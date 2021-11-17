@@ -46,8 +46,6 @@ public:
 
 private:
 
-    int frame_count = 0;
-
     const myAVMediaType   type    =   myAVMediaType::AVMEDIA_TYPE_VIDEO;
 
     uint8_t *video_dst_data[4]  =   {nullptr};

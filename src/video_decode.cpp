@@ -241,16 +241,13 @@ VideoDecode::output_video_data()
 ********************************************************************************/
 VideoData   VideoDecode::output_video_data()
 {
-    VideoData   vd { 0, nullptr, 0 };
+    VideoData   vd;
 
     // 1. Get frame and QImage to show 
-    QImage  *img     =   new QImage( width, height, QImage::Format_RGB888 );
-
-    if( img == nullptr )
-        MYLOG( LOG::ERROR, "alloc QImage fail." );
+    QImage  img { width, height, QImage::Format_RGB888 };
 
     // 2. Convert and write into image buffer  
-    uint8_t *dst[]  =   { img->bits() };
+    uint8_t *dst[]  =   { img.bits() };
     int     linesizes[4];
 
     av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
@@ -270,89 +267,26 @@ VideoData   VideoDecode::output_video_data()
 
 
 
-
-
-
-
 /*******************************************************************************
 VideoDecode::get_timestamp()
 
 試了很多方法都沒成功
 最後選擇用土法煉鋼
 
+AVRational avr = {1, AV_TIME_BASE};
 ********************************************************************************/
-int64_t VideoDecode::get_timestamp()
+int64_t     VideoDecode::get_timestamp()
 {
-    //char    buf[AV_TS_MAX_STRING_SIZE]{0};
-    //auto str    =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
-    //double ts = atof(str);
-
     int64_t ts;
 
-    int64_t delay = 0;
-    AVRational avr = {1, AV_TIME_BASE};
+    int     num     =   dec_ctx->time_base.num;
+    int     den     =   dec_ctx->time_base.den;
+    double  base_ms =   1000.f;  // 表示單位為 mili sec
 
-    static int64_t last_pts = AV_NOPTS_VALUE;
-
-    //frame->best_effort_timestamp;
-
-    //int64_t aaaa = frame->best_effort_timestamp;
-    //ts = av_rescale_q ( aaaa, formatCtx->streams[videoStream]->time_base, AV_TIME_BASE_Q );
-    //ts = av_rescale_q ( aaaa, dec_ctx->time_base, avr );
-    //printf("ts = %lld\n", ts );
-
-
-     //ts = 1000 ms / (dec_ctx->time_base.den / 2 / dec_ctx->time_base.num) 
-
-
-
-
-    if( frame->pts != AV_NOPTS_VALUE )
-    {
-        //if( last_pts != AV_NOPTS_VALUE )
-        {
-            /* sleep roughly the right amount of time;
-            * usleep is in microseconds, just like AV_TIME_BASE. */
-
-            /*
-                不明白這個  2 * 的理由, 但這樣做可以正確播放, 還在研究中.
-                是否為 1080p, 1080i 的差別 ?
-
-                考慮改成 AVStream 的 pts 做測試.
-            */
-
-            delay = 2 * av_rescale_q( frame->pts,  dec_ctx->time_base, avr );
-            //delay = av_rescale_q( frame->pts, dec_ctx->time_base, avr );
-
-            //if (delay > 0 && delay < 1000000)
-              //  usleep(delay);
-        }
-        //last_pts = frame->pts;
-    }
-
-    ts = delay;
-
-
-    static int64_t fff_ccc = 0;                       
-    const double c24 = 24000.0, c1001 = 1001.0, ddd = 1000; // ms
-    ts = ( ddd  * c1001 / c24 ) * fff_ccc;
-    fff_ccc++;
-
-
-
-    int num = dec_ctx->time_base.num;
-    int den = dec_ctx->time_base.den;
-
-
-
-    /*if( ts == 0 )
-        printf("Test");
-    else
-        printf("test");*/
-
-    //ts = 1.f * frame->pts * av_q2d(avr);
-
-    //printf(" ts = %lld\n", ts );
-
+    /* 
+        不知道為何要乘 2, 還沒搜尋到原因
+        fps = 23.97  ( 24000 / 1001 ) 的時候預期 den = 24000, 實際上卻是 48000
+    */
+    ts = base_ms * frame_count * 2 * num / den;  
     return ts;
 }

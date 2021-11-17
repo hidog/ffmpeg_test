@@ -91,13 +91,9 @@ void Worker::run()
     player.output_video_frame_func  =   std::bind( &Worker::get_video_frame, this, std::placeholders::_1 );
     player.output_audio_pcm_func    =   std::bind( &Worker::get_audio_pcm, this, std::placeholders::_1 );
 
-    LOG
-
     thr_decode = new std::thread( &Worker::decode, this );
     thr_audio_play = new std::thread( &Worker::audio_play, this );
     thr_video_paly = new std::thread( &Worker::video_play, this );
-
-    LOG
 
     thr_decode->join();
     thr_audio_play->join();
@@ -114,6 +110,7 @@ void Worker::run()
 
 void Worker::decode()
 {
+    player.set_input_file( "D:\\code\\test.mp4" );
     player.init();
     player.play_QT();
     player.end();
@@ -123,7 +120,8 @@ void Worker::decode()
 
 void Worker::video_play()
 {
-    LOG
+    // 這邊沒有print, 會造成 release build 後無作用
+    MYLOG( LOG::INFO, "start play video" );
 
     std::queue<VideoData>* v_queue = get_video_queue();
     std::queue<AudioData>* a_queue = get_audio_queue();
@@ -133,14 +131,11 @@ void Worker::video_play()
 
     while( v_queue->size() <= 3 )
     {
-        LOG
         std::this_thread::sleep_for( std::chrono::milliseconds(10) );
     }
     v_start = true;
     while( a_start == false )
     {
-        // 這邊沒有print, 會造成optimize後無作用
-        LOG  
         std::this_thread::sleep_for( std::chrono::milliseconds(10) );
     }
     // 需要加上結束的時候跳出迴圈的功能.
@@ -174,7 +169,7 @@ void Worker::video_play()
             
             //printf( "%d    %lld\n", cccc, vd.ts );
 
-            if( cccc >= vd.ts )
+            if( cccc >= vd.timestamp )
             //if( duration.count() >= 41708333 ) // 需要修改程式,從frame的pts做控制
             {
                 //printf( "diff = %lf\n", duration.count() - vd.ts );
@@ -208,20 +203,18 @@ void Worker::video_play()
 void Worker::audio_play()
 {
 #if 1
-    LOG
+    MYLOG( LOG::INFO, "start play audio" );
 
     std::queue<VideoData>* v_queue = get_video_queue();
     std::queue<AudioData>* a_queue = get_audio_queue();
 
     while( a_queue->size() <= 3 )
     {
-        LOG
         std::this_thread::sleep_for( std::chrono::milliseconds(10) );
     }
     a_start = true;
     while( v_start == false )
     {
-        LOG
         std::this_thread::sleep_for( std::chrono::milliseconds(10) );
     }
         

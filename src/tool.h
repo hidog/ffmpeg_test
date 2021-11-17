@@ -19,7 +19,7 @@ struct AudioData
 struct VideoData
 {
     int         index;
-    QImage      *frame;
+    QImage      frame;
     int64_t     timestamp;
 };
 
