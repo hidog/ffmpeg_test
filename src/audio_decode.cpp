@@ -113,7 +113,7 @@ void    AudioDecode::output_audio_frame_info()
     char    buf[AV_TS_MAX_STRING_SIZE]{0};
     int     per_sample  =   av_get_bytes_per_sample( static_cast<AVSampleFormat>(frame->format) );
     auto    pts_str     =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
-    printf( "audio_frame n = %d, nb_samples = %d, pts : %s\n", frame_count++, frame->nb_samples, pts_str );
+    MYLOG( LOG::INFO, "audio_frame n = %d, nb_samples = %d, pts : %s", frame_count++, frame->nb_samples, pts_str );
 }
 
 

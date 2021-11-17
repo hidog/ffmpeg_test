@@ -197,7 +197,7 @@ void    VideoDecode::output_video_frame_info()
 
     char        buf[AV_TS_MAX_STRING_SIZE]{0};
     const char* time_str    =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
-    MYLOG( LOG::INFO, "video_frame = %d, coded_n : %d, time = %s\n", frame_count, frame->coded_picture_number, time_str );
+    MYLOG( LOG::INFO, "video_frame = %d, coded_n : %d, time = %s", frame_count, frame->coded_picture_number, time_str );
 }
 
 
