@@ -55,11 +55,11 @@ AudioDecode::init()
 ********************************************************************************/
 int     AudioDecode::init()
 {
-    output_frame_func   =   std::bind( &AudioDecode::output_frame, this );
-
-                                                 // 輸出統一轉成 2-channel, 16 bit, sample rate 48000Hz
-    swr_ctx     =   swr_alloc_set_opts( swr_ctx, av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16, 48000,
-                                        dec_ctx->channel_layout, dec_ctx->sample_fmt, dec_ctx->sample_rate, NULL, NULL );
+    // 試著想要改變 sample rate, 但沒成功.                                                  
+    swr_ctx     =   swr_alloc_set_opts( swr_ctx, 
+                                        av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16, 48000,                  // output
+                                        dec_ctx->channel_layout, dec_ctx->sample_fmt, dec_ctx->sample_rate,          // input
+                                        NULL, NULL );
     swr_init(swr_ctx);
 
     /*destMs = av_q2d(pFmtCtx->streams[audioindex]->time_base)*1000*pFmtCtx->streams[audioindex]->duration;
@@ -84,13 +84,16 @@ AudioDecode::end()
 int     AudioDecode::end()
 {
     Decode::end();
-
     return  SUCCESS;
 }
 
 
 
 
+
+
+#if 0
+整理需要的資訊
 /*******************************************************************************
 AudioDecode::output_frame()
 ********************************************************************************/
@@ -117,6 +120,7 @@ int     AudioDecode::output_frame()
     fwrite( frame->extended_data[0], 1, unpadded_linesize, dst_fp );
     return 0;
 }
+#endif
 
 
 
@@ -124,7 +128,8 @@ int     AudioDecode::output_frame()
 
 
 
-
+#if 0
+整理需要的資訊
 /*******************************************************************************
 AudioDecode::print_finish_message()
 ********************************************************************************/
@@ -156,6 +161,7 @@ void    AudioDecode::print_finish_message()
     }
     
 }
+#endif
 
 
 
@@ -163,6 +169,8 @@ void    AudioDecode::print_finish_message()
 
 
 
+#if 0
+整理需要的資訊
 /*******************************************************************************
 AudioDecode::get_format_from_sample_fmt()
 ********************************************************************************/
@@ -194,15 +202,16 @@ int     AudioDecode::get_format_from_sample_fmt( const char **fmt, enum AVSample
     ERRLOG( "sample format %s is not supported as output format", str );
     return  ERROR;
 }
+#endif
 
 
 
 
 
 /*******************************************************************************
-AudioDecode::output_PCM()
+AudioDecode::output_audio_data()
 ********************************************************************************/
-AudioData   AudioDecode::output_PCM()
+AudioData   AudioDecode::output_audio_data()
 {
     AudioData   ad { nullptr, 0 };
 
@@ -214,7 +223,7 @@ AudioData   AudioDecode::output_PCM()
     data[0] = pcm;  //輸出格式為AV_SAMPLE_FMT_S16(packet型別),所以轉換後的LR兩通道都存在data[0]中
 
     int ret = swr_convert( swr_ctx,
-                           data, frame->nb_samples,        //輸出
+                           data, frame->nb_samples,                              //輸出
                            (const uint8_t**)frame->data, frame->nb_samples );    //輸入
 
     ad.pcm = pcm;

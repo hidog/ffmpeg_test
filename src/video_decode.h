@@ -26,22 +26,27 @@ public:
     VideoDecode& operator = ( VideoDecode&& ) = delete;
 
     int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx ) override;
-    int     output_frame() override;
-    void    print_finish_message() override;
 
+    VideoData   output_video_data();
+
+
+
+#ifdef FFMPEG_TEST
     int     output_jpg_by_QT();
     int     output_jpg_by_openCV();
+#endif
 
     int     init() override;
     int     end() override;
 
-    QImage  output_QImage();
 
     myAVMediaType   get_type() override { return type; } 
 
-    int64_t get_ts();
+    int64_t     get_timestamp();
 
 private:
+
+    int frame_count = 0;
 
     const myAVMediaType   type    =   myAVMediaType::AVMEDIA_TYPE_VIDEO;
 

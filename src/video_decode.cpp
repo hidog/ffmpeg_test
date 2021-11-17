@@ -71,12 +71,12 @@ int     VideoDecode::init()
     height      =   dec_ctx->height;
     pix_fmt     =   static_cast<myAVPixelFormat>(dec_ctx->pix_fmt);
 
-    printf( "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
+    MYLOG( LOG::INFO, "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
     
     video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, static_cast<AVPixelFormat>(pix_fmt), 1 );
     if( video_dst_bufsize < 0 )
     {
-        ERRLOG( "Could not allocate raw video buffer" );
+        MYLOG( LOG::ERROR, "Could not allocate raw video buffer" );
         return  ERROR;
     }
 
@@ -85,9 +85,10 @@ int     VideoDecode::init()
     sws_ctx     =   sws_getContext( width, height, static_cast<AVPixelFormat>(pix_fmt), width, height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);                                    
 
     //
+#ifdef FFMPEG_TEST
     //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
     output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
-    //output_frame_func   =   std::bind( &VideoDecode::output_frame, this );
+#endif
 
     //
     Decode::init();
@@ -97,7 +98,7 @@ int     VideoDecode::init()
 
 
 
-
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 VideoDecode::output_jpg_by_QT()
 ********************************************************************************/
@@ -120,11 +121,13 @@ int    VideoDecode::output_jpg_by_QT()
 
     return  0;
 }
+#endif
 
 
 
 
 
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 VideoDecode::output_jpg_by_openCV()
 ********************************************************************************/
@@ -148,20 +151,20 @@ int     VideoDecode::output_jpg_by_openCV()
     cv::Mat img( cv::Size( width, height*3/2 ), CV_8UC1, video_dst_data[0] );
 #endif
 
-
-    /*cv::Mat     bgr;
+    cv::Mat     bgr;
     cv::cvtColor( img, bgr, cv::COLOR_YUV2BGR_I420 );
     cv::imshow( "RGB frame", bgr );
-    cv::waitKey(1);*/
+    cv::waitKey(1);
 
     return 0;
 }
+#endif
 
 
 
 
-
-
+#if 0
+需要研究哪些資訊可以拿來利用
 /*******************************************************************************
 VideoDecode::output_frame()
 ********************************************************************************/
@@ -195,7 +198,7 @@ int     VideoDecode::output_frame()
 
     return 0;
 }
-
+#endif
 
 
 
@@ -206,9 +209,7 @@ VideoDecode::end()
 int     VideoDecode::end()
 {
     av_free( video_dst_data[0] );
-
     Decode::end();
-
     return  SUCCESS;
 }
 
@@ -216,7 +217,8 @@ int     VideoDecode::end()
 
 
 
-
+#if 0
+// 將有用的資訊轉移出來
 /*******************************************************************************
 VideoDecode::print_finish_message()
 ********************************************************************************/
@@ -229,33 +231,57 @@ void    VideoDecode::print_finish_message()
     printf( "Play the output video file with the command:\n"
             "ffplay -f rawvideo -pix_fmt %s -video_size %dx%d %s\n", str, width, height, dst_file.c_str() );
 }
+#endif
+
 
 
 
 /*******************************************************************************
-VideoDecode::output_QImage()
+VideoDecode::output_video_data()
 ********************************************************************************/
-QImage  VideoDecode::output_QImage()
+VideoData   VideoDecode::output_video_data()
 {
+    VideoData   vd { 0, nullptr, 0 };
+
     // 1. Get frame and QImage to show 
-    QImage  img     =   QImage( width, height, QImage::Format_RGB888 );
+    QImage  *img     =   new QImage( width, height, QImage::Format_RGB888 );
+
+    if( img == nullptr )
+        MYLOG( LOG::ERROR, "alloc QImage fail." );
 
     // 2. Convert and write into image buffer  
-    uint8_t *dst[]  =   { img.bits() };
+    uint8_t *dst[]  =   { img->bits() };
     int     linesizes[4];
 
     av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
     sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
 
-    return  img;
+    //
+    vd.index        =   frame_count;
+    vd.frame        =   img;
+    vd.timestamp    =   get_timestamp();
+
+    return  vd;
 }
 
 
 
+
+
+
+
+
+
+
+
 /*******************************************************************************
-VideoDecode::get_ts()
+VideoDecode::get_timestamp()
+
+試了很多方法都沒成功
+最後選擇用土法煉鋼
+
 ********************************************************************************/
-int64_t VideoDecode::get_ts()
+int64_t VideoDecode::get_timestamp()
 {
     //char    buf[AV_TS_MAX_STRING_SIZE]{0};
     //auto str    =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
@@ -311,6 +337,12 @@ int64_t VideoDecode::get_ts()
     const double c24 = 24000.0, c1001 = 1001.0, ddd = 1000; // ms
     ts = ( ddd  * c1001 / c24 ) * fff_ccc;
     fff_ccc++;
+
+
+
+    int num = dec_ctx->time_base.num;
+    int den = dec_ctx->time_base.den;
+
 
 
     /*if( ts == 0 )

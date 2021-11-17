@@ -29,7 +29,7 @@ struct VideoData
 
 constexpr int ERROR = -1;
 constexpr int SUCCESS = 0;
-
+constexpr int HAVE_FRAME = 1; // 需要用 1 來判斷是否還有 frame.
 
 
 

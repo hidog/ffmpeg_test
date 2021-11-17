@@ -13,7 +13,7 @@ struct AVFrame;
 struct AVPacket;
 
 
-template class __declspec( dllexport ) std::function<int()>; // fix compiler warning. 主要是匯出成dll的話需要顯式具現化樣板
+//template class __declspec( dllexport ) std::function<int()>; // fix compiler warning. 主要是匯出成dll的話需要顯式具現化樣板
 
 
 
@@ -34,21 +34,20 @@ public:
     virtual int     end();
 
     virtual int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx ) = 0;
-    virtual int     output_frame() = 0;
-    virtual void    print_finish_message() = 0;
-
 
     int     send_packet( const AVPacket *pkt );
     int     recv_frame();
     void    unref_frame();
+
+#ifdef FFMPEG_TEST
     int     flush();
+    std::function<int()>    output_frame_func;
+#endif
 
     AVFrame*        get_frame();
     myAVMediaType   get_decode_context_type();
-
-    int     open_output( std::string dst );
+    AVCodecContext* get_decode_context();
     
-    std::function<int()>    output_frame_func;
 
     virtual myAVMediaType   get_type() = 0; 
 
@@ -60,9 +59,6 @@ protected:
     AVFrame         *frame      =   nullptr;
 
     int     frame_count =   0;
-    FILE    *dst_fp   =   nullptr;
-
-    std::string     dst_file;
 
 private:
 

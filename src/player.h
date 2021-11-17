@@ -40,9 +40,12 @@ public:
     void    play_QT();
     int     init();
     int     end();
+    int     flush();
 
+    //
     void    set_input_file( std::string path );
 
+    //
     std::function<void(QImage)> output_video_frame_func;
     std::function<void(AudioData)> output_audio_pcm_func;
 

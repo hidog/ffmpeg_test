@@ -211,7 +211,6 @@ void    Player::play_QT()
     VideoData   vdata;
     AudioData   adata;
 
-
     while( true ) 
     {
         while( video_queue.size() > 40 )        
@@ -223,7 +222,7 @@ void    Player::play_QT()
 
         pkt     =   demuxer.get_packet();
         if( pkt->stream_index == demuxer.get_video_index() )
-            dc  =   dynamic_cast<Decode*>(&v_decoder);        
+            dc  =   dynamic_cast<Decode*>(&v_decoder);
         else if( pkt->stream_index == demuxer.get_audio_index() )
             dc  =   dynamic_cast<Decode*>(&a_decoder);
         else        
@@ -259,11 +258,66 @@ void    Player::play_QT()
         demuxer.unref_packet();
     }
 
-    v_decoder.flush();
-    a_decoder.flush();
+    //
+    flush();
+    MYLOG( LOG::INFO, "play finish.")
 }
 
 
+
+/*******************************************************************************
+Player::flush()
+
+flush 過程基本上同 decode, 送 nullptr 進去
+也會吐出一張 frame, 需要將此 frame 資料寫入 output.
+
+********************************************************************************/
+int    Player::flush()
+{
+    int     ret     =   0;
+
+    VideoData   vdata;
+    AudioData   adata;
+    Decode      *dc     =   nullptr;
+
+    // flush video
+    dc      =   dynamic_cast<Decode*>(&v_decoder);
+    ret     =   dc->send_packet(nullptr);
+    if( ret >= 0 )
+    {
+        while(true)
+        {
+            ret     =   dc->recv_frame();
+            if( ret <= 0 )
+                break;
+
+            vdata   =   v_decoder.output_video_data();
+            video_queue.push(vdata);           
+            
+            dc->unref_frame();
+        }
+    }
+
+    // flush audio
+    dc      =   dynamic_cast<Decode*>(&a_decoder);
+    ret     =   dc->send_packet(nullptr);
+    if( ret >= 0 )
+    {
+        while(true)
+        {
+            ret     =   dc->recv_frame();
+            if( ret <= 0 )
+                break;
+
+            adata   =   a_decoder.output_audio_data();
+            audio_queue.push(adata);
+
+            dc->unref_frame();
+        }
+    }
+
+    return 0;
+}
 
 
 

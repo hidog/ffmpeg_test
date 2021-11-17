@@ -22,14 +22,12 @@ public:
     AudioDecode& operator = ( AudioDecode&& ) = delete;
 
     int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx ) override;
-    int     output_frame() override;
-    void    print_finish_message() override;
-    int     get_format_from_sample_fmt( const char **fmt, enum AVSampleFormat sample_fmt );
+    //int     get_format_from_sample_fmt( const char **fmt, enum AVSampleFormat sample_fmt ); 有機會用到
 
     int     init() override;
     int     end() override;
 
-    AudioData   output_PCM();
+    AudioData   output_audio_data();
 
 
     myAVMediaType   get_type() override { return type; } 
