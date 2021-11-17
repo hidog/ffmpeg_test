@@ -76,6 +76,8 @@ int     AudioDecode::init()
     sample_fmt      =   dec_ctx->sample_fmt;
     channel_layout  =   dec_ctx->channel_layout;
 
+    assert( dec_ctx->sample_fmt == AV_SAMPLE_FMT_FLTP ); // 如果遇到不同的  在看是不是要調整audio output的sample size
+
     // 試著想要改變 sample rate, 但沒成功.                                                  
     swr_ctx     =   swr_alloc_set_opts( swr_ctx, 
                                         av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16, sample_rate,           // output
@@ -127,19 +129,20 @@ AudioData   AudioDecode::output_audio_data()
 {
     AudioData   ad { nullptr, 0 };
 
-    uint8_t *data[2] = { 0 };
-    int byteCnt = frame->nb_samples * 2 * 2;
+    // 有空來修改這邊 要能動態根據 mp4 檔案做調整
 
-    unsigned char *pcm = new uint8_t[byteCnt];     //frame->nb_samples*2*2表示分配樣本資料量*兩通道*每通道2位元組大小
+    uint8_t     *data[2]    =   { 0 };
+    int         byteCnt     =   frame->nb_samples * 2 * 2;
 
-    data[0] = pcm;  //輸出格式為AV_SAMPLE_FMT_S16(packet型別),所以轉換後的LR兩通道都存在data[0]中
+    unsigned char   *pcm    =   new uint8_t[byteCnt];     // frame->nb_samples * 2 * 2     表示     分配樣本資料量 * 兩通道 * 每通道2位元組大小
 
-    int ret = swr_convert( swr_ctx,
-                           data, frame->nb_samples,                              //輸出
-                           (const uint8_t**)frame->data, frame->nb_samples );    //輸入
+    data[0]     =   pcm;    // 輸出格式為AV_SAMPLE_FMT_S16(packet型別),所以轉換後的 LR 兩通道都存在data[0]中
+    int ret     =   swr_convert( swr_ctx,
+                                 data, frame->nb_samples,                              //輸出
+                                 (const uint8_t**)frame->data, frame->nb_samples );    //輸入
 
-    ad.pcm = pcm;
-    ad.bytes = byteCnt;
+    ad.pcm      =   pcm;
+    ad.bytes    =   byteCnt;
 
     return ad;
 }
