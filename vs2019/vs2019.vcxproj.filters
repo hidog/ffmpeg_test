@@ -42,15 +42,6 @@
     <ClCompile Include="..\src\audio_decode.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\demuxing_decoding.c">
-      <Filter>ffmpeg_example</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\avio_reading.c">
-      <Filter>ffmpeg_example</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\metadata.c">
-      <Filter>ffmpeg_example</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\player.h">
@@ -70,15 +61,6 @@
     </ClInclude>
     <ClInclude Include="..\src\video_decode.h">
       <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\demuxing_decoding.h">
-      <Filter>ffmpeg_example</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\avio_reading.h">
-      <Filter>ffmpeg_example</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\metadata.h">
-      <Filter>ffmpeg_example</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

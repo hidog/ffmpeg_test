@@ -20,7 +20,10 @@ extern "C" {
 Demux::Demux()
 ********************************************************************************/
 Demux::Demux()
-{}
+{
+    v_codec_id  =   AV_CODEC_ID_NONE;
+    a_codec_id  =   AV_CODEC_ID_NONE;
+}
 
 
 
@@ -42,10 +45,11 @@ int    Demux::init()
 {
     int ret;
 
-    ret     =   get_stream_info();
+    //
+    ret     =   stream_info();
     if( ret == ERROR )
     {
-        ERRLOG( "init fail. ret = %d", ret );
+        MYLOG( LOG::ERROR, "init fail. ret = %d", ret );
         return  ERROR;
     }
 
@@ -60,7 +64,7 @@ int    Demux::init()
     if( pkt == nullptr )
     {
         ret =   AVERROR(ENOMEM);
-        ERRLOG( "Could not allocate packet. error = %d", ret );
+        MYLOG( LOG::ERROR, "Could not allocate packet. error = %d", ret );
         return  ERROR;
     }
 
@@ -71,37 +75,36 @@ int    Demux::init()
 
 
 /*******************************************************************************
-Demux::get_stream_info()
+Demux::video_info()
 ********************************************************************************/
-int     Demux::get_video_info()
+int     Demux::video_info()
 {
     vs_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0 );
 
     //
     AVStream    *video_stream   =   fmt_ctx->streams[vs_idx];
     if( video_stream == nullptr )
-        printf("this stream has no video stream\n");
+    {
+        MYLOG( LOG::INFO, "this stream has no video stream" );
+        return  SUCCESS;
+    }
 
+    //
+    AVCodecID   v_codec_id    =   fmt_ctx->streams[vs_idx]->codecpar->codec_id;
 
-    //AVRational avr = {1, AV_TIME_BASE};
-    //auto ttt = fmt_ctx->duration * av_q2d( avr );
-    //printf("ttt = %lf\n", ttt);
-
-
-
-    //AVCodecID   codec_id    =   fmt_ctx->streams[vs_idx]->codecpar->codec_id;
-
-    int width   =   fmt_ctx->streams[vs_idx]->codecpar->width;
-    int height  =   fmt_ctx->streams[vs_idx]->codecpar->height;
-    int depth   =   8;
+    width   =   fmt_ctx->streams[vs_idx]->codecpar->width;
+    height  =   fmt_ctx->streams[vs_idx]->codecpar->height;
+    depth   =   8;
     if( fmt_ctx->streams[vs_idx]->codecpar->format == AV_PIX_FMT_YUV420P10LE )
         depth = 10;
     if( fmt_ctx->streams[vs_idx]->codecpar->format == AV_PIX_FMT_YUV420P12LE )
         depth = 12;
 
-    printf( "width = %d, height = %d, depth = %d\n", width, height, depth );
+    MYLOG( LOG::INFO, "width = %d, height = %d, depth = %d", width, height, depth );
+    MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(v_codec_id) );
 
 #if 0
+    // use for NVDEC
     bool flag1  =   !strcmp( fmt_ctx->iformat->long_name, "QuickTime / MOV" )   ||
                     !strcmp( fmt_ctx->iformat->long_name, "FLV (Flash Video)" ) ||
                     !strcmp( fmt_ctx->iformat->long_name, "Matroska / WebM" );
@@ -111,6 +114,7 @@ int     Demux::get_video_info()
 #endif
 
 #if 0
+    // use for NVDEC
     if( use_bsf == true )
     {
         const AVBitStreamFilter*  bsf   =   nullptr;
@@ -137,20 +141,27 @@ int     Demux::get_video_info()
 
 
 /*******************************************************************************
-Demux::get_audio_info()
+Demux::audio_info()
 ********************************************************************************/
-int     Demux::get_audio_info()
+int     Demux::audio_info()
 {
     as_idx      =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0 );
-    //AVCodecID codec_id    =   fmt_ctx->streams[as_idx]->codecpar->codec_id;
 
+    //
     AVStream    *audio_stream   =   fmt_ctx->streams[as_idx];
     if( audio_stream == nullptr )
-        printf("this stream has no audio stream\n");
+    {
+        MYLOG( LOG::INFO, "this stream has no audio stream" );
+        return  SUCCESS;
+    }
+    
+    //
+    a_codec_id   =   fmt_ctx->streams[as_idx]->codecpar->codec_id;
+    MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(a_codec_id) );
 
+    //
     double a_dur_ms = av_q2d( fmt_ctx->streams[as_idx]->time_base) * fmt_ctx->streams[as_idx]->duration;
-    printf("frame duration = %lf ms\n", a_dur_ms );
-
+    MYLOG( LOG::INFO, "frame duration = %lf ms", a_dur_ms );
 
     return  SUCCESS;
 }
@@ -182,27 +193,28 @@ int     Demux::get_audio_index()
 
 
 /*******************************************************************************
-Demux::get_stream_info()
+Demux::stream_info()
 ********************************************************************************/
-int     Demux::get_stream_info()
+int     Demux::stream_info()
 {
     int ret =   0;
 
-    ret =   avformat_find_stream_info( fmt_ctx, nullptr );
+    //
+    ret     =   avformat_find_stream_info( fmt_ctx, nullptr );
     if( ret < 0) 
     {
-        ERRLOG( "Could not find stream information. ret = %d", ret );
-        return ERROR;
+        MYLOG( LOG::ERROR, "Could not find stream information. ret = %d", ret );
+        return  ERROR;
     }
 
     //
-    get_video_info();
-    get_audio_info();
+    video_info();
+    audio_info();
 
     /* dump input information to stderr */
     //av_dump_format( fmt_ctx, 0, src_file.c_str(), 0 );
 
-    return SUCCESS;
+    return  SUCCESS;
 }
 
 
@@ -218,6 +230,8 @@ int     Demux::end()
     av_packet_free( &pkt );
     //av_bsf_free( &v_bsf_ctx );
 
+    src_file    =   "";
+
     return  SUCCESS;
 }
 
@@ -231,16 +245,16 @@ Demux::open_input()
 ********************************************************************************/
 int     Demux::open_input( std::string str )
 {
-    fmt_ctx     =   avformat_alloc_context();
-
+    fmt_ctx     =   avformat_alloc_context();    
     int  ret    =   0;
-
     src_file    =   str;
-    ret         =   avformat_open_input( &fmt_ctx, src_file.c_str(), NULL, NULL );
+
+    MYLOG( LOG::INFO, "load file %s", src_file.c_str() );
+    ret     =   avformat_open_input( &fmt_ctx, src_file.c_str(), NULL, NULL );
 
     if( ret < 0 )
     {
-        ERRLOG( "Could not open source file %s", src_file.c_str() );
+        MYLOG( LOG::ERROR, "Could not open source file %s", src_file.c_str() );
         return  ERROR;
     }
 
@@ -270,7 +284,6 @@ Demux::get_pkt()
 AVPacket*   Demux::get_packet()
 {
     return  pkt;
-
     /*if( use_bsf == true && pkt->stream_index == vs_idx )
         return pkt_bsf;
     else
@@ -295,14 +308,10 @@ Demux::demux()
 int    Demux::demux()
 {
     int     ret;
-
     ret     =   av_read_frame( fmt_ctx, pkt );
 
-    if( ret < 0 )
-    {
-        printf("load file end.\n");
-        //break;
-    }
+    if( ret < 0 )    
+        MYLOG( LOG::INFO, "load file end." );
 
 #if 0
     if( use_bsf && pkt->stream_index == vs_idx )

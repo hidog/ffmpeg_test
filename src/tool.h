@@ -4,34 +4,70 @@
 #include <cassert>
 #include <QImage>
 
+
+
+
 struct AudioData
 {
-    unsigned char *pcm;
-    int bytes;
+    uint8_t     *pcm;
+    int         bytes;
 };
+
+
+
 
 struct VideoData
 {
-    int index;
-    QImage frame;
-    int64_t ts;
+    int         index;
+    QImage      *frame;
+    int64_t     timestamp;
 };
+
+
+
 
 
 constexpr int ERROR = -1;
 constexpr int SUCCESS = 0;
 
 
-#define LOG printf("[%s] [%d]\n", __FILE__, __LINE__ );
 
 
-#define ERRLOG(...) \
+       
+#define SLEEP_10MS std::this_thread::sleep_for( std::chrono::milliseconds(10) );
+
+
+
+
+
+enum class LOG
+{
+    DEBUG = 0,
+    INFO,
+    WARN,
+    ERROR
+};
+
+
+
+#define MYLOG( TAG, ... ) \
 	{ \
-		printf("[ERR] [%s] [%d] ", __FILE__, __LINE__); \
+        if( TAG == LOG::DEBUG ) \
+		    printf("[DEBUG] [%s] [%d] ", __FILE__, __LINE__); \
+        else if( TAG == LOG::INFO ) \
+            printf("[INFO] [%s] [%d] ", __FILE__, __LINE__); \
+        else if( TAG == LOG::WARN ) \
+            printf("[WARN] [%s] [%d] ", __FILE__, __LINE__); \
+        else \
+            printf("[ERR] [%s] [%d] ", __FILE__, __LINE__); \
 		printf(__VA_ARGS__); \
 		printf("\n"); \
-		assert(0); \
+        if( TAG == LOG::ERROR ) \
+            assert(0); \
 	}
+
+
+
 
 #ifdef FFMPEG_TEST
 #define DLL_API
@@ -40,6 +76,9 @@ constexpr int SUCCESS = 0;
 #else
 #define DLL_API __declspec(dllimport)
 #endif
+
+
+
 
 
 // copy from avutil.h, AVMediaType

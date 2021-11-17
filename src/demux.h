@@ -6,7 +6,7 @@
 
 struct AVPacket;
 struct AVFormatContext;
-
+enum   AVCodecID;
 
 
 /*
@@ -38,9 +38,9 @@ public:
     int     end();
 
     int     open_input( std::string str );
-    int     get_stream_info();
-    int     get_video_info();
-    int     get_audio_info();
+    int     stream_info();
+    int     video_info();
+    int     audio_info();
 
     int     get_video_index();
     int     get_audio_index();
@@ -52,6 +52,18 @@ public:
 
 
 private:
+    // video
+    int     width       =   0;
+    int     height      =   0;
+    int     depth       =   0;
+
+    AVCodecID     v_codec_id;
+
+    // audio
+    AVCodecID     a_codec_id;
+
+
+    //
     AVFormatContext *fmt_ctx    =   nullptr;
     AVPacket        *pkt        =   nullptr;
                     //*pkt_bsf    =   nullptr;    
