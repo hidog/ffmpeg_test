@@ -237,11 +237,13 @@ void    Player::play_QT()
 
                 if( pkt->stream_index == demuxer.get_video_index() )
                 {
+                    v_decoder.output_video_frame_info();
                     vdata   =   v_decoder.output_video_data();
                     video_queue.push(vdata);
                 }
                 else if( pkt->stream_index == demuxer.get_audio_index() )
                 {
+                    a_decoder.output_audio_frame_info();
                     adata   =   a_decoder.output_audio_data();
                     audio_queue.push(adata);
                 }

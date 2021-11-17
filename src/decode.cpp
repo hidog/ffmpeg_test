@@ -69,7 +69,7 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     int         ret =   0;
     AVStream    *st =   nullptr;
 
-    const AVCodec   *dec    =   nullptr;
+    AVCodec     *dec    =   nullptr;
 
     //
     st  =   fmt_ctx->streams[stream_index];
@@ -109,6 +109,9 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
         MYLOG( LOG::ERROR, "Failed to open %s codec. ret = %d", str, ret );
         return  ERROR;
     }   
+
+    // output info
+    output_decode_info( dec, dec_ctx );
 
     return  SUCCESS;
 }

@@ -10,6 +10,8 @@
 // https://stackoverflow.com/questions/13088749/efficient-conversion-of-avframe-to-qimage
 
 struct SwsContext;
+struct AVCodec;
+struct AVCodecContext;
 enum AVPixelFormat;
 
 
@@ -26,20 +28,21 @@ public:
     VideoDecode& operator = ( VideoDecode&& ) = delete;
 
     int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx ) override;
+    void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
+
+    int     init() override;
+    int     end() override;
+
+    void        output_video_frame_info();
+    int64_t     get_timestamp();
 
     VideoData   output_video_data();
-
 
 
 #ifdef FFMPEG_TEST
     int     output_jpg_by_QT();
     int     output_jpg_by_openCV();
 #endif
-
-    int     init() override;
-    int     end() override;
-
-    int64_t     get_timestamp();
 
 private:
 
@@ -54,10 +57,6 @@ private:
 
     AVPixelFormat   pix_fmt;
     SwsContext      *sws_ctx   =   nullptr;   // use for transform yuv to rgb, others.
-
-
-    //int64 pts_base = 0;
-
 
 };
 

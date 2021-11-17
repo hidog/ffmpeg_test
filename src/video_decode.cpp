@@ -131,6 +131,24 @@ int    VideoDecode::output_jpg_by_QT()
 
 
 
+
+/*******************************************************************************
+VideoDecode::output_decode_info()
+********************************************************************************/
+void    VideoDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
+{
+    MYLOG( LOG::INFO, "video dec name = %s", dec->name );
+    MYLOG( LOG::INFO, "video dec long name = %s", dec->long_name );
+    MYLOG( LOG::INFO, "video dec codec id = %s", avcodec_get_name(dec->id) );
+
+    MYLOG( LOG::INFO, "video bitrate = %d, pix_fmt = %s", dec_ctx->bit_rate, av_get_pix_fmt_name(dec_ctx->pix_fmt) );
+}
+
+
+
+
+
+
 #ifdef FFMPEG_TEST
 /*******************************************************************************
 VideoDecode::output_jpg_by_openCV()
@@ -167,42 +185,21 @@ int     VideoDecode::output_jpg_by_openCV()
 
 
 
-#if 0
-需要研究哪些資訊可以拿來利用
 /*******************************************************************************
-VideoDecode::output_frame()
+VideoDecode::output_video_frame_info()
 ********************************************************************************/
-int     VideoDecode::output_frame()
+void    VideoDecode::output_video_frame_info()
 {
-    if( frame->width != width || 
-        frame->height != height ||
-        frame->format != static_cast<AVPixelFormat>(pix_fmt) ) 
-    {
-        // To handle this change, one could call av_image_alloc again and decode the following frames into another rawvideo file.         
-        auto str1   =   av_get_pix_fmt_name(static_cast<AVPixelFormat>(pix_fmt));
-        auto str2   =   av_get_pix_fmt_name( static_cast<AVPixelFormat>(frame->format) );
-        ERRLOG( "Error: Width, height and pixel format have to be "
-                "constant in a rawvideo file, but the width, height or "
-                "pixel format of the input video changed:\n"
-                "old: width = %d, height = %d, format = %s\n"
-                "new: width = %d, height = %d, format = %s\n",
-                width, height, str1, frame->width, frame->height, str2 );
-        return  ERROR;
-    }
-    
-    char    buf[AV_TS_MAX_STRING_SIZE]{0};
-    auto str    =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
-    printf( "video_frame n : %d coded_n : %d, time = %s\n", frame_count++, frame->coded_picture_number, str );
+    const char  *frame_format_str   =   av_get_pix_fmt_name( static_cast<AVPixelFormat>(frame->format) );
 
-    // copy decoded frame to destination buffer: this is required since rawvideo expects non aligned data     
-    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, static_cast<AVPixelFormat>(pix_fmt), width, height );
+    MYLOG( LOG::INFO, "frame width = %d, height = %d", frame->width, frame->height );
+    MYLOG( LOG::INFO, "frame format = %s", frame_format_str );
 
-    // write to rawvideo file
-    fwrite( video_dst_data[0], 1, video_dst_bufsize, dst_fp );
-
-    return 0;
+    char        buf[AV_TS_MAX_STRING_SIZE]{0};
+    const char* time_str    =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
+    MYLOG( LOG::INFO, "video_frame = %d, coded_n : %d, time = %s\n", frame_count, frame->coded_picture_number, time_str );
 }
-#endif
+
 
 
 
@@ -219,23 +216,6 @@ int     VideoDecode::end()
 
 
 
-
-
-#if 0
-// 將有用的資訊轉移出來
-/*******************************************************************************
-VideoDecode::print_finish_message()
-********************************************************************************/
-void    VideoDecode::print_finish_message()
-{
-    // if( video_stream != nullptr )
-    // 假設 video stream 一定存在. 未來再看需求加入判斷.
-    
-    auto str    =   av_get_pix_fmt_name(static_cast<AVPixelFormat>(pix_fmt));
-    printf( "Play the output video file with the command:\n"
-            "ffplay -f rawvideo -pix_fmt %s -video_size %dx%d %s\n", str, width, height, dst_file.c_str() );
-}
-#endif
 
 
 
