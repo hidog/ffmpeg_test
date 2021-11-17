@@ -28,7 +28,11 @@ VideoDecode::VideoDecode()
 ********************************************************************************/
 VideoDecode::VideoDecode()
     :   Decode()
-{}
+{
+    type        =   AVMEDIA_TYPE_VIDEO;
+    pix_fmt     =   AV_PIX_FMT_NONE;
+
+}
 
 
 
@@ -69,25 +73,26 @@ int     VideoDecode::init()
     // allocate image where the decoded image will be put
     width       =   dec_ctx->width;
     height      =   dec_ctx->height;
-    pix_fmt     =   static_cast<myAVPixelFormat>(dec_ctx->pix_fmt);
+    pix_fmt     =   dec_ctx->pix_fmt;
 
-    printf( "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
+    MYLOG( LOG::INFO, "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
     
-    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, static_cast<AVPixelFormat>(pix_fmt), 1 );
+    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, pix_fmt, 1 );
     if( video_dst_bufsize < 0 )
     {
-        ERRLOG( "Could not allocate raw video buffer" );
+        MYLOG( LOG::ERROR, "Could not allocate raw video buffer" );
         return  ERROR;
     }
 
     // 先讓 dst 的寬高等於 src 的寬高
                                     // src                  // dst
-    sws_ctx     =   sws_getContext( width, height, static_cast<AVPixelFormat>(pix_fmt), width, height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);                                    
+    sws_ctx     =   sws_getContext( width, height, pix_fmt, width, height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);                                    
 
     //
+#ifdef FFMPEG_TEST
     //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
     output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
-    //output_frame_func   =   std::bind( &VideoDecode::output_frame, this );
+#endif
 
     //
     Decode::init();
@@ -97,7 +102,7 @@ int     VideoDecode::init()
 
 
 
-
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 VideoDecode::output_jpg_by_QT()
 ********************************************************************************/
@@ -120,11 +125,31 @@ int    VideoDecode::output_jpg_by_QT()
 
     return  0;
 }
+#endif
 
 
 
 
 
+
+/*******************************************************************************
+VideoDecode::output_decode_info()
+********************************************************************************/
+void    VideoDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
+{
+    MYLOG( LOG::INFO, "video dec name = %s", dec->name );
+    MYLOG( LOG::INFO, "video dec long name = %s", dec->long_name );
+    MYLOG( LOG::INFO, "video dec codec id = %s", avcodec_get_name(dec->id) );
+
+    MYLOG( LOG::INFO, "video bitrate = %d, pix_fmt = %s", dec_ctx->bit_rate, av_get_pix_fmt_name(dec_ctx->pix_fmt) );
+}
+
+
+
+
+
+
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 VideoDecode::output_jpg_by_openCV()
 ********************************************************************************/
@@ -148,52 +173,31 @@ int     VideoDecode::output_jpg_by_openCV()
     cv::Mat img( cv::Size( width, height*3/2 ), CV_8UC1, video_dst_data[0] );
 #endif
 
-
-    /*cv::Mat     bgr;
+    cv::Mat     bgr;
     cv::cvtColor( img, bgr, cv::COLOR_YUV2BGR_I420 );
     cv::imshow( "RGB frame", bgr );
-    cv::waitKey(1);*/
+    cv::waitKey(1);
 
     return 0;
 }
-
-
+#endif
 
 
 
 
 /*******************************************************************************
-VideoDecode::output_frame()
+VideoDecode::output_video_frame_info()
 ********************************************************************************/
-int     VideoDecode::output_frame()
+void    VideoDecode::output_video_frame_info()
 {
-    if( frame->width != width || 
-        frame->height != height ||
-        frame->format != static_cast<AVPixelFormat>(pix_fmt) ) 
-    {
-        // To handle this change, one could call av_image_alloc again and decode the following frames into another rawvideo file.         
-        auto str1   =   av_get_pix_fmt_name(static_cast<AVPixelFormat>(pix_fmt));
-        auto str2   =   av_get_pix_fmt_name( static_cast<AVPixelFormat>(frame->format) );
-        ERRLOG( "Error: Width, height and pixel format have to be "
-                "constant in a rawvideo file, but the width, height or "
-                "pixel format of the input video changed:\n"
-                "old: width = %d, height = %d, format = %s\n"
-                "new: width = %d, height = %d, format = %s\n",
-                width, height, str1, frame->width, frame->height, str2 );
-        return  ERROR;
-    }
-    
-    char    buf[AV_TS_MAX_STRING_SIZE]{0};
-    auto str    =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
-    printf( "video_frame n : %d coded_n : %d, time = %s\n", frame_count++, frame->coded_picture_number, str );
+    const char  *frame_format_str   =   av_get_pix_fmt_name( static_cast<AVPixelFormat>(frame->format) );
 
-    // copy decoded frame to destination buffer: this is required since rawvideo expects non aligned data     
-    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, static_cast<AVPixelFormat>(pix_fmt), width, height );
+    MYLOG( LOG::INFO, "frame width = %d, height = %d", frame->width, frame->height );
+    MYLOG( LOG::INFO, "frame format = %s", frame_format_str );
 
-    // write to rawvideo file
-    fwrite( video_dst_data[0], 1, video_dst_bufsize, dst_fp );
-
-    return 0;
+    char        buf[AV_TS_MAX_STRING_SIZE]{0};
+    const char* time_str    =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
+    MYLOG( LOG::INFO, "video_frame = %d, coded_n : %d, time = %s\n", frame_count, frame->coded_picture_number, time_str );
 }
 
 
@@ -206,9 +210,7 @@ VideoDecode::end()
 int     VideoDecode::end()
 {
     av_free( video_dst_data[0] );
-
     Decode::end();
-
     return  SUCCESS;
 }
 
@@ -217,28 +219,16 @@ int     VideoDecode::end()
 
 
 
-/*******************************************************************************
-VideoDecode::print_finish_message()
-********************************************************************************/
-void    VideoDecode::print_finish_message()
-{
-    // if( video_stream != nullptr )
-    // 假設 video stream 一定存在. 未來再看需求加入判斷.
-    
-    auto str    =   av_get_pix_fmt_name(static_cast<AVPixelFormat>(pix_fmt));
-    printf( "Play the output video file with the command:\n"
-            "ffplay -f rawvideo -pix_fmt %s -video_size %dx%d %s\n", str, width, height, dst_file.c_str() );
-}
-
-
 
 /*******************************************************************************
-VideoDecode::output_QImage()
+VideoDecode::output_video_data()
 ********************************************************************************/
-QImage  VideoDecode::output_QImage()
+VideoData   VideoDecode::output_video_data()
 {
+    VideoData   vd;
+
     // 1. Get frame and QImage to show 
-    QImage  img     =   QImage( width, height, QImage::Format_RGB888 );
+    QImage  img { width, height, QImage::Format_RGB888 };
 
     // 2. Convert and write into image buffer  
     uint8_t *dst[]  =   { img.bits() };
@@ -247,80 +237,40 @@ QImage  VideoDecode::output_QImage()
     av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
     sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
 
-    return  img;
+    //
+    vd.index        =   frame_count;
+    vd.frame        =   img;
+    vd.timestamp    =   get_timestamp();
+
+    return  vd;
 }
 
 
 
-/*******************************************************************************
-VideoDecode::get_ts()
-********************************************************************************/
-int64_t VideoDecode::get_ts()
-{
-    //char    buf[AV_TS_MAX_STRING_SIZE]{0};
-    //auto str    =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
-    //double ts = atof(str);
 
+
+
+
+/*******************************************************************************
+VideoDecode::get_timestamp()
+
+試了很多方法都沒成功
+最後選擇用土法煉鋼
+
+AVRational avr = {1, AV_TIME_BASE};
+********************************************************************************/
+int64_t     VideoDecode::get_timestamp()
+{
     int64_t ts;
 
-    int64_t delay = 0;
-    AVRational avr = {1, AV_TIME_BASE};
+    int     num     =   dec_ctx->time_base.num;
+    int     den     =   dec_ctx->time_base.den;
+    double  base_ms =   1000.f;  // 表示單位為 mili sec
 
-    static int64_t last_pts = AV_NOPTS_VALUE;
-
-    //frame->best_effort_timestamp;
-
-    //int64_t aaaa = frame->best_effort_timestamp;
-    //ts = av_rescale_q ( aaaa, formatCtx->streams[videoStream]->time_base, AV_TIME_BASE_Q );
-    //ts = av_rescale_q ( aaaa, dec_ctx->time_base, avr );
-    //printf("ts = %lld\n", ts );
-
-
-     //ts = 1000 ms / (dec_ctx->time_base.den / 2 / dec_ctx->time_base.num) 
-
-
-
-
-    if( frame->pts != AV_NOPTS_VALUE )
-    {
-        //if( last_pts != AV_NOPTS_VALUE )
-        {
-            /* sleep roughly the right amount of time;
-            * usleep is in microseconds, just like AV_TIME_BASE. */
-
-            /*
-                不明白這個  2 * 的理由, 但這樣做可以正確播放, 還在研究中.
-                是否為 1080p, 1080i 的差別 ?
-
-                考慮改成 AVStream 的 pts 做測試.
-            */
-
-            delay = 2 * av_rescale_q( frame->pts,  dec_ctx->time_base, avr );
-            //delay = av_rescale_q( frame->pts, dec_ctx->time_base, avr );
-
-            //if (delay > 0 && delay < 1000000)
-              //  usleep(delay);
-        }
-        //last_pts = frame->pts;
-    }
-
-    ts = delay;
-
-
-    static int64_t fff_ccc = 0;                       
-    const double c24 = 24000.0, c1001 = 1001.0, ddd = 1000; // ms
-    ts = ( ddd  * c1001 / c24 ) * fff_ccc;
-    fff_ccc++;
-
-
-    /*if( ts == 0 )
-        printf("Test");
-    else
-        printf("test");*/
-
-    //ts = 1.f * frame->pts * av_q2d(avr);
-
-    //printf(" ts = %lld\n", ts );
-
+    /* 
+        不知道為何要乘 2, 還沒搜尋到原因
+        fps = 23.97  ( 24000 / 1001 ) 的時候預期 den = 24000, 實際上卻是 48000
+    */
+    ts = base_ms * frame_count * 2 * num / den;  
     return ts;
 }

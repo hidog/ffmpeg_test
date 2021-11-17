@@ -10,7 +10,9 @@
 // https://stackoverflow.com/questions/13088749/efficient-conversion-of-avframe-to-qimage
 
 struct SwsContext;
-class QVideoSurfaceFormat;
+struct AVCodec;
+struct AVCodecContext;
+enum AVPixelFormat;
 
 
 class DLL_API VideoDecode : public Decode
@@ -26,24 +28,25 @@ public:
     VideoDecode& operator = ( VideoDecode&& ) = delete;
 
     int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx ) override;
-    int     output_frame() override;
-    void    print_finish_message() override;
-
-    int     output_jpg_by_QT();
-    int     output_jpg_by_openCV();
+    void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
 
     int     init() override;
     int     end() override;
 
-    QImage  output_QImage();
+    void        output_video_frame_info();
+    int64_t     get_timestamp();
 
-    myAVMediaType   get_type() override { return type; } 
+    VideoData   output_video_data();
 
-    int64_t get_ts();
+
+#ifdef FFMPEG_TEST
+    int     output_jpg_by_QT();
+    int     output_jpg_by_openCV();
+#endif
 
 private:
 
-    const myAVMediaType   type    =   myAVMediaType::AVMEDIA_TYPE_VIDEO;
+    AVMediaType   type;   
 
     uint8_t *video_dst_data[4]  =   {nullptr};
     int     video_dst_linesize[4];
@@ -52,12 +55,8 @@ private:
     int     width   =   0;
     int     height  =   0;
 
-    myAVPixelFormat pix_fmt    =   myAVPixelFormat::AV_PIX_FMT_NONE;
+    AVPixelFormat   pix_fmt;
     SwsContext      *sws_ctx   =   nullptr;   // use for transform yuv to rgb, others.
-
-
-    //int64 pts_base = 0;
-
 
 };
 

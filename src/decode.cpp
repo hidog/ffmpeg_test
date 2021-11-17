@@ -15,8 +15,6 @@ extern "C" {
 
 
 
-
-
 /*******************************************************************************
 Decode::Decode()
 ********************************************************************************/
@@ -33,26 +31,6 @@ Decode::~Decode()
 ********************************************************************************/
 Decode::~Decode()
 {}
-
-
-
-
-/*******************************************************************************
-Decode::open_output()
-********************************************************************************/
-int     Decode::open_output( std::string dst )
-{
-    dst_file    =   dst;
-    dst_fp      =   fopen( dst.c_str(), "wb+" );
-    if( dst_fp == NULL )
-    {
-        ERRLOG( "open %s fail.", dst_file.c_str() );
-        return  ERROR;
-    }
-
-    return  SUCCESS;
-}
-
 
 
 
@@ -63,18 +41,17 @@ Decode::init()
 ********************************************************************************/
 int     Decode::init()
 {
+
     int     ret     =   0;
 
-    frame   =   av_frame_alloc();
+    frame_count =   0;
+    frame       =   av_frame_alloc();
     if( frame == nullptr ) 
     {
-        ERRLOG( "Could not allocate frame" );
+        MYLOG( LOG::ERROR, "Could not allocate frame" );
         ret =   AVERROR(ENOMEM);        
         return  ret;
     }
-
-    //
-    frame_count     =   0;
 
     return  SUCCESS;
 }
@@ -87,13 +64,12 @@ int     Decode::init()
 /*******************************************************************************
 Decode::open_codec_context()
 ********************************************************************************/
-int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, myAVMediaType type )
+int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type )
 {
     int         ret =   0;
     AVStream    *st =   nullptr;
 
-    const AVMediaType   _type   =   static_cast<AVMediaType>(type);
-    const AVCodec       *dec    =   nullptr;
+    AVCodec     *dec    =   nullptr;
 
     //
     st  =   fmt_ctx->streams[stream_index];
@@ -102,8 +78,8 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     dec =   avcodec_find_decoder( st->codecpar->codec_id );
     if( dec == nullptr )
     {
-        auto str =  av_get_media_type_string(_type);
-        ERRLOG( "Failed to find %s codec. error code = %d", str, AVERROR(EINVAL) );
+        auto str =  av_get_media_type_string(type);
+        MYLOG( LOG::ERROR, "Failed to find %s codec. error code = %d", str, AVERROR(EINVAL) );
         return  ERROR;
     }
 
@@ -111,8 +87,8 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     dec_ctx    =   avcodec_alloc_context3(dec);
     if( dec_ctx == nullptr )
     {
-        auto str    =   av_get_media_type_string(_type);
-        ERRLOG( "Failed to allocate the %s codec context. error code = %d", str,  AVERROR(ENOMEM) );
+        auto str    =   av_get_media_type_string(type);
+        MYLOG( LOG::ERROR, "Failed to allocate the %s codec context. error code = %d", str,  AVERROR(ENOMEM) );
         return  ERROR;
     }
 
@@ -120,8 +96,8 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     ret =   avcodec_parameters_to_context( dec_ctx, st->codecpar );
     if( ret < 0 )
     {
-        auto str    =   av_get_media_type_string(_type);
-        ERRLOG( "Failed to copy %s codec parameters to decoder context. ret = %d", str, ret );
+        auto str    =   av_get_media_type_string(type);
+        MYLOG( LOG::ERROR, "Failed to copy %s codec parameters to decoder context. ret = %d", str, ret );
         return  ERROR;
     }
 
@@ -129,10 +105,13 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     ret =   avcodec_open2( dec_ctx, dec, nullptr );
     if( ret < 0 )
     {
-        auto str    =   av_get_media_type_string(_type);
-        ERRLOG( "Failed to open %s codec. ret = %d", str, ret );
+        auto str    =   av_get_media_type_string(type);
+        MYLOG( LOG::ERROR, "Failed to open %s codec. ret = %d", str, ret );
         return  ERROR;
     }   
+
+    // output info
+    output_decode_info( dec, dec_ctx );
 
     return  SUCCESS;
 }
@@ -155,7 +134,7 @@ int     Decode::send_packet( const AVPacket *pkt )
     if( ret < 0 ) 
     {
         auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
-        ERRLOG( "Error submitting a packet for decoding (%s)", str );
+        MYLOG( LOG::ERROR, "Error submitting a packet for decoding (%s)", str );
         return  ret;
     }
 
@@ -189,9 +168,9 @@ if( get_decode_context_type() == AVMEDIA_TYPE_VIDEO )
 
 可以用上面的範例,從decoder判斷屬於video還是audio.
 ********************************************************************************/
-myAVMediaType     Decode::get_decode_context_type()
+AVMediaType     Decode::get_decode_context_type()
 {
-    return  static_cast<myAVMediaType>(dec_ctx->codec->type);
+    return  dec_ctx->codec->type;
 }
 
 
@@ -214,11 +193,12 @@ int     Decode::recv_frame()
             return 0;
 
         auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
-        ERRLOG( "Error during decoding (%s)", str );
+        MYLOG( LOG::ERROR, "Error during decoding (%s)", str );
         return  ret;
     }
 
-    return  1;  // 表示有 frame 被解出來. 之後應該要定義一下 enum 方便管理
+    frame_count++;       // 這個參數錯掉會影響後續播放.
+    return  HAVE_FRAME;  // 表示有 frame 被解出來. 
 }
 
 
@@ -244,10 +224,6 @@ Decode::end()
 int     Decode::end()
 {
     avcodec_free_context( &dec_ctx );
-
-    if( dst_fp != NULL )
-        fclose(dst_fp);
-
     av_frame_free( &frame );
 
     return  SUCCESS;
@@ -257,6 +233,7 @@ int     Decode::end()
 
 
 
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 Decode::flush()
 
@@ -313,4 +290,16 @@ int    Decode::flush()
     printf("flush, v count = %d, a count = %d\n", v_count, a_count );
 
     return 0;
+}
+#endif
+
+
+
+
+/*******************************************************************************
+Decode::get_decode_context()
+********************************************************************************/
+AVCodecContext*  Decode::get_decode_context()
+{
+    return  dec_ctx;
 }

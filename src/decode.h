@@ -11,9 +11,10 @@ struct AVFormatContext;
 struct AVCodecContext;
 struct AVFrame;
 struct AVPacket;
+struct AVCodec;
+enum   AVMediaType;
 
-
-template class __declspec( dllexport ) std::function<int()>; // fix compiler warning. 主要是匯出成dll的話需要顯式具現化樣板
+//template class __declspec( dllexport ) std::function<int()>; // fix compiler warning. 主要是匯出成dll的話需要顯式具現化樣板
 
 
 
@@ -30,39 +31,36 @@ public:
     Decode& operator = ( const Decode& ) = delete;
     Decode& operator = ( Decode&& ) = delete;
 
+    //
     virtual int     init();
     virtual int     end();
 
+    //
+    virtual void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) = 0;
     virtual int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx ) = 0;
-    virtual int     output_frame() = 0;
-    virtual void    print_finish_message() = 0;
-
 
     int     send_packet( const AVPacket *pkt );
     int     recv_frame();
     void    unref_frame();
-    int     flush();
 
+    //
     AVFrame*        get_frame();
-    myAVMediaType   get_decode_context_type();
+    AVMediaType     get_decode_context_type();
+    AVCodecContext* get_decode_context();
 
-    int     open_output( std::string dst );
-    
+#ifdef FFMPEG_TEST
+    int     flush();
     std::function<int()>    output_frame_func;
-
-    virtual myAVMediaType   get_type() = 0; 
+#endif
 
 protected:
 
-    int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, myAVMediaType type );
+    int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type );
 
     AVCodecContext  *dec_ctx    =   nullptr;
     AVFrame         *frame      =   nullptr;
 
     int     frame_count =   0;
-    FILE    *dst_fp   =   nullptr;
-
-    std::string     dst_file;
 
 private:
 

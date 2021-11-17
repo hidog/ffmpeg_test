@@ -74,7 +74,11 @@ void MainWindow::recv_video_frame_slot()
     last_index = g_v_data.index;
 
     //printf("v index = %d\n", g_v_data.index );
-    video_widget->videoSurface()->present(g_v_data.frame);
+    video_widget->videoSurface()->present( g_v_data.frame );
+
+
+
+
 
     mtx.unlock();
 
