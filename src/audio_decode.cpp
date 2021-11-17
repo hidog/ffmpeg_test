@@ -20,7 +20,9 @@ AudioDecode::AudioDecode()
 ********************************************************************************/
 AudioDecode::AudioDecode()
     :   Decode()
-{}
+{
+    AVMediaType   type  =   AVMEDIA_TYPE_AUDIO; 
+}
 
 
 

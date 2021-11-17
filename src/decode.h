@@ -11,7 +11,7 @@ struct AVFormatContext;
 struct AVCodecContext;
 struct AVFrame;
 struct AVPacket;
-
+enum   AVMediaType;
 
 //template class __declspec( dllexport ) std::function<int()>; // fix compiler warning. 主要是匯出成dll的話需要顯式具現化樣板
 
@@ -39,21 +39,20 @@ public:
     int     recv_frame();
     void    unref_frame();
 
+    AVFrame*        get_frame();
+    AVMediaType     get_decode_context_type();
+    AVCodecContext* get_decode_context();
+
 #ifdef FFMPEG_TEST
     int     flush();
     std::function<int()>    output_frame_func;
 #endif
 
-    AVFrame*        get_frame();
-    myAVMediaType   get_decode_context_type();
-    AVCodecContext* get_decode_context();
-    
 
-    virtual myAVMediaType   get_type() = 0; 
 
 protected:
 
-    int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, myAVMediaType type );
+    int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type );
 
     AVCodecContext  *dec_ctx    =   nullptr;
     AVFrame         *frame      =   nullptr;

@@ -28,7 +28,11 @@ VideoDecode::VideoDecode()
 ********************************************************************************/
 VideoDecode::VideoDecode()
     :   Decode()
-{}
+{
+    type        =   AVMEDIA_TYPE_VIDEO;
+    pix_fmt     =   AV_PIX_FMT_NONE;
+
+}
 
 
 
@@ -69,11 +73,11 @@ int     VideoDecode::init()
     // allocate image where the decoded image will be put
     width       =   dec_ctx->width;
     height      =   dec_ctx->height;
-    pix_fmt     =   static_cast<myAVPixelFormat>(dec_ctx->pix_fmt);
+    pix_fmt     =   dec_ctx->pix_fmt;
 
     MYLOG( LOG::INFO, "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
     
-    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, static_cast<AVPixelFormat>(pix_fmt), 1 );
+    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, pix_fmt, 1 );
     if( video_dst_bufsize < 0 )
     {
         MYLOG( LOG::ERROR, "Could not allocate raw video buffer" );
@@ -82,7 +86,7 @@ int     VideoDecode::init()
 
     // 先讓 dst 的寬高等於 src 的寬高
                                     // src                  // dst
-    sws_ctx     =   sws_getContext( width, height, static_cast<AVPixelFormat>(pix_fmt), width, height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);                                    
+    sws_ctx     =   sws_getContext( width, height, pix_fmt, width, height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);                                    
 
     //
 #ifdef FFMPEG_TEST

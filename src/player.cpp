@@ -50,10 +50,7 @@ std::queue<VideoData>* get_video_queue()
 Player::Player()
 ********************************************************************************/
 Player::Player()
-{
-    assert( static_cast<int>(myAVPixelFormat::AV_PIX_FMT_NB) == static_cast<int>(AV_PIX_FMT_NB) );
-    assert( static_cast<int>(myAVMediaType::AVMEDIA_TYPE_NB) == static_cast<int>(AVMEDIA_TYPE_NB) );
-}
+{}
 
 
 

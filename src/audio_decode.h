@@ -30,12 +30,10 @@ public:
     AudioData   output_audio_data();
 
 
-    myAVMediaType   get_type() override { return type; } 
-
 
 private:
 
-    const myAVMediaType   type    =   myAVMediaType::AVMEDIA_TYPE_AUDIO; 
+    AVMediaType   type;
     
     SwrContext  *swr_ctx     =   nullptr; // use for chagne audio data to play.
 

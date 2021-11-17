@@ -64,13 +64,12 @@ int     Decode::init()
 /*******************************************************************************
 Decode::open_codec_context()
 ********************************************************************************/
-int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, myAVMediaType type )
+int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type )
 {
     int         ret =   0;
     AVStream    *st =   nullptr;
 
-    const AVMediaType   _type   =   static_cast<AVMediaType>(type);
-    const AVCodec       *dec    =   nullptr;
+    const AVCodec   *dec    =   nullptr;
 
     //
     st  =   fmt_ctx->streams[stream_index];
@@ -79,7 +78,7 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     dec =   avcodec_find_decoder( st->codecpar->codec_id );
     if( dec == nullptr )
     {
-        auto str =  av_get_media_type_string(_type);
+        auto str =  av_get_media_type_string(type);
         MYLOG( LOG::ERROR, "Failed to find %s codec. error code = %d", str, AVERROR(EINVAL) );
         return  ERROR;
     }
@@ -88,7 +87,7 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     dec_ctx    =   avcodec_alloc_context3(dec);
     if( dec_ctx == nullptr )
     {
-        auto str    =   av_get_media_type_string(_type);
+        auto str    =   av_get_media_type_string(type);
         MYLOG( LOG::ERROR, "Failed to allocate the %s codec context. error code = %d", str,  AVERROR(ENOMEM) );
         return  ERROR;
     }
@@ -97,7 +96,7 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     ret =   avcodec_parameters_to_context( dec_ctx, st->codecpar );
     if( ret < 0 )
     {
-        auto str    =   av_get_media_type_string(_type);
+        auto str    =   av_get_media_type_string(type);
         MYLOG( LOG::ERROR, "Failed to copy %s codec parameters to decoder context. ret = %d", str, ret );
         return  ERROR;
     }
@@ -106,7 +105,7 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     ret =   avcodec_open2( dec_ctx, dec, nullptr );
     if( ret < 0 )
     {
-        auto str    =   av_get_media_type_string(_type);
+        auto str    =   av_get_media_type_string(type);
         MYLOG( LOG::ERROR, "Failed to open %s codec. ret = %d", str, ret );
         return  ERROR;
     }   
@@ -166,9 +165,9 @@ if( get_decode_context_type() == AVMEDIA_TYPE_VIDEO )
 
 可以用上面的範例,從decoder判斷屬於video還是audio.
 ********************************************************************************/
-myAVMediaType     Decode::get_decode_context_type()
+AVMediaType     Decode::get_decode_context_type()
 {
-    return  static_cast<myAVMediaType>(dec_ctx->codec->type);
+    return  dec_ctx->codec->type;
 }
 
 
