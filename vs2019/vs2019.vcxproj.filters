@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{15bf5678-7efd-438e-a046-8ee03c8f2b03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ffmpeg_example">
+      <UniqueIdentifier>{30f397a8-4564-42a5-828a-a1142c55323c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="vs2019.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\player.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\demux.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\tool.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\decode.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\video_decode.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\audio_decode.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\demuxing_decoding.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\avio_reading.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\metadata.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\player.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\demux.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\tool.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\decode.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\audio_decode.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\video_decode.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ffmpeg_example\demuxing_decoding.h">
+      <Filter>ffmpeg_example</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ffmpeg_example\avio_reading.h">
+      <Filter>ffmpeg_example</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ffmpeg_example\metadata.h">
+      <Filter>ffmpeg_example</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
