@@ -2,14 +2,23 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "tool.h"
 
-#include "worker.h"
 
 
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
+
+
+
+class Worker;
+class VideoWorker;
+class AudioWorker;
+class VideoData;
+class QMutex;
+
 
 class MainWindow : public QMainWindow
 {
@@ -29,6 +38,9 @@ public:
     void main_v_play(QImage*);
 
 
+    QMutex*     get_video_mutex();
+    VideoData*  get_view_data();
+
 
 public slots:
 
@@ -41,7 +53,13 @@ private:
 
     Ui::MainWindow *ui;
 
-    Worker worker;
+    Worker          *worker         =   nullptr;  // 未來改成 unique pointer
+    VideoWorker     *video_worker   =   nullptr;
+    AudioWorker     *audio_worker   =   nullptr;
+
+    QMutex          *video_mtx      =   nullptr;
+
+    VideoData       *view_data      =   nullptr;
 
 };
 #endif // MAINWINDOW_H

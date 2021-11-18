@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QMutex>
 
 #include <QVideoWidget>
 #include <QAbstractVideoSurface>
@@ -10,11 +11,18 @@
 #include <mutex>
 
 
+#include "worker.h"
+#include "video_worker.h"
 
-VideoData g_v_data;
-std::mutex mtx;
 
 
+
+
+
+
+/*******************************************************************************
+MainWindow::MainWindow()
+********************************************************************************/
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -24,21 +32,39 @@ MainWindow::MainWindow(QWidget *parent)
     set_signal_slot();
 
     worker.main_cb =  std::bind( &MainWindow::main_v_play, this, std::placeholders::_1 );
+
+    video_mtx       =   new QMutex( QMutex::NonRecursive );
+    view_data       =   new VideoData;
+
+    worker          =   new Worker(this);
+    video_worker    =   new VideoWorker(this);
+    audio_worker    =   new AudioWorker(this);
 }
 
 
 
 
-
+/*******************************************************************************
+MainWindow::~MainWindow()
+********************************************************************************/
 MainWindow::~MainWindow()
 {
     //worker.terminate();
     delete ui;
+
+    delete worker;
+    delete video_worker;
+    delete audio_worker;
+
+    delete video_mtx;
+    delete view_data;
 }
 
 
 
-
+/*******************************************************************************
+MainWindow::main_v_play()
+********************************************************************************/
 void MainWindow::main_v_play(QImage* img)
 {
     QVideoWidget* video_widget = ui->widget;
@@ -50,6 +76,9 @@ void MainWindow::main_v_play(QImage* img)
 
 
 
+/*******************************************************************************
+MainWindow::recv_video_frame_slot()
+********************************************************************************/
 void MainWindow::recv_video_frame_slot()
 {
     QVideoWidget* video_widget = ui->widget;
@@ -89,6 +118,9 @@ void MainWindow::recv_video_frame_slot()
 
 
 
+/*******************************************************************************
+MainWindow::set_signal_slot()
+********************************************************************************/
 void MainWindow::set_signal_slot()
 {
     connect( ui->pushButton, &QPushButton::clicked, this, &MainWindow::load_slot );
@@ -101,6 +133,9 @@ void MainWindow::set_signal_slot()
 
 
 
+/*******************************************************************************
+MainWindow::load_slot()
+********************************************************************************/
 void MainWindow::load_slot()
 {
     QVideoWidget* video_widget = ui->widget;
@@ -129,3 +164,23 @@ void MainWindow::load_slot()
 
 
 
+
+
+/*******************************************************************************
+MainWindow::get_video_mutex()
+********************************************************************************/
+QMutex*     MainWindow::get_video_mutex()
+{
+    return  video_mtx;
+}
+
+
+
+
+/*******************************************************************************
+MainWindow::get_view_data()
+********************************************************************************/
+VideoData*   MainWindow::get_view_data()
+{
+    return  view_data;
+}
