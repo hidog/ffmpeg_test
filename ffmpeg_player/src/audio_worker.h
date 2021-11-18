@@ -27,6 +27,7 @@ public:
     //
     void    open_audio_output( AudioSetting as );
     void    audio_play();
+    bool&   get_audio_start_state();
 
 public slots:
     void handleStateChanged( QAudio::State state );
@@ -39,8 +40,7 @@ private:
     QAudioOutput *audio     =   nullptr;
     QIODevice    *io        =   nullptr;
 
-    bool v_start = false;
-    bool a_start = false;
+    bool    a_start     =   false;
 
 };
 

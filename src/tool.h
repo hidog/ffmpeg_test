@@ -36,7 +36,7 @@ struct VideoSetting
 {
     int     width;
     int     height;
-}
+};
 
 
 

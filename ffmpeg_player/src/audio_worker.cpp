@@ -2,9 +2,10 @@
 
 #include <QDebug>
 
+#include "video_worker.h"
+#include "worker.h"
 
-
-
+#include "mainwindow.h"
 
 
 
@@ -58,6 +59,19 @@ void    AudioWorker::open_audio_output( AudioSetting as )
 
     io      =   audio->start();
 }
+
+
+
+
+
+/*******************************************************************************
+AudioWorker::get_audio_start_state()
+********************************************************************************/
+bool&   AudioWorker::get_audio_start_state()
+{
+    return  a_start;
+}
+
 
 
 
@@ -120,9 +134,11 @@ AudioWorker::audio_play()
 void AudioWorker::audio_play()
 {
     MYLOG( LOG::INFO, "start play audio" );
-
-    std::queue<AudioData>*  a_queue     =   get_audio_queue();
+    
     AudioData   ad;
+    std::queue<AudioData>*  a_queue     =   get_audio_queue();
+    bool    &v_start        =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
+    bool    &is_play_end    =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_play_end_state();
 
     while( a_queue->size() <= 3 )
         SLEEP_10MS;
@@ -130,8 +146,8 @@ void AudioWorker::audio_play()
     while( v_start == false )
         SLEEP_10MS;        
 
-    // 需要加上結束的時候跳出迴圈的功能.
-    while(true)
+    //
+    while( is_play_end == false )
     {        
         if( a_queue->size() <= 0 )
         {
@@ -159,4 +175,25 @@ void AudioWorker::audio_play()
         ad.bytes    =   0;
     }
 
+    // flush
+    while( a_queue->empty() == false )
+    {      
+        //
+        ad = a_queue->front();
+        a_queue->pop();
+
+        //
+        while( audio->bytesFree() < ad.bytes )
+        {      
+            //printf("bytesFree = %d\n",r);
+        }   
+
+        //
+        io->write( (const char*)ad.pcm, ad.bytes );
+
+        //
+        delete [] ad.pcm;
+        ad.pcm      =   nullptr;
+        ad.bytes    =   0;
+    }
 }

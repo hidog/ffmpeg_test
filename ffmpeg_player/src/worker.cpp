@@ -56,16 +56,28 @@ void    Worker::run()
         SLEEP_10MS;
 
     //
+    is_play_end     =   false;
     aw->start();
     vw->start();
 
     //
     player.play_QT();
     player.end();
+    is_play_end     =   true;
 
     MYLOG( LOG::INFO, "finish decode." );
 }
 
+
+
+
+/*******************************************************************************
+Worker::get_play_end_state()
+********************************************************************************/
+bool&   Worker::get_play_end_state()
+{
+    return  is_play_end;
+}
 
 
 

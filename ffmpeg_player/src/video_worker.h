@@ -3,13 +3,7 @@
 
 
 #include <QThread>
-#include <QAudioOutput>
-#include <QImage>
-
-#include "player.h"
 #include "tool.h"
-
-#include <thread>
 
 
 class QMutex;
@@ -24,9 +18,9 @@ public:
     VideoWorker( QObject *parent );
     ~VideoWorker();
 
-    void run() override;
-
-    void video_play();
+    void    run() override;
+    void    video_play();
+    bool&   get_video_start_state();
 
 
 public slots:
@@ -37,12 +31,7 @@ signals:
     void	recv_video_frame_signal();
 
 private:
-
-    Player  player;
-
-    bool v_start = false;
-    bool a_start = false;
-
+    bool        v_start     =   false;
     QMutex*     video_mtx   =   nullptr;    // ¸ò mainwindows ¦@¥Î
 
 };
