@@ -61,6 +61,7 @@ void    Worker::run()
     vw->start();
 
     //
+    //player.play_QT_multi_thread();
     player.play_QT();
     player.end();
     is_play_end     =   true;

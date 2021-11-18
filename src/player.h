@@ -11,11 +11,14 @@
 #include "tool.h"
 
 #include <QImage>
-
+#include <thread>
 
 
 DLL_API std::queue<AudioData>* get_audio_queue();
 DLL_API std::queue<VideoData>* get_video_queue();
+
+
+class AVPacket;
 
 
 
@@ -33,9 +36,14 @@ public:
 
     //
     void    play_QT();
+    void    play_QT_multi_thread();
+
     int     init();
     int     end();
     int     flush();
+
+    void    video_decode();
+    void    audio_decode();
 
     //
     void    set_input_file( std::string path );
@@ -43,7 +51,6 @@ public:
 
     VideoSetting    get_video_setting();
     AudioSetting    get_audio_setting();
-
 
     //
     std::function<void(QImage)> output_video_frame_func;
@@ -61,6 +68,12 @@ private:
     AudioDecode     a_decoder;
 
     std::string     src_filename;
+
+    std::queue<AVPacket*>   video_pkt_queue,
+                            audio_pkt_queue;
+
+    std::thread     *video_decode_thr   =   nullptr,
+                    *audio_decode_thr   =   nullptr;
 };
 
 

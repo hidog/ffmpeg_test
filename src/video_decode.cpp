@@ -57,7 +57,7 @@ VideoDecode::open_codec_context()
 int     VideoDecode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx )
 {
     Decode::open_codec_context( stream_index, fmt_ctx, type );
-    dec_ctx->thread_count = 4;
+    //dec_ctx->thread_count = 4;
     return  SUCCESS;
 }
 

@@ -31,7 +31,7 @@ void    AudioWorker::open_audio_output( AudioSetting as )
     // Set up the format, eg.
     format.setSampleRate(as.sample_rate);
     format.setChannelCount(as.channel);
-    format.setSampleSize(16);
+    format.setSampleSize(32);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
     format.setSampleType(QAudioFormat::UnSignedInt);

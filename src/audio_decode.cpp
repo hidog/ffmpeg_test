@@ -63,7 +63,7 @@ AudioDecode::open_codec_context()
 int     AudioDecode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx )
 {
     Decode::open_codec_context( stream_index, fmt_ctx, type );
-    dec_ctx->thread_count = 4;
+    //dec_ctx->thread_count = 4;
     return  SUCCESS;
 }
 
@@ -83,8 +83,9 @@ int     AudioDecode::init()
     assert( dec_ctx->sample_fmt == AV_SAMPLE_FMT_FLTP ); // 如果遇到不同的  在看是不是要調整audio output的sample size
 
     // 試著想要改變 sample rate, 但沒成功.                                                  
+    // S16 改 S32, 需要修改pcm的部分. 需要找時間研究
     swr_ctx     =   swr_alloc_set_opts( swr_ctx, 
-                                        av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16, sample_rate,           // output
+                                        av_get_default_channel_layout(2), AV_SAMPLE_FMT_S32, sample_rate,           // output
                                         dec_ctx->channel_layout, dec_ctx->sample_fmt, dec_ctx->sample_rate,         // input
                                         NULL, NULL );
     swr_init(swr_ctx);
@@ -135,18 +136,18 @@ AudioData   AudioDecode::output_audio_data()
 
     // 有空來修改這邊 要能動態根據 mp4 檔案做調整
 
-    uint8_t     *data[2]    =   { 0 };
-    int         byteCnt     =   frame->nb_samples * 2 * 2;
+    uint8_t     *data[2]    =   { 0 };  // S16 改 S32, 不確定是不是這邊的 array 要改成 4
+    int         byte_count     =   frame->nb_samples * 2 * 4;  // S16 改 S32, 改成 *4, 理論上資料量會增加, 但不確定是否改的是這邊
 
-    unsigned char   *pcm    =   new uint8_t[byteCnt];     // frame->nb_samples * 2 * 2     表示     分配樣本資料量 * 兩通道 * 每通道2位元組大小
+    unsigned char   *pcm    =   new uint8_t[byte_count];     // frame->nb_samples * 2 * 2     表示     分配樣本資料量 * 兩通道 * 每通道2位元組大小
 
     data[0]     =   pcm;    // 輸出格式為AV_SAMPLE_FMT_S16(packet型別),所以轉換後的 LR 兩通道都存在data[0]中
     int ret     =   swr_convert( swr_ctx,
-                                 data, frame->nb_samples,                              //輸出
+                                 data, sample_rate,                                    //輸出
                                  (const uint8_t**)frame->data, frame->nb_samples );    //輸入
 
     ad.pcm      =   pcm;
-    ad.bytes    =   byteCnt;
+    ad.bytes    =   byte_count;
 
     return ad;
 }
