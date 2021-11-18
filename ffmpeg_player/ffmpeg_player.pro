@@ -7,26 +7,45 @@ CONFIG += c++11
 CONFIG += console
 CONFIG -= app_bundle
 
+
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+
 SOURCES += \
     main.cpp \
-    mainwindow.cpp \
-	worker.cpp
+    ui/mainwindow.cpp \
+	src/worker.cpp \
+	src/audio_worker.cpp \
+	src/video_worker.cpp
+
 
 HEADERS += \
-    mainwindow.h \
-	worker.h
+    ui/mainwindow.h \
+	src/worker.h \
+	src/audio_worker.h \
+	src/video_worker.h
+
+
 
 FORMS += \
-    mainwindow.ui
+    ui/mainwindow.ui
+
+
+
 	
-INCLUDEPATH   +=  ../src
+INCLUDEPATH   +=  ../src ui src
+
+
+
 	
-Debug:LIBS    +=  -L../vs2019/x64/Debug -lffmpeg_kernel
-Release:LIBS += -L../vs2019/x64/Release -lffmpeg_kernel
+Debug:LIBS    +=  -L../ -lffmpeg_kernelD
+Release:LIBS  +=  -L../ -lffmpeg_kernel
+
+
+
+
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vs2019", "vs2019.vcxproj", "{75ED5682-CDFE-4CB6-9E5F-B852EF5607FB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ffmpeg_player", "..\ffmpeg_player\ffmpeg_player.vcxproj", "{F2C2F93C-637C-3237-BACA-82C04A94353C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{75ED5682-CDFE-4CB6-9E5F-B852EF5607FB} = {75ED5682-CDFE-4CB6-9E5F-B852EF5607FB}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

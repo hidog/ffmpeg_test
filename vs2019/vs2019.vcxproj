@@ -136,7 +136,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>ffmpeg_kernel</TargetName>
+    <TargetName>ffmpeg_kernelD</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -216,6 +216,11 @@
       <AdditionalLibraryDirectories>D:\code\opencv\build\install\x64\vc16\lib;C:\Qt\lib;C:\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opencv_imgproc454d.lib;opencv_videoio454d.lib;opencv_highgui454d.lib;opencv_core454d.lib;Qt5Cored.lib;Qt5Guid.lib;Qt5Multimediad.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy D:\code\ffmpeg_test\vs2019\x64\Debug\*.dll D:\code\ffmpeg_test\
+copy D:\code\ffmpeg_test\vs2019\x64\Debug\*.pdb D:\code\ffmpeg_test\
+copy D:\code\ffmpeg_test\vs2019\x64\Debug\*.lib D:\code\ffmpeg_test\</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">
     <ClCompile>
@@ -266,17 +271,12 @@
       <AdditionalLibraryDirectories>D:\code\opencv\build\install\x64\vc16\lib;C:\Qt\lib;C:\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opencv_imgproc454.lib;opencv_videoio454.lib;opencv_highgui454.lib;opencv_core454.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Multimedia.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy D:\code\ffmpeg_test\vs2019\x64\Release\*.dll D:\code\ffmpeg_test\
+copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\ffmpeg_example\avio_reading.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\demuxing_decoding.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\metadata.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="..\src\audio_decode.cpp" />
     <ClCompile Include="..\src\decode.cpp" />
     <ClCompile Include="..\src\demux.cpp" />
@@ -287,18 +287,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_DLL|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\ffmpeg_example\avio_reading.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\demuxing_decoding.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\metadata.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="..\src\audio_decode.h" />
     <ClInclude Include="..\src\decode.h" />
     <ClInclude Include="..\src\demux.h" />
