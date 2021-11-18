@@ -84,7 +84,7 @@ void MainWindow::recv_video_frame_slot()
     video_mtx->lock();
 
     if( view_data->index - last_index != 1 )
-        MYLOG( LOG::WARN, "vidw_data.index = %d, last_index = %d\n",  view_data->index , last_index );
+        MYLOG( LOG::WARN, "vidw_data.index = %d, last_index = %d",  view_data->index , last_index );
 
     last_index = view_data->index;
     video_widget->videoSurface()->present( view_data->frame );
