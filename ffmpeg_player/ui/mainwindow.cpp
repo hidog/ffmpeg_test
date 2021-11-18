@@ -32,6 +32,10 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    // 必須註冊自定義的物件.
+    qRegisterMetaType<VideoSetting>("VideoSetting");
+
+    //
     video_mtx       =   new QMutex( QMutex::NonRecursive );
     view_data       =   new VideoData;
 
@@ -96,7 +100,10 @@ MainWindow::set_signal_slot()
 ********************************************************************************/
 void MainWindow::set_signal_slot()
 {
-    connect(    worker,             &Worker::video_setting_singal,          this,   &MainWindow::set_video_setting_slot );
+    // 舊式寫法
+    connect(    worker,     SIGNAL(video_setting_singal(VideoSetting)),     this,   SLOT(set_video_setting_slot(VideoSetting)) );
+    //connect(    worker,     &Worker::video_setting_singal,     this,   &MainWindow::set_video_setting_slot );
+
     connect(    ui->startButton,    &QPushButton::clicked,                  this,   &MainWindow::start_slot );
     connect(    ui->loadFileButton, &QPushButton::clicked,                  this,   &MainWindow::load_file_slot );
     connect(    video_worker,       &VideoWorker::recv_video_frame_signal,  this,   &MainWindow::recv_video_frame_slot );
