@@ -1,5 +1,5 @@
-#ifndef WORKER_H
-#define WORKER_H
+#ifndef AUDIO_WORKER_H
+#define AUDIO_WORKER_H
 
 
 #include <QThread>
@@ -12,45 +12,32 @@
 #include <thread>
 
 
-class Worker : public QThread
+class AudioWorker : public QThread
 {
     Q_OBJECT
 
 public:
 
-    Worker();
-    ~Worker();
+    AudioWorker( QObject *parent );
+    ~AudioWorker();
 
-    void run() override;
+    //
+    void    run() override;
 
-    void get_video_frame( QImage frame );
-    void get_audio_pcm( AudioData ad );
-
-    void audio_play();
-    void video_play();
-
-    void decode();
-
-    std::function<void(QImage*)> main_cb;
+    //
+    void    open_audio_output();
+    void    audio_play();
 
 public slots:
     void handleStateChanged( QAudio::State state );
 
-
 signals:
-    
-    void	recv_video_frame_signal();
+
 
 private:
 
-    Player  player;
-
-    QAudioOutput *audio = nullptr;
-    QIODevice    *io = nullptr;
-
-    std::thread *thr_decode;
-    std::thread *thr_audio_play;
-    std::thread *thr_video_paly;
+    QAudioOutput *audio     =   nullptr;
+    QIODevice    *io        =   nullptr;
 
     bool v_start = false;
     bool a_start = false;

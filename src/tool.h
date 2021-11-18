@@ -14,6 +14,13 @@ struct AudioData
 };
 
 
+struct AudioSetting
+{
+    int     channel;
+    int     sample_rate;
+    int     sample_size;
+};
+
 
 
 struct VideoData

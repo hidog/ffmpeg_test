@@ -46,6 +46,8 @@ VideoWorker::run()
 void VideoWorker::run()  
 {
     video_play();
+
+    MYLOG( LOG::INFO, "finish video play." );
 }
 
 
@@ -86,7 +88,7 @@ void VideoWorker::video_play()
     {       
         if( v_queue->size() <= 0 )
         {
-            MYLOG( LOG::WARN, "v queue empty." );
+            MYLOG( LOG::WARN, "video queue empty." );
             SLEEP_10MS;
             continue;
         }
