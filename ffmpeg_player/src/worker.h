@@ -18,23 +18,16 @@ class Worker : public QThread
 
 public:
 
-    Worker();
+    Worker( QObject *parent );
     ~Worker();
 
     void run() override;
-
-    void get_video_frame( QImage frame );
-    void get_audio_pcm( AudioData ad );
-
-    void audio_play();
-    void video_play();
 
     void decode();
 
     std::function<void(QImage*)> main_cb;
 
 public slots:
-    void handleStateChanged( QAudio::State state );
 
 
 signals:
@@ -45,12 +38,6 @@ private:
 
     Player  player;
 
-    QAudioOutput *audio = nullptr;
-    QIODevice    *io = nullptr;
-
-    std::thread *thr_decode;
-    std::thread *thr_audio_play;
-    std::thread *thr_video_paly;
 
     bool v_start = false;
     bool a_start = false;

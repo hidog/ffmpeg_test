@@ -41,6 +41,10 @@ public:
     QMutex*     get_video_mutex();
     VideoData*  get_view_data();
 
+    Worker*         get_worker();
+    VideoWorker*    get_video_worker();
+    AudioWorker*    get_audio_worker();
+
 
 public slots:
 

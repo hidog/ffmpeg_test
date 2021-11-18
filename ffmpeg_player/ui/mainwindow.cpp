@@ -13,7 +13,7 @@
 
 #include "worker.h"
 #include "video_worker.h"
-
+#include "audio_worker.h"
 
 
 
@@ -183,4 +183,39 @@ MainWindow::get_view_data()
 VideoData*   MainWindow::get_view_data()
 {
     return  view_data;
+}
+
+
+
+
+
+/*******************************************************************************
+MainWindow::get_worker()
+********************************************************************************/
+Worker*     MainWindow::get_worker()
+{
+    return  worker;
+}
+
+
+
+
+/*******************************************************************************
+MainWindow::get_view_data()
+********************************************************************************/
+VideoWorker*    MainWindow::get_video_worker()
+{
+    return  video_worker;
+}
+
+
+
+
+
+/*******************************************************************************
+MainWindow::get_audio_worker()
+********************************************************************************/
+AudioWorker*    MainWindow::get_audio_worker()
+{
+    return  audio_worker;
 }
