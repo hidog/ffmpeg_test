@@ -63,6 +63,10 @@ public:
 
 private:
 
+    bool    v_thr_start     =   false,
+            a_thr_start     =   false;
+
+
     Demux           demuxer;
     VideoDecode     v_decoder;
     AudioDecode     a_decoder;
