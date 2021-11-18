@@ -32,11 +32,6 @@ public:
     Player& operator = ( Player&& ) = delete;
 
     //
-#ifdef FFMPEG_TEST
-    void    play();
-#endif
-
-    //
     void    play_QT();
     int     init();
     int     end();
@@ -44,10 +39,20 @@ public:
 
     //
     void    set_input_file( std::string path );
+    bool    is_set_input_file();
+
+    VideoSetting    get_video_setting();
+    AudioSetting    get_audio_setting();
+
 
     //
     std::function<void(QImage)> output_video_frame_func;
     std::function<void(AudioData)> output_audio_pcm_func;
+
+    //
+#ifdef FFMPEG_TEST
+    void    play();
+#endif
 
 private:
 

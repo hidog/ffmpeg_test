@@ -37,6 +37,28 @@ Demux::~Demux()
 
 
 
+/*******************************************************************************
+Demux::get_video_width()
+********************************************************************************/
+int     Demux::get_video_width()
+{
+    return  width;
+}
+
+
+
+/*******************************************************************************
+Demux::get_video_height()
+********************************************************************************/
+int     Demux::get_video_height()
+{
+    return  height;
+}
+
+
+
+
+
 
 /*******************************************************************************
 Demux::init()
@@ -160,6 +182,11 @@ int     Demux::audio_info()
     MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(a_codec_id) );
 
     //
+    channel     =   fmt_ctx->streams[as_idx]->codecpar->channels;
+    sample_rate =   fmt_ctx->streams[as_idx]->codecpar->sample_rate;
+    MYLOG( LOG::INFO, "channel = %d, sample rate = %d", channel, sample_rate );
+
+    //
     double a_dur_ms = av_q2d( fmt_ctx->streams[as_idx]->time_base) * fmt_ctx->streams[as_idx]->duration;
     MYLOG( LOG::INFO, "frame duration = %lf ms", a_dur_ms );
 
@@ -188,6 +215,26 @@ int     Demux::get_audio_index()
     return  as_idx;
 }
 
+
+
+
+/*******************************************************************************
+Demux::get_audio_channel()
+********************************************************************************/
+int     Demux::get_audio_channel()
+{
+    return  channel;
+}
+
+
+
+/*******************************************************************************
+Demux::get_audio_sample_rate()
+********************************************************************************/
+int     Demux::get_audio_sample_rate()
+{
+    return  sample_rate;
+}
 
 
 

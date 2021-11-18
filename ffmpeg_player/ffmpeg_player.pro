@@ -15,24 +15,36 @@ CONFIG -= app_bundle
 
 SOURCES += \
     main.cpp \
-    mainwindow.cpp \
-	worker.cpp
+    ui/mainwindow.cpp \
+	src/worker.cpp \
+	src/audio_worker.cpp \
+	src/video_worker.cpp
 
 
 HEADERS += \
-    mainwindow.h \
-	worker.h
+    ui/mainwindow.h \
+	src/worker.h \
+	src/audio_worker.h \
+	src/video_worker.h
+
 
 
 FORMS += \
-    mainwindow.ui
+    ui/mainwindow.ui
+
+
 
 	
-INCLUDEPATH   +=  ../src
+INCLUDEPATH   +=  ../src ui src
+
+
 
 	
 Debug:LIBS    +=  -L../ -lffmpeg_kernelD
 Release:LIBS  +=  -L../ -lffmpeg_kernel
+
+
+
 
 
 # Default rules for deployment.

@@ -67,6 +67,15 @@ void    Player::set_input_file( std::string path )
 
 
 
+/*******************************************************************************
+Player::is_set_input_file()
+********************************************************************************/
+bool    Player::is_set_input_file()
+{
+    return  src_filename.size() != 0;
+}
+
+
 
 
 /*******************************************************************************
@@ -118,6 +127,38 @@ int     Player::init()
 
     return SUCCESS;
 }
+
+
+
+
+/*******************************************************************************
+Player::get_video_setting()
+********************************************************************************/
+VideoSetting    Player::get_video_setting()
+{
+    VideoSetting    vs;
+    vs.width    =   demuxer.get_video_width();
+    vs.height   =   demuxer.get_video_height();
+    return  vs;
+}
+
+
+
+
+
+/*******************************************************************************
+Player::get_audio_setting()
+********************************************************************************/
+AudioSetting    Player::get_audio_setting()
+{
+    AudioSetting    as;
+    as.channel      =   demuxer.get_audio_channel();
+    as.sample_rate  =   demuxer.get_audio_sample_rate();
+    return  as;
+}
+
+
+
 
 
 
@@ -222,8 +263,12 @@ void    Player::play_QT()
             dc  =   dynamic_cast<Decode*>(&v_decoder);
         else if( pkt->stream_index == demuxer.get_audio_index() )
             dc  =   dynamic_cast<Decode*>(&a_decoder);
-        else        
-            MYLOG( LOG::ERROR, "stream type not handle.")
+        else
+        {
+            demuxer.unref_packet();
+            continue;
+            //MYLOG( LOG::ERROR, "stream type not handle.")
+        }
 
         //
         ret     =   dc->send_packet(pkt);
@@ -237,13 +282,13 @@ void    Player::play_QT()
 
                 if( pkt->stream_index == demuxer.get_video_index() )
                 {
-                    v_decoder.output_video_frame_info();
+                    //v_decoder.output_video_frame_info();
                     vdata   =   v_decoder.output_video_data();
                     video_queue.push(vdata);
                 }
                 else if( pkt->stream_index == demuxer.get_audio_index() )
                 {
-                    a_decoder.output_audio_frame_info();
+                    //a_decoder.output_audio_frame_info();
                     adata   =   a_decoder.output_audio_data();
                     audio_queue.push(adata);
                 }
