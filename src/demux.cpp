@@ -61,11 +61,26 @@ int     Demux::get_video_height()
 
 
 /*******************************************************************************
+Demux::collect_packet()
+********************************************************************************/
+void    Demux::collect_packet( AVPacket *_pkt )
+{
+    std::lock_guard<std::mutex>     lock(pkt_mtx);
+    av_packet_unref(_pkt);
+    pkt_queue.push(_pkt);
+}
+
+
+
+
+
+
+/*******************************************************************************
 Demux::init()
 ********************************************************************************/
 int    Demux::init()
 {
-    int ret;
+    int     ret, i;
 
     //
     ret     =   stream_info();
@@ -73,6 +88,23 @@ int    Demux::init()
     {
         MYLOG( LOG::ERROR, "init fail. ret = %d", ret );
         return  ERROR;
+    }
+
+    /*
+        use for multi-thread
+    */
+    for( i = 0; i < 1000; i++ )
+    {
+        pkt_array[i]    =   av_packet_alloc();
+        
+        if( pkt_array[i] == nullptr )
+        {
+            ret     =   AVERROR(ENOMEM);
+            MYLOG( LOG::ERROR, "Could not allocate packet. error = %d", ret );
+            return  ERROR; 
+        }
+
+        pkt_queue.emplace( pkt_array[i] );        
     }
 
     /*
@@ -85,7 +117,7 @@ int    Demux::init()
     //if( pkt == nullptr || pkt_bsf == nullptr ) 
     if( pkt == nullptr )
     {
-        ret =   AVERROR(ENOMEM);
+        ret     =   AVERROR(ENOMEM);
         MYLOG( LOG::ERROR, "Could not allocate packet. error = %d", ret );
         return  ERROR;
     }
@@ -124,6 +156,10 @@ int     Demux::video_info()
 
     MYLOG( LOG::INFO, "width = %d, height = %d, depth = %d", width, height, depth );
     MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(v_codec_id) );
+
+    //
+    double  fps     =   av_q2d( fmt_ctx->streams[vs_idx]->r_frame_rate );
+    MYLOG( LOG::INFO, "fps = %lf", fps );
 
 #if 0
     // use for NVDEC
@@ -273,9 +309,17 @@ Demux::end()
 ********************************************************************************/
 int     Demux::end()
 {
+    int     i;
+
     avformat_close_input( &fmt_ctx );
     av_packet_free( &pkt );
     //av_bsf_free( &v_bsf_ctx );
+
+    //
+    while( pkt_queue.empty() == false )
+        pkt_queue.pop();
+    for( i = 0; i < 1000; i++ )
+        av_packet_free( &pkt_array[i] );
 
     src_file    =   "";
 
@@ -346,6 +390,41 @@ void    Demux::unref_packet()
 {
     av_packet_unref(pkt);
 }
+
+
+
+
+
+/*******************************************************************************
+Demux::demux_multi_thread()
+********************************************************************************/
+std::pair<int,AVPacket*>     Demux::demux_multi_thread()
+{
+    int     ret;
+    AVPacket    *packet     =   nullptr;
+
+    if( pkt_queue.empty() == true )
+    {
+        MYLOG( LOG::WARN, "pkt stack empty." );
+        return  std::make_pair( 0, nullptr );
+    }
+
+    if( pkt_queue.size() < 10 )
+        MYLOG( LOG::DEBUG, "queue size = %d", pkt_queue.size() );
+
+    packet  =   pkt_queue.front();
+    pkt_queue.pop();
+
+    ret     =   av_read_frame( fmt_ctx, packet );
+
+    if( ret < 0 )    
+        MYLOG( LOG::INFO, "load file end." );
+
+    std::pair<int,AVPacket*>    result  =   std::make_pair( ret, packet );
+
+    return  result;
+}
+
 
 
 

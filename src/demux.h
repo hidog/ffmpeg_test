@@ -2,6 +2,9 @@
 #define DEMUX_H
 
 #include <string>
+#include <queue>
+#include <mutex>
+
 #include "tool.h"
 
 struct AVPacket;
@@ -37,6 +40,10 @@ public:
     int     init();
     int     demux();
     int     end();
+
+    std::pair<int,AVPacket*>    demux_multi_thread();
+    void    collect_packet( AVPacket *_pkt );
+
 
     //
     int     open_input( std::string str );
@@ -81,6 +88,12 @@ private:
                     //*pkt_bsf    =   nullptr;    
     //AVBSFContext    *v_bsf_ctx  =   nullptr,;
 
+    // use for multi-thread
+    AVPacket*               pkt_array[1000]  =   {nullptr};  
+    std::queue<AVPacket*>   pkt_queue;
+    std::mutex              pkt_mtx; 
+
+    //
     int     vs_idx      =   -1;         // video stream index
     int     as_idx      =   -1;         // audio stream index
     //bool    use_bsf     =   false;

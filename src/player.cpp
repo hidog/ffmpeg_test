@@ -230,17 +230,21 @@ void    Player::play()
 
 
 
+/*******************************************************************************
+Player::video_decode()
+********************************************************************************/
 void    Player::video_decode()
 {
     AVPacket*   pkt     =   nullptr;
     int         ret     =   0;
     VideoData   vdata;
 
-    //
+    // 需要加上結束判斷
+    v_thr_start =   true;
     while( true ) 
     {
         while( video_pkt_queue.empty() == true )
-            SLEEP_10MS;
+            SLEEP_1MS;
 
         pkt     =   video_pkt_queue.front();
         video_pkt_queue.pop();
@@ -263,23 +267,32 @@ void    Player::video_decode()
             }
         }
 
-        av_packet_unref(pkt);
-        av_packet_free( &pkt );
+        demuxer.collect_packet(pkt);
+        SLEEP_1MS;
     }
+
+    // 需要加入flush
 }
 
 
+
+
+
+/*******************************************************************************
+Player::audio_decode()
+********************************************************************************/
 void    Player::audio_decode()
 {
     AVPacket*   pkt     =   nullptr;
     int         ret     =   0;
     AudioData   adata;
 
-    //
+    // 需要加上結束判斷
+    a_thr_start =   true;
     while( true ) 
     {
         while( audio_pkt_queue.empty() == true )
-            SLEEP_10MS;
+            SLEEP_1MS;
 
         pkt     =   audio_pkt_queue.front();
         audio_pkt_queue.pop();
@@ -302,9 +315,11 @@ void    Player::audio_decode()
             }
         }
 
-        av_packet_unref(pkt);
-        av_packet_free( &pkt );
+        demuxer.collect_packet(pkt);
+        SLEEP_1MS;
     }
+
+    // 需要加上flush
 }
 
 
@@ -314,98 +329,48 @@ Player::play_QT_multi_thread()
 ********************************************************************************/
 void    Player::play_QT_multi_thread()
 {
-    int         count   =   0;
+    //int         count   =   0;
     int         ret     =   0;
     AVPacket*   pkt     =   nullptr;
-    Decode      *dc     =   nullptr;
-    //AVFrame     *frame  =   nullptr;
-    VideoData   vdata;
-    AudioData   adata;
+
+    v_thr_start     =   false;
+    a_thr_start     =   false;
 
     video_decode_thr    =   new std::thread( &Player::video_decode, this );
     audio_decode_thr    =   new std::thread( &Player::audio_decode, this );
 
-
+    if( v_thr_start == false || a_thr_start == false )
+        SLEEP_10MS;
 
     while( true ) 
     {
-        while( video_queue.size() > 40 || audio_queue.size() > 40 )        
-            SLEEP_10MS;
+        while( video_queue.size() > 100 || audio_queue.size() > 200 )      // 1080p, 10bit的影像, 必須拉大buffer
+        {
+            SLEEP_1MS;  // 這邊不能睡太久, 不然會造成 demux 速度來不及.
+            MYLOG( LOG::DEBUG, "v queue %d, a queue %d", video_queue.size(), audio_queue.size() );
+        }
 
-        ret     =   demuxer.demux();
+       //aa MYLOG( LOG::DEBUG, "v queue %d, a queue %d", video_queue.size(), audio_queue.size() );
+
+
+        auto    pkt_pair    =   demuxer.demux_multi_thread();
+        ret     =   pkt_pair.first;
+        pkt     =   pkt_pair.second;
         if( ret < 0 )
             break;      
 
-        pkt     =   demuxer.get_packet();
-
-        //AVPacket* npkt =  av_packet_alloc();
-        //av_copy_packet( npkt, pkt );
-        //av_packet_ref(npkt, pkt);
-
-//#define AV_INPUT_BUFFER_PADDING_SIZE   64
-
-
-
-//#undef AV_INPUT_BUFFER_PADDING_SIZE
-
         if( pkt->stream_index == demuxer.get_video_index() )
-        {
-            AVPacket *npkt = av_packet_clone(pkt);
-            //AVPacket *npkt  =   av_packet_alloc();
-            //npkt->data = reinterpret_cast<uint8_t*>(new uint64_t[(pkt->size + AV_INPUT_BUFFER_PADDING_SIZE)/sizeof(uint64_t) + 1]);
-            //memcpy(npkt->data, pkt->data, pkt->size);
-            video_pkt_queue.push(npkt);
-            //dc  =   dynamic_cast<Decode*>(&v_decoder);
-        }
+            video_pkt_queue.push(pkt);
         else if( pkt->stream_index == demuxer.get_audio_index() )
-        {
-            AVPacket *npkt = av_packet_clone(pkt);
-            //AVPacket *npkt  =   av_packet_alloc();
-            //npkt->data = reinterpret_cast<uint8_t*>(new uint64_t[(pkt->size + AV_INPUT_BUFFER_PADDING_SIZE)/sizeof(uint64_t) + 1]);
-            //memcpy(npkt->data, pkt->data, pkt->size);
-            //dc  =   dynamic_cast<Decode*>(&a_decoder);
-            audio_pkt_queue.push(npkt);
-        }
+            audio_pkt_queue.push(pkt);       
         else
         {
-            //demuxer.unref_packet();
-            continue;
+            demuxer.collect_packet( pkt );
+            //continue;
             //MYLOG( LOG::ERROR, "stream type not handle.")
         }
 
-        //
-        //demuxer.unref_packet();
-
-#if 0
-        ret     =   dc->send_packet(pkt);
-        if( ret >= 0 )
-        {
-            while(true)
-            {
-                ret     =   dc->recv_frame();
-                if( ret <= 0 )
-                    break;
-
-                if( pkt->stream_index == demuxer.get_video_index() )
-                {
-                    //v_decoder.output_video_frame_info();
-                    vdata   =   v_decoder.output_video_data();
-                    video_queue.push(vdata);
-                }
-                else if( pkt->stream_index == demuxer.get_audio_index() )
-                {
-                    //a_decoder.output_audio_frame_info();
-                    adata   =   a_decoder.output_audio_data();
-                    audio_queue.push(adata);
-                }
-                else
-                    MYLOG( LOG::ERROR, "stream type not handle.")
-
-                    dc->unref_frame();
-            }
-        }
-#endif
-
+        SLEEP_1MS;
     }
 
     //
@@ -430,7 +395,7 @@ void    Player::play_QT()
     int         ret     =   0;
     AVPacket*   pkt     =   nullptr;
     Decode      *dc     =   nullptr;
-    //AVFrame     *frame  =   nullptr;
+    AVFrame     *frame  =   nullptr;
     VideoData   vdata;
     AudioData   adata;
 
@@ -467,6 +432,15 @@ void    Player::play_QT()
 
                 if( pkt->stream_index == demuxer.get_video_index() )
                 {
+                    //[time: {Utils.TicksToTime((long)(m_pAVFrame->pts * demuxer.VideoStreams[0].Timebase))}] 
+                    //frame = v_decoder.get_frame();
+                    //int64_t time = frame->pts * demuxer.get_format_context()->streams[0]->time_base;
+
+                    //auto m_streamTimebase = av_q2d(demuxer.get_format_context()->streams[0]->time_base) * 1000.0 * 10000.0; // Convert timebase to ticks so we can easily convert stream's timestamps to ticks
+                    //int64_t curPts = frame->best_effort_timestamp == AV_NOPTS_VALUE ? frame->pts : frame->best_effort_timestamp;
+                    //MYLOG( LOG::DEBUG, "cur pts = %lld", curPts );
+
+
                     //v_decoder.output_video_frame_info();
                     vdata   =   v_decoder.output_video_data();
                     video_queue.push(vdata);

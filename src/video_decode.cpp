@@ -57,7 +57,7 @@ VideoDecode::open_codec_context()
 int     VideoDecode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx )
 {
     Decode::open_codec_context( stream_index, fmt_ctx, type );
-    //dec_ctx->thread_count = 4;
+    dec_ctx->thread_count = 10;
     return  SUCCESS;
 }
 
@@ -258,19 +258,42 @@ VideoDecode::get_timestamp()
 最後選擇用土法煉鋼
 
 AVRational avr = {1, AV_TIME_BASE};
+
+需要拿浮動 fps 的影片做測試, 應該會出問題
 ********************************************************************************/
 int64_t     VideoDecode::get_timestamp()
 {
     int64_t ts;
 
+    // MYLOG( LOG::DEBUG, "frame rate = %lf", dec_ctx->framerate ); 印出的數字不是 fps
+
     int     num     =   dec_ctx->time_base.num;
     int     den     =   dec_ctx->time_base.den;
     double  base_ms =   1000.f;  // 表示單位為 mili sec
 
+    //int     interlaced  =   frame->interlaced_frame;
+    //MYLOG( LOG::DEBUG, "is interlaced = %d", interlaced );
+
+    int     tpf     =   dec_ctx->ticks_per_frame;
+
     /* 
         不知道為何要乘 2, 還沒搜尋到原因
         fps = 23.97  ( 24000 / 1001 ) 的時候預期 den = 24000, 實際上卻是 48000
+        某些情況又不用 * 2, 是否跟1080p, 1080i 有關??
+
+        https://stackoverflow.com/questions/12234949/ffmpeg-time-unit-explanation-and-av-seek-frame-method
+        http://runxinzhi.com/welhzh-p-4835864.html  似乎可以參考這個做判斷, 跟interlace無關
+
+        https://blog.csdn.net/chinabinlang/article/details/49885765
     */
-    ts = base_ms * frame_count * 2 * num / den;  
+    //ts = base_ms * frame_count * 2 * num / den;  
+    ts = base_ms * frame_count *  tpf * num / den;  
+
+
+    //MYLOG( LOG::DEBUG, "pts = %d", frame->pts );
+    //MYLOG( LOG::DEBUG, "coded number = %d", frame->coded_picture_number );
+
     return ts;
 }
+
+
