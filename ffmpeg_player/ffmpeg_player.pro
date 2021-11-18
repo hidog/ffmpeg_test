@@ -29,10 +29,8 @@ HEADERS += \
 
 
 
-
-
 FORMS += \
-    mainwindow.ui
+    ui/mainwindow.ui
 
 
 

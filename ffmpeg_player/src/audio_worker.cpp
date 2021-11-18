@@ -23,34 +23,40 @@ AudioWorker::AudioWorker( QObject *parent )
 /*******************************************************************************
 AudioWorker::open_audio_output()
 ********************************************************************************/
-void    AudioWorker::open_audio_output()
+void    AudioWorker::open_audio_output( AudioSetting as )
 {
-    QAudioFormat format;
+    QAudioFormat    format;
+
     // Set up the format, eg.
-    format.setSampleRate(48000);
-    format.setChannelCount(2);
+    format.setSampleRate(as.sample_rate);
+    format.setChannelCount(as.channel);
     format.setSampleSize(16);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
     format.setSampleType(QAudioFormat::UnSignedInt);
 
-
-
+    //
     QAudioDeviceInfo info { QAudioDeviceInfo::defaultOutputDevice() };
     if( false == info.isFormatSupported(format) ) 
     {
-        qWarning() << "Raw audio format not supported by backend, cannot play audio.";
+        MYLOG( LOG::ERROR, "Raw audio format not supported by backend, cannot play audio." );
         return;
     }
 
-    audio = new QAudioOutput( info, format );
+    //
+    if( audio != nullptr )
+    {
+        io->close();
+        audio->stop();
+        delete audio;
+    }
+
+    //
+    audio   =   new QAudioOutput( info, format );
     connect( audio, SIGNAL(stateChanged(QAudio::State)), this, SLOT(handleStateChanged(QAudio::State)) );
     audio->stop();
 
-    io = audio->start(); // 未來要從 mainwindow 做驅動
-
-
-                         //thr = new std::thread( &Worker::audio_play, this );
+    io      =   audio->start();
 }
 
 

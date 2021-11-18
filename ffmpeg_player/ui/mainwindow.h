@@ -29,18 +29,13 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    void set_signal_slot();
+    void    set_signal_slot();
 
-    
-    void audio_play();
-
-
-    void main_v_play(QImage*);
-
-
+    //
     QMutex*     get_video_mutex();
     VideoData*  get_view_data();
 
+    //
     Worker*         get_worker();
     VideoWorker*    get_video_worker();
     AudioWorker*    get_audio_worker();
@@ -48,10 +43,10 @@ public:
 
 public slots:
 
-    void load_slot();
-    void recv_video_frame_slot();
-
-
+    void    load_file_slot();
+    void    start_slot();
+    void    recv_video_frame_slot();
+    void    set_video_setting_slot( VideoSetting vs );
 
 private:
 
@@ -62,7 +57,6 @@ private:
     AudioWorker     *audio_worker   =   nullptr;
 
     QMutex          *video_mtx      =   nullptr;
-
     VideoData       *view_data      =   nullptr;
 
 };

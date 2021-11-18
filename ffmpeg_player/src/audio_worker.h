@@ -25,7 +25,7 @@ public:
     void    run() override;
 
     //
-    void    open_audio_output();
+    void    open_audio_output( AudioSetting as );
     void    audio_play();
 
 public slots:

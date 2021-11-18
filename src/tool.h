@@ -18,7 +18,7 @@ struct AudioSetting
 {
     int     channel;
     int     sample_rate;
-    int     sample_size;
+    //int     sample_size;
 };
 
 
@@ -30,6 +30,13 @@ struct VideoData
     int64_t     timestamp;
 };
 
+
+
+struct VideoSetting
+{
+    int     width;
+    int     height;
+}
 
 
 

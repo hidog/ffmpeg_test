@@ -3,13 +3,7 @@
 
 
 #include <QThread>
-#include <QAudioOutput>
-#include <QImage>
-
 #include "player.h"
-#include "tool.h"
-
-#include <thread>
 
 
 class Worker : public QThread
@@ -18,29 +12,33 @@ class Worker : public QThread
 
 public:
 
+    //
     Worker( QObject *parent );
     ~Worker();
 
-    void run() override;
+    //
+    void    run() override;
 
-    void decode();
-
-    std::function<void(QImage*)> main_cb;
+    //
+    void    set_src_file( std::string file );
+    bool    is_set_src_file();
+    void    finish_set_video();
 
 public slots:
 
-
-signals:
     
-    void	recv_video_frame_signal();
+signals:
+    void    video_setting_singal( VideoSetting );
+
 
 private:
 
     Player  player;
 
-
     bool v_start = false;
     bool a_start = false;
+
+    bool    is_set_video;
 
 };
 

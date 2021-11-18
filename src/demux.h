@@ -33,18 +33,27 @@ public:
     Demux& operator = ( const Demux& ) = delete;
     Demux& operator = ( Demux&& ) = delete;
 
+    //
     int     init();
     int     demux();
     int     end();
 
+    //
     int     open_input( std::string str );
     int     stream_info();
     int     video_info();
     int     audio_info();
 
+    int     get_video_width();
+    int     get_video_height();
+    int     get_audio_channel();
+    int     get_audio_sample_rate();
+
+    //
     int     get_video_index();
     int     get_audio_index();
 
+    //
     AVPacket*   get_packet();
     void        unref_packet();
 
@@ -57,11 +66,14 @@ private:
     int     height      =   0;
     int     depth       =   0;
 
-    AVCodecID     v_codec_id;
+    AVCodecID   v_codec_id;
 
     // audio
-    AVCodecID     a_codec_id;
+    int     channel         =   0;
+    int     sample_rate     =   0;
+    //int     sample_size     =   0;
 
+    AVCodecID   a_codec_id;
 
     //
     AVFormatContext *fmt_ctx    =   nullptr;

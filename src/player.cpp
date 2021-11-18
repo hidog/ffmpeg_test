@@ -67,6 +67,15 @@ void    Player::set_input_file( std::string path )
 
 
 
+/*******************************************************************************
+Player::is_set_input_file()
+********************************************************************************/
+bool    Player::is_set_input_file()
+{
+    return  src_filename.size() != 0;
+}
+
+
 
 
 /*******************************************************************************
@@ -118,6 +127,38 @@ int     Player::init()
 
     return SUCCESS;
 }
+
+
+
+
+/*******************************************************************************
+Player::get_video_setting()
+********************************************************************************/
+VideoSetting    Player::get_video_setting()
+{
+    VideoSetting    vs;
+    vs.width    =   demuxer.get_video_width();
+    vs.height   =   demuxer.get_video_height();
+    return  vs;
+}
+
+
+
+
+
+/*******************************************************************************
+Player::get_audio_setting()
+********************************************************************************/
+AudioSetting    Player::get_audio_setting()
+{
+    AudioSetting    as;
+    as.channel      =   demuxer.get_audio_channel();
+    as.sample_rate  =   demuxer.get_audio_sample_rate();
+    return  as;
+}
+
+
+
 
 
 
