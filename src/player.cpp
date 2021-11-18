@@ -350,9 +350,6 @@ void    Player::play_QT_multi_thread()
             MYLOG( LOG::DEBUG, "v queue %d, a queue %d", video_queue.size(), audio_queue.size() );
         }
 
-       //aa MYLOG( LOG::DEBUG, "v queue %d, a queue %d", video_queue.size(), audio_queue.size() );
-
-
         auto    pkt_pair    =   demuxer.demux_multi_thread();
         ret     =   pkt_pair.first;
         pkt     =   pkt_pair.second;
@@ -365,9 +362,7 @@ void    Player::play_QT_multi_thread()
             audio_pkt_queue.push(pkt);       
         else
         {
-            demuxer.collect_packet( pkt );
-            //continue;
-            //MYLOG( LOG::ERROR, "stream type not handle.")
+            MYLOG( LOG::ERROR, "stream type not handle.")
         }
 
         SLEEP_1MS;
@@ -415,9 +410,7 @@ void    Player::play_QT()
             dc  =   dynamic_cast<Decode*>(&a_decoder);
         else
         {
-            demuxer.unref_packet();
-            continue;
-            //MYLOG( LOG::ERROR, "stream type not handle.")
+            MYLOG( LOG::ERROR, "stream type not handle.")
         }
 
         //
@@ -432,15 +425,6 @@ void    Player::play_QT()
 
                 if( pkt->stream_index == demuxer.get_video_index() )
                 {
-                    //[time: {Utils.TicksToTime((long)(m_pAVFrame->pts * demuxer.VideoStreams[0].Timebase))}] 
-                    //frame = v_decoder.get_frame();
-                    //int64_t time = frame->pts * demuxer.get_format_context()->streams[0]->time_base;
-
-                    //auto m_streamTimebase = av_q2d(demuxer.get_format_context()->streams[0]->time_base) * 1000.0 * 10000.0; // Convert timebase to ticks so we can easily convert stream's timestamps to ticks
-                    //int64_t curPts = frame->best_effort_timestamp == AV_NOPTS_VALUE ? frame->pts : frame->best_effort_timestamp;
-                    //MYLOG( LOG::DEBUG, "cur pts = %lld", curPts );
-
-
                     //v_decoder.output_video_frame_info();
                     vdata   =   v_decoder.output_video_data();
                     video_queue.push(vdata);
