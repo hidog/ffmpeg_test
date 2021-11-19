@@ -396,6 +396,58 @@ void    Player::play_QT_multi_thread()
 #endif
 
 
+
+
+
+
+
+/*******************************************************************************
+Player::int     Player::decode_video_and_audio()
+********************************************************************************/
+int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
+{
+    VideoData   vdata;
+    AudioData   adata;
+
+    int     ret     =   dc->send_packet(pkt);
+    if( ret >= 0 )
+    {
+        while(true)
+        {
+            ret     =   dc->recv_frame();
+            if( ret <= 0 )
+                break;
+
+            if( pkt->stream_index == demuxer.get_video_index() )
+            {
+                //v_decoder.output_video_frame_info();
+                vdata   =   v_decoder.output_video_data();
+                video_queue.push(vdata);
+            }
+            else if( pkt->stream_index == demuxer.get_audio_index() )
+            {
+                //a_decoder.output_audio_frame_info();
+                adata   =   a_decoder.output_audio_data();
+                audio_queue.push(adata);
+            }
+            else if( pkt->stream_index == demuxer.get_sub_index() )
+            {
+                MYLOG( LOG::DEBUG, "test" );
+            }
+            else
+                MYLOG( LOG::ERROR, "stream type not handle.")
+
+                dc->unref_frame();
+        }
+    }
+
+    return  SUCCESS;
+}
+
+
+
+
+
 /*******************************************************************************
 Player::play_QT()
 ********************************************************************************/
@@ -406,8 +458,7 @@ void    Player::play_QT()
     AVPacket*   pkt     =   nullptr;
     Decode      *dc     =   nullptr;
     AVFrame     *frame  =   nullptr;
-    VideoData   vdata;
-    AudioData   adata;
+
 
     while( true ) 
     {
@@ -471,38 +522,9 @@ void    Player::play_QT()
         }
 
         //
-        ret     =   dc->send_packet(pkt);
-        if( ret >= 0 )
-        {
-            while(true)
-            {
-                ret     =   dc->recv_frame();
-                if( ret <= 0 )
-                    break;
+        decode_video_and_audio( dc, pkt );
 
-                if( pkt->stream_index == demuxer.get_video_index() )
-                {
-                    //v_decoder.output_video_frame_info();
-                    vdata   =   v_decoder.output_video_data();
-                    video_queue.push(vdata);
-                }
-                else if( pkt->stream_index == demuxer.get_audio_index() )
-                {
-                    //a_decoder.output_audio_frame_info();
-                    adata   =   a_decoder.output_audio_data();
-                    audio_queue.push(adata);
-                }
-                else if( pkt->stream_index == demuxer.get_sub_index() )
-                {
-                    MYLOG( LOG::DEBUG, "test" );
-                }
-                else
-                    MYLOG( LOG::ERROR, "stream type not handle.")
-
-                dc->unref_frame();
-            }
-        }
-
+        //
         demuxer.unref_packet();
     }
 
