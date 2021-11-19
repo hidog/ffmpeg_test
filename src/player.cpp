@@ -527,9 +527,8 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
 #if 1
     if( pkt->stream_index == demuxer.get_sub_index() )
     {
-        //if( aaaa > 10 )
         {
-            // 可以動態切換
+            // 可以動態切換, 但要做mutex lock
             std::string filterDesc;
             if( aaaa % 2 == 0 )
                 filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=0";  
@@ -751,6 +750,32 @@ void    Player::play_QT()
     AVPacket*   pkt     =   nullptr;
     Decode      *dc     =   nullptr;
     AVFrame     *frame  =   nullptr;
+
+
+#if 0
+    必須加上mutex lock, 不然會出問題
+    std::thread *thr = new std::thread( [this]() -> void {
+
+            static int aaaa = 0;
+
+            while(true) 
+            {
+                std::this_thread::sleep_for( std::chrono::seconds(1) );
+                aaaa++;
+
+                // 可以動態切換
+                std::string filterDesc;
+                if( aaaa % 2 == 0 )
+                    filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=0";  
+                else
+                    filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=1";  
+
+                std::string args = "video_size=1920x1080:pix_fmt=64:time_base=1/1000:pixel_aspect=1/1";
+
+                init_subtitle_filter( buffersrcContext, buffersinkContext,  args,  filterDesc);
+            }
+        } );
+#endif
 
 
     while( true ) 
