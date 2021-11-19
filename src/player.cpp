@@ -78,8 +78,8 @@ bool init_subtitle_filter( AVFilterContext * &buffersrcContext, AVFilterContext 
     {
         //qDebug() << "Has Error: line =" << __LINE__;
         MYLOG( LOG::DEBUG, "error" );
-        //release();
-        //return false;
+        release();
+        return false;
     }
 
     if (avfilter_graph_config(filterGraph, nullptr) < 0) 
@@ -92,6 +92,82 @@ bool init_subtitle_filter( AVFilterContext * &buffersrcContext, AVFilterContext 
 
     release();
     return true;
+}
+
+
+
+/*******************************************************************************
+Player::init()
+********************************************************************************/
+int     Player::init()
+{
+    if( src_filename == "" )
+    {
+        MYLOG( LOG::ERROR, "src file not set." );
+        return  ERROR;
+    }
+
+    int     ret     =   -1;
+    int     vs_idx  =   -1;
+    int     as_idx  =   -1;
+    int     ss_idx  =   -1;
+
+    AVFormatContext *fmt_ctx    =   nullptr;
+
+    //
+    ret     =   demuxer.open_input( src_filename );
+    assert( ret == SUCCESS );
+
+    ret     =   demuxer.init();
+    assert( ret == SUCCESS );
+
+    fmt_ctx =   demuxer.get_format_context();
+    vs_idx  =   demuxer.get_video_index();
+    as_idx  =   demuxer.get_audio_index();
+    ss_idx  =   demuxer.get_sub_index();
+
+    ret     =   v_decoder.open_codec_context( vs_idx, fmt_ctx );
+    assert( ret == SUCCESS );
+    ret     =   a_decoder.open_codec_context( as_idx, fmt_ctx );
+    assert( ret == SUCCESS );
+    ret     =   s_decoder.open_codec_context( ss_idx, fmt_ctx );
+    assert( ret == SUCCESS );
+
+    ret     =   v_decoder.init();
+    assert( ret == SUCCESS );
+    ret     =   a_decoder.init();
+    assert( ret == SUCCESS );
+    ret     =   s_decoder.init();
+    assert( ret == SUCCESS );
+
+
+    // for test
+    subStream = fmt_ctx->streams[as_idx];
+
+
+    std::string filterDesc = "subtitles=filename=../../test2.mkv:original_size=1920x1080";
+    //std::string filterDesc = "subtitles=filename='D\:\\\\code\\\\test.ass':original_size=1280x720";
+    //.arg(subtitleFilename).arg(m_width).arg(m_height);
+
+    int ddd = v_decoder.get_decode_context()->sample_aspect_ratio.den;
+    int nnn = v_decoder.get_decode_context()->sample_aspect_ratio.num;
+    //pixel_aspect need equal ddd/nnn
+
+    AVRational time_base = fmt_ctx->streams[vs_idx]->time_base;
+    int num = time_base.num;
+    int den = time_base.den;
+    
+    std::string args = "video_size=1920x1080:pix_fmt=64:time_base=1/1000:pixel_aspect=1/1";
+    //m_width, m_height, videoCodecContext->pix_fmt, time_base.num, time_base.den,
+    //videoCodecContext->sample_aspect_ratio.num, videoCodecContext->sample_aspect_ratio.den);
+
+
+    subtitleOpened = init_subtitle_filter(buffersrcContext, buffersinkContext, args, filterDesc );
+
+
+
+
+    return SUCCESS;
 }
 
 
@@ -159,77 +235,6 @@ Player::~Player()
 Player::~Player()
 {}
 
-
-
-
-/*******************************************************************************
-Player::init()
-********************************************************************************/
-int     Player::init()
-{
-    if( src_filename == "" )
-    {
-        MYLOG( LOG::ERROR, "src file not set." );
-        return  ERROR;
-    }
-
-    int     ret     =   -1;
-    int     vs_idx  =   -1;
-    int     as_idx  =   -1;
-    int     ss_idx  =   -1;
-
-    AVFormatContext *fmt_ctx    =   nullptr;
-
-    //
-    ret     =   demuxer.open_input( src_filename );
-    assert( ret == SUCCESS );
-
-    ret     =   demuxer.init();
-    assert( ret == SUCCESS );
-
-    fmt_ctx =   demuxer.get_format_context();
-    vs_idx  =   demuxer.get_video_index();
-    as_idx  =   demuxer.get_audio_index();
-    ss_idx  =   demuxer.get_sub_index();
-
-    ret     =   v_decoder.open_codec_context( vs_idx, fmt_ctx );
-    assert( ret == SUCCESS );
-    ret     =   a_decoder.open_codec_context( as_idx, fmt_ctx );
-    assert( ret == SUCCESS );
-    ret     =   s_decoder.open_codec_context( ss_idx, fmt_ctx );
-    assert( ret == SUCCESS );
-
-    ret     =   v_decoder.init();
-    assert( ret == SUCCESS );
-    ret     =   a_decoder.init();
-    assert( ret == SUCCESS );
-    ret     =   s_decoder.init();
-    assert( ret == SUCCESS );
-
-
-    // for test
-    subStream = fmt_ctx->streams[as_idx];
-
-
-    std::string filterDesc = "subtitles=filename=../../test.ass:original_size=1280x720";
-        //.arg(subtitleFilename).arg(m_width).arg(m_height);
-    
-    int ddd = v_decoder.get_decode_context()->sample_aspect_ratio.den;
-    int nnn = v_decoder.get_decode_context()->sample_aspect_ratio.num;
-    //pixel_aspect need equal ddd/nnn
-
-    std::string args = "video_size=1280x720:pix_fmt=0:time_base=1001/48000:pixel_aspect=1/1";
-        //m_width, m_height, videoCodecContext->pix_fmt, time_base.num, time_base.den,
-        //videoCodecContext->sample_aspect_ratio.num, videoCodecContext->sample_aspect_ratio.den);
-
-
-    subtitleOpened = init_subtitle_filter(buffersrcContext, buffersinkContext, args, filterDesc );
-
-
-
-
-    return SUCCESS;
-}
 
 
 
@@ -602,40 +607,43 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
                 AVFrame *frame = v_decoder.get_frame();
                 //AVFrame *filter_frame = av_frame_alloc();
 
-                if (av_buffersrc_add_frame_flags( buffersrcContext, frame, AV_BUFFERSRC_FLAG_KEEP_REF) < 0)
-                    break;
-
-                while (true) 
+                if (true )
                 {
-                    ret = av_buffersink_get_frame(buffersinkContext, frame);
-
-                    if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) 
+                    if (av_buffersrc_add_frame_flags( buffersrcContext, frame, AV_BUFFERSRC_FLAG_KEEP_REF) < 0)
                         break;
-                    else if (ret < 0) 
-                        printf("Error");
 
-                    // 1. Get frame and QImage to show 
-                    QImage  img { 1280, 720, QImage::Format_RGB888 };
+                    while (true) 
+                    {
+                        ret = av_buffersink_get_frame(buffersinkContext, frame);
 
-                    // 2. Convert and write into image buffer  
-                    uint8_t *dst[]  =   { img.bits() };
-                    int     linesizes[4];
+                        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) 
+                            break;
+                        else if (ret < 0) 
+                            printf("Error");
 
-                    SwsContext      *sws_ctx   =   v_decoder.get_sws_ctx();
+                        // 1. Get frame and QImage to show 
+                        QImage  img { 1920, 1080, QImage::Format_RGB888 };
+
+                        // 2. Convert and write into image buffer  
+                        uint8_t *dst[]  =   { img.bits() };
+                        int     linesizes[4];
+
+                        SwsContext      *sws_ctx   =   v_decoder.get_sws_ctx();
 
 
-                    av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
-                    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
+                        av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
+                        sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
 
-                    //
-                    //vd.index        =   frame_count;
-                    //vd.frame        =   img;
-                    //vd.timestamp    =   get_timestamp();
-                    vdata.frame = img;
+                        //
+                        //vd.index        =   frame_count;
+                        //vd.frame        =   img;
+                        //vd.timestamp    =   get_timestamp();
+                        vdata.frame = img;
 
-                    av_frame_unref(frame);
+                    }
                 }
 
+                //av_frame_unref(frame);
 
 
                 video_queue.push(vdata);
@@ -653,7 +661,7 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
             else
                 MYLOG( LOG::ERROR, "stream type not handle.")
 
-                dc->unref_frame();
+            dc->unref_frame();
         }
     }
 
