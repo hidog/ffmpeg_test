@@ -141,7 +141,7 @@ int     Demux::sub_info()
     int     i;
 
     //
-    ss_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0 );
+    ss_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, 3, 3, NULL, 0 );
     if( ss_idx < 0 )
     {
         MYLOG( LOG::INFO, "no subtitle stream" );

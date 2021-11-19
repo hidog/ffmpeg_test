@@ -31,6 +31,9 @@ https://www.twblogs.net/a/5ef2639e26bc8c4a8eb3c99e
 https://github.com/wang-bin/QtAV/blob/master/src/subtitle/SubtitleProcessorFFmpeg.cpp
 https://cpp.hotexamples.com/examples/-/-/hb_subsource_name/cpp-hb_subsource_name-function-examples.html
 
+subtitles filter
+¨Ï¥Îlibass®wÃ¸»ssubtitle¡]¦r¹õ¡^¡C
+
 */
 
 

@@ -148,7 +148,7 @@ int     Player::init()
     //std::string filterDesc = "subtitles=filename=../../test.ass:original_size=1280x720";
     //std::string filterDesc = "subtitles=filename='\\D\\:\\\\code\\\\test2.mkv':original_size=1280x720";  // ¦¨¥\ªº½d¨Ò
     //std::string filterDesc = "subtitles=filename='\\D\\:/code/test.ass':original_size=1280x720";  // ¦¨¥\ªº½d¨Ò
-    std::string filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080";  // ¦¨¥\ªº½d¨Ò
+    std::string filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=1";  // ¦¨¥\ªº½d¨Ò
 
 
     //.arg(subtitleFilename).arg(m_width).arg(m_height);
@@ -517,7 +517,7 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
     VideoData   vdata;
     AudioData   adata;
 
-
+#if 1
     if( pkt->stream_index == demuxer.get_sub_index() )
     {
         //encode_sub
@@ -595,6 +595,8 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
         avsubtitle_free( &subtitle );
         return  SUCCESS;
     }
+#endif
+
 
 
     int     ret     =   dc->send_packet(pkt);
