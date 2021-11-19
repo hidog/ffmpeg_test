@@ -51,6 +51,7 @@ public:
     int     stream_info();
     int     video_info();
     int     audio_info();
+    int     sub_info();
 
     int     get_video_width();
     int     get_video_height();
@@ -99,6 +100,7 @@ private:
     //
     int     vs_idx      =   -1;         // video stream index
     int     as_idx      =   -1;         // audio stream index
+    int     ss_idx      =   -1;         // sub stream index
     //bool    use_bsf     =   false;
 
     std::string     src_file;
