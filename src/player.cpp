@@ -145,9 +145,12 @@ int     Player::init()
     subStream = fmt_ctx->streams[as_idx];
 
 
-    std::string filterDesc = "subtitles=filename=../../test2.mkv:original_size=1920x1080";
-    //std::string filterDesc = "subtitles=filename='D\:\\\\code\\\\test.ass':original_size=1280x720";
+    //std::string filterDesc = "subtitles=filename=../../test.ass:original_size=1280x720";
+    //std::string filterDesc = "subtitles=filename='\\D\\:\\\\code\\\\test2.mkv':original_size=1280x720";  // 成功的範例
+    std::string filterDesc = "subtitles=filename='\\D\\:/code/test.ass':original_size=1280x720";  // 成功的範例
+
     //.arg(subtitleFilename).arg(m_width).arg(m_height);
+    //    file:///D:/
 
     int ddd = v_decoder.get_decode_context()->sample_aspect_ratio.den;
     int nnn = v_decoder.get_decode_context()->sample_aspect_ratio.num;
@@ -157,7 +160,7 @@ int     Player::init()
     int num = time_base.num;
     int den = time_base.den;
     
-    std::string args = "video_size=1920x1080:pix_fmt=64:time_base=1/1000:pixel_aspect=1/1";
+    std::string args = "video_size=1280x720:pix_fmt=0:time_base=1/24000:pixel_aspect=0/1";
     //m_width, m_height, videoCodecContext->pix_fmt, time_base.num, time_base.den,
     //videoCodecContext->sample_aspect_ratio.num, videoCodecContext->sample_aspect_ratio.den);
 
@@ -622,7 +625,7 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
                             printf("Error");
 
                         // 1. Get frame and QImage to show 
-                        QImage  img { 1920, 1080, QImage::Format_RGB888 };
+                        QImage  img { 1280, 720, QImage::Format_RGB888 };
 
                         // 2. Convert and write into image buffer  
                         uint8_t *dst[]  =   { img.bits() };
@@ -639,6 +642,7 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
                         //vd.frame        =   img;
                         //vd.timestamp    =   get_timestamp();
                         vdata.frame = img;
+                        dc->unref_frame();
 
                     }
                 }
@@ -647,12 +651,16 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
 
 
                 video_queue.push(vdata);
+                //dc->unref_frame();
+
             }
             else if( pkt->stream_index == demuxer.get_audio_index() )
             {
                 //a_decoder.output_audio_frame_info();
                 adata   =   a_decoder.output_audio_data();
                 audio_queue.push(adata);
+                dc->unref_frame();
+
             }
             else if( pkt->stream_index == demuxer.get_sub_index() )
             {
@@ -661,7 +669,7 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
             else
                 MYLOG( LOG::ERROR, "stream type not handle.")
 
-            dc->unref_frame();
+            //dc->unref_frame();
         }
     }
 
