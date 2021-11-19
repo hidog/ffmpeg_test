@@ -42,6 +42,9 @@
     <ClCompile Include="..\src\audio_decode.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\sub_decode.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\player.h">
@@ -60,6 +63,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\video_decode.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sub_decode.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

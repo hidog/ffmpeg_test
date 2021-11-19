@@ -101,6 +101,7 @@ int     Player::init()
     int     ret     =   -1;
     int     vs_idx  =   -1;
     int     as_idx  =   -1;
+    int     ss_idx  =   -1;
 
     AVFormatContext *fmt_ctx    =   nullptr;
 
@@ -114,6 +115,7 @@ int     Player::init()
     fmt_ctx =   demuxer.get_format_context();
     vs_idx  =   demuxer.get_video_index();
     as_idx  =   demuxer.get_audio_index();
+    ss_idx  =   demuxer.get_sub_index();
 
     ret     =   v_decoder.open_codec_context( vs_idx, fmt_ctx );
     assert( ret == SUCCESS );

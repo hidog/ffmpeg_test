@@ -61,6 +61,7 @@ public:
     //
     int     get_video_index();
     int     get_audio_index();
+    int     get_sub_index();
 
     //
     AVPacket*   get_packet();

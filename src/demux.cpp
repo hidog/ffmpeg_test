@@ -158,8 +158,6 @@ int     Demux::sub_info()
     AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)fmt_ctx->streams[ss_idx]->metadata, "title", NULL, AV_DICT_MATCH_CASE );
     MYLOG( LOG::DEBUG, "title %s", dic->value );
 
-
-
     return  ss_idx;
 }
 
@@ -290,6 +288,18 @@ int     Demux::get_audio_index()
 {
     return  as_idx;
 }
+
+
+
+
+/*******************************************************************************
+Demux::get_sub_index()
+********************************************************************************/
+int     Demux::get_sub_index()
+{
+    return  ss_idx;
+}
+
 
 
 

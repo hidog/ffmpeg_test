@@ -7,6 +7,13 @@
 
 
 
+struct SubData
+{
+    int test;
+};
+
+
+
 struct AudioData
 {
     uint8_t     *pcm;
