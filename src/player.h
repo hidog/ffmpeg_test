@@ -15,6 +15,7 @@
 #include <thread>
 
 
+
 DLL_API std::queue<AudioData>* get_audio_queue();
 DLL_API std::queue<VideoData>* get_video_queue();
 
@@ -22,6 +23,8 @@ DLL_API std::queue<VideoData>* get_video_queue();
 class AVPacket;
 class AVStream;
 class AVFilterContext;
+class AVFilterGraph;
+
 
 
 class DLL_API Player
@@ -95,6 +98,11 @@ private:
 
 
     int subtitleOpened = 0;
+
+    //AVFilterGraph *filterGraph = nullptr;//avfilter_graph_alloc();
+
+    //bool init_subtitle_filter( AVFilterContext * &buffersrcContext, AVFilterContext * &buffersinkContext, std::string args, std::string filterDesc);
+
 };
 
 

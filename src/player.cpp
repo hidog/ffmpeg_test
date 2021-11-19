@@ -33,7 +33,9 @@ bool init_subtitle_filter( AVFilterContext * &buffersrcContext, AVFilterContext 
     AVFilterInOut *output = avfilter_inout_alloc();
     AVFilterInOut *input = avfilter_inout_alloc();
     AVFilterGraph *filterGraph = avfilter_graph_alloc();
+    //filterGraph = avfilter_graph_alloc();
 
+    // lambda operator, 省略了傳入參數括號. 
     auto release = [&output, &input] 
     {
         avfilter_inout_free(&output);
@@ -81,6 +83,9 @@ bool init_subtitle_filter( AVFilterContext * &buffersrcContext, AVFilterContext 
         release();
         return false;
     }
+
+    char *str = avfilter_graph_dump( filterGraph, NULL );
+    MYLOG( LOG::DEBUG, "options = %s", str );
 
     if (avfilter_graph_config(filterGraph, nullptr) < 0) 
     {
@@ -517,9 +522,27 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
     VideoData   vdata;
     AudioData   adata;
 
+    static int aaaa = 0;
+
 #if 1
     if( pkt->stream_index == demuxer.get_sub_index() )
     {
+        //if( aaaa > 10 )
+        {
+            // 可以動態切換
+            std::string filterDesc;
+            if( aaaa % 2 == 0 )
+                filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=0";  
+            else
+                filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=1";  
+
+            std::string args = "video_size=1920x1080:pix_fmt=64:time_base=1/1000:pixel_aspect=1/1";
+
+            init_subtitle_filter( buffersrcContext, buffersinkContext,  args,  filterDesc);
+
+        }
+        aaaa++;
+
         //encode_sub
 
         int got_sub = 0;
@@ -703,7 +726,9 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
                 MYLOG( LOG::DEBUG, "test" );
             }
             else
-                MYLOG( LOG::ERROR, "stream type not handle.")
+            {
+                //MYLOG( LOG::ERROR, "stream type not handle.")
+            }
 
             //dc->unref_frame();
         }
@@ -746,7 +771,7 @@ void    Player::play_QT()
             dc  =   dynamic_cast<Decode*>(&s_decoder);        
         else
         {
-            MYLOG( LOG::WARN, "stream type not handle.");
+            //MYLOG( LOG::WARN, "stream type not handle.");
             demuxer.unref_packet();
             continue;
         }

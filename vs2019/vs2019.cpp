@@ -31,6 +31,10 @@ init_subtitles
 
 decode_frame
 
+
+http://underpop.online.fr/f/ffmpeg/help/subtitles.htm.gz
+
+
 */
 
 
