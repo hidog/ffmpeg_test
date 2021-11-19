@@ -8,6 +8,7 @@
 #include "demux.h"
 #include "audio_decode.h"
 #include "video_decode.h"
+#include "sub_decode.h"
 #include "tool.h"
 
 #include <QImage>
@@ -72,6 +73,7 @@ private:
     Demux           demuxer;
     VideoDecode     v_decoder;
     AudioDecode     a_decoder;
+    SubDecode       s_decoder;
 
     std::string     src_filename;
 

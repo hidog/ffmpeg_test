@@ -37,9 +37,9 @@ SubDecode::output_decode_info()
 ********************************************************************************/
 void    SubDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
 {
-    //MYLOG( LOG::INFO, "audio dec name = %s", dec->name );
-    //MYLOG( LOG::INFO, "audio dec long name = %s", dec->long_name );
-    //MYLOG( LOG::INFO, "audio dec codec id = %s", avcodec_get_name(dec->id) );
+    MYLOG( LOG::INFO, "sub dec name = %s", dec->name );
+    MYLOG( LOG::INFO, "sub dec long name = %s", dec->long_name );
+    MYLOG( LOG::INFO, "sub dec codec id = %s", avcodec_get_name(dec->id) );
     //MYLOG( LOG::INFO, "audio bitrate = %d", dec_ctx->bit_rate );
 }
 
