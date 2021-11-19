@@ -39,6 +39,9 @@ public:
     VideoData   output_video_data();
 
 
+    SwsContext* get_sws_ctx() { return sws_ctx; }
+
+
 #ifdef FFMPEG_TEST
     int     output_jpg_by_QT();
     int     output_jpg_by_openCV();

@@ -1,4 +1,4 @@
-#include <iostream>
+ï»¿#include <iostream>
 
 #include "player.h"
 
@@ -583,7 +583,7 @@ m_fps = videoStream->avg_frame_rate.num / videoStream->avg_frame_rate.den;
 m_width = videoCodecContext->width;
 m_height = videoCodecContext->height;
 
-//ªì©l¤Æfilter¬ÛÃö
+//åˆå§‹åŒ–filterç›¸é—œ
 AVRational time_base = videoStream->time_base;
 QString args = QString::asprintf("video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
     m_width, m_height, videoCodecContext->pix_fmt, time_base.num, time_base.den,
@@ -594,10 +594,10 @@ AVFilterContext *buffersrcContext = nullptr;
 AVFilterContext *buffersinkContext = nullptr;
 bool subtitleOpened = false;
 
-//¦pªG¦³¦r¹õ¬y
+//å¦‚æœæœ‰å­—å¹•æµ
 if (subCodecContext) 
 {
-    //¦r¹õ¬yª½±µ¥ÎµøÀW¦W§Y¥i
+    //å­—å¹•æµç›´æ¥ç”¨è¦–é »åå³å¯
     QString subtitleFilename = m_filename;
     subtitleFilename.replace('/', "\\\\");
     subtitleFilename.insert(subtitleFilename.indexOf(":\\"), char('\\'));
@@ -612,19 +612,19 @@ if (subCodecContext)
 
 
     if (!subtitleOpened) {
-        qDebug() << "¦r¹õ¥´¶}¥¢±Ñ!";
+        qDebug() << "å­—å¹•æ‰“é–‹å¤±æ•—!";
     }
 } 
 else 
 {
-    //¨S¦³¦r¹õ¬y®É¡A¦b¦P¥Ø¿ı¤U´M§ä¦r¹õ¤å¥ó
-    //¦r¹õ¬ÛÃö¡A¨Ï¥Îsubtitles¡A¥Ø«e´ú¸Õªº¬Oass¡A¦ısrt, ssa, ass, lrc³£¦æ¡A§ï«áºó¦W§Y¥i
+    //æ²’æœ‰å­—å¹•æµæ™‚ï¼Œåœ¨åŒç›®éŒ„ä¸‹å°‹æ‰¾å­—å¹•æ–‡ä»¶
+    //å­—å¹•ç›¸é—œï¼Œä½¿ç”¨subtitlesï¼Œç›®å‰æ¸¬è©¦çš„æ˜¯assï¼Œä½†srt, ssa, ass, lrcéƒ½è¡Œï¼Œæ”¹å¾Œç¶´åå³å¯
     int suffixLength = QFileInfo(m_filename).suffix().length();
     QString subtitleFilename = m_filename.mid(0, m_filename.length() - suffixLength - 1) + ".ass";
     if (QFile::exists(subtitleFilename)) {
-        //ªì©l¤Æsubtitle filter
-        //µ´¹ï¸ô®|¥²¶·Âà¦¨D\:\\xxx\\test.ass³oºØ§Î¦¡, °O¦í¡A¬O[D\:\\]³oºØ§Î¦¡
-        //toNativeSeparator()µL¥Î¡A¦]?¥u¬O / -> \ ªºÂà´«
+        //åˆå§‹åŒ–subtitle filter
+        //çµ•å°è·¯å¾‘å¿…é ˆè½‰æˆD\:\\xxx\\test.assé€™ç¨®å½¢å¼, è¨˜ä½ï¼Œæ˜¯[D\:\\]é€™ç¨®å½¢å¼
+        //toNativeSeparator()ç„¡ç”¨ï¼Œå› çˆ²åªæ˜¯ / -> \ çš„è½‰æ›
         subtitleFilename.replace('/', "\\\\");
         subtitleFilename.insert(subtitleFilename.indexOf(":\\"), char('\\'));
         QString filterDesc = QString("subtitles=filename='%1':original_size=%2x%3")
@@ -632,7 +632,7 @@ else
         qDebug() << "Filter Description:" << filterDesc.toStdString().c_str();
         subtitleOpened = init_subtitle_filter(buffersrcContext, buffersinkContext, args, filterDesc);
         if (!subtitleOpened) {
-            qDebug() << "¦r¹õ¥´¶}¥¢±Ñ!";
+            qDebug() << "å­—å¹•æ‰“é–‹å¤±æ•—!";
         }
     }
 }
@@ -643,17 +643,17 @@ else
 
 SubtitleFrame subFrame;
 
-//Åª¨ú¤U¤@´V
+//è®€å–ä¸‹ä¸€å¹€
 while (m_runnable && av_read_frame(formatContext, packet) >= 0) 
 {
     if (packet->stream_index == videoIndex) 
     {
-        //µo°eµ¹¸Ñ½X¾¹
+        //ç™¼é€çµ¦è§£ç¢¼å™¨
         int ret = avcodec_send_packet(videoCodecContext, packet);
 
         while (ret >= 0) 
         {
-            //±q¸Ñ½X¾¹±µ¦¬¸Ñ½X«áªº´V
+            //å¾è§£ç¢¼å™¨æ¥æ”¶è§£ç¢¼å¾Œçš„å¹€
             ret = avcodec_receive_frame(videoCodecContext, frame);
 
             frame->pts = frame->best_effort_timestamp;
@@ -661,7 +661,7 @@ while (m_runnable && av_read_frame(formatContext, packet) >= 0)
             if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) break;
             else if (ret < 0) goto Run_End;
 
-            //¦pªG¦r¹õ¦¨¥\¥´¶}¡A«h¿é¥X¨Ï¥Îsubtitle filter¹LÂo«áªº¹Ï¹³
+            //å¦‚æœå­—å¹•æˆåŠŸæ‰“é–‹ï¼Œå‰‡è¼¸å‡ºä½¿ç”¨subtitle filteréæ¿¾å¾Œçš„åœ–åƒ
             if (subtitleOpened) 
             {
                 if (av_buffersrc_add_frame_flags(buffersrcContext, frame, AV_BUFFERSRC_FLAG_KEEP_REF) < 0)
@@ -682,12 +682,12 @@ while (m_runnable && av_read_frame(formatContext, packet) >= 0)
             } 
             else 
             {
-                //¥¼¥´¶}¦r¹õ¹LÂo¾¹©ÎµL¦r¹õ
+                //æœªæ‰“é–‹å­—å¹•éæ¿¾å™¨æˆ–ç„¡å­—å¹•
                 if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) break;
                 else if (ret < 0) goto Run_End;
 
                 QImage videoImage = convert_image(frame);
-                //¦pªG»İ­nÅã¥Ü¦r¹õ¡A´N±N¦r¹õÂĞ»\¤W¥h
+                //å¦‚æœéœ€è¦é¡¯ç¤ºå­—å¹•ï¼Œå°±å°‡å­—å¹•è¦†è“‹ä¸Šå»
                 if (frame->pts >= subFrame.pts && frame->pts <= (subFrame.pts + subFrame.duration)) 
                 {
                     videoImage = overlay_subtitle(videoImage, subFrame.image);
@@ -706,35 +706,40 @@ while (m_runnable && av_read_frame(formatContext, packet) >= 0)
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) break;
         else if (ret < 0) goto Run_End;
 
-        if (got_frame > 0) {
-            //¦pªG¬O¹Ï¹³¦r¹õ¡A§Ysub + idx
-            //¹ê»Ú¤W¡A¥u»İ­n³B²z³oºØ§Y¥i
-            if (subtitle.format == 0) {
-                for (size_t i = 0; i < subtitle.num_rects; i++) {
+        if (got_frame > 0) 
+        {
+            //å¦‚æœæ˜¯åœ–åƒå­—å¹•ï¼Œå³sub + idx
+            //å¯¦éš›ä¸Šï¼Œåªéœ€è¦è™•ç†é€™ç¨®å³å¯
+            if (subtitle.format == 0) 
+            {
+                for (size_t i = 0; i < subtitle.num_rects; i++) 
+                {
                     AVSubtitleRect *sub_rect = subtitle.rects[i];
 
                     int dst_linesize[4];
                     uint8_t *dst_data[4];
-                    //ª`·N¡A³oùØ¬ORGBA®æ¦¡¡A»İ­nAlpha
+                    //æ³¨æ„ï¼Œé€™è£æ˜¯RGBAæ ¼å¼ï¼Œéœ€è¦Alpha
                     av_image_alloc(dst_data, dst_linesize, sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA, 1);
                     SwsContext *swsContext = sws_getContext(sub_rect->w, sub_rect->h, AV_PIX_FMT_PAL8,
                         sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA,
                         SWS_BILINEAR, nullptr, nullptr, nullptr);
                     sws_scale(swsContext, sub_rect->data, sub_rect->linesize, 0, sub_rect->h, dst_data, dst_linesize);
                     sws_freeContext(swsContext);
-                    //³oùØ¤]¨Ï¥ÎRGBA
+                    //é€™è£ä¹Ÿä½¿ç”¨RGBA
                     QImage image = QImage(dst_data[0], sub_rect->w, sub_rect->h, QImage::Format_RGBA8888).copy();
                     av_freep(&dst_data[0]);
 
-                    //subFrame¦sÀx·í«eªº¦r¹õ
-                    //¥u¦³¹Ï¹³¦r¹õÅ×¦³start_display_time©Mstart_display_time
+                    //subFrameå­˜å„²ç•¶å‰çš„å­—å¹•
+                    //åªæœ‰åœ–åƒå­—å¹•çº”æœ‰start_display_timeå’Œstart_display_time
                     subFrame.pts = packet->pts;
                     subFrame.duration = subtitle.end_display_time - subtitle.start_display_time;
                     subFrame.image = image;
                 }
-            } else {
-                //¦pªG¬O¤å¥»®æ¦¡¦r¹õ:srt, ssa, ass, lrc
-                //¥i¥Hª½±µ¿é¥X¤å¥»¡A¹ê»Ú¤W¤w¸g²K¥[¨ì¹LÂo¾¹¤¤
+            } 
+            else 
+            {
+                //å¦‚æœæ˜¯æ–‡æœ¬æ ¼å¼å­—å¹•:srt, ssa, ass, lrc
+                //å¯ä»¥ç›´æ¥è¼¸å‡ºæ–‡æœ¬ï¼Œå¯¦éš›ä¸Šå·²ç¶“æ·»åŠ åˆ°éæ¿¾å™¨ä¸­
                 qreal pts = packet->pts * av_q2d(subStream->time_base);
                 qreal duration = packet->duration * av_q2d(subStream->time_base);
                 const char *text = const_int8_ptr(packet->data);

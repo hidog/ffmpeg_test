@@ -20,7 +20,8 @@ DLL_API std::queue<VideoData>* get_video_queue();
 
 
 class AVPacket;
-
+class AVStream;
+class AVFilterContext;
 
 
 class DLL_API Player
@@ -70,6 +71,8 @@ private:
     bool    v_thr_start     =   false,
             a_thr_start     =   false;
 
+    AVStream    *subStream = nullptr;
+
 
     Demux           demuxer;
     VideoDecode     v_decoder;
@@ -83,6 +86,15 @@ private:
 
     std::thread     *video_decode_thr   =   nullptr,
                     *audio_decode_thr   =   nullptr;
+
+    QImage  sub_img;
+
+
+    AVFilterContext *buffersrcContext = nullptr;
+    AVFilterContext *buffersinkContext = nullptr;
+
+
+    int subtitleOpened = 0;
 };
 
 

@@ -4,6 +4,7 @@
 #include <thread>
 
 
+
 extern "C" {
 
 #include <libavutil/imgutils.h>
@@ -12,12 +13,86 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 
+#include <libswscale/swscale.h>
+#include <libavfilter/buffersrc.h>  // use for subtitle
+#include <libavfilter/buffersink.h>
+
+
 } // end extern "C"
 
 
 static std::queue<AudioData> audio_queue;
 static std::queue<VideoData> video_queue;
 
+
+
+bool init_subtitle_filter( AVFilterContext * &buffersrcContext, AVFilterContext * &buffersinkContext, std::string args, std::string filterDesc)
+{
+    const AVFilter *buffersrc = avfilter_get_by_name("buffer");
+    const AVFilter *buffersink = avfilter_get_by_name("buffersink");
+    AVFilterInOut *output = avfilter_inout_alloc();
+    AVFilterInOut *input = avfilter_inout_alloc();
+    AVFilterGraph *filterGraph = avfilter_graph_alloc();
+
+    auto release = [&output, &input] 
+    {
+        avfilter_inout_free(&output);
+        avfilter_inout_free(&input);
+    };
+
+    if (!output || !input || !filterGraph) 
+    {
+        release();
+        return false;
+    }
+
+    // Crear filtro de entrada, necesita arg
+    if (avfilter_graph_create_filter(&buffersrcContext, buffersrc, "in", args.c_str(), nullptr, filterGraph) < 0) 
+    {
+        //qDebug() << "Has Error: line =" << __LINE__;
+        MYLOG( LOG::ERROR, "error" );
+        release();
+        return false;
+    }
+
+    if (avfilter_graph_create_filter(&buffersinkContext, buffersink, "out", nullptr, nullptr, filterGraph) < 0) 
+    {
+        //qDebug() << "Has Error: line =" << __LINE__;
+        MYLOG( LOG::ERROR, "error" );
+        release();
+        return false;
+    }
+
+    output->name = av_strdup("in");
+    output->next = nullptr;
+    output->pad_idx = 0;
+    output->filter_ctx = buffersrcContext;
+
+    input->name = av_strdup("out");
+    input->next = nullptr;
+    input->pad_idx = 0;
+    input->filter_ctx = buffersinkContext;
+
+    int ret = avfilter_graph_parse_ptr(filterGraph, filterDesc.c_str(), &input, &output, nullptr);
+    if (ret < 0) 
+    {
+        //qDebug() << "Has Error: line =" << __LINE__;
+        MYLOG( LOG::DEBUG, "error" );
+        //release();
+        //return false;
+    }
+
+    if (avfilter_graph_config(filterGraph, nullptr) < 0) 
+    {
+        //qDebug() << "Has Error: line =" << __LINE__;
+        MYLOG( LOG::DEBUG, "error" );
+        release();
+        return false;
+    }
+
+    release();
+    return true;
+}
 
 
 
@@ -130,6 +205,27 @@ int     Player::init()
     assert( ret == SUCCESS );
     ret     =   s_decoder.init();
     assert( ret == SUCCESS );
+
+
+    // for test
+    subStream = fmt_ctx->streams[as_idx];
+
+
+    std::string filterDesc = "subtitles=filename=../../test.ass:original_size=1280x720";
+        //.arg(subtitleFilename).arg(m_width).arg(m_height);
+    
+    int ddd = v_decoder.get_decode_context()->sample_aspect_ratio.den;
+    int nnn = v_decoder.get_decode_context()->sample_aspect_ratio.num;
+    //pixel_aspect need equal ddd/nnn
+
+    std::string args = "video_size=1280x720:pix_fmt=0:time_base=1001/48000:pixel_aspect=1/1";
+        //m_width, m_height, videoCodecContext->pix_fmt, time_base.num, time_base.den,
+        //videoCodecContext->sample_aspect_ratio.num, videoCodecContext->sample_aspect_ratio.den);
+
+
+    subtitleOpened = init_subtitle_filter(buffersrcContext, buffersinkContext, args, filterDesc );
+
+
 
 
     return SUCCESS;
@@ -430,6 +526,13 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
             sp->height = is->subdec.avctx->height;
             sp->uploaded = 0;*/
 
+            qreal pts = pkt->pts * av_q2d(subStream->time_base);
+            qreal duration = pkt->duration * av_q2d(subStream->time_base);
+
+            //https://tsduck.io/doxy/namespacets.html
+            //const char *text = const_int8_ptr(pkt->data);
+            MYLOG( LOG::DEBUG, "pts = %lf, duration = %lf, text = %s", pts, duration, pkt->data );
+
 
             AVSubtitleRect **rects = subtitle.rects;
             for (int i = 0; i < subtitle.num_rects; i++) 
@@ -442,6 +545,39 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
             }
             // it just writes some big file (similar to videofile size)
             //out.write((char*)pkt.data, pkt.size);
+
+
+            if (subtitle.format == 0)
+            {
+
+                for ( int i = 0; i < subtitle.num_rects; i++) 
+                {
+                    AVSubtitleRect *sub_rect = subtitle.rects[i];
+
+                    int dst_linesize[4];
+                    uint8_t *dst_data[4];
+                    //
+                    av_image_alloc(dst_data, dst_linesize, sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA, 1);
+                    SwsContext *swsContext = sws_getContext( sub_rect->w, sub_rect->h, AV_PIX_FMT_PAL8,
+                                                             sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA,
+                                                             SWS_BILINEAR, nullptr, nullptr, nullptr);
+                    sws_scale(swsContext, sub_rect->data, sub_rect->linesize, 0, sub_rect->h, dst_data, dst_linesize);
+                    sws_freeContext(swsContext);
+                    //這裏也使用RGBA
+
+                    sub_img = QImage(dst_data[0], sub_rect->w, sub_rect->h, QImage::Format_RGBA8888).copy();
+                    av_freep(&dst_data[0]);
+
+                    //subFrame存儲當前的字幕
+                    //只有圖像字幕纔有start_display_time和start_display_time
+                    //subFrame.pts = packet->pts;
+                    //subFrame.duration = subtitle.end_display_time - subtitle.start_display_time;
+                    //subFrame.image = image;
+                }
+
+            }
+
+
         }
 
         avsubtitle_free( &subtitle );
@@ -462,6 +598,46 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
             {
                 //v_decoder.output_video_frame_info();
                 vdata   =   v_decoder.output_video_data();
+
+                AVFrame *frame = v_decoder.get_frame();
+                //AVFrame *filter_frame = av_frame_alloc();
+
+                if (av_buffersrc_add_frame_flags( buffersrcContext, frame, AV_BUFFERSRC_FLAG_KEEP_REF) < 0)
+                    break;
+
+                while (true) 
+                {
+                    ret = av_buffersink_get_frame(buffersinkContext, frame);
+
+                    if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) 
+                        break;
+                    else if (ret < 0) 
+                        printf("Error");
+
+                    // 1. Get frame and QImage to show 
+                    QImage  img { 1280, 720, QImage::Format_RGB888 };
+
+                    // 2. Convert and write into image buffer  
+                    uint8_t *dst[]  =   { img.bits() };
+                    int     linesizes[4];
+
+                    SwsContext      *sws_ctx   =   v_decoder.get_sws_ctx();
+
+
+                    av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
+                    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
+
+                    //
+                    //vd.index        =   frame_count;
+                    //vd.frame        =   img;
+                    //vd.timestamp    =   get_timestamp();
+                    vdata.frame = img;
+
+                    av_frame_unref(frame);
+                }
+
+
+
                 video_queue.push(vdata);
             }
             else if( pkt->stream_index == demuxer.get_audio_index() )
