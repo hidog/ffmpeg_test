@@ -412,12 +412,25 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
 
     if( pkt->stream_index == demuxer.get_sub_index() )
     {
+        //encode_sub
+
         int got_sub = 0;
         AVSubtitle subtitle;
         int ret = avcodec_decode_subtitle2( s_decoder.get_decode_context(), &subtitle, &got_sub, pkt );
 
         if (ret >= 0 && got_sub) 
         {
+            /*Frame *sp = v_decoder.get_frame();
+
+            if( sp->sub.pts != AV_NOPTS_VALUE )
+                pts = sp->sub.pts / (double)AV_TIME_BASE;
+            sp->pts = pts;
+            sp->serial = is->subdec.pkt_serial;
+            sp->width = is->subdec.avctx->width;
+            sp->height = is->subdec.avctx->height;
+            sp->uploaded = 0;*/
+
+
             AVSubtitleRect **rects = subtitle.rects;
             for (int i = 0; i < subtitle.num_rects; i++) 
             {
@@ -595,3 +608,5 @@ int     Player::end()
 
     return  SUCCESS;
 }
+
+

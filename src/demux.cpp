@@ -140,6 +140,7 @@ int     Demux::sub_info()
 {
     int     i;
 
+    //
     ss_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0 );
     if( ss_idx < 0 )
     {
