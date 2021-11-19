@@ -115,8 +115,8 @@ void AudioWorker::run()
     // start play
     audio_play();
 
-    audio->stop();
     io->close();
+    audio->stop();
     delete audio;
     audio = nullptr;
 

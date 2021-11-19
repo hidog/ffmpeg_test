@@ -612,17 +612,35 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
 
                 if (true )
                 {
+                    auto filter_frame = av_frame_alloc();
+
                     if (av_buffersrc_add_frame_flags( buffersrcContext, frame, AV_BUFFERSRC_FLAG_KEEP_REF) < 0)
+                    {
+                        av_frame_unref(filter_frame);
+                        av_frame_free(&filter_frame);
                         break;
+                        //throw std::runtime_error("Could not feed the frame into the filtergraph.");                    
+                    }
+                        //break;
 
                     while (true) 
                     {
-                        ret = av_buffersink_get_frame(buffersinkContext, frame);
+
+                        ret = av_buffersink_get_frame(buffersinkContext, filter_frame);
 
                         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) 
+                        {
+                            av_frame_unref(filter_frame);
+                            av_frame_free(&filter_frame);
                             break;
+                        }
                         else if (ret < 0) 
+                        {
+                            av_frame_unref(filter_frame);
+                            av_frame_free(&filter_frame);
                             printf("Error");
+                            break;
+                        }
 
                         // 1. Get frame and QImage to show 
                         QImage  img { 1280, 720, QImage::Format_RGB888 };
@@ -634,25 +652,28 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
                         SwsContext      *sws_ctx   =   v_decoder.get_sws_ctx();
 
 
-                        av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
-                        sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
+                        av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, filter_frame->width );
+                        sws_scale( sws_ctx, filter_frame->data, (const int*)filter_frame->linesize, 0, filter_frame->height, dst, linesizes );
 
                         //
                         //vd.index        =   frame_count;
                         //vd.frame        =   img;
                         //vd.timestamp    =   get_timestamp();
                         vdata.frame = img;
-                        dc->unref_frame();
+                        //dc->unref_frame();
+                        av_frame_unref(filter_frame);
+                        av_frame_free(&filter_frame);
 
+                        video_queue.push(vdata);
                     }
                 }
 
                 //av_frame_unref(frame);
+                dc->unref_frame();
 
 
-                video_queue.push(vdata);
+                //video_queue.push(vdata);
                 //dc->unref_frame();
-
             }
             else if( pkt->stream_index == demuxer.get_audio_index() )
             {
