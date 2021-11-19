@@ -543,17 +543,18 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
 
             //https://tsduck.io/doxy/namespacets.html
             //const char *text = const_int8_ptr(pkt->data);
-            MYLOG( LOG::DEBUG, "pts = %lf, duration = %lf, text = %s", pts, duration, pkt->data );
+            //MYLOG( LOG::DEBUG, "pts = %lf, duration = %lf, text = %s", pts, duration, pkt->data );
 
 
             AVSubtitleRect **rects = subtitle.rects;
             for (int i = 0; i < subtitle.num_rects; i++) 
             {
                 AVSubtitleRect rect = *rects[i];
-                if (rect.type == SUBTITLE_ASS)                 
+                /*if (rect.type == SUBTITLE_ASS)                 
                     MYLOG( LOG::DEBUG, "ASS %s", rect.ass)                
                 else if (rect.x == SUBTITLE_TEXT)                 
-                    MYLOG( LOG::DEBUG, "TEXT %s", rect.text)              
+                    MYLOG( LOG::DEBUG, "TEXT %s", rect.text)*/
+                    
             }
             // it just writes some big file (similar to videofile size)
             //out.write((char*)pkt.data, pkt.size);
@@ -629,6 +630,8 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
                     }
                         //break;
 
+                    int cccc = 0;
+
                     while (true) 
                     {
 
@@ -647,6 +650,10 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
                             printf("Error");
                             break;
                         }
+
+                        if( cccc > 0 )
+                            MYLOG( LOG::DEBUG, "run this loop more than once");
+                        cccc++;
 
                         // 1. Get frame and QImage to show 
                         //QImage  img { 1280, 720, QImage::Format_RGB888 };
