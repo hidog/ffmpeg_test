@@ -59,7 +59,7 @@ int     Demux::get_video_height()
 
 
 
-
+#ifdef USE_MT
 /*******************************************************************************
 Demux::collect_packet()
 ********************************************************************************/
@@ -69,7 +69,7 @@ void    Demux::collect_packet( AVPacket *_pkt )
     av_packet_unref(_pkt);
     pkt_queue.push(_pkt);
 }
-
+#endif
 
 
 
@@ -93,7 +93,8 @@ int    Demux::init()
     /*
         use for multi-thread
     */
-    for( i = 0; i < 1000; i++ )
+#ifdef USE_MT
+    for( i = 0; i < 10; i++ )
     {
         pkt_array[i]    =   av_packet_alloc();
         
@@ -106,6 +107,8 @@ int    Demux::init()
 
         pkt_queue.emplace( pkt_array[i] );        
     }
+#endif
+
 
     /*
         av_init_packet(&pkt);
@@ -316,10 +319,12 @@ int     Demux::end()
     //av_bsf_free( &v_bsf_ctx );
 
     //
+#ifdef USE_MT
     while( pkt_queue.empty() == false )
         pkt_queue.pop();
-    for( i = 0; i < 1000; i++ )
+    for( i = 0; i < 10; i++ )
         av_packet_free( &pkt_array[i] );
+#endif
 
     src_file    =   "";
 
@@ -394,7 +399,7 @@ void    Demux::unref_packet()
 
 
 
-
+#ifdef USE_MT
 /*******************************************************************************
 Demux::demux_multi_thread()
 ********************************************************************************/
@@ -424,7 +429,7 @@ std::pair<int,AVPacket*>     Demux::demux_multi_thread()
 
     return  result;
 }
-
+#endif
 
 
 

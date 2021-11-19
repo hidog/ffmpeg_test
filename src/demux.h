@@ -41,9 +41,10 @@ public:
     int     demux();
     int     end();
 
+#ifdef USE_MT
     std::pair<int,AVPacket*>    demux_multi_thread();
     void    collect_packet( AVPacket *_pkt );
-
+#endif
 
     //
     int     open_input( std::string str );
@@ -89,9 +90,11 @@ private:
     //AVBSFContext    *v_bsf_ctx  =   nullptr,;
 
     // use for multi-thread
-    AVPacket*               pkt_array[1000]  =   {nullptr};  
+#ifdef USE_MT
+    AVPacket*               pkt_array[10]  =   {nullptr};  
     std::queue<AVPacket*>   pkt_queue;
     std::mutex              pkt_mtx; 
+#endif
 
     //
     int     vs_idx      =   -1;         // video stream index

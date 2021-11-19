@@ -141,9 +141,13 @@ AudioData   AudioDecode::output_audio_data()
 
     unsigned char   *pcm    =   new uint8_t[byte_count];     // frame->nb_samples * 2 * 2     表示     分配樣本資料量 * 兩通道 * 每通道2位元組大小
 
+    if( pcm == nullptr )
+        MYLOG( LOG::WARN, "pcm is null" );
+
     data[0]     =   pcm;    // 輸出格式為AV_SAMPLE_FMT_S16(packet型別),所以轉換後的 LR 兩通道都存在data[0]中
     int ret     =   swr_convert( swr_ctx,
                                  data, sample_rate,                                    //輸出
+                                 //data, frame->nb_samples,                              //輸出
                                  (const uint8_t**)frame->data, frame->nb_samples );    //輸入
 
     ad.pcm      =   pcm;

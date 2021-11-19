@@ -36,14 +36,16 @@ public:
 
     //
     void    play_QT();
-    void    play_QT_multi_thread();
 
     int     init();
     int     end();
     int     flush();
 
+#ifdef USE_MT
+    void    play_QT_multi_thread();
     void    video_decode();
     void    audio_decode();
+#endif
 
     //
     void    set_input_file( std::string path );
