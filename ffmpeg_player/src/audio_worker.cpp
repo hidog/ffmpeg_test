@@ -47,8 +47,8 @@ void    AudioWorker::open_audio_output( AudioSetting as )
     //
     if( audio != nullptr )
     {
-        io->close();
         audio->stop();
+        io->close();
         delete audio;
     }
 
@@ -115,8 +115,10 @@ void AudioWorker::run()
     // start play
     audio_play();
 
-    io->close();
     audio->stop();
+    io->close();
+    delete audio;
+    audio = nullptr;
 
     MYLOG( LOG::INFO, "finish audio play." );
 }

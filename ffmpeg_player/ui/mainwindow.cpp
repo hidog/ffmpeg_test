@@ -169,6 +169,7 @@ MainWindow::load_slot()
 void MainWindow::load_file_slot()
 {
     QString file     =   QFileDialog::getOpenFileName( this, tr("select src file"), "D:\\" );
+    MYLOG( LOG::INFO, "load file %s", file.toStdString().c_str() );
     worker->set_src_file(file.toStdString());
 }
 
