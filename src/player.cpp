@@ -147,7 +147,9 @@ int     Player::init()
 
     //std::string filterDesc = "subtitles=filename=../../test.ass:original_size=1280x720";
     //std::string filterDesc = "subtitles=filename='\\D\\:\\\\code\\\\test2.mkv':original_size=1280x720";  // ¦¨¥\ªº½d¨Ò
-    std::string filterDesc = "subtitles=filename='\\D\\:/code/test.ass':original_size=1280x720";  // ¦¨¥\ªº½d¨Ò
+    //std::string filterDesc = "subtitles=filename='\\D\\:/code/test.ass':original_size=1280x720";  // ¦¨¥\ªº½d¨Ò
+    std::string filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080";  // ¦¨¥\ªº½d¨Ò
+
 
     //.arg(subtitleFilename).arg(m_width).arg(m_height);
     //    file:///D:/
@@ -160,7 +162,9 @@ int     Player::init()
     int num = time_base.num;
     int den = time_base.den;
     
-    std::string args = "video_size=1280x720:pix_fmt=0:time_base=1/24000:pixel_aspect=0/1";
+    //std::string args = "video_size=1280x720:pix_fmt=0:time_base=1/24000:pixel_aspect=0/1";
+    std::string args = "video_size=1920x1080:pix_fmt=64:time_base=1/1000:pixel_aspect=1/1";
+                                                         //  num den                nnn ddd   
     //m_width, m_height, videoCodecContext->pix_fmt, time_base.num, time_base.den,
     //videoCodecContext->sample_aspect_ratio.num, videoCodecContext->sample_aspect_ratio.den);
 
@@ -643,7 +647,9 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
                         }
 
                         // 1. Get frame and QImage to show 
-                        QImage  img { 1280, 720, QImage::Format_RGB888 };
+                        //QImage  img { 1280, 720, QImage::Format_RGB888 };
+                        QImage  img { 1920, 1080, QImage::Format_RGB888 };
+
 
                         // 2. Convert and write into image buffer  
                         uint8_t *dst[]  =   { img.bits() };
