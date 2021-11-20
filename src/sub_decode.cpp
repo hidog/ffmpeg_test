@@ -9,10 +9,11 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 
-#include <libswresample/swresample.h>
-
 #include <libavfilter/buffersrc.h>  // use for subtitle
 #include <libavfilter/buffersink.h>
+
+#include <libswscale/swscale.h>
+
 
 } // end extern "C"
 
@@ -234,3 +235,259 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string filterDesc)
     release();
     return true;
 }
+
+
+
+
+/*******************************************************************************
+SubDecode::generate_subtitle_image()
+
+這個程式碼沒執行過, 是從網路複製過來的, 想辦法測試.
+********************************************************************************/
+void    SubDecode::generate_subtitle_image(  AVSubtitle &subtitle )
+{
+    int     i;
+
+    for( i = 0; i < subtitle.num_rects; i++ )
+    {
+        AVSubtitleRect  *sub_rect   =   subtitle.rects[i];
+
+        int     dst_linesize[4];
+        uint8_t *dst_data[4];
+
+        //
+        av_image_alloc( dst_data, dst_linesize, sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA, 1 );
+
+        SwsContext *swsContext  =   sws_getContext( sub_rect->w, sub_rect->h, AV_PIX_FMT_PAL8,
+                                                    sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA,
+                                                    SWS_BILINEAR, nullptr, nullptr, nullptr );
+
+        sws_scale( swsContext, sub_rect->data, sub_rect->linesize, 0, sub_rect->h, dst_data, dst_linesize );
+        sws_freeContext(swsContext);        
+
+        sub_image  =   QImage(dst_data[0], sub_rect->w, sub_rect->h, QImage::Format_RGBA8888).copy();
+        av_freep(&dst_data[0]);
+    }
+}
+
+
+
+
+/*******************************************************************************
+SubDecode::decode_subtitle()
+********************************************************************************/
+int    SubDecode::decode_subtitle( AVPacket* pkt )
+{
+    AVSubtitle  subtitle {0};
+
+    int     got_sub     =   0;
+    int     ret         =   avcodec_decode_subtitle2( dec_ctx, &subtitle, &got_sub, pkt );
+    
+    if( ret >= 0 && got_sub > 0 )
+    {
+        if( got_sub > 0 )
+        {
+            MYLOG( LOG::DEBUG, "decode subtitle.");
+
+            // 代表字幕是圖片格式, 需要產生對應的字幕圖檔.
+            if (subtitle.format == 0)
+                generate_subtitle_image( subtitle );
+
+            avsubtitle_free( &subtitle );
+            return  SUCCESS;
+        }
+        else         
+            return  SUCCESS;  // decode success, but no subtitle.
+    }
+    else
+    {
+        MYLOG( LOG::ERROR, "decode subtitle fail" );
+        return  ERROR;
+    }   
+    
+
+#if 0
+    // 用來輸出訊息的測試程式碼
+    qreal pts = pkt->pts * av_q2d(subStream->time_base);
+    qreal duration = pkt->duration * av_q2d(subStream->time_base);
+
+    // https://tsduck.io/doxy/namespacets.html
+    // 可以用 ts 套件做文字轉換.
+    const char *text = const_int8_ptr(pkt->data);
+    MYLOG( LOG::DEBUG, "pts = %lf, duration = %lf, text = %s", pts, duration, pkt->data );
+#endif
+
+#if 0
+    // 用來輸出訊息的測試程式碼
+    AVSubtitleRect **rects = subtitle.rects;
+    for (int i = 0; i < subtitle.num_rects; i++) 
+    {
+        AVSubtitleRect rect = *rects[i];
+        if (rect.type == SUBTITLE_ASS)                 
+            MYLOG( LOG::DEBUG, "ASS %s", rect.ass)                
+        else if (rect.x == SUBTITLE_TEXT)                 
+            MYLOG( LOG::DEBUG, "TEXT %s", rect.text)
+    }
+#endif
+}
+
+
+
+
+
+
+
+/*******************************************************************************
+SubDecode::get_subtitle_image()
+********************************************************************************/
+QImage  SubDecode::get_subtitle_image()
+{
+    return  sub_image;
+}
+
+
+
+
+
+/*******************************************************************************
+SubDecode::get_subtitle_image()
+
+sws_ctx 先共用, 下一個階段必須移走
+********************************************************************************/
+int     SubDecode::generate_subtitle_image( AVFrame *video_frame, SwsContext *sws_ctx )
+{
+    //v_decoder.output_video_frame_info();
+    //vdata   =   v_decoder.output_video_data();
+
+    //AVFrame *frame = v_decoder.get_frame();
+    //AVFrame *filter_frame = av_frame_alloc();
+
+    int     ret     =   0;   
+
+    ret     =   av_buffersrc_add_frame_flags( buffersrcContext, video_frame, AV_BUFFERSRC_FLAG_KEEP_REF );    
+    if( ret < 0 )
+    {
+        MYLOG( LOG::ERROR, "add frame flag fail." );
+        return  -1;
+    }
+
+    //
+    ret     =   av_buffersink_get_frame( buffersinkContext, frame );    
+    if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF ) 
+        return  0;  // 沒資料,但沒錯誤.
+    else if( ret < 0 )
+    {
+        MYLOG( LOG::ERROR, "get frame fail." );
+        return  -1;
+    }
+    
+    // generate image.
+    // 1. Get frame and QImage to show 
+    sub_image  =   QImage{ video_frame->width, video_frame->height, QImage::Format_RGB888 };  // 未來考慮移走這邊的code, 避免重複初始化.
+    
+    // 2. Convert and write into image buffer  
+    uint8_t *dst[]  =   { sub_image.bits() };
+    int     linesizes[4];
+    
+    //SwsContext      *sws_ctx   =   v_decoder.get_sws_ctx();    
+    
+    av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
+    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
+    
+    av_frame_unref(frame);
+
+
+    // 網路參考的程式碼會用 loop 多次執行, 檢查一下是否真的有這種case. 目前測試都是一次只傳回一張圖
+    ret     =   av_buffersink_get_frame( buffersinkContext, frame );    
+    if( ret >= 0 )
+        MYLOG( LOG::ERROR, "get two data. fail" );
+
+
+    //
+    //vd.index        =   frame_count;
+    //vd.frame        =   img;
+    //vd.timestamp    =   get_timestamp();
+    //vdata.frame = img;
+    //dc->unref_frame();
+    //av_frame_unref(filter_frame);
+    //av_frame_free(&filter_frame);
+    
+    //video_queue.push(vdata);
+    
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 測試切換subtitle的程式碼
+#if 0
+必須加上mutex lock, 不然會出問題
+std::thread *thr = new std::thread( [this]() -> void {
+
+    static int aaaa = 0;
+
+    while(true) 
+    {
+        std::this_thread::sleep_for( std::chrono::seconds(1) );
+        aaaa++;
+
+        // 可以動態切換
+        std::string filterDesc;
+        if( aaaa % 2 == 0 )
+            filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=0";  
+        else
+            filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=1";  
+
+        std::string args = "video_size=1920x1080:pix_fmt=64:time_base=1/1000:pixel_aspect=1/1";
+
+        init_subtitle_filter( buffersrcContext, buffersinkContext,  args,  filterDesc);
+    }
+    } );
+#endif
+
+
+
+// 測試切換subtitle的程式碼
+#if 0
+{
+    static int aaaa = 0;
+
+    // 可以動態切換, 但要做mutex lock
+    std::string filterDesc;
+    if( aaaa % 2 == 0 )
+        filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=0";  
+    else
+        filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=1";  
+
+    std::string args = "video_size=1920x1080:pix_fmt=64:time_base=1/1000:pixel_aspect=1/1";
+
+    init_subtitle_filter( buffersrcContext, buffersinkContext,  args,  filterDesc);
+
+}
+aaaa++;
+#endif
+
+
+
+
+
+
+
+
+

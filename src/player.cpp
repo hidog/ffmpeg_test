@@ -417,109 +417,28 @@ void    Player::play_QT_multi_thread()
 /*******************************************************************************
 Player::int     Player::decode_video_and_audio()
 ********************************************************************************/
-int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
+int     Player::decode( Decode *dc, AVPacket* pkt )
 {
-#if 0
+    int     ret     =   0;
 
     VideoData   vdata;
     AudioData   adata;
+    AVFrame     *video_frame    =   nullptr;
 
-    static int aaaa = 0;
 
-#if 1
+    // 必須對 subtitle 進行decode, 不然 filter 會出錯
     if( pkt->stream_index == demuxer.get_sub_index() )
     {
-#if 1
-        {
-            // 可以動態切換, 但要做mutex lock
-            std::string filterDesc;
-            if( aaaa % 2 == 0 )
-                filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=0";  
-            else
-                filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=1";  
-
-            std::string args = "video_size=1920x1080:pix_fmt=64:time_base=1/1000:pixel_aspect=1/1";
-
-            init_subtitle_filter( buffersrcContext, buffersinkContext,  args,  filterDesc);
-
-        }
-        aaaa++;
-#endif
-
-        //encode_sub
-
-#if 1
-        // 必須decode
-        int got_sub = 0;
-        AVSubtitle subtitle;
-        int ret = avcodec_decode_subtitle2( s_decoder.get_decode_context(), &subtitle, &got_sub, pkt );
-
-        if( ret >= 0 && got_sub )
-        {
-            MYLOG( LOG::DEBUG, "decode subtitle.");
-            avsubtitle_free( &subtitle );
-            return  SUCCESS;
-        }
-#endif
-
-#if 0
-        if (ret >= 0 && got_sub) 
-        {
-            qreal pts = pkt->pts * av_q2d(subStream->time_base);
-            qreal duration = pkt->duration * av_q2d(subStream->time_base);
-
-            //https://tsduck.io/doxy/namespacets.html
-            //const char *text = const_int8_ptr(pkt->data);
-            //MYLOG( LOG::DEBUG, "pts = %lf, duration = %lf, text = %s", pts, duration, pkt->data );
-
-
-            AVSubtitleRect **rects = subtitle.rects;
-            for (int i = 0; i < subtitle.num_rects; i++) 
-            {
-                AVSubtitleRect rect = *rects[i];
-                /*if (rect.type == SUBTITLE_ASS)                 
-                    MYLOG( LOG::DEBUG, "ASS %s", rect.ass)                
-                else if (rect.x == SUBTITLE_TEXT)                 
-                    MYLOG( LOG::DEBUG, "TEXT %s", rect.text)*/
-                    
-            }
-
-            if (subtitle.format == 0)
-            {
-
-                for ( int i = 0; i < subtitle.num_rects; i++) 
-                {
-                    AVSubtitleRect *sub_rect = subtitle.rects[i];
-
-                    int dst_linesize[4];
-                    uint8_t *dst_data[4];
-                    //
-                    av_image_alloc(dst_data, dst_linesize, sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA, 1);
-                    SwsContext *swsContext = sws_getContext( sub_rect->w, sub_rect->h, AV_PIX_FMT_PAL8,
-                                                             sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA,
-                                                             SWS_BILINEAR, nullptr, nullptr, nullptr);
-                    sws_scale(swsContext, sub_rect->data, sub_rect->linesize, 0, sub_rect->h, dst_data, dst_linesize);
-                    sws_freeContext(swsContext);
-                    //這裏也使用RGBA
-
-                    sub_img = QImage(dst_data[0], sub_rect->w, sub_rect->h, QImage::Format_RGBA8888).copy();
-                    av_freep(&dst_data[0]);
-                }
-
-            }
-
-
-        }
-#endif
-
-        //avsubtitle_free( &subtitle );
-        //return  SUCCESS;
+        ret     =   dynamic_cast<SubDecode*>(dc)->decode_subtitle(pkt);
+        return  ret;
     }
-#endif
+    else if( pkt->stream_index == 3 )
+    {
+        return  1; // 還沒支援multi decode的時候先這樣處理
+    }
 
-
-
-    int     ret     =   dc->send_packet(pkt);
+    //
+    ret     =   dc->send_packet(pkt);
     if( ret >= 0 )
     {
         while(true)
@@ -530,107 +449,35 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
 
             if( pkt->stream_index == demuxer.get_video_index() )
             {
-                //v_decoder.output_video_frame_info();
-                vdata   =   v_decoder.output_video_data();
-
-                AVFrame *frame = v_decoder.get_frame();
-                //AVFrame *filter_frame = av_frame_alloc();
-
-                if (true )
+                if( demuxer.exist_subtitle() == true )
                 {
-                    auto filter_frame = av_frame_alloc();
-
-                    if (av_buffersrc_add_frame_flags( buffersrcContext, frame, AV_BUFFERSRC_FLAG_KEEP_REF) < 0)
-                    {
-                        av_frame_unref(filter_frame);
-                        av_frame_free(&filter_frame);
-                        break;
-                        //throw std::runtime_error("Could not feed the frame into the filtergraph.");                    
-                    }
-                        //break;
-
-                    int cccc = 0;
-
-                    while (true) 
-                    {
-
-                        ret = av_buffersink_get_frame(buffersinkContext, filter_frame);
-
-                        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) 
-                        {
-                            av_frame_unref(filter_frame);
-                            av_frame_free(&filter_frame);
-                            break;
-                        }
-                        else if (ret < 0) 
-                        {
-                            av_frame_unref(filter_frame);
-                            av_frame_free(&filter_frame);
-                            printf("Error");
-                            break;
-                        }
-
-                        if( cccc > 0 )
-                            MYLOG( LOG::DEBUG, "run this loop more than once");
-                        cccc++;
-
-                        // 1. Get frame and QImage to show 
-                        //QImage  img { 1280, 720, QImage::Format_RGB888 };
-                        QImage  img { 1920, 1080, QImage::Format_RGB888 };
-
-
-                        // 2. Convert and write into image buffer  
-                        uint8_t *dst[]  =   { img.bits() };
-                        int     linesizes[4];
-
-                        SwsContext      *sws_ctx   =   v_decoder.get_sws_ctx();
-
-
-                        av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, filter_frame->width );
-                        sws_scale( sws_ctx, filter_frame->data, (const int*)filter_frame->linesize, 0, filter_frame->height, dst, linesizes );
-
-                        //
-                        //vd.index        =   frame_count;
-                        //vd.frame        =   img;
-                        //vd.timestamp    =   get_timestamp();
-                        vdata.frame = img;
-                        //dc->unref_frame();
-                        av_frame_unref(filter_frame);
-                        av_frame_free(&filter_frame);
-
-                        video_queue.push(vdata);
-                    }
+                    auto sws_ctx    =   v_decoder.get_sws_ctx();
+                    video_frame     =   v_decoder.get_frame();
+                    s_decoder.generate_subtitle_image( video_frame, sws_ctx );  // 這邊規劃需要重購, 看怎麼寫比較好
+                    vdata.frame = s_decoder.get_subtitle_image();
+                    vdata.index = v_decoder.get_frame_count();
+                    vdata.timestamp = v_decoder.get_timestamp();
                 }
-
-                //av_frame_unref(frame);
-                dc->unref_frame();
-
-
-                //video_queue.push(vdata);
-                //dc->unref_frame();
+                else
+                {
+                    vdata   =   v_decoder.output_video_data();
+                    video_queue.push(vdata);
+                }
             }
             else if( pkt->stream_index == demuxer.get_audio_index() )
             {
                 //a_decoder.output_audio_frame_info();
                 adata   =   a_decoder.output_audio_data();
                 audio_queue.push(adata);
-                dc->unref_frame();
+            }
+            else            
+                MYLOG( LOG::WARN, "un handle stream type." );            
 
-            }
-            else if( pkt->stream_index == demuxer.get_sub_index() )
-            {
-                MYLOG( LOG::DEBUG, "test" );
-            }
-            else
-            {
-                MYLOG( LOG::ERROR, "test" );
-            }
-
-            //dc->unref_frame();
+            dc->unref_frame();
         }
     }
 
-#endif
+
     return  SUCCESS;
 }
 
@@ -649,33 +496,7 @@ void    Player::play_QT()
     Decode      *dc     =   nullptr;
     AVFrame     *frame  =   nullptr;
 
-
-#if 0
-    必須加上mutex lock, 不然會出問題
-    std::thread *thr = new std::thread( [this]() -> void {
-
-            static int aaaa = 0;
-
-            while(true) 
-            {
-                std::this_thread::sleep_for( std::chrono::seconds(1) );
-                aaaa++;
-
-                // 可以動態切換
-                std::string filterDesc;
-                if( aaaa % 2 == 0 )
-                    filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=0";  
-                else
-                    filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=1";  
-
-                std::string args = "video_size=1920x1080:pix_fmt=64:time_base=1/1000:pixel_aspect=1/1";
-
-                init_subtitle_filter( buffersrcContext, buffersinkContext,  args,  filterDesc);
-            }
-        } );
-#endif
-
-
+    //
     while( true ) 
     {
         while( video_queue.size() > 50 )        
@@ -694,15 +515,13 @@ void    Player::play_QT()
             dc  =   dynamic_cast<Decode*>(&s_decoder);  
         else
         {
-            MYLOG( LOG::ERROR, "stream type not handle.");
+            //MYLOG( LOG::WARN, "stream type not handle.");
             demuxer.unref_packet();
             continue;
         }
 
         //
-        decode_video_and_audio( dc, pkt );
-
-        //
+        decode( dc, pkt );       
         demuxer.unref_packet();
     }
 

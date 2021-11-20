@@ -54,7 +54,7 @@ public:
     //
     void    set_input_file( std::string path );
     bool    is_set_input_file();
-    int     decode_video_and_audio( Decode *dc, AVPacket* pkt );
+    int     decode( Decode *dc, AVPacket* pkt );
 
     VideoSetting    get_video_setting();
     AudioSetting    get_audio_setting();

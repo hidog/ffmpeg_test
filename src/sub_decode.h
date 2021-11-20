@@ -9,6 +9,8 @@ struct AVCodec;
 struct AVCodecContext;
 struct AVFilterContext;
 struct AVFilterGraph;
+struct AVSubtitle;
+struct SwsContext;
 
 enum AVSampleFormat;
 
@@ -35,6 +37,9 @@ public:
     int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx ) override;
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
 
+    int     decode_subtitle( AVPacket* pkt );
+    void    generate_subtitle_image( AVSubtitle &subtitle );
+
     //
     int     init() override;
     int     end() override;
@@ -45,16 +50,22 @@ public:
     //
     SubData   output_sub_data();
 
-    bool open_subtitle_filter( std::string args, std::string filterDesc );
+    bool    open_subtitle_filter( std::string args, std::string filterDesc );
+
+
+    int     generate_subtitle_image( AVFrame *video_frame, SwsContext *sws_ctx );
+    QImage  get_subtitle_image();
 
 
 private:
 
     AVMediaType     type;    
-    //SwrContext      *swr_ctx    =   nullptr; // use for chagne audio data to play.
+    //SwrContext      *swr_ctx    =   nullptr;
 
     AVFilterContext *buffersrcContext = nullptr;
     AVFilterContext *buffersinkContext = nullptr;
+
+    QImage  sub_image;     // 如果字幕資料是圖片, 將字幕資料轉成圖片後暫存在這邊
 
 };
 

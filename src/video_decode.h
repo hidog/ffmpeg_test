@@ -42,6 +42,8 @@ public:
 
     AVPixelFormat   get_pix_fmt();
 
+    int get_frame_count();
+
 
 #ifdef FFMPEG_TEST
     int     output_jpg_by_QT();

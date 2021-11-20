@@ -66,6 +66,7 @@ public:
     int     get_audio_index();
     int     get_sub_index();
 
+    bool    exist_subtitle();
 
     //
     AVPacket*   get_packet();
@@ -117,6 +118,8 @@ private:
     //bool    use_bsf     =   false;
 
     std::string     src_file;
+
+    bool    exist_subtitle_flag     =   true;
 };
 
 
