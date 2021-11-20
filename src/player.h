@@ -80,7 +80,7 @@ private:
     Demux           demuxer;
     VideoDecode     v_decoder;
     AudioDecode     a_decoder;
-    SubDecode       s_decoder;
+    SubDecode       s_decoder, s_decoder_2;
 
     std::string     src_filename;
 
