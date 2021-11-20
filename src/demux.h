@@ -73,6 +73,9 @@ public:
     AVFormatContext*    get_format_context();
 
 
+    std::pair<std::string,std::string> get_subtitle_param();
+
+
 private:
     // video
     int     width       =   0;

@@ -22,8 +22,7 @@ DLL_API std::queue<VideoData>* get_video_queue();
 
 class AVPacket;
 class AVStream;
-class AVFilterContext;
-class AVFilterGraph;
+
 
 
 
@@ -93,8 +92,7 @@ private:
     QImage  sub_img;
 
 
-    AVFilterContext *buffersrcContext = nullptr;
-    AVFilterContext *buffersinkContext = nullptr;
+
 
 
     int subtitleOpened = 0;

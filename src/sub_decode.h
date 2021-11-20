@@ -7,7 +7,14 @@
 struct SwrContext;
 struct AVCodec;
 struct AVCodecContext;
+struct AVFilterContext;
+struct AVFilterGraph;
+
 enum AVSampleFormat;
+
+
+
+
 
 
 // 試著要轉sample rate但沒成功,有機會再試試看.
@@ -38,10 +45,16 @@ public:
     //
     SubData   output_sub_data();
 
+    bool init_subtitle_filter( std::string args, std::string filterDesc );
+
+
 private:
 
     AVMediaType     type;    
     //SwrContext      *swr_ctx    =   nullptr; // use for chagne audio data to play.
+
+    AVFilterContext *buffersrcContext = nullptr;
+    AVFilterContext *buffersinkContext = nullptr;
 
 };
 

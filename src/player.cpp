@@ -14,8 +14,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 
 #include <libswscale/swscale.h>
-#include <libavfilter/buffersrc.h>  // use for subtitle
-#include <libavfilter/buffersink.h>
+
 
 
 } // end extern "C"
@@ -24,80 +23,6 @@ extern "C" {
 static std::queue<AudioData> audio_queue;
 static std::queue<VideoData> video_queue;
 
-
-
-bool init_subtitle_filter( AVFilterContext * &buffersrcContext, AVFilterContext * &buffersinkContext, std::string args, std::string filterDesc)
-{
-    const AVFilter *buffersrc = avfilter_get_by_name("buffer");
-    const AVFilter *buffersink = avfilter_get_by_name("buffersink");
-    AVFilterInOut *output = avfilter_inout_alloc();
-    AVFilterInOut *input = avfilter_inout_alloc();
-    AVFilterGraph *filterGraph = avfilter_graph_alloc();
-    //filterGraph = avfilter_graph_alloc();
-
-    // lambda operator, 省略了傳入參數括號. 
-    auto release = [&output, &input] 
-    {
-        avfilter_inout_free(&output);
-        avfilter_inout_free(&input);
-    };
-
-    if (!output || !input || !filterGraph) 
-    {
-        release();
-        return false;
-    }
-
-    // Crear filtro de entrada, necesita arg
-    if (avfilter_graph_create_filter(&buffersrcContext, buffersrc, "in", args.c_str(), nullptr, filterGraph) < 0) 
-    {
-        //qDebug() << "Has Error: line =" << __LINE__;
-        MYLOG( LOG::ERROR, "error" );
-        release();
-        return false;
-    }
-
-    if (avfilter_graph_create_filter(&buffersinkContext, buffersink, "out", nullptr, nullptr, filterGraph) < 0) 
-    {
-        //qDebug() << "Has Error: line =" << __LINE__;
-        MYLOG( LOG::ERROR, "error" );
-        release();
-        return false;
-    }
-
-    output->name = av_strdup("in");
-    output->next = nullptr;
-    output->pad_idx = 0;
-    output->filter_ctx = buffersrcContext;
-
-    input->name = av_strdup("out");
-    input->next = nullptr;
-    input->pad_idx = 0;
-    input->filter_ctx = buffersinkContext;
-
-    int ret = avfilter_graph_parse_ptr(filterGraph, filterDesc.c_str(), &input, &output, nullptr);
-    if (ret < 0) 
-    {
-        //qDebug() << "Has Error: line =" << __LINE__;
-        MYLOG( LOG::DEBUG, "error" );
-        release();
-        return false;
-    }
-
-    char *str = avfilter_graph_dump( filterGraph, NULL );
-    MYLOG( LOG::DEBUG, "options = %s", str );
-
-    if (avfilter_graph_config(filterGraph, nullptr) < 0) 
-    {
-        //qDebug() << "Has Error: line =" << __LINE__;
-        MYLOG( LOG::DEBUG, "error" );
-        release();
-        return false;
-    }
-
-    release();
-    return true;
-}
 
 
 
@@ -147,35 +72,8 @@ int     Player::init()
     ret     =   s_decoder.init();
     assert( ret == SUCCESS );
 
-    // for test
-    subStream = fmt_ctx->streams[as_idx];
-
-
-    //std::string filterDesc = "subtitles=filename=../../test.ass:original_size=1280x720";
-    //std::string filterDesc = "subtitles=filename='\\D\\:\\\\code\\\\test2.mkv':original_size=1280x720";  // 成功的範例
-    //std::string filterDesc = "subtitles=filename='\\D\\:/code/test.ass':original_size=1280x720";  // 成功的範例
-    std::string filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=1";  // 成功的範例
-
-
-    //.arg(subtitleFilename).arg(m_width).arg(m_height);
-    //    file:///D:/
-
-    int ddd = v_decoder.get_decode_context()->sample_aspect_ratio.den;
-    int nnn = v_decoder.get_decode_context()->sample_aspect_ratio.num;
-    //pixel_aspect need equal ddd/nnn
-
-    AVRational time_base = fmt_ctx->streams[vs_idx]->time_base;
-    int num = time_base.num;
-    int den = time_base.den;
-    
-    //std::string args = "video_size=1280x720:pix_fmt=0:time_base=1/24000:pixel_aspect=0/1";
-    std::string args = "video_size=1920x1080:pix_fmt=64:time_base=1/1000:pixel_aspect=1/1";
-                                                         //  num den                nnn ddd   
-    //m_width, m_height, videoCodecContext->pix_fmt, time_base.num, time_base.den,
-    //videoCodecContext->sample_aspect_ratio.num, videoCodecContext->sample_aspect_ratio.den);
-
-
-    subtitleOpened = init_subtitle_filter(buffersrcContext, buffersinkContext, args, filterDesc );
+    // if exist subtitle, open it.
+    std::pair<std::string,std::string>  subtitle_param = demuxer.get_subtitle_param();
 
 
 
@@ -520,6 +418,8 @@ Player::int     Player::decode_video_and_audio()
 ********************************************************************************/
 int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
 {
+#if 0
+
     VideoData   vdata;
     AudioData   adata;
 
@@ -729,6 +629,7 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
         }
     }
 
+#endif
     return  SUCCESS;
 }
 

@@ -11,6 +11,9 @@ extern "C" {
 
 #include <libswresample/swresample.h>
 
+#include <libavfilter/buffersrc.h>  // use for subtitle
+#include <libavfilter/buffersink.h>
+
 } // end extern "C"
 
 
@@ -81,26 +84,6 @@ SubDecode::init()
 ********************************************************************************/
 int     SubDecode::init()
 {
-#if 0
-    sample_rate     =   dec_ctx->sample_rate;
-    sample_fmt      =   dec_ctx->sample_fmt;
-    channel_layout  =   dec_ctx->channel_layout;
-
-    assert( dec_ctx->sample_fmt == AV_SAMPLE_FMT_FLTP ); // 如果遇到不同的  在看是不是要調整audio output的sample size
-
-    // 試著想要改變 sample rate, 但沒成功.                                                  
-    // S16 改 S32, 需要修改pcm的部分. 需要找時間研究
-    swr_ctx     =   swr_alloc_set_opts( swr_ctx, 
-                                        av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16, sample_rate,           // output
-                                        dec_ctx->channel_layout, dec_ctx->sample_fmt, dec_ctx->sample_rate,         // input
-                                        NULL, NULL );
-    swr_init(swr_ctx);
-
-    MYLOG( LOG::INFO, "audio sample format = %s", av_get_sample_fmt_name(sample_fmt) );
-    MYLOG( LOG::INFO, "audio channel = %d, sample rate = %d", channel_layout, sample_rate );
-
-    Decode::init();
-#endif
     return  SUCCESS;
 }
 
@@ -165,4 +148,87 @@ SubData   SubDecode::output_sub_data()
 #endif
     SubData     sd { 0 };
     return  sd;
+}
+
+
+
+
+
+
+
+
+/*******************************************************************************
+SubDecode::init_subtitle_filter()
+********************************************************************************/
+bool SubDecode::init_subtitle_filter( std::string args, std::string filterDesc)
+{
+    const AVFilter *buffersrc = avfilter_get_by_name("buffer");
+    const AVFilter *buffersink = avfilter_get_by_name("buffersink");
+    AVFilterInOut *output = avfilter_inout_alloc();
+    AVFilterInOut *input = avfilter_inout_alloc();
+    AVFilterGraph *filterGraph = avfilter_graph_alloc();
+    //filterGraph = avfilter_graph_alloc();
+
+    // lambda operator, 省略了傳入參數括號. 
+    auto release = [&output, &input] 
+    {
+        avfilter_inout_free(&output);
+        avfilter_inout_free(&input);
+    };
+
+    if (!output || !input || !filterGraph) 
+    {
+        release();
+        return false;
+    }
+
+    // Crear filtro de entrada, necesita arg
+    if (avfilter_graph_create_filter(&buffersrcContext, buffersrc, "in", args.c_str(), nullptr, filterGraph) < 0) 
+    {
+        //qDebug() << "Has Error: line =" << __LINE__;
+        MYLOG( LOG::ERROR, "error" );
+        release();
+        return false;
+    }
+
+    if (avfilter_graph_create_filter(&buffersinkContext, buffersink, "out", nullptr, nullptr, filterGraph) < 0) 
+    {
+        //qDebug() << "Has Error: line =" << __LINE__;
+        MYLOG( LOG::ERROR, "error" );
+        release();
+        return false;
+    }
+
+    output->name = av_strdup("in");
+    output->next = nullptr;
+    output->pad_idx = 0;
+    output->filter_ctx = buffersrcContext;
+
+    input->name = av_strdup("out");
+    input->next = nullptr;
+    input->pad_idx = 0;
+    input->filter_ctx = buffersinkContext;
+
+    int ret = avfilter_graph_parse_ptr(filterGraph, filterDesc.c_str(), &input, &output, nullptr);
+    if (ret < 0) 
+    {
+        //qDebug() << "Has Error: line =" << __LINE__;
+        MYLOG( LOG::DEBUG, "error" );
+        release();
+        return false;
+    }
+
+    char *str = avfilter_graph_dump( filterGraph, NULL );
+    MYLOG( LOG::DEBUG, "options = %s", str );
+
+    if (avfilter_graph_config(filterGraph, nullptr) < 0) 
+    {
+        //qDebug() << "Has Error: line =" << __LINE__;
+        MYLOG( LOG::DEBUG, "error" );
+        release();
+        return false;
+    }
+
+    release();
+    return true;
 }

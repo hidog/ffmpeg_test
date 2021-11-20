@@ -141,7 +141,7 @@ int     Demux::sub_info()
     int     i;
 
     //
-    ss_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, 2, 3, NULL, 0 );
+    ss_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0 );
     if( ss_idx < 0 )
     {
         MYLOG( LOG::INFO, "no subtitle stream" );
@@ -362,6 +362,50 @@ int     Demux::stream_info()
 
     return  SUCCESS;
 }
+
+
+
+/*******************************************************************************
+Demux::get_subtitle_param()
+********************************************************************************/
+std::pair<std::string,std::string> Demux::get_subtitle_param()
+{
+#if 0
+    // for test
+    subStream = fmt_ctx->streams[as_idx];
+
+
+    //std::string filterDesc = "subtitles=filename=../../test.ass:original_size=1280x720";
+    //std::string filterDesc = "subtitles=filename='\\D\\:\\\\code\\\\test2.mkv':original_size=1280x720";  // 成功的範例
+    //std::string filterDesc = "subtitles=filename='\\D\\:/code/test.ass':original_size=1280x720";  // 成功的範例
+    std::string filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=1";  // 成功的範例
+
+
+                                                                                                                   //.arg(subtitleFilename).arg(m_width).arg(m_height);
+                                                                                                                   //    file:///D:/
+
+    int ddd = v_decoder.get_decode_context()->sample_aspect_ratio.den;
+    int nnn = v_decoder.get_decode_context()->sample_aspect_ratio.num;
+    //pixel_aspect need equal ddd/nnn
+
+    AVRational time_base = fmt_ctx->streams[vs_idx]->time_base;
+    int num = time_base.num;
+    int den = time_base.den;
+
+    //std::string args = "video_size=1280x720:pix_fmt=0:time_base=1/24000:pixel_aspect=0/1";
+    std::string args = "video_size=1920x1080:pix_fmt=64:time_base=1/1000:pixel_aspect=1/1";
+    //  num den                nnn ddd   
+    //m_width, m_height, videoCodecContext->pix_fmt, time_base.num, time_base.den,
+    //videoCodecContext->sample_aspect_ratio.num, videoCodecContext->sample_aspect_ratio.den);
+
+
+    subtitleOpened = init_subtitle_filter(buffersrcContext, buffersinkContext, args, filterDesc );
+
+#endif
+
+    return std::pair<std::string,std::string>();
+}
+
 
 
 
