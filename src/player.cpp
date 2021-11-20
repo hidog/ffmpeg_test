@@ -453,10 +453,15 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
                 {
                     auto sws_ctx    =   v_decoder.get_sws_ctx();
                     video_frame     =   v_decoder.get_frame();
-                    s_decoder.generate_subtitle_image( video_frame, sws_ctx );  // 這邊規劃需要重購, 看怎麼寫比較好
+                    int rrr = s_decoder.generate_subtitle_image( video_frame, sws_ctx );  // 這邊規劃需要重購, 看怎麼寫比較好
+                    if( rrr < 0 )
+                        break;
+
                     vdata.frame = s_decoder.get_subtitle_image();
                     vdata.index = v_decoder.get_frame_count();
                     vdata.timestamp = v_decoder.get_timestamp();
+
+                    video_queue.push(vdata);
                 }
                 else
                 {

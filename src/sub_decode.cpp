@@ -397,11 +397,12 @@ int     SubDecode::generate_subtitle_image( AVFrame *video_frame, SwsContext *sw
     
     av_frame_unref(frame);
 
+    return 1;
 
     // 網路參考的程式碼會用 loop 多次執行, 檢查一下是否真的有這種case. 目前測試都是一次只傳回一張圖
-    ret     =   av_buffersink_get_frame( buffersinkContext, frame );    
+    /*ret     =   av_buffersink_get_frame( buffersinkContext, frame );    
     if( ret >= 0 )
-        MYLOG( LOG::ERROR, "get two data. fail" );
+        MYLOG( LOG::ERROR, "get two data. fail" );*/
 
 
     //
