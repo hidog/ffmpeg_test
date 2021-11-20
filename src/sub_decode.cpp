@@ -85,6 +85,7 @@ SubDecode::init()
 ********************************************************************************/
 int     SubDecode::init()
 {
+    Decode::init();
     return  SUCCESS;
 }
 
