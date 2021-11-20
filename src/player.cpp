@@ -115,7 +115,7 @@ int     Player::init()
     int     ret     =   -1;
     int     vs_idx  =   -1;
     int     as_idx  =   -1;
-    int     ss_idx  =   -1, ss_idx_2 = 3;
+    int     ss_idx  =   -1;
 
     AVFormatContext *fmt_ctx    =   nullptr;
 
@@ -130,29 +130,22 @@ int     Player::init()
     vs_idx  =   demuxer.get_video_index();
     as_idx  =   demuxer.get_audio_index();
     ss_idx  =   demuxer.get_sub_index();
-    ss_idx_2  =   demuxer.get_sub_index_2();
 
+    //
     ret     =   v_decoder.open_codec_context( vs_idx, fmt_ctx );
     assert( ret == SUCCESS );
     ret     =   a_decoder.open_codec_context( as_idx, fmt_ctx );
     assert( ret == SUCCESS );
     ret     =   s_decoder.open_codec_context( ss_idx, fmt_ctx );
     assert( ret == SUCCESS );
-    
-
-    ret     =   s_decoder_2.open_codec_context( ss_idx_2, fmt_ctx );
-
-
-
+ 
+    //
     ret     =   v_decoder.init();
     assert( ret == SUCCESS );
     ret     =   a_decoder.init();
     assert( ret == SUCCESS );
     ret     =   s_decoder.init();
     assert( ret == SUCCESS );
-
-    s_decoder_2.init();
-
 
     // for test
     subStream = fmt_ctx->streams[as_idx];
@@ -533,20 +526,7 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
     static int aaaa = 0;
 
 #if 1
-    if( pkt->stream_index == demuxer.get_sub_index_2() )
-    {
-        int got_sub = 0;
-        AVSubtitle subtitle;
-        int ret = avcodec_decode_subtitle2( s_decoder_2.get_decode_context(), &subtitle, &got_sub, pkt );
-
-        if( ret >= 0 && got_sub )
-        {
-            MYLOG( LOG::DEBUG, "decode subtitle.");
-            avsubtitle_free( &subtitle );
-            return  SUCCESS;
-        }
-    }
-    else if( pkt->stream_index == demuxer.get_sub_index() )
+    if( pkt->stream_index == demuxer.get_sub_index() )
     {
 #if 1
         {
@@ -740,11 +720,6 @@ int     Player::decode_video_and_audio( Decode *dc, AVPacket* pkt )
             {
                 MYLOG( LOG::DEBUG, "test" );
             }
-            else if( pkt->stream_index == demuxer.get_sub_index_2() )
-            {
-                MYLOG( LOG::DEBUG, "test" );
-                //MYLOG( LOG::ERROR, "stream type not handle.")
-            }
             else
             {
                 MYLOG( LOG::ERROR, "test" );
@@ -815,8 +790,6 @@ void    Player::play_QT()
             dc  =   dynamic_cast<Decode*>(&a_decoder);
         else if( pkt->stream_index == demuxer.get_sub_index() )
             dc  =   dynamic_cast<Decode*>(&s_decoder);  
-        else if( pkt->stream_index == demuxer.get_sub_index_2() )
-            dc = dynamic_cast<Decode*>(&s_decoder_2);
         else
         {
             MYLOG( LOG::ERROR, "stream type not handle.");
