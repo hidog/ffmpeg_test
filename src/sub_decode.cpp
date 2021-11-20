@@ -160,8 +160,10 @@ SubData   SubDecode::output_sub_data()
 /*******************************************************************************
 SubDecode::init_subtitle_filter()
 ********************************************************************************/
-bool SubDecode::init_subtitle_filter( std::string args, std::string filterDesc)
+bool SubDecode::open_subtitle_filter( std::string args, std::string filterDesc)
 {
+    int     ret     =   0;
+
     const AVFilter *buffersrc = avfilter_get_by_name("buffer");
     const AVFilter *buffersink = avfilter_get_by_name("buffersink");
     AVFilterInOut *output = avfilter_inout_alloc();
@@ -183,15 +185,15 @@ bool SubDecode::init_subtitle_filter( std::string args, std::string filterDesc)
     }
 
     // Crear filtro de entrada, necesita arg
-    if (avfilter_graph_create_filter(&buffersrcContext, buffersrc, "in", args.c_str(), nullptr, filterGraph) < 0) 
+    ret     =   avfilter_graph_create_filter( &buffersrcContext, buffersrc, "in", args.c_str(), nullptr, filterGraph );
+    if( ret < 0 ) 
     {
-        //qDebug() << "Has Error: line =" << __LINE__;
-        MYLOG( LOG::ERROR, "error" );
         release();
+        MYLOG( LOG::ERROR, "error" );
         return false;
     }
 
-    if (avfilter_graph_create_filter(&buffersinkContext, buffersink, "out", nullptr, nullptr, filterGraph) < 0) 
+    if( avfilter_graph_create_filter( &buffersinkContext, buffersink, "out", nullptr, nullptr, filterGraph) < 0 )
     {
         //qDebug() << "Has Error: line =" << __LINE__;
         MYLOG( LOG::ERROR, "error" );
@@ -209,11 +211,11 @@ bool SubDecode::init_subtitle_filter( std::string args, std::string filterDesc)
     input->pad_idx = 0;
     input->filter_ctx = buffersinkContext;
 
-    int ret = avfilter_graph_parse_ptr(filterGraph, filterDesc.c_str(), &input, &output, nullptr);
+    ret     =   avfilter_graph_parse_ptr(filterGraph, filterDesc.c_str(), &input, &output, nullptr);
     if (ret < 0) 
     {
         //qDebug() << "Has Error: line =" << __LINE__;
-        MYLOG( LOG::DEBUG, "error" );
+        MYLOG( LOG::ERROR, "error" );
         release();
         return false;
     }

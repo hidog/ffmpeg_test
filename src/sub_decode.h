@@ -45,7 +45,7 @@ public:
     //
     SubData   output_sub_data();
 
-    bool init_subtitle_filter( std::string args, std::string filterDesc );
+    bool open_subtitle_filter( std::string args, std::string filterDesc );
 
 
 private:

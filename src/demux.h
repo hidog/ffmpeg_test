@@ -10,6 +10,7 @@
 struct AVPacket;
 struct AVFormatContext;
 enum   AVCodecID;
+enum   AVPixelFormat;
 
 
 /*
@@ -73,7 +74,7 @@ public:
     AVFormatContext*    get_format_context();
 
 
-    std::pair<std::string,std::string> get_subtitle_param();
+    std::pair<std::string,std::string> get_subtitle_param( std::string src_file, AVPixelFormat pix_fmt );
 
 
 private:
@@ -90,6 +91,11 @@ private:
     //int     sample_size     =   0;
 
     AVCodecID   a_codec_id;
+
+    // subtitle
+    int     current_subtitle_index  =   0;
+
+    //
 
     //
     AVFormatContext *fmt_ctx    =   nullptr;

@@ -73,8 +73,6 @@ private:
     bool    v_thr_start     =   false,
             a_thr_start     =   false;
 
-    AVStream    *subStream = nullptr;
-
 
     Demux           demuxer;
     VideoDecode     v_decoder;

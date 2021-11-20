@@ -73,8 +73,9 @@ int     Player::init()
     assert( ret == SUCCESS );
 
     // if exist subtitle, open it.
-    std::pair<std::string,std::string>  subtitle_param = demuxer.get_subtitle_param();
-
+    // 這邊有執行順序問題, 不能隨便更改執行順序
+    std::pair<std::string,std::string>  sub_param   =   demuxer.get_subtitle_param( src_filename, v_decoder.get_pix_fmt() );
+    s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
 
 
 

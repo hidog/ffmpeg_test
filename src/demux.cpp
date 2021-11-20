@@ -1,6 +1,7 @@
 #include "demux.h"
 
 #include "tool.h"
+#include <sstream>
 
 extern "C" {
 
@@ -368,21 +369,50 @@ int     Demux::stream_info()
 /*******************************************************************************
 Demux::get_subtitle_param()
 ********************************************************************************/
-std::pair<std::string,std::string> Demux::get_subtitle_param()
+std::pair<std::string,std::string> Demux::get_subtitle_param( std::string src_file, AVPixelFormat pix_fmt )
 {
-#if 0
-    // for test
-    subStream = fmt_ctx->streams[as_idx];
+    std::stringstream   ss;
+    std::string     in_param, out_param;;
 
+    int     sar_num     =   fmt_ctx->streams[vs_idx]->sample_aspect_ratio.num;
+    int     sar_den     =   fmt_ctx->streams[vs_idx]->sample_aspect_ratio.den;
+
+    int     tb_num      =   fmt_ctx->streams[vs_idx]->time_base.num;
+    int     tb_den      =   fmt_ctx->streams[vs_idx]->time_base.den;
+
+    ss << "video_size=" << width << "x" << height << ":pix_fmt=" << static_cast<int>(pix_fmt) 
+        << ":time_base=" << tb_num << "/" << tb_den << ":pixel_aspect=" << sar_num << "/" << sar_den;
+
+    in_param   =   ss.str();
+
+    MYLOG( LOG::INFO, "out = %s", in_param.c_str() );
+
+    ss.str("");
+    ss.clear();   
+
+    // make filename param. 留意絕對路徑的格式, 不能亂改, 會造成錯誤.
+    // 這邊需要加入判斷, 如果檔案裏面有字幕軌, 就開啟檔案. 如果沒有, 就搜尋並開啟 subtitle.   
+    std::string     filename_param  =   "\\";
+    filename_param  +=  src_file;
+    filename_param.insert( 2, 1, '\\' );
+
+    ss << "subtitles=filename='" << filename_param << "':original_size=" << width 
+        << "x" << height << ":stream_index=" << current_subtitle_index;
+
+    out_param    =   ss.str();
+
+    MYLOG( LOG::INFO, "in = %s", in_param.c_str() );
+
+
+    return  std::make_pair( in_param, out_param );
+
+#if 0
 
     //std::string filterDesc = "subtitles=filename=../../test.ass:original_size=1280x720";
     //std::string filterDesc = "subtitles=filename='\\D\\:\\\\code\\\\test2.mkv':original_size=1280x720";  // 成功的範例
     //std::string filterDesc = "subtitles=filename='\\D\\:/code/test.ass':original_size=1280x720";  // 成功的範例
     std::string filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=1";  // 成功的範例
 
-
-                                                                                                                   //.arg(subtitleFilename).arg(m_width).arg(m_height);
-                                                                                                                   //    file:///D:/
 
     int ddd = v_decoder.get_decode_context()->sample_aspect_ratio.den;
     int nnn = v_decoder.get_decode_context()->sample_aspect_ratio.num;
@@ -398,12 +428,10 @@ std::pair<std::string,std::string> Demux::get_subtitle_param()
     //m_width, m_height, videoCodecContext->pix_fmt, time_base.num, time_base.den,
     //videoCodecContext->sample_aspect_ratio.num, videoCodecContext->sample_aspect_ratio.den);
 
-
     subtitleOpened = init_subtitle_filter(buffersrcContext, buffersinkContext, args, filterDesc );
 
 #endif
 
-    return std::pair<std::string,std::string>();
 }
 
 

@@ -43,17 +43,19 @@ void    Worker::run()
 
     player.init();
 
-    //
+    // send video setting to UI
     is_set_video    =   false;
     vs              =   player.get_video_setting();
     emit video_setting_singal(vs);
 
-    //
+    // send audio setting to UI
     as  =   player.get_audio_setting();
     aw->open_audio_output(as);
 
     while( is_set_video == false )
         SLEEP_10MS;
+
+    // need implement, send subtitle setting to UI.
 
     //
     is_play_end     =   false;
