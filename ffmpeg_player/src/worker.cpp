@@ -36,6 +36,8 @@ Worker::run()
 ********************************************************************************/
 void    Worker::run()  
 {
+    while(true) {
+
     VideoSetting    vs;
     AudioSetting    as;
     AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
@@ -69,6 +71,8 @@ void    Worker::run()
     is_play_end     =   true;
 
     MYLOG( LOG::INFO, "finish decode." );
+
+    }
 }
 
 

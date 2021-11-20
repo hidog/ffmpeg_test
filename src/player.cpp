@@ -72,6 +72,14 @@ int     Player::init()
     ret     =   s_decoder.init();
     assert( ret == SUCCESS );
 
+    //
+    int     width   =   demuxer.get_video_width();  // 這邊改成從 video decoder讀取設定
+    int     height  =   demuxer.get_video_height();
+    AVPixelFormat   pix_fmt     =   v_decoder.get_pix_fmt();
+    s_decoder.init_sub_image( width, height );
+    s_decoder.init_sws_ctx( width, height, pix_fmt );
+
+
     // if exist subtitle, open it.
     // 這邊有執行順序問題, 不能隨便更改執行順序
     std::pair<std::string,std::string>  sub_param   =   demuxer.get_subtitle_param( src_filename, v_decoder.get_pix_fmt() );
@@ -425,17 +433,53 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
     AudioData   adata;
     AVFrame     *video_frame    =   nullptr;
 
-
     // 必須對 subtitle 進行decode, 不然 filter 會出錯
     if( pkt->stream_index == demuxer.get_sub_index() )
     {
-        ret     =   dynamic_cast<SubDecode*>(dc)->decode_subtitle(pkt);
+        ret     =   s_decoder.decode_subtitle(pkt);
         return  ret;
     }
-    else if( pkt->stream_index == 3 )
-    {
+    else if( pkt->stream_index == 3 )    
         return  1; // 還沒支援multi decode的時候先這樣處理
+
+    // handle video stream with subtitle
+    if( demuxer.exist_subtitle() == true && pkt->stream_index == demuxer.get_video_index() )
+    {
+        ret     =   v_decoder.send_packet(pkt);
+        if( ret >= 0 )
+        {
+            while(true)
+            {
+                ret     =   dc->recv_frame();
+                if( ret <= 0 )
+                    break;
+
+                video_frame     =   v_decoder.get_frame();
+                ret     =   s_decoder.send_video_frame( video_frame );
+
+                while(true)
+                {
+                    ret     =   s_decoder.render_subtitle();
+                    if( ret <= 0 )
+                        break;
+
+                    vdata.frame         =   s_decoder.get_subtitle_image();
+                    vdata.index         =   v_decoder.get_frame_count();
+                    vdata.timestamp     =   v_decoder.get_timestamp();
+
+                    video_queue.push(vdata);
+                }
+
+                v_decoder.unref_frame();
+            }
+        }
+
+        return  1;
     }
+
+
+    //實際運行的時候遇到一些隨機crash. (記憶體出錯)
+    //參考原本的code再改一下流程
 
     //
     ret     =   dc->send_packet(pkt);
@@ -449,25 +493,9 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
 
             if( pkt->stream_index == demuxer.get_video_index() )
             {
-                if( demuxer.exist_subtitle() == true )
-                {
-                    auto sws_ctx    =   v_decoder.get_sws_ctx();
-                    video_frame     =   v_decoder.get_frame();
-                    int rrr = s_decoder.generate_subtitle_image( video_frame, sws_ctx );  // 這邊規劃需要重購, 看怎麼寫比較好
-                    if( rrr < 0 )
-                        break;
-
-                    vdata.frame = s_decoder.get_subtitle_image();
-                    vdata.index = v_decoder.get_frame_count();
-                    vdata.timestamp = v_decoder.get_timestamp();
-
-                    video_queue.push(vdata);
-                }
-                else
-                {
-                    vdata   =   v_decoder.output_video_data();
-                    video_queue.push(vdata);
-                }
+                vdata   =   v_decoder.output_video_data();
+                video_queue.push(vdata);
+                
             }
             else if( pkt->stream_index == demuxer.get_audio_index() )
             {
@@ -553,6 +581,10 @@ int    Player::flush()
     VideoData   vdata;
     AudioData   adata;
     Decode      *dc     =   nullptr;
+    AVFrame     *video_frame    =   nullptr;
+
+    // flush subtitle
+    //s_decoder.decode_subtitle(nullptr);
 
     // flush video
     dc      =   dynamic_cast<Decode*>(&v_decoder);
@@ -565,8 +597,35 @@ int    Player::flush()
             if( ret <= 0 )
                 break;
 
-            vdata   =   v_decoder.output_video_data();
-            video_queue.push(vdata);           
+            if( demuxer.exist_subtitle() == true )
+            {
+                // 這塊思考有沒有辦法做整理
+                while(true)
+                {
+                    video_frame =   dc->get_frame();
+                    ret         =   s_decoder.send_video_frame( video_frame );
+                    if( ret < 0 )
+                        break;
+
+                    while(true)
+                    {
+                        ret     =   s_decoder.render_subtitle();
+                        if( ret <= 0 )
+                            break;
+
+                        vdata.frame         =   s_decoder.get_subtitle_image();
+                        vdata.index         =   v_decoder.get_frame_count();
+                        vdata.timestamp     =   v_decoder.get_timestamp();
+
+                        video_queue.push(vdata);
+                    }
+                }
+            }
+            else
+            {
+                vdata   =   v_decoder.output_video_data();
+                video_queue.push(vdata);
+            } 
             
             dc->unref_frame();
         }
@@ -606,6 +665,7 @@ int     Player::end()
 {
     v_decoder.end();
     a_decoder.end();
+    s_decoder.end();
     demuxer.end();
 
     return  SUCCESS;

@@ -222,6 +222,7 @@ VideoDecode::end()
 int     VideoDecode::end()
 {
     av_free( video_dst_data[0] );
+    sws_freeContext( sws_ctx );
     Decode::end();
     return  SUCCESS;
 }
@@ -312,11 +313,3 @@ int64_t     VideoDecode::get_timestamp()
 
 
 
-
-/*******************************************************************************
-VideoDecode::get_frame_count()
-********************************************************************************/
-int VideoDecode::get_frame_count()
-{
-    return  frame_count;
-}

@@ -85,8 +85,76 @@ SubDecode::init()
 ********************************************************************************/
 int     SubDecode::init()
 {
+    filterGraph = avfilter_graph_alloc();
+
     Decode::init();
     return  SUCCESS;
+}
+
+
+
+
+/*******************************************************************************
+SubDecode::send_video_frame()
+********************************************************************************/
+int SubDecode::send_video_frame( AVFrame *video_frame )
+{
+    int ret =   av_buffersrc_add_frame_flags( buffersrcContext, video_frame, AV_BUFFERSRC_FLAG_KEEP_REF );    
+    if( ret < 0 )    
+        MYLOG( LOG::ERROR, "add frame flag fail." );
+    return  ret;
+}
+
+
+
+
+/*******************************************************************************
+SubDecode::init_sub_image()
+********************************************************************************/
+void    SubDecode::init_sub_image( int width, int height )
+{
+    sub_image  =   QImage{ width, height, QImage::Format_RGB888 };  // 未來考慮移走這邊的code, 避免重複初始化.
+}
+
+
+
+
+
+/*******************************************************************************
+SubDecode::init_sws_ctx()
+********************************************************************************/
+int SubDecode::init_sws_ctx( int width, int height, AVPixelFormat pix_fmt )
+{
+    sws_ctx     =   sws_getContext( width, height, pix_fmt, width, height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);   
+    return 1;
+}
+
+
+
+/*******************************************************************************
+SubDecode::render_subtitle()
+********************************************************************************/
+int SubDecode::render_subtitle()
+{
+    int ret     =   av_buffersink_get_frame( buffersinkContext, frame );    
+    if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF ) 
+        return  0;  // 沒資料,但沒錯誤.
+    else if( ret < 0 )
+    {
+        MYLOG( LOG::ERROR, "get frame fail." );
+        return  -1;
+    }
+
+    // render subtitle and generate image.
+    uint8_t *dst[]  =   { sub_image.bits() };
+    int     linesizes[4];
+
+    //
+    av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
+    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
+
+    av_frame_unref(frame);
+    return 1;
 }
 
 
@@ -98,6 +166,12 @@ SubDecode::end()
 ********************************************************************************/
 int     SubDecode::end()
 {
+    avfilter_free( buffersrcContext );
+    avfilter_free( buffersinkContext );
+    sws_freeContext( sws_ctx );
+    avfilter_graph_free(&filterGraph);
+
+
     Decode::end();
     return  SUCCESS;
 }
@@ -170,7 +244,7 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string filterDesc)
     const AVFilter *buffersink = avfilter_get_by_name("buffersink");
     AVFilterInOut *output = avfilter_inout_alloc();
     AVFilterInOut *input = avfilter_inout_alloc();
-    AVFilterGraph *filterGraph = avfilter_graph_alloc();
+    //AVFilterGraph *filterGraph = avfilter_graph_alloc();
     //filterGraph = avfilter_graph_alloc();
 
     // lambda operator, 省略了傳入參數括號. 
@@ -178,6 +252,7 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string filterDesc)
     {
         avfilter_inout_free(&output);
         avfilter_inout_free(&input);
+        //avfilter_graph_free(&filterGraph);
     };
 
     if (!output || !input || !filterGraph) 

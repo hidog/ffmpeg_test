@@ -77,7 +77,6 @@ public:
 
     std::pair<std::string,std::string> get_subtitle_param( std::string src_file, AVPixelFormat pix_fmt );
 
-
 private:
     // video
     int     width       =   0;

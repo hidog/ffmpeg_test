@@ -43,6 +43,9 @@ public:
     int     recv_frame();
     void    unref_frame();
 
+    int get_frame_count();
+
+
     //
     AVFrame*        get_frame();
     AVMediaType     get_decode_context_type();

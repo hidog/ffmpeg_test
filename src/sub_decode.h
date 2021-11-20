@@ -12,7 +12,9 @@ struct AVFilterGraph;
 struct AVSubtitle;
 struct SwsContext;
 
-enum AVSampleFormat;
+
+//enum AVSampleFormat;
+enum AVPixelFormat;
 
 
 
@@ -44,6 +46,8 @@ public:
     int     init() override;
     int     end() override;
 
+    void    init_sub_image( int width, int height );
+
     //
     void    output_sub_frame_info();
 
@@ -57,15 +61,23 @@ public:
     QImage  get_subtitle_image();
 
 
+    int send_video_frame( AVFrame *video_frame );
+    int render_subtitle();
+    int init_sws_ctx( int width, int height, AVPixelFormat pix_fmt );
+
 private:
 
     AVMediaType     type;    
-    //SwrContext      *swr_ctx    =   nullptr;
 
     AVFilterContext *buffersrcContext = nullptr;
     AVFilterContext *buffersinkContext = nullptr;
+    AVFilterGraph *filterGraph = nullptr; //avfilter_graph_alloc();
+
 
     QImage  sub_image;     // 如果字幕資料是圖片, 將字幕資料轉成圖片後暫存在這邊
+
+    SwsContext      *sws_ctx   =   nullptr;  
+
 
 };
 

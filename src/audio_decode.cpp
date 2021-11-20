@@ -106,6 +106,8 @@ AudioDecode::end()
 ********************************************************************************/
 int     AudioDecode::end()
 {
+    swr_close(swr_ctx);
+
     Decode::end();
     return  SUCCESS;
 }
