@@ -78,9 +78,9 @@ int     AudioDecode::init()
 {
     sample_rate     =   dec_ctx->sample_rate;
     sample_fmt      =   dec_ctx->sample_fmt;
-    channel_layout  =   dec_ctx->channel_layout;
+    channel_layout  =   dec_ctx->channel_layout;  //dec_ctx->channels;
 
-    assert( dec_ctx->sample_fmt == AV_SAMPLE_FMT_FLTP ); // 如果遇到不同的  在看是不是要調整audio output的sample size
+    //assert( dec_ctx->sample_fmt == AV_SAMPLE_FMT_FLTP ); // 如果遇到不同的  在看是不是要調整audio output的sample size
 
     // 試著想要改變 sample rate, 但沒成功.                                                  
     // S16 改 S32, 需要修改pcm的部分. 需要找時間研究

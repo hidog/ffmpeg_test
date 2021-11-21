@@ -49,6 +49,7 @@ QStringList Worker::get_subtitle_files( std::string filename )
 
     QStringList filter;
     filter.push_back("*.ass");
+    filter.push_back("*.ssa");
     //filter.push_back("*.sub");
 
 

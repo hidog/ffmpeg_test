@@ -377,7 +377,7 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
     {
         if( got_sub > 0 )
         {
-            MYLOG( LOG::DEBUG, "decode subtitle.");
+            //MYLOG( LOG::DEBUG, "decode subtitle.");
 
             // 代表字幕是圖片格式, 需要產生對應的字幕圖檔.
             if (subtitle.format == 0)
