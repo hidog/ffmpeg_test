@@ -24,6 +24,11 @@ static std::queue<AudioData> audio_queue;
 static std::queue<VideoData> video_queue;
 
 
+std::mutex a_mtx;
+std::mutex v_mtx;
+
+std::mutex& get_a_mtx() { return a_mtx; }
+std::mutex& get_v_mtx() { return v_mtx; }
 
 
 /*******************************************************************************
@@ -467,7 +472,11 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
                     vdata.index         =   v_decoder.get_frame_count();
                     vdata.timestamp     =   v_decoder.get_timestamp();
 
+                    v_mtx.lock();
                     video_queue.push(vdata);
+                    v_mtx.unlock();
+
+                    s_decoder.unref_frame();
                 }
 
                 v_decoder.unref_frame();
@@ -494,14 +503,17 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
             if( pkt->stream_index == demuxer.get_video_index() )
             {
                 vdata   =   v_decoder.output_video_data();
+                v_mtx.lock();
                 video_queue.push(vdata);
-                
+                v_mtx.unlock();
             }
             else if( pkt->stream_index == demuxer.get_audio_index() )
             {
                 //a_decoder.output_audio_frame_info();
                 adata   =   a_decoder.output_audio_data();
+                a_mtx.lock();
                 audio_queue.push(adata);
+                a_mtx.unlock();
             }
             else            
                 MYLOG( LOG::WARN, "un handle stream type." );            
@@ -597,13 +609,14 @@ int    Player::flush()
             if( ret <= 0 )
                 break;
 
-            if( demuxer.exist_subtitle() == true )
+            //if( demuxer.exist_subtitle() == true )
+            if(0)
             {
                 // 這塊思考有沒有辦法做整理
                 while(true)
                 {
                     video_frame =   dc->get_frame();
-                    ret         =   s_decoder.send_video_frame( video_frame );
+                    ret         =   s_decoder.flush( video_frame );
                     if( ret < 0 )
                         break;
 
@@ -617,17 +630,25 @@ int    Player::flush()
                         vdata.index         =   v_decoder.get_frame_count();
                         vdata.timestamp     =   v_decoder.get_timestamp();
 
+                        v_mtx.lock();
                         video_queue.push(vdata);
+                        v_mtx.unlock();
+
+                        s_decoder.unref_frame();
                     }
+
+                    dc->unref_frame();
+
                 }
             }
             else
             {
                 vdata   =   v_decoder.output_video_data();
                 video_queue.push(vdata);
+                dc->unref_frame();
+
             } 
             
-            dc->unref_frame();
         }
     }
 
@@ -643,7 +664,10 @@ int    Player::flush()
                 break;
 
             adata   =   a_decoder.output_audio_data();
+
+            a_mtx.lock();
             audio_queue.push(adata);
+            a_mtx.unlock();
 
             dc->unref_frame();
         }

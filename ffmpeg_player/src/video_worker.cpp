@@ -57,7 +57,7 @@ void VideoWorker::run()
 
 
 
-
+#include "player.h"
 
 
 /*******************************************************************************
@@ -65,6 +65,7 @@ VideoWorker::video_play()
 ********************************************************************************/
 void VideoWorker::video_play()
 {
+    std::mutex &v_mtx = get_v_mtx();
     // 這邊沒有print, 會造成 release build 無作用
     MYLOG( LOG::INFO, "start play video" );
 
@@ -100,8 +101,11 @@ void VideoWorker::video_play()
             continue;
         }
 
+        v_mtx.lock();
         VideoData vd    =   v_queue->front();
         v_queue->pop();
+        v_mtx.unlock();
+
 
         while(true)
         {

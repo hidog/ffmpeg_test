@@ -64,6 +64,8 @@ public:
     int send_video_frame( AVFrame *video_frame );
     int render_subtitle();
     int init_sws_ctx( int width, int height, AVPixelFormat pix_fmt );
+    int flush( AVFrame *video_frame );
+
 
 private:
 

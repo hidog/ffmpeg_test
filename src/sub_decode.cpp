@@ -107,6 +107,20 @@ int SubDecode::send_video_frame( AVFrame *video_frame )
 
 
 
+/*******************************************************************************
+SubDecode::flush()
+********************************************************************************/
+int SubDecode::flush( AVFrame *video_frame )
+{
+    int ret =   av_buffersrc_add_frame_flags( buffersrcContext, video_frame, AV_BUFFERSRC_FLAG_PUSH );    
+    if( ret < 0 )    
+        MYLOG( LOG::ERROR, "add frame flag fail." );
+    return  ret;
+}
+
+
+
+
 
 /*******************************************************************************
 SubDecode::init_sub_image()
@@ -153,7 +167,7 @@ int SubDecode::render_subtitle()
     av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
     sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
 
-    av_frame_unref(frame);
+    //av_frame_unref(frame);
     return 1;
 }
 
