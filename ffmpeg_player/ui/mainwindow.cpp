@@ -9,6 +9,7 @@
 #include <QVideoSurfaceFormat>
 
 #include <QFileDialog>
+#include <QDebug>
 
 #include "player.h"
 #include <mutex>
@@ -173,9 +174,9 @@ MainWindow::load_slot()
 ********************************************************************************/
 void MainWindow::load_file_slot()
 {
-    QString file     =   QFileDialog::getOpenFileName( this, tr("select src file"), "D:\\" );
-    MYLOG( LOG::INFO, "load file %s", file.toStdString().c_str() );
-    worker->set_src_file(file.toStdString());
+    QString filename     =   QFileDialog::getOpenFileName( this, tr("select src file"), "D:\\" );
+    MYLOG( LOG::INFO, "load file %s", filename.toStdString().c_str() );
+    worker->set_src_file(filename.toStdString());
 }
 
 

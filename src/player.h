@@ -61,6 +61,10 @@ public:
     VideoSetting    get_video_setting();
     AudioSetting    get_audio_setting();
 
+
+    void set_sub_file( std::string str );
+
+
     //
     std::function<void(QImage)> output_video_frame_func;
     std::function<void(AudioData)> output_audio_pcm_func;
@@ -83,16 +87,18 @@ private:
 
     std::string     src_filename;
 
+#ifdef USE_MT
     std::queue<AVPacket*>   video_pkt_queue,
                             audio_pkt_queue;
 
     std::thread     *video_decode_thr   =   nullptr,
                     *audio_decode_thr   =   nullptr;
+#endif
 
     QImage  sub_img;
 
 
-
+    std::string sub_name = "";
 
 
     int subtitleOpened = 0;

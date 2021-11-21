@@ -429,7 +429,7 @@ std::pair<std::string,std::string> Demux::get_subtitle_param( std::string src_fi
 
     in_param   =   ss.str();
 
-    MYLOG( LOG::INFO, "out = %s", in_param.c_str() );
+    MYLOG( LOG::INFO, "in = %s", in_param.c_str() );
 
     ss.str("");
     ss.clear();   
@@ -445,7 +445,7 @@ std::pair<std::string,std::string> Demux::get_subtitle_param( std::string src_fi
 
     out_param    =   ss.str();
 
-    MYLOG( LOG::INFO, "in = %s", in_param.c_str() );
+    MYLOG( LOG::INFO, "out = %s", out_param.c_str() );
 
 
     return  std::make_pair( in_param, out_param );

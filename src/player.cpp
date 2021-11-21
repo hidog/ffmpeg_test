@@ -79,6 +79,8 @@ int     Player::init()
 
     ss_idx  =   demuxer.get_sub_index();
 
+    std::string sub_src; // = src_filename;
+
     // handle subtitle
     if( ss_idx > 0 )
     {
@@ -86,13 +88,18 @@ int     Player::init()
         ret     =   s_decoder.open_codec_context( ss_idx, fmt_ctx );
         ret     =   s_decoder.init();
         assert( ret == SUCCESS );
+        sub_src = src_filename;
     }
     else
     {
-        // need handle load from file.
-        //ret = open_subtitle_from_file();
-        // if( ret ) 
-        //      demuxer.set_exist_subtitle(true);       
+        if( sub_name.empty() == false )
+        {
+            demuxer.set_exist_subtitle(true);
+            ret     =   s_decoder.open_codec_context( ss_idx, fmt_ctx );
+            ret     =   s_decoder.init();
+            assert( ret == SUCCESS );
+            sub_src = sub_name;
+        }     
     }
 
     if( demuxer.exist_subtitle() == true )
@@ -103,7 +110,7 @@ int     Player::init()
         // if exist subtitle, open it.
         // 這邊有執行順序問題, 不能隨便更改執行順序
         // 需要增加從外掛檔案讀取字幕的功能        
-        std::pair<std::string,std::string>  sub_param   =   demuxer.get_subtitle_param( src_filename, v_decoder.get_pix_fmt() );
+        std::pair<std::string,std::string>  sub_param   =   demuxer.get_subtitle_param( sub_src, v_decoder.get_pix_fmt() );
         s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
     }
 
@@ -121,7 +128,6 @@ std::queue<AudioData>* get_audio_queue()
 {
     return  &audio_queue;
 }
-
 
 
 
@@ -145,6 +151,14 @@ Player::Player()
 
 
 
+
+/*******************************************************************************
+Player::set_sub_file()
+********************************************************************************/
+void Player::set_sub_file( std::string str )
+{
+    sub_name = str;
+}
 
 
 /*******************************************************************************
@@ -631,46 +645,10 @@ int    Player::flush()
             if( ret <= 0 )
                 break;
 
-            //if( demuxer.exist_subtitle() == true )
-            if(0)
-            {
-                // 這塊思考有沒有辦法做整理
-                while(true)
-                {
-                    video_frame =   dc->get_frame();
-                    ret         =   s_decoder.flush( video_frame );
-                    if( ret < 0 )
-                        break;
-
-                    while(true)
-                    {
-                        ret     =   s_decoder.render_subtitle();
-                        if( ret <= 0 )
-                            break;
-
-                        vdata.frame         =   s_decoder.get_subtitle_image();
-                        vdata.index         =   v_decoder.get_frame_count();
-                        vdata.timestamp     =   v_decoder.get_timestamp();
-
-                        v_mtx.lock();
-                        video_queue.push(vdata);
-                        v_mtx.unlock();
-
-                        s_decoder.unref_frame();
-                    }
-
-                    dc->unref_frame();
-
-                }
-            }
-            else
-            {
-                vdata   =   v_decoder.output_video_data();
-                video_queue.push(vdata);
-                dc->unref_frame();
-
-            } 
-            
+            // flush 階段本來想處理 subtitle, 但會跳錯誤, 還沒找到解決的做法
+            vdata   =   v_decoder.output_video_data();
+            video_queue.push(vdata);
+            dc->unref_frame();  
         }
     }
 
@@ -713,6 +691,8 @@ int     Player::end()
     a_decoder.end();
     s_decoder.end();
     demuxer.end();
+
+    sub_name = "";
 
     return  SUCCESS;
 }
