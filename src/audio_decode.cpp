@@ -84,7 +84,7 @@ int     AudioDecode::init()
 
     // 試著想要改變 sample rate, 但沒成功.                                                  
     // S16 改 S32, 需要修改pcm的部分. 需要找時間研究
-    swr_ctx     =   swr_alloc_set_opts( swr_ctx, 
+    swr_ctx     =   swr_alloc_set_opts( swr_ctx,
                                         av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16, sample_rate,           // output
                                         dec_ctx->channel_layout, dec_ctx->sample_fmt, dec_ctx->sample_rate,         // input
                                         NULL, NULL );

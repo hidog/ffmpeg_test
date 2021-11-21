@@ -241,18 +241,18 @@ VideoData   VideoDecode::output_video_data()
     VideoData   vd;
 
     // 1. Get frame and QImage to show 
-    //QImage  img { width, height, QImage::Format_RGB888 };
+    QImage  img { width, height, QImage::Format_RGB888 };
 
     // 2. Convert and write into image buffer  
-    //uint8_t *dst[]  =   { img.bits() };
-    //int     linesizes[4];
+    uint8_t *dst[]  =   { img.bits() };
+    int     linesizes[4];
 
-    //av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
-    //sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
+    av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
+    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
 
     //
     vd.index        =   frame_count;
-    //vd.frame        =   img;
+    vd.frame        =   img;
     vd.timestamp    =   get_timestamp();
 
     return  vd;
@@ -273,6 +273,8 @@ VideoDecode::get_timestamp()
 AVRational avr = {1, AV_TIME_BASE};
 
 需要拿浮動 fps 的影片做測試, 應該會出問題
+
+https://blog.csdn.net/chinabinlang/article/details/49885765
 ********************************************************************************/
 int64_t     VideoDecode::get_timestamp()
 {
@@ -280,8 +282,9 @@ int64_t     VideoDecode::get_timestamp()
 
     // MYLOG( LOG::DEBUG, "frame rate = %lf", dec_ctx->framerate ); 印出的數字不是 fps
 
-    int     num     =   dec_ctx->time_base.num;
-    int     den     =   dec_ctx->time_base.den;
+    //int     num     =   dec_ctx->time_base.num;
+    //int     den     =   dec_ctx->time_base.den;
+
     double  base_ms =   1000.f;  // 表示單位為 mili sec
 
     //int     interlaced  =   frame->interlaced_frame;
@@ -299,8 +302,10 @@ int64_t     VideoDecode::get_timestamp()
 
         https://blog.csdn.net/chinabinlang/article/details/49885765
     */
-    //ts = base_ms * frame_count * 2 * num / den;  
-    ts = base_ms * frame_count *  tpf * num / den;  
+    ts = base_ms * frame_count * den / num;   // 改抓其他參數但必須顛倒. 參考 r_frame_rate
+
+    //ts = base_ms * frame_count * num / den;   // 改從其他位置抓num, den, 但這塊程式碼應該會需要修改
+    //ts = base_ms * frame_count *  tpf * num / den;  
 
 
     //MYLOG( LOG::DEBUG, "pts = %d", frame->pts );
@@ -312,4 +317,4 @@ int64_t     VideoDecode::get_timestamp()
 
 
 
-
+ 

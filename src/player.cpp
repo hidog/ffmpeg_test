@@ -60,6 +60,12 @@ int     Player::init()
     vs_idx  =   demuxer.get_video_index();
     as_idx  =   demuxer.get_audio_index();
 
+    // fot test
+    v_decoder.num = fmt_ctx->streams[vs_idx]->r_frame_rate.num;
+    v_decoder.den = fmt_ctx->streams[vs_idx]->r_frame_rate.den;
+
+
+
     //
     ret     =   v_decoder.open_codec_context( vs_idx, fmt_ctx );
     assert( ret == SUCCESS );

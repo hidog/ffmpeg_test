@@ -44,6 +44,8 @@ public:
 
 
 
+    int num, den;
+
 
 #ifdef FFMPEG_TEST
     int     output_jpg_by_QT();
