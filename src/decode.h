@@ -60,6 +60,9 @@ protected:
 
     int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type );
 
+    std::map<int,AVCodecContext*>   dec_map;
+    int current_stream_idx = -1;
+
     AVCodecContext  *dec_ctx    =   nullptr;
     AVFrame         *frame      =   nullptr;
 

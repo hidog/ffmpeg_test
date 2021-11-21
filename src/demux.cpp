@@ -136,19 +136,19 @@ int    Demux::init()
 Demux::sub_info()
 
 https://www.jianshu.com/p/89f2da631e16
+
+實際上不必解開多個字幕軌, 有空再研究.
 ********************************************************************************/
 int     Demux::sub_info()
-{
-    int     i;
-
-    //
+{  
+    // 這邊需要改成loop, 判斷有幾個音軌,並且呈現在UI上.
     ss_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0 );
     if( ss_idx < 0 )
     {
-        MYLOG( LOG::INFO, "no subtitle stream" );
+        MYLOG( LOG::INFO, "no subtitle stream" );        
         return  SUCCESS;
     }
-
+    
     //
     AVStream    *sub_stream   =   fmt_ctx->streams[ss_idx];
     if( sub_stream == nullptr )
@@ -156,11 +156,11 @@ int     Demux::sub_info()
         MYLOG( LOG::INFO, "this stream has no sub stream" );
         return  SUCCESS;
     }
-
+    
     //
     AVCodecID   codec_id    =   fmt_ctx->streams[ss_idx]->codecpar->codec_id;
     MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(codec_id) );
-
+    
     // 測試用 未來需要能掃描 metadata, 並且秀出對應的 sub title, audio title.
     AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)fmt_ctx->streams[ss_idx]->metadata, "title", NULL, AV_DICT_MATCH_CASE );
     MYLOG( LOG::DEBUG, "title %s", dic->value );
@@ -171,7 +171,13 @@ int     Demux::sub_info()
 
 
 
-
+/*******************************************************************************
+Demux::set_exist_subtitle()
+********************************************************************************/
+void    Demux::set_exist_subtitle( bool flag )
+{
+    exist_subtitle_flag     =   flag;
+}
 
 
 
@@ -179,6 +185,8 @@ int     Demux::sub_info()
 
 /*******************************************************************************
 Demux::video_info()
+
+NOTE: 假設影片只有一個視訊軌,先不處理多重視訊軌的問題.
 ********************************************************************************/
 int     Demux::video_info()
 {
@@ -191,6 +199,9 @@ int     Demux::video_info()
         MYLOG( LOG::INFO, "this stream has no video stream" );
         return  SUCCESS;
     }
+
+    //if( fmt_ctx->streams[vs_idx]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
+      //  printf("Test");
 
     //
     AVCodecID   v_codec_id    =   fmt_ctx->streams[vs_idx]->codecpar->codec_id;
@@ -249,6 +260,8 @@ int     Demux::video_info()
 
 /*******************************************************************************
 Demux::audio_info()
+
+遇到的時候再來處理多重音軌的問題
 ********************************************************************************/
 int     Demux::audio_info()
 {
@@ -352,6 +365,20 @@ int     Demux::stream_info()
     }
 
     MYLOG( LOG::INFO, "nb_streams = %d", fmt_ctx->nb_streams );
+
+
+    int vc = 0, ac = 0, sc = 0;
+    for( int i = 0; i < fmt_ctx->nb_streams; i++ )
+    {
+        if( fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
+            vc++;
+        else if( fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO )
+            ac++;
+        else if( fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE )
+            sc++;
+    }
+    if( vc > 1 || ac > 1 )    
+        MYLOG( LOG::ERROR, "multi video or audio."); // 未來需要處理多重音軌/視訊軌的問題. 理論上不太會遇到多重視訊軌.   
 
     //
     video_info();

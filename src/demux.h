@@ -67,6 +67,7 @@ public:
     int     get_sub_index();
 
     bool    exist_subtitle();
+    void    set_exist_subtitle( bool flag );
 
     //
     AVPacket*   get_packet();
@@ -96,8 +97,6 @@ private:
     int     current_subtitle_index  =   0;
 
     //
-
-    //
     AVFormatContext *fmt_ctx    =   nullptr;
     AVPacket        *pkt        =   nullptr;
                     //*pkt_bsf    =   nullptr;    
@@ -118,7 +117,7 @@ private:
 
     std::string     src_file;
 
-    bool    exist_subtitle_flag     =   true;
+    bool    exist_subtitle_flag     =   false;
 };
 
 

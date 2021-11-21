@@ -75,7 +75,6 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
 {
     int         ret =   0;
     AVStream    *st =   nullptr;
-
     AVCodec     *dec    =   nullptr;
 
     //

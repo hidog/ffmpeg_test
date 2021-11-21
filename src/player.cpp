@@ -59,38 +59,53 @@ int     Player::init()
     fmt_ctx =   demuxer.get_format_context();
     vs_idx  =   demuxer.get_video_index();
     as_idx  =   demuxer.get_audio_index();
-    ss_idx  =   demuxer.get_sub_index();
 
     //
     ret     =   v_decoder.open_codec_context( vs_idx, fmt_ctx );
     assert( ret == SUCCESS );
     ret     =   a_decoder.open_codec_context( as_idx, fmt_ctx );
     assert( ret == SUCCESS );
-    ret     =   s_decoder.open_codec_context( ss_idx, fmt_ctx );
-    assert( ret == SUCCESS );
- 
+
     //
     ret     =   v_decoder.init();
     assert( ret == SUCCESS );
     ret     =   a_decoder.init();
     assert( ret == SUCCESS );
-    ret     =   s_decoder.init();
-    assert( ret == SUCCESS );
 
-    //
+    //    
     int     width   =   demuxer.get_video_width();  // 這邊改成從 video decoder讀取設定
     int     height  =   demuxer.get_video_height();
     AVPixelFormat   pix_fmt     =   v_decoder.get_pix_fmt();
-    s_decoder.init_sub_image( width, height );
-    s_decoder.init_sws_ctx( width, height, pix_fmt );
 
+    ss_idx  =   demuxer.get_sub_index();
 
-    // if exist subtitle, open it.
-    // 這邊有執行順序問題, 不能隨便更改執行順序
-    std::pair<std::string,std::string>  sub_param   =   demuxer.get_subtitle_param( src_filename, v_decoder.get_pix_fmt() );
-    s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
+    // handle subtitle
+    if( ss_idx > 0 )
+    {
+        demuxer.set_exist_subtitle(true);
+        ret     =   s_decoder.open_codec_context( ss_idx, fmt_ctx );
+        ret     =   s_decoder.init();
+        assert( ret == SUCCESS );
+    }
+    else
+    {
+        // need handle load from file.
+        //ret = open_subtitle_from_file();
+        // if( ret ) 
+        //      demuxer.set_exist_subtitle(true);       
+    }
 
+    if( demuxer.exist_subtitle() == true )
+    {
+        s_decoder.init_sub_image( width, height );
+        s_decoder.init_sws_ctx( width, height, pix_fmt );
 
+        // if exist subtitle, open it.
+        // 這邊有執行順序問題, 不能隨便更改執行順序
+        // 需要增加從外掛檔案讀取字幕的功能        
+        std::pair<std::string,std::string>  sub_param   =   demuxer.get_subtitle_param( src_filename, v_decoder.get_pix_fmt() );
+        s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
+    }
 
     return SUCCESS;
 }
@@ -444,8 +459,8 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
         ret     =   s_decoder.decode_subtitle(pkt);
         return  ret;
     }
-    else if( pkt->stream_index == 3 )    
-        return  1; // 還沒支援multi decode的時候先這樣處理
+    //else if( pkt->stream_index == 3 )    
+       // return  1; // 還沒支援multi decode的時候先這樣處理
 
     // handle video stream with subtitle
     if( demuxer.exist_subtitle() == true && pkt->stream_index == demuxer.get_video_index() )
@@ -484,6 +499,13 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
         }
 
         return  1;
+    }
+
+
+    if( pkt->stream_index != demuxer.get_video_index() && pkt->stream_index != demuxer.get_audio_index() )
+    {
+        // 未來再看要不要改成多重decode
+        return 1;
     }
 
 

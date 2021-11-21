@@ -36,7 +36,7 @@ Worker::run()
 ********************************************************************************/
 void    Worker::run()  
 {
-    while(true) {
+    //while(true) {
 
         VideoSetting    vs;
         AudioSetting    as;
@@ -74,9 +74,9 @@ void    Worker::run()
 
 
         // 應該要做處理,判斷其他兩個thread結束後,才跑下一個loop
-        // 暫時先省略
-        std::this_thread::sleep_for( std::chrono::seconds(10) );
-    }
+        // 暫時先省略       
+        //std::this_thread::sleep_for( std::chrono::seconds(10) );
+    //}
 }
 
 
