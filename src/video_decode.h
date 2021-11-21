@@ -38,6 +38,12 @@ public:
 
     VideoData   output_video_data();
 
+    SwsContext* get_sws_ctx() { return sws_ctx; }
+
+    AVPixelFormat   get_pix_fmt();
+
+
+
 
 #ifdef FFMPEG_TEST
     int     output_jpg_by_QT();

@@ -10,6 +10,7 @@
 struct AVPacket;
 struct AVFormatContext;
 enum   AVCodecID;
+enum   AVPixelFormat;
 
 
 /*
@@ -41,15 +42,19 @@ public:
     int     demux();
     int     end();
 
+#ifdef USE_MT
     std::pair<int,AVPacket*>    demux_multi_thread();
     void    collect_packet( AVPacket *_pkt );
-
+#endif
 
     //
     int     open_input( std::string str );
     int     stream_info();
     int     video_info();
     int     audio_info();
+    int     sub_info();
+
+
 
     int     get_video_width();
     int     get_video_height();
@@ -59,6 +64,10 @@ public:
     //
     int     get_video_index();
     int     get_audio_index();
+    int     get_sub_index();
+
+    bool    exist_subtitle();
+    void    set_exist_subtitle( bool flag );
 
     //
     AVPacket*   get_packet();
@@ -66,6 +75,8 @@ public:
 
     AVFormatContext*    get_format_context();
 
+
+    std::pair<std::string,std::string> get_subtitle_param( std::string src_file, AVPixelFormat pix_fmt );
 
 private:
     // video
@@ -82,6 +93,9 @@ private:
 
     AVCodecID   a_codec_id;
 
+    // subtitle
+    int     current_subtitle_index  =   0;
+
     //
     AVFormatContext *fmt_ctx    =   nullptr;
     AVPacket        *pkt        =   nullptr;
@@ -89,16 +103,21 @@ private:
     //AVBSFContext    *v_bsf_ctx  =   nullptr,;
 
     // use for multi-thread
-    AVPacket*               pkt_array[1000]  =   {nullptr};  
+#ifdef USE_MT
+    AVPacket*               pkt_array[10]  =   {nullptr};  
     std::queue<AVPacket*>   pkt_queue;
     std::mutex              pkt_mtx; 
+#endif
 
     //
     int     vs_idx      =   -1;         // video stream index
     int     as_idx      =   -1;         // audio stream index
+    int     ss_idx      =   -1;         // sub stream index
     //bool    use_bsf     =   false;
 
     std::string     src_file;
+
+    bool    exist_subtitle_flag     =   false;
 };
 
 

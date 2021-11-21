@@ -117,6 +117,8 @@ void AudioWorker::run()
 
     io->close();
     audio->stop();
+    delete audio;
+    audio = nullptr;
 
     MYLOG( LOG::INFO, "finish audio play." );
 }
@@ -124,7 +126,7 @@ void AudioWorker::run()
 
 
 
-
+//extern std::mutex a_mtx;
 
 
 
@@ -134,6 +136,8 @@ AudioWorker::audio_play()
 void AudioWorker::audio_play()
 {
     MYLOG( LOG::INFO, "start play audio" );
+
+    std::mutex& a_mtx = get_a_mtx();
     
     AudioData   ad;
     std::queue<AudioData>*  a_queue     =   get_audio_queue();
@@ -157,8 +161,10 @@ void AudioWorker::audio_play()
         }
 
         //
-        ad = a_queue->front();
+        a_mtx.lock();
+        ad = a_queue->front();       
         a_queue->pop();
+        a_mtx.unlock();
 
         //
         while( audio->bytesFree() < ad.bytes )
@@ -167,7 +173,9 @@ void AudioWorker::audio_play()
         }   
 
         //
-        io->write( (const char*)ad.pcm, ad.bytes );
+        int r = io->write( (const char*)ad.pcm, ad.bytes );
+        if( r != ad.bytes )
+            MYLOG( LOG::WARN, "r != ad.bytes" );
 
         //
         delete [] ad.pcm;

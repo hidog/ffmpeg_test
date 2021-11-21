@@ -38,6 +38,16 @@ VideoDecode::VideoDecode()
 
 
 
+/*******************************************************************************
+VideoDecode::VideoDecode()
+********************************************************************************/
+AVPixelFormat   VideoDecode::get_pix_fmt()
+{
+    return  pix_fmt;
+}
+
+
+
 
 /*******************************************************************************
 VideoDecode::~VideoDecode()
@@ -60,6 +70,8 @@ int     VideoDecode::open_codec_context( int stream_index, AVFormatContext *fmt_
     dec_ctx->thread_count = 10;
     return  SUCCESS;
 }
+
+
 
 
 
@@ -210,6 +222,7 @@ VideoDecode::end()
 int     VideoDecode::end()
 {
     av_free( video_dst_data[0] );
+    sws_freeContext( sws_ctx );
     Decode::end();
     return  SUCCESS;
 }
@@ -228,18 +241,18 @@ VideoData   VideoDecode::output_video_data()
     VideoData   vd;
 
     // 1. Get frame and QImage to show 
-    QImage  img { width, height, QImage::Format_RGB888 };
+    //QImage  img { width, height, QImage::Format_RGB888 };
 
     // 2. Convert and write into image buffer  
-    uint8_t *dst[]  =   { img.bits() };
-    int     linesizes[4];
+    //uint8_t *dst[]  =   { img.bits() };
+    //int     linesizes[4];
 
-    av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
-    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
+    //av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
+    //sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
 
     //
     vd.index        =   frame_count;
-    vd.frame        =   img;
+    //vd.frame        =   img;
     vd.timestamp    =   get_timestamp();
 
     return  vd;
@@ -295,5 +308,8 @@ int64_t     VideoDecode::get_timestamp()
 
     return ts;
 }
+
+
+
 
 

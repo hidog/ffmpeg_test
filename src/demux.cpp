@@ -1,6 +1,7 @@
 #include "demux.h"
 
 #include "tool.h"
+#include <sstream>
 
 extern "C" {
 
@@ -59,7 +60,7 @@ int     Demux::get_video_height()
 
 
 
-
+#ifdef USE_MT
 /*******************************************************************************
 Demux::collect_packet()
 ********************************************************************************/
@@ -69,7 +70,7 @@ void    Demux::collect_packet( AVPacket *_pkt )
     av_packet_unref(_pkt);
     pkt_queue.push(_pkt);
 }
-
+#endif
 
 
 
@@ -82,7 +83,7 @@ int    Demux::init()
 {
     int     ret, i;
 
-    //
+    // 解開video, audio, subtitle info.
     ret     =   stream_info();
     if( ret == ERROR )
     {
@@ -93,7 +94,8 @@ int    Demux::init()
     /*
         use for multi-thread
     */
-    for( i = 0; i < 1000; i++ )
+#ifdef USE_MT
+    for( i = 0; i < 10; i++ )
     {
         pkt_array[i]    =   av_packet_alloc();
         
@@ -106,6 +108,8 @@ int    Demux::init()
 
         pkt_queue.emplace( pkt_array[i] );        
     }
+#endif
+
 
     /*
         av_init_packet(&pkt);
@@ -129,7 +133,60 @@ int    Demux::init()
 
 
 /*******************************************************************************
+Demux::sub_info()
+
+https://www.jianshu.com/p/89f2da631e16
+
+實際上不必解開多個字幕軌, 有空再研究.
+********************************************************************************/
+int     Demux::sub_info()
+{  
+    // 這邊需要改成loop, 判斷有幾個音軌,並且呈現在UI上.
+    ss_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0 );
+    if( ss_idx < 0 )
+    {
+        MYLOG( LOG::INFO, "no subtitle stream" );        
+        return  SUCCESS;
+    }
+    
+    //
+    AVStream    *sub_stream   =   fmt_ctx->streams[ss_idx];
+    if( sub_stream == nullptr )
+    {
+        MYLOG( LOG::INFO, "this stream has no sub stream" );
+        return  SUCCESS;
+    }
+    
+    //
+    AVCodecID   codec_id    =   fmt_ctx->streams[ss_idx]->codecpar->codec_id;
+    MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(codec_id) );
+    
+    // 測試用 未來需要能掃描 metadata, 並且秀出對應的 sub title, audio title.
+    AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)fmt_ctx->streams[ss_idx]->metadata, "title", NULL, AV_DICT_MATCH_CASE );
+    MYLOG( LOG::DEBUG, "title %s", dic->value );
+
+    return  ss_idx;
+}
+
+
+
+
+/*******************************************************************************
+Demux::set_exist_subtitle()
+********************************************************************************/
+void    Demux::set_exist_subtitle( bool flag )
+{
+    exist_subtitle_flag     =   flag;
+}
+
+
+
+
+
+/*******************************************************************************
 Demux::video_info()
+
+NOTE: 假設影片只有一個視訊軌,先不處理多重視訊軌的問題.
 ********************************************************************************/
 int     Demux::video_info()
 {
@@ -142,6 +199,9 @@ int     Demux::video_info()
         MYLOG( LOG::INFO, "this stream has no video stream" );
         return  SUCCESS;
     }
+
+    //if( fmt_ctx->streams[vs_idx]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
+      //  printf("Test");
 
     //
     AVCodecID   v_codec_id    =   fmt_ctx->streams[vs_idx]->codecpar->codec_id;
@@ -200,6 +260,8 @@ int     Demux::video_info()
 
 /*******************************************************************************
 Demux::audio_info()
+
+遇到的時候再來處理多重音軌的問題
 ********************************************************************************/
 int     Demux::audio_info()
 {
@@ -255,6 +317,18 @@ int     Demux::get_audio_index()
 
 
 /*******************************************************************************
+Demux::get_sub_index()
+********************************************************************************/
+int     Demux::get_sub_index()
+{
+    return  ss_idx;
+}
+
+
+
+
+
+/*******************************************************************************
 Demux::get_audio_channel()
 ********************************************************************************/
 int     Demux::get_audio_channel()
@@ -290,15 +364,120 @@ int     Demux::stream_info()
         return  ERROR;
     }
 
+    MYLOG( LOG::INFO, "nb_streams = %d", fmt_ctx->nb_streams );
+
+
+    int vc = 0, ac = 0, sc = 0;
+    for( int i = 0; i < fmt_ctx->nb_streams; i++ )
+    {
+        if( fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
+            vc++;
+        else if( fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO )
+            ac++;
+        else if( fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE )
+            sc++;
+    }
+    if( vc > 1 || ac > 1 )    
+        MYLOG( LOG::ERROR, "multi video or audio."); // 未來需要處理多重音軌/視訊軌的問題. 理論上不太會遇到多重視訊軌.   
+
     //
     video_info();
     audio_info();
+    sub_info();
 
     /* dump input information to stderr */
     //av_dump_format( fmt_ctx, 0, src_file.c_str(), 0 );
 
     return  SUCCESS;
 }
+
+
+
+
+
+/*******************************************************************************
+Demux::get_subtitle_param()
+********************************************************************************/
+bool    Demux::exist_subtitle()
+{
+    return  exist_subtitle_flag;
+}
+
+
+
+
+
+
+
+
+/*******************************************************************************
+Demux::get_subtitle_param()
+********************************************************************************/
+std::pair<std::string,std::string> Demux::get_subtitle_param( std::string src_file, AVPixelFormat pix_fmt )
+{
+    std::stringstream   ss;
+    std::string     in_param, out_param;;
+
+    int     sar_num     =   fmt_ctx->streams[vs_idx]->sample_aspect_ratio.num;
+    int     sar_den     =   fmt_ctx->streams[vs_idx]->sample_aspect_ratio.den;
+
+    int     tb_num      =   fmt_ctx->streams[vs_idx]->time_base.num;
+    int     tb_den      =   fmt_ctx->streams[vs_idx]->time_base.den;
+
+    ss << "video_size=" << width << "x" << height << ":pix_fmt=" << static_cast<int>(pix_fmt) 
+        << ":time_base=" << tb_num << "/" << tb_den << ":pixel_aspect=" << sar_num << "/" << sar_den;
+
+    in_param   =   ss.str();
+
+    MYLOG( LOG::INFO, "in = %s", in_param.c_str() );
+
+    ss.str("");
+    ss.clear();   
+
+    // make filename param. 留意絕對路徑的格式, 不能亂改, 會造成錯誤.
+    // 這邊需要加入判斷, 如果檔案裏面有字幕軌, 就開啟檔案. 如果沒有, 就搜尋並開啟 subtitle.   
+    std::string     filename_param  =   "\\";
+    filename_param  +=  src_file;
+    filename_param.insert( 2, 1, '\\' );
+
+    ss << "subtitles=filename='" << filename_param << "':original_size=" << width 
+        << "x" << height << ":stream_index=" << current_subtitle_index;
+
+    out_param    =   ss.str();
+
+    MYLOG( LOG::INFO, "out = %s", out_param.c_str() );
+
+
+    return  std::make_pair( in_param, out_param );
+
+#if 0
+
+    //std::string filterDesc = "subtitles=filename=../../test.ass:original_size=1280x720";
+    //std::string filterDesc = "subtitles=filename='\\D\\:\\\\code\\\\test2.mkv':original_size=1280x720";  // 成功的範例
+    //std::string filterDesc = "subtitles=filename='\\D\\:/code/test.ass':original_size=1280x720";  // 成功的範例
+    std::string filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=1";  // 成功的範例
+
+
+    int ddd = v_decoder.get_decode_context()->sample_aspect_ratio.den;
+    int nnn = v_decoder.get_decode_context()->sample_aspect_ratio.num;
+    //pixel_aspect need equal ddd/nnn
+
+    AVRational time_base = fmt_ctx->streams[vs_idx]->time_base;
+    int num = time_base.num;
+    int den = time_base.den;
+
+    //std::string args = "video_size=1280x720:pix_fmt=0:time_base=1/24000:pixel_aspect=0/1";
+    std::string args = "video_size=1920x1080:pix_fmt=64:time_base=1/1000:pixel_aspect=1/1";
+    //  num den                nnn ddd   
+    //m_width, m_height, videoCodecContext->pix_fmt, time_base.num, time_base.den,
+    //videoCodecContext->sample_aspect_ratio.num, videoCodecContext->sample_aspect_ratio.den);
+
+    subtitleOpened = init_subtitle_filter(buffersrcContext, buffersinkContext, args, filterDesc );
+
+#endif
+
+}
+
 
 
 
@@ -316,10 +495,12 @@ int     Demux::end()
     //av_bsf_free( &v_bsf_ctx );
 
     //
+#ifdef USE_MT
     while( pkt_queue.empty() == false )
         pkt_queue.pop();
-    for( i = 0; i < 1000; i++ )
+    for( i = 0; i < 10; i++ )
         av_packet_free( &pkt_array[i] );
+#endif
 
     src_file    =   "";
 
@@ -394,7 +575,7 @@ void    Demux::unref_packet()
 
 
 
-
+#ifdef USE_MT
 /*******************************************************************************
 Demux::demux_multi_thread()
 ********************************************************************************/
@@ -424,7 +605,7 @@ std::pair<int,AVPacket*>     Demux::demux_multi_thread()
 
     return  result;
 }
-
+#endif
 
 
 
