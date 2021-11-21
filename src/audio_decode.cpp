@@ -1,4 +1,4 @@
-#include "audio_decode.h"
+ï»¿#include "audio_decode.h"
 #include "tool.h"
 
 extern "C" {
@@ -63,7 +63,7 @@ AudioDecode::open_codec_context()
 int     AudioDecode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx )
 {
     Decode::open_codec_context( stream_index, fmt_ctx, type );
-    dec_ctx->thread_count = 4;
+    //dec_ctx->thread_count = 4;
     return  SUCCESS;
 }
 
@@ -80,9 +80,10 @@ int     AudioDecode::init()
     sample_fmt      =   dec_ctx->sample_fmt;
     channel_layout  =   dec_ctx->channel_layout;
 
-    assert( dec_ctx->sample_fmt == AV_SAMPLE_FMT_FLTP ); // ¦pªG¹J¨ì¤£¦Pªº  ¦b¬Ý¬O¤£¬O­n½Õ¾ãaudio outputªºsample size
+    assert( dec_ctx->sample_fmt == AV_SAMPLE_FMT_FLTP ); // å¦‚æžœé‡åˆ°ä¸åŒçš„  åœ¨çœ‹æ˜¯ä¸æ˜¯è¦èª¿æ•´audio outputçš„sample size
 
-    // ¸ÕµÛ·Q­n§ïÅÜ sample rate, ¦ý¨S¦¨¥\.                                                  
+    // è©¦è‘—æƒ³è¦æ”¹è®Š sample rate, ä½†æ²’æˆåŠŸ.                                                  
+    // S16 æ”¹ S32, éœ€è¦ä¿®æ”¹pcmçš„éƒ¨åˆ†. éœ€è¦æ‰¾æ™‚é–“ç ”ç©¶
     swr_ctx     =   swr_alloc_set_opts( swr_ctx, 
                                         av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16, sample_rate,           // output
                                         dec_ctx->channel_layout, dec_ctx->sample_fmt, dec_ctx->sample_rate,         // input
@@ -105,6 +106,8 @@ AudioDecode::end()
 ********************************************************************************/
 int     AudioDecode::end()
 {
+    swr_close(swr_ctx);
+
     Decode::end();
     return  SUCCESS;
 }
@@ -133,20 +136,24 @@ AudioData   AudioDecode::output_audio_data()
 {
     AudioData   ad { nullptr, 0 };
 
-    // ¦³ªÅ¨Ó­×§ï³oÃä ­n¯à°ÊºA®Ú¾Ú mp4 ÀÉ®×°µ½Õ¾ã
+    // æœ‰ç©ºä¾†ä¿®æ”¹é€™é‚Š è¦èƒ½å‹•æ…‹æ ¹æ“š mp4 æª”æ¡ˆåšèª¿æ•´
 
-    uint8_t     *data[2]    =   { 0 };
-    int         byteCnt     =   frame->nb_samples * 2 * 2;
+    uint8_t     *data[2]    =   { 0 };  // S16 æ”¹ S32, ä¸ç¢ºå®šæ˜¯ä¸æ˜¯é€™é‚Šçš„ array è¦æ”¹æˆ 4
+    int         byte_count     =   frame->nb_samples * 2 * 2;  // S16 æ”¹ S32, æ”¹æˆ *4, ç†è«–ä¸Šè³‡æ–™é‡æœƒå¢žåŠ , ä½†ä¸ç¢ºå®šæ˜¯å¦æ”¹çš„æ˜¯é€™é‚Š
 
-    unsigned char   *pcm    =   new uint8_t[byteCnt];     // frame->nb_samples * 2 * 2     ªí¥Ü     ¤À°t¼Ë¥»¸ê®Æ¶q * ¨â³q¹D * ¨C³q¹D2¦ì¤¸²Õ¤j¤p
+    unsigned char   *pcm    =   new uint8_t[byte_count];     // frame->nb_samples * 2 * 2     è¡¨ç¤º     åˆ†é…æ¨£æœ¬è³‡æ–™é‡ * å…©é€šé“ * æ¯é€šé“2ä½å…ƒçµ„å¤§å°
 
-    data[0]     =   pcm;    // ¿é¥X®æ¦¡¬°AV_SAMPLE_FMT_S16(packet«¬§O),©Ò¥HÂà´««áªº LR ¨â³q¹D³£¦s¦bdata[0]¤¤
+    if( pcm == nullptr )
+        MYLOG( LOG::WARN, "pcm is null" );
+
+    data[0]     =   pcm;    // è¼¸å‡ºæ ¼å¼ç‚ºAV_SAMPLE_FMT_S16(packetåž‹åˆ¥),æ‰€ä»¥è½‰æ›å¾Œçš„ LR å…©é€šé“éƒ½å­˜åœ¨data[0]ä¸­
     int ret     =   swr_convert( swr_ctx,
-                                 data, frame->nb_samples,                              //¿é¥X
-                                 (const uint8_t**)frame->data, frame->nb_samples );    //¿é¤J
+                                 data, sample_rate,                                    //è¼¸å‡º
+                                 //data, frame->nb_samples,                              //è¼¸å‡º
+                                 (const uint8_t**)frame->data, frame->nb_samples );    //è¼¸å…¥
 
     ad.pcm      =   pcm;
-    ad.bytes    =   byteCnt;
+    ad.bytes    =   byte_count;
 
     return ad;
 }

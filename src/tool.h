@@ -7,6 +7,13 @@
 
 
 
+struct SubData
+{
+    int test;
+};
+
+
+
 struct AudioData
 {
     uint8_t     *pcm;
@@ -49,6 +56,7 @@ constexpr int HAVE_FRAME = 1; // 需要用 1 來判斷是否還有 frame.
 
        
 #define SLEEP_10MS std::this_thread::sleep_for( std::chrono::milliseconds(10) );
+#define SLEEP_1MS std::this_thread::sleep_for( std::chrono::milliseconds(1) );
 
 
 

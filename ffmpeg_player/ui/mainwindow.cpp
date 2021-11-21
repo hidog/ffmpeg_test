@@ -9,6 +9,7 @@
 #include <QVideoSurfaceFormat>
 
 #include <QFileDialog>
+#include <QDebug>
 
 #include "player.h"
 #include <mutex>
@@ -35,6 +36,8 @@ MainWindow::MainWindow(QWidget *parent)
     // 必須註冊自定義的物件.
     qRegisterMetaType<VideoSetting>("VideoSetting");
 
+    //video_widget    =   new QVideoWidget();
+
     //
     video_mtx       =   new QMutex( QMutex::NonRecursive );
     view_data       =   new VideoData;
@@ -58,6 +61,10 @@ MainWindow::~MainWindow()
     //worker.terminate();
     delete ui;
 
+    /*if( video_widget->isActiveWindow() )
+        video_widget->close();
+    delete video_widget;*/
+
     delete worker;
     delete video_worker;
     delete audio_worker;
@@ -75,8 +82,11 @@ MainWindow::~MainWindow()
 MainWindow::recv_video_frame_slot()
 ********************************************************************************/
 void MainWindow::recv_video_frame_slot()
-{
-    QVideoWidget*   video_widget    =   ui->widget;
+{ 
+    /*if( video_widget->isVisible() == false )
+        return;*/
+
+    QVideoWidget    *video_widget   =   ui->widget;
 
     static int  last_index  =   -1;
 
@@ -84,7 +94,12 @@ void MainWindow::recv_video_frame_slot()
     video_mtx->lock();
 
     if( view_data->index - last_index != 1 )
-        MYLOG( LOG::WARN, "vidw_data.index = %d, last_index = %d\n",  view_data->index , last_index );
+        MYLOG( LOG::WARN, "vidw_data.index = %d, last_index = %d",  view_data->index , last_index );
+
+    // 未來考慮改成timer驅動,方便確認是否有frame來不及解出來.
+    // 未必真的用timer, 可以用loop控制
+    // 計算每個frame出現的時間, 超過就秀frame
+    // seek的時候, 把出現時間歸零後重新計算. frame count 跟真正在影片中的frame count脫鉤,而是每次seek播放後重新計算frame count.
 
     last_index = view_data->index;
     video_widget->videoSurface()->present( view_data->frame );
@@ -117,15 +132,17 @@ MainWindow::set_video_setting_slot()
 ********************************************************************************/
 void    MainWindow::set_video_setting_slot( VideoSetting vs )
 {
-    QVideoWidget*   video_widget    =   ui->widget;
+    /*if( video_widget->videoSurface()->isActive() )
+        video_widget->videoSurface()->stop();*/
 
-    if( video_widget->videoSurface()->isActive() )
-        video_widget->videoSurface()->stop();
+    QVideoWidget    *video_widget   =   ui->widget;
+
 
     QSize   size { vs.width, vs.height };
 
     QVideoSurfaceFormat     format { size, QVideoFrame::Format_RGB24 };
-    video_widget->videoSurface()->start(format);
+    video_widget->videoSurface()->start(format);   
+    //video_widget->show();
 
     worker->finish_set_video();
 }
@@ -139,8 +156,6 @@ MainWindow::start_slot()
 ********************************************************************************/
 void MainWindow::start_slot()
 {
-
-
     if( worker->is_set_src_file() == false )
     {
         QMessageBox::warning( this, tr("ffmpeg player"),
@@ -150,7 +165,6 @@ void MainWindow::start_slot()
 
     //
     worker->start();
-
 }
 
 
@@ -160,8 +174,9 @@ MainWindow::load_slot()
 ********************************************************************************/
 void MainWindow::load_file_slot()
 {
-    QString file     =   QFileDialog::getOpenFileName( this, tr("select src file"), "D:\\" );
-    worker->set_src_file(file.toStdString());
+    QString filename     =   QFileDialog::getOpenFileName( this, tr("select src file"), "D:\\" );
+    MYLOG( LOG::INFO, "load file %s", filename.toStdString().c_str() );
+    worker->set_src_file(filename.toStdString());
 }
 
 

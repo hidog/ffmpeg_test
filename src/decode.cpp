@@ -34,6 +34,13 @@ Decode::~Decode()
 
 
 
+/*******************************************************************************
+Decode::get_frame_count()
+********************************************************************************/
+int Decode::get_frame_count()
+{
+    return  frame_count;
+}
 
 
 /*******************************************************************************
@@ -68,7 +75,6 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
 {
     int         ret =   0;
     AVStream    *st =   nullptr;
-
     AVCodec     *dec    =   nullptr;
 
     //

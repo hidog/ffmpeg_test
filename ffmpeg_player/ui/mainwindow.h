@@ -18,6 +18,7 @@ class VideoWorker;
 class AudioWorker;
 class VideoData;
 class QMutex;
+class QVideoWidget;
 
 
 class MainWindow : public QMainWindow
@@ -51,6 +52,9 @@ public slots:
 private:
 
     Ui::MainWindow *ui;
+
+    //QVideoWidget    *video_widget; 可以用這個方式產生 video 視窗, 但是會遇到直接關掉此視窗,造成關閉軟體的時候會crash. 在研究怎麼修
+
 
     Worker          *worker         =   nullptr;  // 未來改成 unique pointer
     VideoWorker     *video_worker   =   nullptr;

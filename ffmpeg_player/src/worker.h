@@ -25,6 +25,8 @@ public:
     void    finish_set_video();
     bool&   get_play_end_state();
 
+    QStringList get_subtitle_files( std::string filename );
+
 public slots:
 
     

@@ -281,6 +281,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClCompile Include="..\src\decode.cpp" />
     <ClCompile Include="..\src\demux.cpp" />
     <ClCompile Include="..\src\player.cpp" />
+    <ClCompile Include="..\src\sub_decode.cpp" />
     <ClCompile Include="..\src\tool.cpp" />
     <ClCompile Include="..\src\video_decode.cpp" />
     <ClCompile Include="vs2019.cpp">
@@ -295,6 +296,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClInclude Include="..\src\decode.h" />
     <ClInclude Include="..\src\demux.h" />
     <ClInclude Include="..\src\player.h" />
+    <ClInclude Include="..\src\sub_decode.h" />
     <ClInclude Include="..\src\tool.h" />
     <ClInclude Include="..\src\video_decode.h" />
   </ItemGroup>

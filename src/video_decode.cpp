@@ -38,6 +38,16 @@ VideoDecode::VideoDecode()
 
 
 
+/*******************************************************************************
+VideoDecode::VideoDecode()
+********************************************************************************/
+AVPixelFormat   VideoDecode::get_pix_fmt()
+{
+    return  pix_fmt;
+}
+
+
+
 
 /*******************************************************************************
 VideoDecode::~VideoDecode()
@@ -57,9 +67,11 @@ VideoDecode::open_codec_context()
 int     VideoDecode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx )
 {
     Decode::open_codec_context( stream_index, fmt_ctx, type );
-    dec_ctx->thread_count = 4;
+    dec_ctx->thread_count = 10;
     return  SUCCESS;
 }
+
+
 
 
 
@@ -210,6 +222,7 @@ VideoDecode::end()
 int     VideoDecode::end()
 {
     av_free( video_dst_data[0] );
+    sws_freeContext( sws_ctx );
     Decode::end();
     return  SUCCESS;
 }
@@ -228,18 +241,18 @@ VideoData   VideoDecode::output_video_data()
     VideoData   vd;
 
     // 1. Get frame and QImage to show 
-    QImage  img { width, height, QImage::Format_RGB888 };
+    //QImage  img { width, height, QImage::Format_RGB888 };
 
     // 2. Convert and write into image buffer  
-    uint8_t *dst[]  =   { img.bits() };
-    int     linesizes[4];
+    //uint8_t *dst[]  =   { img.bits() };
+    //int     linesizes[4];
 
-    av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
-    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
+    //av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
+    //sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
 
     //
     vd.index        =   frame_count;
-    vd.frame        =   img;
+    //vd.frame        =   img;
     vd.timestamp    =   get_timestamp();
 
     return  vd;
@@ -258,19 +271,45 @@ VideoDecode::get_timestamp()
 最後選擇用土法煉鋼
 
 AVRational avr = {1, AV_TIME_BASE};
+
+需要拿浮動 fps 的影片做測試, 應該會出問題
 ********************************************************************************/
 int64_t     VideoDecode::get_timestamp()
 {
     int64_t ts;
 
+    // MYLOG( LOG::DEBUG, "frame rate = %lf", dec_ctx->framerate ); 印出的數字不是 fps
+
     int     num     =   dec_ctx->time_base.num;
     int     den     =   dec_ctx->time_base.den;
     double  base_ms =   1000.f;  // 表示單位為 mili sec
 
+    //int     interlaced  =   frame->interlaced_frame;
+    //MYLOG( LOG::DEBUG, "is interlaced = %d", interlaced );
+
+    int     tpf     =   dec_ctx->ticks_per_frame;
+
     /* 
         不知道為何要乘 2, 還沒搜尋到原因
         fps = 23.97  ( 24000 / 1001 ) 的時候預期 den = 24000, 實際上卻是 48000
+        某些情況又不用 * 2, 是否跟1080p, 1080i 有關??
+
+        https://stackoverflow.com/questions/12234949/ffmpeg-time-unit-explanation-and-av-seek-frame-method
+        http://runxinzhi.com/welhzh-p-4835864.html  似乎可以參考這個做判斷, 跟interlace無關
+
+        https://blog.csdn.net/chinabinlang/article/details/49885765
     */
-    ts = base_ms * frame_count * 2 * num / den;  
+    //ts = base_ms * frame_count * 2 * num / den;  
+    ts = base_ms * frame_count *  tpf * num / den;  
+
+
+    //MYLOG( LOG::DEBUG, "pts = %d", frame->pts );
+    //MYLOG( LOG::DEBUG, "coded number = %d", frame->coded_picture_number );
+
     return ts;
 }
+
+
+
+
+
