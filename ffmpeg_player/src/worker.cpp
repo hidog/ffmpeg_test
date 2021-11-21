@@ -39,7 +39,7 @@ QStringList Worker::get_subtitle_files( std::string filename )
     QDir dir { qstr };
 
     qDebug() << dir.dirName();
-    int len = dir.dirName().indexOf('.');
+    int len = dir.dirName().size() - dir.dirName().indexOf('.');
     QString filename_only = dir.dirName().chopped(len);
 
     qDebug() << filename_only;
@@ -59,7 +59,7 @@ QStringList Worker::get_subtitle_files( std::string filename )
     {
         qDebug() << itr.fileName();
 
-        int len = itr.fileName().lastIndexOf('.');
+        int len = itr.fileName().size() - itr.fileName().indexOf('.');
         QString subname = itr.fileName().chopped(len);
 
         if( subname == filename_only )
@@ -162,7 +162,11 @@ void    Worker::set_src_file( std::string file )
 
     auto list = get_subtitle_files(file);
 
-    player.set_sub_file(list[0].toStdString()); // 未來做成可以多重輸入
+    if( list.size() > 0 )
+    {
+        QString str = list.at(0);
+        player.set_sub_file(str.toStdString()); // 未來做成可以多重輸入
+    }
 }
 
 
