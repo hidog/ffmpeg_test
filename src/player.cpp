@@ -268,7 +268,7 @@ void    Player::play()
         else if( pkt->stream_index == demuxer.get_audio_index() )
             dc  =   dynamic_cast<Decode*>(&a_decoder);
         else        
-            ERRLOG("stream type not handle.");        
+            MYLOG( LOG::ERROR, "stream type not handle.");        
 
         //
         ret     =   dc->send_packet(pkt);

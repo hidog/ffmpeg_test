@@ -35,6 +35,9 @@ void    AudioWorker::open_audio_output( AudioSetting as )
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
     format.setSampleType(QAudioFormat::UnSignedInt);
+    
+
+
 
     //
     QAudioDeviceInfo info { QAudioDeviceInfo::defaultOutputDevice() };
@@ -57,7 +60,12 @@ void    AudioWorker::open_audio_output( AudioSetting as )
     connect( audio, SIGNAL(stateChanged(QAudio::State)), this, SLOT(handleStateChanged(QAudio::State)) );
     audio->stop();
 
+    //audio->setBufferSize( 1000000 );  // 遇到影片檔必須開大buffer不然會出問題. 研究一下怎麼取得這個參數....
+
+
     io      =   audio->start();
+
+
 }
 
 
@@ -150,6 +158,11 @@ void AudioWorker::audio_play()
     while( v_start == false )
         SLEEP_10MS;        
 
+    
+    // 一次寫入4096的效果比較好. 用原本的作法會有機會破音. 記得修改變數名稱
+    int buffer_size_half = 4096; //audio->bufferSize()/2;
+    MYLOG( LOG::DEBUG, "buffer size half = %d", buffer_size_half );
+
     //
     while( is_play_end == false )
     {        
@@ -166,10 +179,47 @@ void AudioWorker::audio_play()
         a_queue->pop();
         a_mtx.unlock();
 
+        //int rr = audio->bytesFree();
+        //MYLOG( LOG::DEBUG, "bytesFree = %d\n", rr );
+
+        // 某些影片檔,會解出超過buffer size的audio frame
+        // 可以改變audio output的buffer size, 或是分批寫入
+
+  
+        int remain_bytes = ad.bytes;
+        uint8_t *ptr = ad.pcm; 
+        
+        while(true)
+        {
+            //MYLOG( LOG::DEBUG, "bytesFree = %d\n", audio->bytesFree() );
+
+            if( audio->bytesFree() < buffer_size_half )
+                continue;
+            else if( remain_bytes <= buffer_size_half )
+            {
+                int r = io->write( (const char*)ptr, remain_bytes );
+                if( r != remain_bytes )
+                    MYLOG( LOG::WARN, "r != remain_bytes" );
+                delete [] ad.pcm;
+                ad.pcm = nullptr;
+                ad.bytes = 0;
+                break;
+            }
+            else
+            {
+                int r = io->write( (const char*)ptr, buffer_size_half );
+                if( r != buffer_size_half )
+                    MYLOG( LOG::WARN, "r != buffer_size_half" );
+                ptr += buffer_size_half;
+                remain_bytes -= buffer_size_half;
+            }
+        }
+#if 0
+        // old code
         //
         while( audio->bytesFree() < ad.bytes )
         {      
-            //printf("bytesFree = %d\n",r);
+            //MYLOG( LOG::DEBUG, "bytesFree = %d\n", audio->bytesFree() );
         }   
 
         //
@@ -181,6 +231,7 @@ void AudioWorker::audio_play()
         delete [] ad.pcm;
         ad.pcm      =   nullptr;
         ad.bytes    =   0;
+#endif
     }
 
     // flush

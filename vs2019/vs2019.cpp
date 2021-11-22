@@ -41,15 +41,23 @@ https://cloud.tencent.com/developer/article/1357993
 
 */
 
+extern "C" {
+#include "../ffmpeg_example/demuxing_decoding.h"
+}
 
 
 int main()
 {
-    Player  player;
+#if 1
+    play_demuxing_decodeing();
+#else
+
+    Player  player;  
 
     player.init();
     player.play();
     player.end();
+#endif
 
     return 0;
 }

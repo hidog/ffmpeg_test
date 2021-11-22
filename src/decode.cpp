@@ -252,14 +252,12 @@ int    Decode::flush()
     int     ret =   0;
     char    buf[AV_ERROR_MAX_STRING_SIZE]{0};
 
-    int v_count = 0, a_count = 0;
-
     // submit the packet to the decoder
     ret =   avcodec_send_packet( dec_ctx, nullptr );
     if( ret < 0 ) 
     {
         auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
-        ERRLOG( "Error submitting a packet for decoding (%s)", str );
+        MYLOG( LOG::ERROR, "Error submitting a packet for decoding (%s)", str );
         return  ERROR;
     }
 
@@ -275,25 +273,17 @@ int    Decode::flush()
                 break; //return 0;
 
             auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
-            ERRLOG( "Error during decoding (%s)", str );
+            MYLOG( LOG::ERROR, "Error during decoding (%s)", str );
             break; //return  ret;
         }
 
         // write the frame data to output file
-        // 這邊會執行衍生物件的 output frame 
-        if( get_type() == static_cast<myAVMediaType>(AVMEDIA_TYPE_VIDEO) )
-            v_count++;
-        else
-            a_count++;
-
         output_frame_func();
         av_frame_unref(frame);
 
         if( ret < 0 )
             break; //return ret;
     }
-
-    printf("flush, v count = %d, a count = %d\n", v_count, a_count );
 
     return 0;
 }
