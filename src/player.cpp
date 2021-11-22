@@ -574,6 +574,10 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
 
 /*******************************************************************************
 Player::play_QT()
+
+要考慮某些影片, 音軌開始的點跟視訊開始的點不同, 要針對這點做調整
+需要讀取 pts 做同步.
+
 ********************************************************************************/
 void    Player::play_QT()
 {
@@ -583,11 +587,22 @@ void    Player::play_QT()
     Decode      *dc     =   nullptr;
     AVFrame     *frame  =   nullptr;
 
+    bool first_play_v_and_a = false;
+
     //
     while( true ) 
     {
-        while( video_queue.size() > 50 )        
-            SLEEP_10MS;
+        // 有遇到影片檔,解了大量video後才解開audio, 之後要改成任何一個音軌解開後才開始sleep
+        if( first_play_v_and_a == true )
+        {
+            while( video_queue.size() > 300 )  // value 太小有遇到一直跳 audio_queue is empty的warn.
+                SLEEP_10MS;
+        }
+
+        if( first_play_v_and_a == false && video_queue.size() > 10 && audio_queue.size() > 10 )
+            first_play_v_and_a = true;
+
+        //MYLOG( LOG::DEBUG, "v = %d, a = %d", video_queue.size(), audio_queue.size() );
 
         ret     =   demuxer.demux();
         if( ret < 0 )

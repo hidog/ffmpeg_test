@@ -205,7 +205,7 @@ int play_demuxing_decodeing()
 {
     int ret = 0;
 
-    src_filename = "D:\\code\\test.wmv";
+    src_filename = "D:\\code\\test.avi";
     video_dst_filename = "H:\\v.data";
     audio_dst_filename = "H:\\a.data";
 
