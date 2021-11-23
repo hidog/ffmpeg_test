@@ -3,7 +3,6 @@
 #include "player.h"
 
 
-
 /*
 http://dranger.com/ffmpeg/tutorial05.html
 http://dranger.com/ffmpeg/tutorial01.html
@@ -43,13 +42,20 @@ https://cloud.tencent.com/developer/article/1357993
 
 extern "C" {
 #include "../ffmpeg_example/demuxing_decoding.h"
+#include "../ffmpeg_example/ffplay.h"
 }
 
 
 int main()
 {
 #if 1
-    play_demuxing_decodeing();
+    char str[100] = "D:\\code\\test.avi";
+
+    char **argv = new char* [10];
+    argv[1] = str;
+
+    ffplay_main( 2, argv );
+    //play_demuxing_decodeing();
 #else
 
     Player  player;  
@@ -62,4 +68,4 @@ int main()
     return 0;
 }
 
-http://blog.360converter.com/archives/2931  youtube
+//http://blog.360converter.com/archives/2931  youtube

@@ -48,6 +48,12 @@
     <ClCompile Include="..\ffmpeg_example\demuxing_decoding.c">
       <Filter>ffmpeg_example</Filter>
     </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\ffplay.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\cmdutils.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\player.h">
@@ -72,6 +78,12 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\ffmpeg_example\demuxing_decoding.h">
+      <Filter>ffmpeg_example</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ffmpeg_example\ffplay.h">
+      <Filter>ffmpeg_example</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ffmpeg_example\cmdutils.h">
       <Filter>ffmpeg_example</Filter>
     </ClInclude>
   </ItemGroup>

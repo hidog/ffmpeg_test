@@ -20,8 +20,8 @@ DLL_API std::queue<AudioData>* get_audio_queue();
 DLL_API std::queue<VideoData>* get_video_queue();
 
 
-class AVPacket;
-class AVStream;
+struct AVPacket;
+struct AVStream;
 
 
 DLL_API std::mutex& get_a_mtx(); // { return a_mtx; }
