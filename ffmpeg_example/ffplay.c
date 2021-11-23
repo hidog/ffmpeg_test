@@ -1391,7 +1391,7 @@ static void do_exit(VideoState *is)
     avformat_network_deinit();
     if (show_status)
         printf("\n");
-    SDL_Quit();
+    //SDL_Quit();
     av_log(NULL, AV_LOG_QUIET, "%s", "");
     exit(0);
 }
@@ -3941,7 +3941,7 @@ void show_help_default(const char *opt, const char *arg)
 }
 
 /* Called from the main */
-int main(int argc, char **argv)
+int pplay_main(int argc, char **argv)
 {
     int flags;
     VideoState *is;

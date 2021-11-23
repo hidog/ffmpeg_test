@@ -204,8 +204,8 @@ void show_help_children(const AVClass *class, int flags)
         printf("\n");
     }
 
-    while (child = av_opt_child_class_iterate(class, &iter))
-        show_help_children(child, flags);
+    //while (child = av_opt_child_class_iterate(class, &iter))
+      //  show_help_children(child, flags);
 }
 
 static const OptionDef *find_option(const OptionDef *po, const char *name)
@@ -848,11 +848,13 @@ int opt_cpucount(void *optctx, const char *opt, const char *arg)
     int ret;
     int count;
 
-    static const AVOption opts[] = {
+    static const AVOption opts[] = 
+    {
         {"count", NULL, 0, AV_OPT_TYPE_INT, { .i64 = -1}, -1, INT_MAX},
         {NULL},
     };
-    static const AVClass class = {
+    static const AVClass class = 
+    {
         .class_name = "cpucount",
         .item_name  = av_default_item_name,
         .option     = opts,
@@ -862,9 +864,8 @@ int opt_cpucount(void *optctx, const char *opt, const char *arg)
 
     ret = av_opt_eval_int(&pclass, opts, arg, &count);
 
-    if (!ret) {
-        av_cpu_force_count(count);
-    }
+    //if (!ret)     
+        //av_cpu_force_count(count);    
 
     return ret;
 }
