@@ -133,8 +133,7 @@ void exit_program(int ret)
     exit(ret);
 }
 
-double parse_number_or_die(const char *context, const char *numstr, int type,
-                           double min, double max)
+double parse_number_or_die(const char *context, const char *numstr, int type, double min, double max)
 {
     char *tail;
     const char *error;
