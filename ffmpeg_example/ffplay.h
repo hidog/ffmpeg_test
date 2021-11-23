@@ -191,16 +191,17 @@ typedef struct Decoder {
     int pkt_serial;
     int finished;
     int packet_pending;
-    SDL_cond *empty_queue_cond;
+    //SDL_cond *empty_queue_cond;
     int64_t start_pts;
     AVRational start_pts_tb;
     int64_t next_pts;
     AVRational next_pts_tb;
-    SDL_Thread *decoder_tid;
+    //SDL_Thread *decoder_tid;
 } Decoder;
 
-typedef struct VideoState {
-    SDL_Thread *read_tid;
+typedef struct VideoState 
+{
+    //SDL_Thread *read_tid;
     const AVInputFormat *iformat;
     int abort_request;
     int force_refresh;
