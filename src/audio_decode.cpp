@@ -84,6 +84,7 @@ int     AudioDecode::init()
 
 
 
+    // 有些影片要用這個來初始化swr_ctx, 研究一下這個問題
     int aaa = av_get_default_channel_layout( dec_ctx->channels );
 
     //int aaa = av_get_channel_layout_nb_channels( dec_ctx->channel_layout );
@@ -93,7 +94,8 @@ int     AudioDecode::init()
     // S16 改 S32, 需要修改pcm的部分. 需要找時間研究
     swr_ctx     =   swr_alloc_set_opts( swr_ctx,
                                         av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16, sample_rate,           // output
-                                        channel_layout, dec_ctx->sample_fmt, dec_ctx->sample_rate,         // input
+                                        //channel_layout, dec_ctx->sample_fmt, dec_ctx->sample_rate,         // input  有些case要用底下的做初始化,研究正確用法
+                                        aaa, dec_ctx->sample_fmt, dec_ctx->sample_rate,         // input
                                         NULL, NULL );
     swr_init(swr_ctx);
 
