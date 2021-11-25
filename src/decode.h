@@ -12,6 +12,7 @@ struct AVCodecContext;
 struct AVFrame;
 struct AVPacket;
 struct AVCodec;
+struct AVStream;
 enum   AVMediaType;
 
 //template class __declspec( dllexport ) std::function<int()>; // fix compiler warning. 主要是匯出成dll的話需要顯式具現化樣板
@@ -55,6 +56,9 @@ public:
     int     flush();
     std::function<int()>    output_frame_func;
 #endif
+
+    AVStream* stream;
+
 
 protected:
 

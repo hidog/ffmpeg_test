@@ -311,6 +311,17 @@ int64_t     VideoDecode::get_timestamp()
     //MYLOG( LOG::DEBUG, "pts = %d", frame->pts );
     //MYLOG( LOG::DEBUG, "coded number = %d", frame->coded_picture_number );
 
+
+
+    double dpts = av_q2d( stream->time_base) * frame->pts;
+
+    MYLOG( LOG::DEBUG, "%d %d %d %d",  dec_ctx->time_base.den, dec_ctx->time_base.num, stream->time_base.den, stream->time_base.num );
+    MYLOG( LOG::DEBUG, "pts = %lf, ts = %lld",  dpts, ts );
+
+
+    ts = dpts * 1000.0;
+
+
     return ts;
 }
 

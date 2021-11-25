@@ -52,6 +52,8 @@ public:
     int     output_jpg_by_openCV();
 #endif
 
+
+
 private:
 
     AVMediaType   type;   
