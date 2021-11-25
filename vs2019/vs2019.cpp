@@ -38,6 +38,8 @@ http://underpop.online.fr/f/ffmpeg/help/subtitles.htm.gz
 https://cloud.tencent.com/developer/article/1357993
 調用 avformat_match_stream_specifier： 分離audio，video流訊息，判断当前流的类型
 
+https://www.itread01.com/content/1546569392.html
+
 */
 
 extern "C" {
