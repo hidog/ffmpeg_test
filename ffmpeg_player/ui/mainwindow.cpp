@@ -41,6 +41,8 @@ MainWindow::MainWindow(QWidget *parent)
     //
     video_mtx       =   new QMutex( QMutex::NonRecursive );
     view_data       =   new VideoData;
+    view_data->index        =   0;
+    view_data->timestamp    =   0;
 
     worker          =   new Worker(this);
     video_worker    =   new VideoWorker(this);

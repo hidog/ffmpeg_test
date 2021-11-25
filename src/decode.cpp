@@ -79,6 +79,7 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
 
     //
     st  =   fmt_ctx->streams[stream_index];
+    stream = fmt_ctx->streams[stream_index];
 
     // find decoder for the stream 
     dec =   avcodec_find_decoder( st->codecpar->codec_id );
