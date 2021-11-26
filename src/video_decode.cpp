@@ -271,7 +271,9 @@ int64_t     VideoDecode::get_timestamp()
 {
     //MYLOG( LOG::DEBUG, "%d %d %d %d",  dec_ctx->time_base.den, dec_ctx->time_base.num, stream->time_base.den, stream->time_base.num );
 
-    double  dpts    =   av_q2d( stream->time_base) * frame->pts;
+    //frame->pts = frame->best_effort_timestamp; 
+
+    double  dpts    =   av_q2d( stream->time_base) * frame->best_effort_timestamp;
     int64_t ts      =   dpts * 1000;
 
     return ts;

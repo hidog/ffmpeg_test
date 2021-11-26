@@ -141,7 +141,7 @@ int     Decode::send_packet( const AVPacket *pkt )
     if( ret < 0 ) 
     {
         auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
-        MYLOG( LOG::ERROR, "Error submitting a packet for decoding (%s)", str );
+        MYLOG( LOG::WARN, "Error submitting a packet for decoding (%s)", str );
         return  ret;
     }
 
