@@ -48,7 +48,6 @@ Decode::init()
 ********************************************************************************/
 int     Decode::init()
 {
-
     int     ret     =   0;
 
     frame_count =   0;
@@ -69,20 +68,81 @@ int     Decode::init()
 
 
 /*******************************************************************************
+Decode::open_all_codec()
+********************************************************************************/
+int     Decode::open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type )
+{
+    int         ret     =   0;
+    int         index;
+    AVStream    *st     =   nullptr;
+    AVCodec     *dec    =   nullptr;
+
+    //
+    for( index = 0; index < fmt_ctx->nb_streams; index++ )
+    {
+        ret  =   av_find_best_stream( fmt_ctx, type, index, -1, NULL, 0 );
+        if( ret >= 0 )
+        {
+            if( cs_idx < 0 )           
+                cs_idx   =   index; // choose first ad current.
+
+            // note: dec_ctx, stream is class member. after open codec, they use for current ctx, stream.
+            open_codec_context( index, fmt_ctx, type );            
+            dec_map.emplace(    std::make_pair(index,dec_ctx) ); 
+            stream_map.emplace( std::make_pair(index,stream)  );
+        }
+    }
+
+    // set
+    dec_ctx     =   dec_map[cs_idx];
+    stream      =   stream_map[cs_idx];
+
+    return  SUCCESS;
+}
+
+
+
+
+
+
+/*******************************************************************************
+Decode::current_index()
+********************************************************************************/
+int     Decode::current_index()
+{
+    return  cs_idx;
+}
+
+
+
+
+/*******************************************************************************
+Decode::is_index()
+********************************************************************************/
+bool    Decode::is_index( int index )
+{
+    auto    item    =   dec_map.find(index);
+    return  item != dec_map.end();
+}
+
+
+
+
+
+
+/*******************************************************************************
 Decode::open_codec_context()
 ********************************************************************************/
 int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type )
 {
-    int         ret =   0;
-    AVStream    *st =   nullptr;
+    int         ret     =   0;
     AVCodec     *dec    =   nullptr;
 
     //
-    st  =   fmt_ctx->streams[stream_index];
-    stream = fmt_ctx->streams[stream_index];
+    stream  =   fmt_ctx->streams[stream_index];
 
     // find decoder for the stream 
-    dec =   avcodec_find_decoder( st->codecpar->codec_id );
+    dec     =   avcodec_find_decoder( stream->codecpar->codec_id );
     if( dec == nullptr )
     {
         auto str =  av_get_media_type_string(type);
@@ -100,7 +160,7 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     }
 
     // Copy codec parameters from input stream to output codec context 
-    ret =   avcodec_parameters_to_context( dec_ctx, st->codecpar );
+    ret =   avcodec_parameters_to_context( dec_ctx, stream->codecpar );
     if( ret < 0 )
     {
         auto str    =   av_get_media_type_string(type);
@@ -133,11 +193,14 @@ Decode::send_packet()
 ********************************************************************************/
 int     Decode::send_packet( const AVPacket *pkt )
 {
+    int     index   =   pkt == nullptr ? cs_idx : pkt->stream_index;
+
     int     ret =   0;
     char    buf[AV_ERROR_MAX_STRING_SIZE]{0};
 
     // submit the packet to the decoder
-    ret =   avcodec_send_packet( dec_ctx, pkt );
+    AVCodecContext  *ctx    =   dec_map[index];
+    ret =   avcodec_send_packet( ctx, pkt );
     if( ret < 0 ) 
     {
         auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
@@ -186,12 +249,16 @@ AVMediaType     Decode::get_decode_context_type()
 /*******************************************************************************
 Decode::recv_frame()
 ********************************************************************************/
-int     Decode::recv_frame()
+int     Decode::recv_frame( int index )
 {
+    if( index == -1 ) // -1 use for flush.
+        index   =   cs_idx; 
+
     char    buf[AV_ERROR_MAX_STRING_SIZE]{0};
     int     ret     =   0;
 
-    ret     =   avcodec_receive_frame( dec_ctx, frame );
+    AVCodecContext  *dec    =   dec_map[index];
+    ret     =   avcodec_receive_frame( dec, frame );
     if( ret < 0 ) 
     {
         // those two return values are special and mean there is no output
@@ -232,6 +299,8 @@ int     Decode::end()
 {
     avcodec_free_context( &dec_ctx );
     av_frame_free( &frame );
+
+    cs_idx  =   -1;
 
     return  SUCCESS;
 }

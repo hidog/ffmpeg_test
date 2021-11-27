@@ -64,9 +64,10 @@ VideoDecode::~VideoDecode()
 /*******************************************************************************
 VideoDecode::open_codec_context()
 ********************************************************************************/
-int     VideoDecode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx )
+int     VideoDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
-    Decode::open_codec_context( stream_index, fmt_ctx, type );
+    Decode::open_all_codec( fmt_ctx, type );
+
     //dec_ctx->thread_count = 10;
     return  SUCCESS;
 }
@@ -256,6 +257,31 @@ VideoData   VideoDecode::output_video_data()
     vd.timestamp    =   get_timestamp();
 
     return  vd;
+}
+
+
+
+
+
+
+
+/*******************************************************************************
+VideoDecode::get_video_width()
+********************************************************************************/
+int     VideoDecode::get_video_width()
+{
+    return  stream->codecpar->width;
+}
+
+
+
+
+/*******************************************************************************
+VideoDecode::get_video_height()
+********************************************************************************/
+int     VideoDecode::get_video_height()
+{
+    return  stream->codecpar->height;
 }
 
 

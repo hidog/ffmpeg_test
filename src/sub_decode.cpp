@@ -28,7 +28,7 @@ SubDecode::SubDecode()
 SubDecode::SubDecode()
     :   Decode()
 {
-    AVMediaType   type  =   AVMEDIA_TYPE_SUBTITLE; 
+    type  =   AVMEDIA_TYPE_SUBTITLE; 
 }
 
 
@@ -63,15 +63,9 @@ SubDecode::~SubDecode()
 /*******************************************************************************
 SubDecode::open_codec_context()
 ********************************************************************************/
-int     SubDecode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx )
+int     SubDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
-    if( stream_index < 0 )
-    {
-        MYLOG( LOG::INFO, "no sub stream" );
-        return  SUCCESS;
-    }
-
-    Decode::open_codec_context( stream_index, fmt_ctx, type );
+    Decode::open_all_codec( fmt_ctx, type );
     //dec_ctx->thread_count = 4;
     return  SUCCESS;
 }
@@ -368,10 +362,12 @@ SubDecode::decode_subtitle()
 ********************************************************************************/
 int    SubDecode::decode_subtitle( AVPacket* pkt )
 {
+    AVCodecContext  *dec    =   pkt == nullptr ? dec_map[cs_idx] : dec_map[pkt->stream_index];
+
     AVSubtitle  subtitle {0};
 
     int     got_sub     =   0;
-    int     ret         =   avcodec_decode_subtitle2( dec_ctx, &subtitle, &got_sub, pkt );
+    int     ret         =   avcodec_decode_subtitle2( dec, &subtitle, &got_sub, pkt );
     
     if( ret >= 0 && got_sub > 0 )
     {

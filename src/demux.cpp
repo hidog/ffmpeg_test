@@ -38,6 +38,7 @@ Demux::~Demux()
 
 
 
+#if 0
 /*******************************************************************************
 Demux::get_video_width()
 ********************************************************************************/
@@ -45,9 +46,10 @@ int     Demux::get_video_width()
 {
     return  width;
 }
+#endif
 
 
-
+#if 0
 /*******************************************************************************
 Demux::get_video_height()
 ********************************************************************************/
@@ -55,7 +57,7 @@ int     Demux::get_video_height()
 {
     return  height;
 }
-
+#endif
 
 
 
@@ -82,14 +84,6 @@ Demux::init()
 int    Demux::init()
 {
     int     ret, i;
-
-    // 解開video, audio, subtitle info.
-    ret     =   stream_info();
-    if( ret == ERROR )
-    {
-        MYLOG( LOG::ERROR, "init fail. ret = %d", ret );
-        return  ERROR;
-    }
 
     /*
         use for multi-thread
@@ -141,6 +135,7 @@ https://www.jianshu.com/p/89f2da631e16
 ********************************************************************************/
 int     Demux::sub_info()
 {  
+#if 0
     // 這邊需要改成loop, 判斷有幾個音軌,並且呈現在UI上.
     ss_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0 );
     if( ss_idx < 0 )
@@ -166,6 +161,8 @@ int     Demux::sub_info()
     MYLOG( LOG::DEBUG, "title %s", dic->value );
 
     return  ss_idx;
+#endif
+    return 0;
 }
 
 
@@ -190,6 +187,7 @@ NOTE: 假設影片只有一個視訊軌,先不處理多重視訊軌的問題.
 ********************************************************************************/
 int     Demux::video_info()
 {
+#if 0
     vs_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0 );
 
     //
@@ -249,6 +247,7 @@ int     Demux::video_info()
     }
 
 #endif
+#endif
 
     return SUCCESS;
 }
@@ -265,6 +264,7 @@ Demux::audio_info()
 ********************************************************************************/
 int     Demux::audio_info()
 {
+#if 0
     as_idx      =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0 );
 
     //
@@ -288,46 +288,14 @@ int     Demux::audio_info()
     double a_dur_ms = av_q2d( fmt_ctx->streams[as_idx]->time_base) * fmt_ctx->streams[as_idx]->duration;
     MYLOG( LOG::INFO, "frame duration = %lf ms", a_dur_ms );
 
+#endif
     return  SUCCESS;
 }
 
 
 
 
-/*******************************************************************************
-Demux::get_video_index()
-********************************************************************************/
-int     Demux::get_video_index()
-{
-    return  vs_idx;
-}
-
-
-
-
-/*******************************************************************************
-Demux::get_audio_index()
-********************************************************************************/
-int     Demux::get_audio_index()
-{
-    return  as_idx;
-}
-
-
-
-
-/*******************************************************************************
-Demux::get_sub_index()
-********************************************************************************/
-int     Demux::get_sub_index()
-{
-    return  ss_idx;
-}
-
-
-
-
-
+#if 0
 /*******************************************************************************
 Demux::get_audio_channel()
 ********************************************************************************/
@@ -335,9 +303,10 @@ int     Demux::get_audio_channel()
 {
     return  channel;
 }
+#endif
 
 
-
+#if 0
 /*******************************************************************************
 Demux::get_audio_sample_rate()
 ********************************************************************************/
@@ -345,7 +314,7 @@ int     Demux::get_audio_sample_rate()
 {
     return  sample_rate;
 }
-
+#endif
 
 
 
@@ -367,7 +336,7 @@ int     Demux::stream_info()
     MYLOG( LOG::INFO, "nb_streams = %d", fmt_ctx->nb_streams );
 
 
-    int vc = 0, ac = 0, sc = 0;
+    /*int vc = 0, ac = 0, sc = 0;
     for( int i = 0; i < fmt_ctx->nb_streams; i++ )
     {
         if( fmt_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
@@ -378,12 +347,12 @@ int     Demux::stream_info()
             sc++;
     }
     if( vc > 1 || ac > 1 )    
-        MYLOG( LOG::ERROR, "multi video or audio."); // 未來需要處理多重音軌/視訊軌的問題. 理論上不太會遇到多重視訊軌.   
+        MYLOG( LOG::ERROR, "multi video or audio."); // 未來需要處理多重音軌/視訊軌的問題. 理論上不太會遇到多重視訊軌.   */
 
-    //
-    video_info();
-    audio_info();
-    sub_info();
+    // 底下的動作目前無實質作用, 但如果要做 NVidia, 可以考慮在底下函數做判斷.
+    //video_info();
+    //audio_info();
+    //sub_info();
 
     /* dump input information to stderr */
     //av_dump_format( fmt_ctx, 0, src_file.c_str(), 0 );
@@ -396,7 +365,7 @@ int     Demux::stream_info()
 
 
 /*******************************************************************************
-Demux::get_subtitle_param()
+Demux::exist_subtitle()
 ********************************************************************************/
 bool    Demux::exist_subtitle()
 {
@@ -413,16 +382,16 @@ bool    Demux::exist_subtitle()
 /*******************************************************************************
 Demux::get_subtitle_param()
 ********************************************************************************/
-std::pair<std::string,std::string> Demux::get_subtitle_param( std::string src_file, AVPixelFormat pix_fmt )
+std::pair<std::string,std::string> Demux::get_subtitle_param( int v_index, int width, int height, std::string src_file, AVPixelFormat pix_fmt )
 {
     std::stringstream   ss;
     std::string     in_param, out_param;;
 
-    int     sar_num     =   fmt_ctx->streams[vs_idx]->sample_aspect_ratio.num;
-    int     sar_den     =   fmt_ctx->streams[vs_idx]->sample_aspect_ratio.den;
+    int     sar_num     =   fmt_ctx->streams[v_index]->sample_aspect_ratio.num;
+    int     sar_den     =   fmt_ctx->streams[v_index]->sample_aspect_ratio.den;
 
-    int     tb_num      =   fmt_ctx->streams[vs_idx]->time_base.num;
-    int     tb_den      =   fmt_ctx->streams[vs_idx]->time_base.den;
+    int     tb_num      =   fmt_ctx->streams[v_index]->time_base.num;
+    int     tb_den      =   fmt_ctx->streams[v_index]->time_base.den;
 
     ss << "video_size=" << width << "x" << height << ":pix_fmt=" << static_cast<int>(pix_fmt) 
         << ":time_base=" << tb_num << "/" << tb_den << ":pixel_aspect=" << sar_num << "/" << sar_den;
@@ -475,7 +444,6 @@ std::pair<std::string,std::string> Demux::get_subtitle_param( std::string src_fi
     subtitleOpened = init_subtitle_filter(buffersrcContext, buffersinkContext, args, filterDesc );
 
 #endif
-
 }
 
 
@@ -527,6 +495,14 @@ int     Demux::open_input( std::string str )
     if( ret < 0 )
     {
         MYLOG( LOG::ERROR, "Could not open source file %s", src_file.c_str() );
+        return  ERROR;
+    }
+
+    // 解開video, audio, subtitle info.
+    ret     =   stream_info();
+    if( ret == ERROR )
+    {
+        MYLOG( LOG::ERROR, "init fail. ret = %d", ret );
         return  ERROR;
     }
 

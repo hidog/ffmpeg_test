@@ -24,7 +24,7 @@ AudioDecode::AudioDecode()
 AudioDecode::AudioDecode()
     :   Decode()
 {
-    AVMediaType   type  =   AVMEDIA_TYPE_AUDIO; 
+    type  =   AVMEDIA_TYPE_AUDIO; 
 }
 
 
@@ -60,9 +60,9 @@ AudioDecode::~AudioDecode()
 /*******************************************************************************
 AudioDecode::open_codec_context()
 ********************************************************************************/
-int     AudioDecode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx )
+int     AudioDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
-    Decode::open_codec_context( stream_index, fmt_ctx, type );
+    Decode::open_all_codec( fmt_ctx, type );
     //dec_ctx->thread_count = 4;
     return  SUCCESS;
 }
@@ -133,6 +133,34 @@ void    AudioDecode::output_audio_frame_info()
     auto    pts_str     =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
     MYLOG( LOG::INFO, "audio_frame n = %d, nb_samples = %d, pts : %s", frame_count++, frame->nb_samples, pts_str );
 }
+
+
+
+
+
+
+/*******************************************************************************
+AudioDecode::get_audio_channel()
+********************************************************************************/
+int     AudioDecode::get_audio_channel()
+{
+    return  stream->codecpar->channels;
+}
+
+
+
+
+
+/*******************************************************************************
+AudioDecode::get_audio_sample_rate()
+********************************************************************************/
+int     AudioDecode::get_audio_sample_rate()
+{
+    return  stream->codecpar->sample_rate;
+}
+
+
+
 
 
 
