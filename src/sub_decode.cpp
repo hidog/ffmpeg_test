@@ -63,15 +63,9 @@ SubDecode::~SubDecode()
 /*******************************************************************************
 SubDecode::open_codec_context()
 ********************************************************************************/
-int     SubDecode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx )
+int     SubDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
-    if( stream_index < 0 )
-    {
-        MYLOG( LOG::INFO, "no sub stream" );
-        return  SUCCESS;
-    }
-
-    Decode::open_codec_context( stream_index, fmt_ctx, type );
+    Decode::open_all_codec( fmt_ctx, type );
     //dec_ctx->thread_count = 4;
     return  SUCCESS;
 }

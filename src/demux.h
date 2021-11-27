@@ -61,11 +61,6 @@ public:
     int     get_audio_channel();
     int     get_audio_sample_rate();
 
-    //
-    int     get_video_index();
-    int     get_audio_index();
-    int     get_sub_index();
-
     bool    exist_subtitle();
     void    set_exist_subtitle( bool flag );
 
@@ -109,10 +104,6 @@ private:
     std::mutex              pkt_mtx; 
 #endif
 
-    //
-    int     vs_idx      =   -1;         // video stream index
-    int     as_idx      =   -1;         // audio stream index
-    int     ss_idx      =   -1;         // sub stream index
     //bool    use_bsf     =   false;
 
     std::string     src_file;

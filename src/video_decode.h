@@ -27,7 +27,7 @@ public:
     VideoDecode& operator = ( const VideoDecode& ) = delete;
     VideoDecode& operator = ( VideoDecode&& ) = delete;
 
-    int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx ) override;
+    int     open_codec_context( AVFormatContext *fmt_ctx ) override;
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
 
     int     init() override;

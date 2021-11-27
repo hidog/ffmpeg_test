@@ -38,7 +38,7 @@ public:
 
     //
     virtual void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) = 0;
-    virtual int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx ) = 0;
+    virtual int     open_codec_context( AVFormatContext *fmt_ctx ) = 0;
 
     int     send_packet( const AVPacket *pkt );
     int     recv_frame();
@@ -57,17 +57,21 @@ public:
     std::function<int()>    output_frame_func;
 #endif
 
-    AVStream* stream;
 
 
 protected:
 
     int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type );
+    int     open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type );
+
 
     std::map<int,AVCodecContext*>   dec_map;
-    int current_stream_idx = -1;
+    std::map<int,AVStream*>         stream_map;
+
+    int cs_idx      =   -1;     // current stream index.
 
     AVCodecContext  *dec_ctx    =   nullptr;
+    AVStream        *stream     =   nullptr;
     AVFrame         *frame      =   nullptr;
 
     int     frame_count =   0;

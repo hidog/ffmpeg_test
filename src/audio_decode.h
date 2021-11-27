@@ -25,17 +25,18 @@ public:
     AudioDecode& operator = ( AudioDecode&& ) = delete;
 
     //
-    int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx ) override;
+    int     open_codec_context( AVFormatContext *fmt_ctx ) override;
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
 
     //
     int     init() override;
     int     end() override;
 
-    //
-    void    output_audio_frame_info();
+    int     get_audio_channel();
+    int     get_audio_sample_rate();
 
     //
+    void        output_audio_frame_info();    
     AudioData   output_audio_data();
 
 private:

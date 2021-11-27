@@ -69,20 +69,53 @@ int     Decode::init()
 
 
 /*******************************************************************************
+Decode::open_all_codec()
+********************************************************************************/
+int     Decode::open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type )
+{
+    int         ret     =   0;
+    int         index;
+    AVStream    *st     =   nullptr;
+    AVCodec     *dec    =   nullptr;
+
+    //
+    for( index = 0; index < fmt_ctx->nb_streams; index++ )
+    {
+        ret  =   av_find_best_stream( fmt_ctx, type, index, -1, NULL, 0 );
+        if( ret >= 0 )
+        {
+            if( cs_idx < 0 )           
+                cs_idx   =   index; // choose first ad current.
+
+            // note: dec_ctx, stream is class member. after open codec, they use for current ctx, stream.
+            open_codec_context( index, fmt_ctx, type );            
+            dec_map.emplace(    std::make_pair(index,dec_ctx) ); 
+            stream_map.emplace( std::make_pair(index,stream)  );
+        }
+    }
+
+    // set
+    dec_ctx     =   dec_map[cs_idx];
+    stream      =   stream_map[cs_idx];
+
+    return  SUCCESS;
+}
+
+
+
+/*******************************************************************************
 Decode::open_codec_context()
 ********************************************************************************/
 int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type )
 {
-    int         ret =   0;
-    AVStream    *st =   nullptr;
+    int         ret     =   0;
     AVCodec     *dec    =   nullptr;
 
     //
-    st  =   fmt_ctx->streams[stream_index];
-    stream = fmt_ctx->streams[stream_index];
+    stream  =   fmt_ctx->streams[stream_index];
 
     // find decoder for the stream 
-    dec =   avcodec_find_decoder( st->codecpar->codec_id );
+    dec     =   avcodec_find_decoder( stream->codecpar->codec_id );
     if( dec == nullptr )
     {
         auto str =  av_get_media_type_string(type);
@@ -100,7 +133,7 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     }
 
     // Copy codec parameters from input stream to output codec context 
-    ret =   avcodec_parameters_to_context( dec_ctx, st->codecpar );
+    ret =   avcodec_parameters_to_context( dec_ctx, stream->codecpar );
     if( ret < 0 )
     {
         auto str    =   av_get_media_type_string(type);
