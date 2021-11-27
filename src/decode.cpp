@@ -48,7 +48,6 @@ Decode::init()
 ********************************************************************************/
 int     Decode::init()
 {
-
     int     ret     =   0;
 
     frame_count =   0;
@@ -300,6 +299,8 @@ int     Decode::end()
 {
     avcodec_free_context( &dec_ctx );
     av_frame_free( &frame );
+
+    cs_idx  =   -1;
 
     return  SUCCESS;
 }
