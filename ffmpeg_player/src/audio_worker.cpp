@@ -158,10 +158,16 @@ void AudioWorker::audio_play()
     while( v_start == false )
         SLEEP_10MS;        
 
+    std::chrono::steady_clock::time_point       last, now;
+    std::chrono::duration<int64_t, std::milli>  duration;
+    int64_t last_ts = 0;
+
     
     // 一次寫入4096的效果比較好. 用原本的作法會有機會破音. 記得修改變數名稱
     int buffer_size_half = 4096; //audio->bufferSize()/2;
     MYLOG( LOG::DEBUG, "buffer size half = %d", buffer_size_half );
+
+    last   =   std::chrono::steady_clock::now();
 
     //
     while( is_play_end == false )
@@ -184,6 +190,15 @@ void AudioWorker::audio_play()
 
         // 某些影片檔,會解出超過buffer size的audio frame
         // 可以改變audio output的buffer size, 或是分批寫入
+
+        while(true)
+        {
+            now         =   std::chrono::steady_clock::now();
+            duration    =   std::chrono::duration_cast<std::chrono::milliseconds>( now - last );
+
+            if( duration.count() >= ad.timestamp - last_ts )
+                break;
+        }
 
   
         int remain_bytes = ad.bytes;
@@ -214,6 +229,8 @@ void AudioWorker::audio_play()
                 remain_bytes -= buffer_size_half;
             }
         }
+
+        last_ts = ad.timestamp;
 #if 0
         // old code
         //
