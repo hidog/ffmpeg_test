@@ -362,10 +362,12 @@ SubDecode::decode_subtitle()
 ********************************************************************************/
 int    SubDecode::decode_subtitle( AVPacket* pkt )
 {
+    AVCodecContext  *dec    =   pkt == nullptr ? dec_map[cs_idx] : dec_map[pkt->stream_index];
+
     AVSubtitle  subtitle {0};
 
     int     got_sub     =   0;
-    int     ret         =   avcodec_decode_subtitle2( dec_ctx, &subtitle, &got_sub, pkt );
+    int     ret         =   avcodec_decode_subtitle2( dec, &subtitle, &got_sub, pkt );
     
     if( ret >= 0 && got_sub > 0 )
     {

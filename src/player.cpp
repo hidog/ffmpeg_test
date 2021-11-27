@@ -598,7 +598,7 @@ void    Player::play_QT()
             dc  =   dynamic_cast<Decode*>(&s_decoder);  
         else
         {
-            //MYLOG( LOG::WARN, "stream type not handle.");
+            MYLOG( LOG::ERROR, "stream type not handle.");
             demuxer.unref_packet();
             continue;
         }
