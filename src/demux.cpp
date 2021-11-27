@@ -38,6 +38,7 @@ Demux::~Demux()
 
 
 
+#if 0
 /*******************************************************************************
 Demux::get_video_width()
 ********************************************************************************/
@@ -45,9 +46,10 @@ int     Demux::get_video_width()
 {
     return  width;
 }
+#endif
 
 
-
+#if 0
 /*******************************************************************************
 Demux::get_video_height()
 ********************************************************************************/
@@ -55,7 +57,7 @@ int     Demux::get_video_height()
 {
     return  height;
 }
-
+#endif
 
 
 
@@ -293,7 +295,7 @@ int     Demux::audio_info()
 
 
 
-
+#if 0
 /*******************************************************************************
 Demux::get_audio_channel()
 ********************************************************************************/
@@ -301,9 +303,10 @@ int     Demux::get_audio_channel()
 {
     return  channel;
 }
+#endif
 
 
-
+#if 0
 /*******************************************************************************
 Demux::get_audio_sample_rate()
 ********************************************************************************/
@@ -311,7 +314,7 @@ int     Demux::get_audio_sample_rate()
 {
     return  sample_rate;
 }
-
+#endif
 
 
 
@@ -362,7 +365,7 @@ int     Demux::stream_info()
 
 
 /*******************************************************************************
-Demux::get_subtitle_param()
+Demux::exist_subtitle()
 ********************************************************************************/
 bool    Demux::exist_subtitle()
 {
@@ -379,19 +382,16 @@ bool    Demux::exist_subtitle()
 /*******************************************************************************
 Demux::get_subtitle_param()
 ********************************************************************************/
-std::pair<std::string,std::string> Demux::get_subtitle_param( std::string src_file, AVPixelFormat pix_fmt )
+std::pair<std::string,std::string> Demux::get_subtitle_param( int v_index, int width, int height, std::string src_file, AVPixelFormat pix_fmt )
 {
-    assert(0);
-    return std::pair<std::string,std::string>();
-#if 0
     std::stringstream   ss;
     std::string     in_param, out_param;;
 
-    int     sar_num     =   fmt_ctx->streams[vs_idx]->sample_aspect_ratio.num;
-    int     sar_den     =   fmt_ctx->streams[vs_idx]->sample_aspect_ratio.den;
+    int     sar_num     =   fmt_ctx->streams[v_index]->sample_aspect_ratio.num;
+    int     sar_den     =   fmt_ctx->streams[v_index]->sample_aspect_ratio.den;
 
-    int     tb_num      =   fmt_ctx->streams[vs_idx]->time_base.num;
-    int     tb_den      =   fmt_ctx->streams[vs_idx]->time_base.den;
+    int     tb_num      =   fmt_ctx->streams[v_index]->time_base.num;
+    int     tb_den      =   fmt_ctx->streams[v_index]->time_base.den;
 
     ss << "video_size=" << width << "x" << height << ":pix_fmt=" << static_cast<int>(pix_fmt) 
         << ":time_base=" << tb_num << "/" << tb_den << ":pixel_aspect=" << sar_num << "/" << sar_den;
@@ -443,7 +443,6 @@ std::pair<std::string,std::string> Demux::get_subtitle_param( std::string src_fi
 
     subtitleOpened = init_subtitle_filter(buffersrcContext, buffersinkContext, args, filterDesc );
 
-#endif
 #endif
 }
 

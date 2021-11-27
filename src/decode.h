@@ -41,10 +41,11 @@ public:
     virtual int     open_codec_context( AVFormatContext *fmt_ctx ) = 0;
 
     int     send_packet( const AVPacket *pkt );
-    int     recv_frame();
+    int     recv_frame( int index );
     void    unref_frame();
-
-    int get_frame_count();
+    int     get_frame_count();
+    bool    is_index( int index );
+    int     current_index();
 
 
     //

@@ -33,6 +33,9 @@ public:
     int     init() override;
     int     end() override;
 
+    int     get_video_width();
+    int     get_video_height();
+
     void        output_video_frame_info();
     int64_t     get_timestamp();
 

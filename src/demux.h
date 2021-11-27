@@ -56,10 +56,10 @@ public:
 
 
 
-    int     get_video_width();
-    int     get_video_height();
-    int     get_audio_channel();
-    int     get_audio_sample_rate();
+    //int     get_video_width();
+    //int     get_video_height();
+    //int     get_audio_channel();
+    //int     get_audio_sample_rate();
 
     bool    exist_subtitle();
     void    set_exist_subtitle( bool flag );
@@ -71,19 +71,19 @@ public:
     AVFormatContext*    get_format_context();
 
 
-    std::pair<std::string,std::string> get_subtitle_param( std::string src_file, AVPixelFormat pix_fmt );
+    std::pair<std::string,std::string> get_subtitle_param( int v_index, int width, int height, std::string src_file, AVPixelFormat pix_fmt );
 
 private:
     // video
-    int     width       =   0;
-    int     height      =   0;
-    int     depth       =   0;
+    //int     width       =   0;
+    //int     height      =   0;
+    //int     depth       =   0;
 
     AVCodecID   v_codec_id;
 
     // audio
-    int     channel         =   0;
-    int     sample_rate     =   0;
+    //int     channel         =   0;
+    //int     sample_rate     =   0;
     //int     sample_size     =   0;
 
     AVCodecID   a_codec_id;

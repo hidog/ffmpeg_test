@@ -28,7 +28,7 @@ SubDecode::SubDecode()
 SubDecode::SubDecode()
     :   Decode()
 {
-    AVMediaType   type  =   AVMEDIA_TYPE_SUBTITLE; 
+    type  =   AVMEDIA_TYPE_SUBTITLE; 
 }
 
 
