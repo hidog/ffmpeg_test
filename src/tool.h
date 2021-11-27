@@ -18,6 +18,7 @@ struct AudioData
 {
     uint8_t     *pcm;
     int         bytes;
+    int64_t     timestamp;
 };
 
 
