@@ -1,4 +1,4 @@
-#ifndef PLAYER_H
+﻿#ifndef PLAYER_H
 #define PLAYER_H
 
 #include <string>
@@ -42,10 +42,19 @@ public:
 
     //
     void    play_QT();
-
     int     init();
     int     end();
     int     flush();
+
+    //
+    void    set_input_file( std::string path );
+    bool    is_set_input_file();
+    int     decode( Decode *dc, AVPacket* pkt );
+    void    set_sub_file( std::string str );
+
+    VideoSetting    get_video_setting();
+    AudioSetting    get_audio_setting();
+
 
 #ifdef USE_MT
     void    play_QT_multi_thread();
@@ -53,59 +62,33 @@ public:
     void    audio_decode();
 #endif
 
-    //
-    void    set_input_file( std::string path );
-    bool    is_set_input_file();
-    int     decode( Decode *dc, AVPacket* pkt );
-
-    VideoSetting    get_video_setting();
-    AudioSetting    get_audio_setting();
-
-
-    void set_sub_file( std::string str );
-
-
-    //
-    std::function<void(QImage)> output_video_frame_func;
-    std::function<void(AudioData)> output_audio_pcm_func;
-
-    //
 #ifdef FFMPEG_TEST
     void    play();
+    std::function<void(QImage)> output_video_frame_func;
+    std::function<void(AudioData)> output_audio_pcm_func;
 #endif
 
 private:
-
-    bool    v_thr_start     =   false,
-            a_thr_start     =   false;
-
 
     Demux           demuxer;
     VideoDecode     v_decoder;
     AudioDecode     a_decoder;
     SubDecode       s_decoder;
 
-    std::string     src_filename;
+    std::string     src_file;
+    std::string     sub_name;   // 外部設置的 sub file
+    std::string     sub_src;    // 最後決定使用的sub file. 因為可能是使用內嵌字幕,也可能用外掛字幕.
 
 #ifdef USE_MT
+    bool    v_thr_start     =   false,
+        a_thr_start     =   false;
+
     std::queue<AVPacket*>   video_pkt_queue,
-                            audio_pkt_queue;
+        audio_pkt_queue;
 
     std::thread     *video_decode_thr   =   nullptr,
-                    *audio_decode_thr   =   nullptr;
+        *audio_decode_thr   =   nullptr;
 #endif
-
-    QImage  sub_img;
-
-
-    std::string sub_name = "";
-
-
-    int subtitleOpened = 0;
-
-    //AVFilterGraph *filterGraph = nullptr;//avfilter_graph_alloc();
-
-    //bool init_subtitle_filter( AVFilterContext * &buffersrcContext, AVFilterContext * &buffersinkContext, std::string args, std::string filterDesc);
 
 };
 

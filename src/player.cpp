@@ -79,7 +79,7 @@ Player::init()
 ********************************************************************************/
 int     Player::init()
 {
-    if( src_filename == "" )
+    if( src_file == "" )
     {
         MYLOG( LOG::ERROR, "src file not set." );
         return  ERROR;
@@ -89,7 +89,7 @@ int     Player::init()
     AVFormatContext *fmt_ctx    =   nullptr;
 
     //
-    ret     =   demuxer.open_input( src_filename );
+    ret     =   demuxer.open_input( src_file );
     ret     =   demuxer.init();
     fmt_ctx =   demuxer.get_format_context();
 
@@ -103,10 +103,6 @@ int     Player::init()
     ret     =   a_decoder.init();
 
     //
-    int     ss_idx  =   s_decoder.current_index();
-
-    std::string sub_src;
-
     bool    exist_subtitle  =   false;
 
     // handle subtitle
@@ -114,15 +110,15 @@ int     Player::init()
     {
         exist_subtitle  =   true;
         ret     =   s_decoder.init();
-        sub_src = src_filename;
+        sub_src =   src_file;
     }
     else
     {
         if( sub_name.empty() == false )
         {
             exist_subtitle  =   true;
-            ret     =   s_decoder.init();
-            sub_src = sub_name;
+            ret         =   s_decoder.init();
+            sub_src     =   sub_name;
         }     
     }
 
@@ -134,14 +130,13 @@ int     Player::init()
         sd.height   =   v_decoder.get_video_height();
         sd.pix_fmt  =    v_decoder.get_pix_fmt();
         sd.video_index  =   v_decoder.current_index();
-        sd.sub_index    =   ss_idx;
+        sd.sub_index    =   s_decoder.current_index();
 
         s_decoder.init_sub_image( sd );
         s_decoder.init_sws_ctx( sd );
 
         // if exist subtitle, open it.
-        // 這邊有執行順序問題, 不能隨便更改執行順序
-        // 需要增加從外掛檔案讀取字幕的功能        
+        // 這邊有執行順序問題, 不能隨便更改執行順序      
         std::pair<std::string,std::string>  sub_param   =   s_decoder.get_subtitle_param( fmt_ctx, sub_src, sd );
         s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
     }
@@ -168,7 +163,7 @@ Player::set_sub_file()
 ********************************************************************************/
 void Player::set_sub_file( std::string str )
 {
-    sub_name = str;
+    sub_name    =   str;
 }
 
 
@@ -177,7 +172,7 @@ Player::Player()
 ********************************************************************************/
 void    Player::set_input_file( std::string path )
 {
-    src_filename    =   path;
+    src_file    =   path;
 }
 
 
@@ -188,7 +183,7 @@ Player::is_set_input_file()
 ********************************************************************************/
 bool    Player::is_set_input_file()
 {
-    return  src_filename.size() != 0;
+    return  src_file.size() != 0;
 }
 
 
@@ -706,7 +701,7 @@ int     Player::end()
     s_decoder.end();
     demuxer.end();
 
-    sub_name = "";
+    sub_name.clear();
 
     return  SUCCESS;
 }

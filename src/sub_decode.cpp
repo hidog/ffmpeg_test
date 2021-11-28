@@ -66,7 +66,6 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     ss.clear();   
 
     // make filename param. 留意絕對路徑的格式, 不能亂改, 會造成錯誤.
-    // 這邊需要加入判斷, 如果檔案裏面有字幕軌, 就開啟檔案. 如果沒有, 就搜尋並開啟 subtitle.   
     std::string     filename_param  =   "\\";
     filename_param  +=  src_file;
     filename_param.insert( 2, 1, '\\' );
