@@ -107,26 +107,27 @@ int     Player::init()
 
     std::string sub_src;
 
+    bool    exist_subtitle  =   false;
+
     // handle subtitle
-    if( ss_idx >= 0 )
+    if( s_decoder.exist_stream() == true )
     {
-        demuxer.set_exist_subtitle(true);
+        exist_subtitle  =   true;
         ret     =   s_decoder.init();
-        assert( ret == SUCCESS );
         sub_src = src_filename;
     }
     else
     {
         if( sub_name.empty() == false )
         {
-            demuxer.set_exist_subtitle(true);
+            exist_subtitle  =   true;
             ret     =   s_decoder.init();
-            assert( ret == SUCCESS );
             sub_src = sub_name;
         }     
     }
 
-    if( demuxer.exist_subtitle() == true )
+    //
+    if( exist_subtitle == true )
     {
         SubData     sd;
         sd.width    =   v_decoder.get_video_width();
@@ -484,7 +485,7 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
     }
 
     // handle video stream with subtitle
-    if( demuxer.exist_subtitle() == true && v_decoder.is_index( pkt->stream_index ) == true )
+    if( s_decoder.exist_stream() == true && v_decoder.is_index( pkt->stream_index ) == true )
     {
         ret     =   v_decoder.send_packet(pkt);
         if( ret >= 0 )

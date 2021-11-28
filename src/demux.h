@@ -54,8 +54,6 @@ public:
     int     audio_info();
     int     sub_info();
 
-    bool    exist_subtitle();
-    void    set_exist_subtitle( bool flag );
 
     //
     AVPacket*   get_packet();
@@ -92,8 +90,6 @@ private:
     //bool    use_bsf     =   false;
 
     std::string     src_file;
-
-    bool    exist_subtitle_flag     =   false;
 };
 
 

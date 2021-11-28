@@ -415,7 +415,7 @@ SubDecode::decode_subtitle()
 ********************************************************************************/
 int    SubDecode::decode_subtitle( AVPacket* pkt )
 {
-    AVCodecContext  *dec    =   pkt == nullptr ? dec_map[cs_idx] : dec_map[pkt->stream_index];
+    AVCodecContext  *dec    =   pkt == nullptr ? dec_map[cs_index] : dec_map[pkt->stream_index];
 
     AVSubtitle  subtitle {0};
 

@@ -46,6 +46,7 @@ public:
     int     get_frame_count();
     bool    is_index( int index );
     int     current_index();
+    bool    exist_stream();
 
 
     //
@@ -69,7 +70,7 @@ protected:
     std::map<int,AVCodecContext*>   dec_map;
     std::map<int,AVStream*>         stream_map;
 
-    int cs_idx      =   -1;     // current stream index.
+    int cs_index    =   -1;     // current stream index.
 
     AVCodecContext  *dec_ctx    =   nullptr;
     AVStream        *stream     =   nullptr;
