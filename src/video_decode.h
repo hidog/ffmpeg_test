@@ -55,9 +55,9 @@ private:
     AVPixelFormat   pix_fmt;
     SwsContext      *sws_ctx    =   nullptr;   // use for transform yuv to rgb, others.
 
-    uint8_t  *video_dst_data[4] =   { nullptr };
-    int      video_dst_linesize[4];
-    int      video_dst_bufsize;
+    uint8_t  *video_dst_data[4]     =   { nullptr };
+    int      video_dst_linesize[4]  =   { 0 };
+    int      video_dst_bufsize      =   0;
 
     int      width   =   0;
     int      height  =   0;

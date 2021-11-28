@@ -162,14 +162,31 @@ VideoDecode::end()
 ********************************************************************************/
 int     VideoDecode::end()
 {
-    av_free( video_dst_data[0] );
-    video_dst_data[0]   =   nullptr;
+    if( video_dst_data[0] != nullptr )
+    {
+        av_free( video_dst_data[0] );
+        video_dst_data[0]   =   nullptr;
+        video_dst_data[1]   =   nullptr;
+        video_dst_data[2]   =   nullptr;
+        video_dst_data[3]   =   nullptr;
+    }
+    
+    video_dst_linesize[0]   =   0;
+    video_dst_linesize[1]   =   0;
+    video_dst_linesize[2]   =   0;
+    video_dst_linesize[3]   =   0;
+    video_dst_bufsize       =   0;
+
 
     if( sws_ctx != nullptr )
     {
         sws_freeContext( sws_ctx );
         sws_ctx;
     }
+
+    pix_fmt =   AV_PIX_FMT_NONE;
+    width   =   0;
+    height  =   0;
 
     Decode::end();
     return  SUCCESS;
