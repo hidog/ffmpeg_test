@@ -128,18 +128,20 @@ int     Player::init()
 
     if( demuxer.exist_subtitle() == true )
     {
-        int             width       =   v_decoder.get_video_width();  // 這邊改成從 video decoder讀取設定
-        int             height      =   v_decoder.get_video_height();
-        int             v_index     =   v_decoder.current_index();
-        AVPixelFormat   pix_fmt     =   v_decoder.get_pix_fmt();
+        SubData     sd;
+        sd.width    =   v_decoder.get_video_width();
+        sd.height   =   v_decoder.get_video_height();
+        sd.pix_fmt  =    v_decoder.get_pix_fmt();
+        sd.video_index  =   v_decoder.current_index();
+        sd.sub_index    =   ss_idx;
 
-        s_decoder.init_sub_image( width, height );
-        s_decoder.init_sws_ctx( width, height, pix_fmt );
+        s_decoder.init_sub_image( sd );
+        s_decoder.init_sws_ctx( sd );
 
         // if exist subtitle, open it.
         // 這邊有執行順序問題, 不能隨便更改執行順序
         // 需要增加從外掛檔案讀取字幕的功能        
-        std::pair<std::string,std::string>  sub_param   =   s_decoder.get_subtitle_param( fmt_ctx, v_index, width, height, sub_src, pix_fmt, ss_idx );
+        std::pair<std::string,std::string>  sub_param   =   s_decoder.get_subtitle_param( fmt_ctx, sub_src, sd );
         s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
     }
 

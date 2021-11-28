@@ -154,7 +154,7 @@ void    VideoDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
     MYLOG( LOG::INFO, "video dec long name = %s", dec->long_name );
     MYLOG( LOG::INFO, "video dec codec id = %s", avcodec_get_name(dec->id) );
 
-    MYLOG( LOG::INFO, "video bitrate = %d, pix_fmt = %s", dec_ctx->bit_rate, av_get_pix_fmt_name(dec_ctx->pix_fmt) );
+    MYLOG( LOG::INFO, "video bitrate = %lld, pix_fmt = %s", dec_ctx->bit_rate, av_get_pix_fmt_name(dec_ctx->pix_fmt) );
 }
 
 

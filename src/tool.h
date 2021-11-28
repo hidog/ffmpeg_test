@@ -9,7 +9,11 @@
 
 struct SubData
 {
-    int test;
+    int     video_index;
+    int     width;
+    int     height;
+    int     sub_index;
+    int     pix_fmt;
 };
 
 

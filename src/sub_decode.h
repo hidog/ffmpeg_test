@@ -43,14 +43,14 @@ public:
     void    generate_subtitle_image( AVSubtitle &subtitle );
 
 
-    std::pair<std::string,std::string>  get_subtitle_param( AVFormatContext *fmt_ctx, int v_index, int width, int height, std::string src_file, AVPixelFormat pix_fmt, int current_subtitle_index );
+    std::pair<std::string,std::string>  get_subtitle_param( AVFormatContext *fmt_ctx, std::string src_file, SubData sd );
 
 
     //
     int     init() override;
     int     end() override;
 
-    void    init_sub_image( int width, int height );
+    void    init_sub_image( SubData sd );
 
     //
     void    output_sub_frame_info();
@@ -67,7 +67,7 @@ public:
 
     int send_video_frame( AVFrame *video_frame );
     int render_subtitle();
-    int init_sws_ctx( int width, int height, AVPixelFormat pix_fmt );
+    int init_sws_ctx( SubData sd );
     int flush( AVFrame *video_frame );
 
 

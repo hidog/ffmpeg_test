@@ -44,18 +44,18 @@ SubDecode::SubDecode()
 /*******************************************************************************
 SubDecode::get_subtitle_param()
 ********************************************************************************/
-std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatContext* fmt_ctx, int v_index, int width, int height, std::string src_file, AVPixelFormat pix_fmt, int current_subtitle_index )
+std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatContext* fmt_ctx, std::string src_file, SubData sd )
 {
     std::stringstream   ss;
     std::string     in_param, out_param;;
 
-    int     sar_num     =   fmt_ctx->streams[v_index]->sample_aspect_ratio.num;
-    int     sar_den     =   fmt_ctx->streams[v_index]->sample_aspect_ratio.den;
+    int     sar_num     =   fmt_ctx->streams[sd.video_index]->sample_aspect_ratio.num;
+    int     sar_den     =   fmt_ctx->streams[sd.video_index]->sample_aspect_ratio.den;
 
-    int     tb_num      =   fmt_ctx->streams[v_index]->time_base.num;
-    int     tb_den      =   fmt_ctx->streams[v_index]->time_base.den;
+    int     tb_num      =   fmt_ctx->streams[sd.video_index]->time_base.num;
+    int     tb_den      =   fmt_ctx->streams[sd.video_index]->time_base.den;
 
-    ss << "video_size=" << width << "x" << height << ":pix_fmt=" << static_cast<int>(pix_fmt) 
+    ss << "video_size=" << sd.width << "x" << sd.height << ":pix_fmt=" << static_cast<int>(sd.pix_fmt) 
        << ":time_base=" << tb_num << "/" << tb_den << ":pixel_aspect=" << sar_num << "/" << sar_den;
 
     in_param   =   ss.str();
@@ -71,8 +71,8 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     filename_param  +=  src_file;
     filename_param.insert( 2, 1, '\\' );
 
-    ss << "subtitles=filename='" << filename_param << "':original_size=" << width 
-       << "x" << height << ":stream_index=" << current_subtitle_index;
+    ss << "subtitles=filename='" << filename_param << "':original_size=" << sd.width << "x" << sd.height 
+       << ":stream_index=" << sd.sub_index;
 
     out_param    =   ss.str();
 
@@ -171,9 +171,9 @@ int SubDecode::flush( AVFrame *video_frame )
 /*******************************************************************************
 SubDecode::init_sub_image()
 ********************************************************************************/
-void    SubDecode::init_sub_image( int width, int height )
+void    SubDecode::init_sub_image( SubData sd )
 {
-    sub_image  =   QImage{ width, height, QImage::Format_RGB888 };  // 未來考慮移走這邊的code, 避免重複初始化.
+    sub_image  =   QImage{ sd.width, sd.height, QImage::Format_RGB888 };  // 未來考慮移走這邊的code, 避免重複初始化.
 }
 
 
@@ -183,10 +183,11 @@ void    SubDecode::init_sub_image( int width, int height )
 /*******************************************************************************
 SubDecode::init_sws_ctx()
 ********************************************************************************/
-int SubDecode::init_sws_ctx( int width, int height, AVPixelFormat pix_fmt )
+int SubDecode::init_sws_ctx( SubData sd )
 {
-    sws_ctx     =   sws_getContext( width, height, pix_fmt, width, height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);   
-    return 1;
+    AVPixelFormat   pix_fmt     =   static_cast<AVPixelFormat>(sd.pix_fmt);
+    sws_ctx     =   sws_getContext( sd.width, sd.height, pix_fmt, sd.width, sd.height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);   
+    return  SUCCESS;
 }
 
 
