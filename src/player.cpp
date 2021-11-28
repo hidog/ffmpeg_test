@@ -158,6 +158,8 @@ Player::Player()
 
 
 
+
+
 /*******************************************************************************
 Player::set_sub_file()
 ********************************************************************************/
@@ -165,6 +167,9 @@ void Player::set_sub_file( std::string str )
 {
     sub_name    =   str;
 }
+
+
+
 
 
 /*******************************************************************************
@@ -185,6 +190,8 @@ bool    Player::is_set_input_file()
 {
     return  src_file.size() != 0;
 }
+
+
 
 
 
@@ -461,100 +468,7 @@ void    Player::play_QT_multi_thread()
 
 
 
-/*******************************************************************************
-Player::int     Player::decode_video_and_audio()
-********************************************************************************/
-int     Player::decode( Decode *dc, AVPacket* pkt )
-{
-    int     ret     =   0;
 
-    VideoData   vdata;
-    AudioData   adata;
-    AVFrame     *video_frame    =   nullptr;
-
-    // 必須對 subtitle 進行decode, 不然 filter 會出錯
-    if( s_decoder.is_index( pkt->stream_index ) == true )
-    {
-        ret     =   s_decoder.decode_subtitle(pkt);
-        return  ret;
-    }
-
-    // handle video stream with subtitle
-    if( s_decoder.exist_stream() == true && v_decoder.is_index( pkt->stream_index ) == true )
-    {
-        ret     =   v_decoder.send_packet(pkt);
-        if( ret >= 0 )
-        {
-            while(true)
-            {
-                ret     =   dc->recv_frame(pkt->stream_index);
-                if( ret <= 0 )
-                    break;
-
-                video_frame     =   v_decoder.get_frame();
-                ret     =   s_decoder.send_video_frame( video_frame );
-
-                while(true)
-                {
-                    ret     =   s_decoder.render_subtitle();
-                    if( ret <= 0 )
-                        break;
-
-                    vdata.frame         =   s_decoder.get_subtitle_image();
-                    vdata.index         =   v_decoder.get_frame_count();
-                    vdata.timestamp     =   v_decoder.get_timestamp();
-
-                    v_mtx.lock();
-                    video_queue.push(vdata);
-                    v_mtx.unlock();
-
-                    s_decoder.unref_frame();
-                }
-
-                v_decoder.unref_frame();
-            }
-        }
-
-        return  1;
-    }
-
-
-    //實際運行的時候遇到一些隨機crash. (記憶體出錯)
-    //參考原本的code再改一下流程
-
-    //
-    ret     =   dc->send_packet(pkt);
-    if( ret >= 0 )
-    {
-        while(true)
-        {
-            ret     =   dc->recv_frame(pkt->stream_index);
-            if( ret <= 0 )
-                break;
-
-            if( pkt->stream_index == v_decoder.current_index() )
-            {
-                vdata   =   v_decoder.output_video_data();
-                v_mtx.lock();
-                video_queue.push(vdata);
-                v_mtx.unlock();
-            }
-            else if( pkt->stream_index == a_decoder.current_index() )
-            {
-                //a_decoder.output_audio_frame_info();
-                adata   =   a_decoder.output_audio_data();
-                a_mtx.lock();
-                audio_queue.push(adata);
-                a_mtx.unlock();
-            }     
-
-            dc->unref_frame();
-        }
-    }
-
-
-    return  SUCCESS;
-}
 
 
 
@@ -562,10 +476,6 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
 
 /*******************************************************************************
 Player::play_QT()
-
-要考慮某些影片, 音軌開始的點跟視訊開始的點不同, 要針對這點做調整
-需要讀取 pts 做同步.
-
 ********************************************************************************/
 void    Player::play_QT()
 {
@@ -619,6 +529,126 @@ void    Player::play_QT()
     flush();
     MYLOG( LOG::INFO, "play finish.")
 }
+
+
+
+
+
+/*******************************************************************************
+Player::decode
+********************************************************************************/
+int     Player::decode( Decode *dc, AVPacket* pkt )
+{
+    int     ret     =   0;
+
+    // 必須對 subtitle 進行decode, 不然 filter 會出錯
+    if( s_decoder.is_index( pkt->stream_index ) == true )
+    {
+        ret     =   s_decoder.decode_subtitle(pkt);
+        return  ret;
+    }
+
+    // handle video stream with subtitle
+    if( s_decoder.exist_stream() == true && v_decoder.is_index( pkt->stream_index ) == true )
+    {
+        decode_video_with_subtitle(pkt);
+        return  SUCCESS;
+    }
+
+    // handle video and audio
+    VideoData   vdata;
+    AudioData   adata;
+
+    ret     =   dc->send_packet(pkt);
+    if( ret >= 0 )
+    {
+        while(true)
+        {
+            ret     =   dc->recv_frame(pkt->stream_index);
+            if( ret <= 0 )
+                break;
+
+            if( pkt->stream_index == v_decoder.current_index() )
+            {
+                vdata   =   v_decoder.output_video_data();
+                v_mtx.lock();
+                video_queue.push(vdata);
+                v_mtx.unlock();
+            }
+            else if( pkt->stream_index == a_decoder.current_index() )
+            {
+                //a_decoder.output_audio_frame_info();
+                adata   =   a_decoder.output_audio_data();
+                a_mtx.lock();
+                audio_queue.push(adata);
+                a_mtx.unlock();
+            }     
+
+            dc->unref_frame();
+        }
+    }
+
+    return  SUCCESS;
+}
+
+
+
+
+
+/*******************************************************************************
+Player::decode_video_with_subtitle()
+********************************************************************************/
+int    Player::decode_video_with_subtitle( AVPacket* pkt )
+{
+    int         ret         =   v_decoder.send_packet(pkt);
+    AVFrame     *v_frame    =   nullptr;
+    int         count       =   0;
+    VideoData   vdata;
+
+
+    if( ret >= 0 )
+    {
+        while(true)
+        {
+            ret     =   v_decoder.recv_frame(pkt->stream_index);
+            if( ret <= 0 )
+                break;
+
+            v_frame     =   v_decoder.get_frame();
+            ret         =   s_decoder.send_video_frame( v_frame );
+
+            count       =   0;
+            while(true) // note: 目前測試結果都是一次一張,不確定是否存在一次兩張的case
+            {
+                ret     =   s_decoder.render_subtitle();
+                if( ret <= 0 )
+                    break;
+
+                vdata.frame         =   s_decoder.get_subtitle_image();
+                vdata.index         =   v_decoder.get_frame_count();
+                vdata.timestamp     =   v_decoder.get_timestamp();
+
+                v_mtx.lock();
+                video_queue.push(vdata);
+                v_mtx.unlock();
+
+                s_decoder.unref_frame();
+
+                count++;
+            }
+
+            if( count > 1 )
+                MYLOG( LOG::ERROR, "count > 1. %d", count );
+
+            v_decoder.unref_frame();
+        }
+    }
+
+    return  SUCCESS;
+}
+
+
+
 
 
 
