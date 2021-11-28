@@ -569,6 +569,48 @@ int     SubDecode::generate_subtitle_image( AVFrame *video_frame, SwsContext *sw
 
 
 
+/*******************************************************************************
+SubDecode::sub_info()
+
+https://www.jianshu.com/p/89f2da631e16
+
+實際上不必解開多個字幕軌, 有空再研究.
+********************************************************************************/
+int     SubDecode::sub_info()
+{  
+#if 0
+    // 這邊需要改成loop, 判斷有幾個音軌,並且呈現在UI上.
+    ss_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0 );
+    if( ss_idx < 0 )
+    {
+        MYLOG( LOG::INFO, "no subtitle stream" );        
+        return  SUCCESS;
+    }
+
+    //
+    AVStream    *sub_stream   =   fmt_ctx->streams[ss_idx];
+    if( sub_stream == nullptr )
+    {
+        MYLOG( LOG::INFO, "this stream has no sub stream" );
+        return  SUCCESS;
+    }
+
+    //
+    AVCodecID   codec_id    =   fmt_ctx->streams[ss_idx]->codecpar->codec_id;
+    MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(codec_id) );
+
+    // 測試用 未來需要能掃描 metadata, 並且秀出對應的 sub title, audio title.
+    AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)fmt_ctx->streams[ss_idx]->metadata, "title", NULL, AV_DICT_MATCH_CASE );
+    MYLOG( LOG::DEBUG, "title %s", dic->value );
+
+    return  ss_idx;
+#endif
+    return 0;
+}
+
+
+
+
 
 
 
@@ -621,8 +663,6 @@ std::thread *thr = new std::thread( [this]() -> void {
 }
 aaaa++;
 #endif
-
-
 
 
 

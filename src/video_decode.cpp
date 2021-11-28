@@ -32,6 +32,8 @@ VideoDecode::VideoDecode()
     type        =   AVMEDIA_TYPE_VIDEO;
     pix_fmt     =   AV_PIX_FMT_NONE;
 
+    //v_codec_id  =   AV_CODEC_ID_NONE;
+
 }
 
 
@@ -309,3 +311,97 @@ int64_t     VideoDecode::get_timestamp()
 
 
  
+
+
+
+
+
+/*******************************************************************************
+VideoDecode::video_info()
+
+NOTE: 假設影片只有一個視訊軌,先不處理多重視訊軌的問題.
+********************************************************************************/
+int     VideoDecode::video_info()
+{
+#if 0
+    vs_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0 );
+
+    //
+    AVStream    *video_stream   =   fmt_ctx->streams[vs_idx];
+    if( video_stream == nullptr )
+    {
+        MYLOG( LOG::INFO, "this stream has no video stream" );
+        return  SUCCESS;
+    }
+
+    //if( fmt_ctx->streams[vs_idx]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
+    //  printf("Test");
+
+    //
+    AVCodecID   v_codec_id    =   fmt_ctx->streams[vs_idx]->codecpar->codec_id;
+
+    width   =   fmt_ctx->streams[vs_idx]->codecpar->width;
+    height  =   fmt_ctx->streams[vs_idx]->codecpar->height;
+    depth   =   8;
+    if( fmt_ctx->streams[vs_idx]->codecpar->format == AV_PIX_FMT_YUV420P10LE )
+        depth = 10;
+    if( fmt_ctx->streams[vs_idx]->codecpar->format == AV_PIX_FMT_YUV420P12LE )
+        depth = 12;
+
+    MYLOG( LOG::INFO, "width = %d, height = %d, depth = %d", width, height, depth );
+    MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(v_codec_id) );
+
+    //
+    double  fps     =   av_q2d( fmt_ctx->streams[vs_idx]->r_frame_rate );
+    MYLOG( LOG::INFO, "fps = %lf", fps );
+#endif
+
+#if 0
+    // use for NVDEC
+    bool flag1  =   !strcmp( fmt_ctx->iformat->long_name, "QuickTime / MOV" )   ||
+        !strcmp( fmt_ctx->iformat->long_name, "FLV (Flash Video)" ) ||
+        !strcmp( fmt_ctx->iformat->long_name, "Matroska / WebM" );
+    bool flag2  =   codec_id == AV_CODEC_ID_H264 || codec_id == AV_CODEC_ID_HEVC;
+
+    use_bsf     =   flag1 && flag2;
+#endif
+
+#if 0
+    // use for NVDEC
+    if( use_bsf == true )
+    {
+        const AVBitStreamFilter*  bsf   =   nullptr;
+        if( codec_id == AV_CODEC_ID_H264 )
+            bsf     =   av_bsf_get_by_name("h264_mp4toannexb");
+        else if( codec_id == AV_CODEC_ID_HEVC )
+            bsf     =   av_bsf_get_by_name("hevc_mp4toannexb");
+        else 
+            assert(0);
+
+        av_bsf_alloc( bsf, &v_bsf_ctx );
+        v_bsf_ctx->par_in   =   fmt_ctx->streams[vs_idx]->codecpar;
+        av_bsf_init( v_bsf_ctx );
+    }
+
+#endif
+
+
+
+
+#if 0
+    用 bsf 處理 pkt, 再丟給 nv decode 的參考.
+    if( use_bsf && pkt->stream_index == vs_idx )
+    {
+        av_bsf_send_packet( v_bsf_ctx, pkt );
+        av_bsf_receive_packet( v_bsf_ctx, pkt_bsf );
+    }
+    else if( pkt->stream_index == as_idx )
+    {
+        av_bsf_send_packet( a_bsf_ctx, pkt );
+        av_bsf_receive_packet( a_bsf_ctx, pkt );
+    }
+#endif
+
+
+    return SUCCESS;
+}

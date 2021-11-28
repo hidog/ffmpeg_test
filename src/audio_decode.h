@@ -39,6 +39,10 @@ public:
     void        output_audio_frame_info();    
     AudioData   output_audio_data();
 
+
+
+    int audio_info(); // 目前無作用 未來考慮移除
+
 private:
 
     int         sample_rate     =   0;
@@ -48,6 +52,9 @@ private:
 
     AVMediaType     type;    
     SwrContext      *swr_ctx    =   nullptr; // use for chagne audio data to play.
+
+    //AVCodecID   a_codec_id;
+
 
 };
 

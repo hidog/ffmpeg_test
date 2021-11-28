@@ -46,6 +46,8 @@ public:
     AVPixelFormat   get_pix_fmt();
 
 
+    int video_info(); // 未來增加 nv decode 可以參考這邊
+
 
     int num, den;
 
@@ -70,6 +72,15 @@ private:
 
     AVPixelFormat   pix_fmt;
     SwsContext      *sws_ctx   =   nullptr;   // use for transform yuv to rgb, others.
+
+
+
+/*
+    未來增加nv decode 可以參考這邊
+    AVCodecID   v_codec_id;
+    AVPacket *pkt_bsf    =   nullptr;    
+    AVBSFContext    *v_bsf_ctx  =   nullptr,;
+*/
 
 };
 

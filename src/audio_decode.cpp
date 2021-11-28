@@ -25,6 +25,9 @@ AudioDecode::AudioDecode()
     :   Decode()
 {
     type  =   AVMEDIA_TYPE_AUDIO; 
+
+    //a_codec_id  =   AV_CODEC_ID_NONE;
+
 }
 
 
@@ -208,3 +211,42 @@ AudioData   AudioDecode::output_audio_data()
 }
 
 
+
+
+
+
+
+
+
+/*******************************************************************************
+AudioDecode::audio_info()
+********************************************************************************/
+int     AudioDecode::audio_info()
+{
+#if 0
+    as_idx      =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0 );
+
+    //
+    AVStream    *audio_stream   =   fmt_ctx->streams[as_idx];
+    if( audio_stream == nullptr )
+    {
+        MYLOG( LOG::INFO, "this stream has no audio stream" );
+        return  SUCCESS;
+    }
+
+    //
+    a_codec_id   =   fmt_ctx->streams[as_idx]->codecpar->codec_id;
+    MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(a_codec_id) );
+
+    //
+    channel     =   fmt_ctx->streams[as_idx]->codecpar->channels;
+    sample_rate =   fmt_ctx->streams[as_idx]->codecpar->sample_rate;
+    MYLOG( LOG::INFO, "channel = %d, sample rate = %d", channel, sample_rate );
+
+    //
+    double a_dur_ms = av_q2d( fmt_ctx->streams[as_idx]->time_base) * fmt_ctx->streams[as_idx]->duration;
+    MYLOG( LOG::INFO, "frame duration = %lf ms", a_dur_ms );
+
+#endif
+    return  SUCCESS;
+}

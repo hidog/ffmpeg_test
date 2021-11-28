@@ -71,6 +71,9 @@ public:
     int flush( AVFrame *video_frame );
 
 
+    int sub_info(); // 目前無作用
+
+
 private:
 
     AVMediaType     type;    

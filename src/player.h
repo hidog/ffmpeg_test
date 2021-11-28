@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <queue>
 #include <thread>
+#include <mutex>
 
 #include "demux.h"
 #include "audio_decode.h"
@@ -22,7 +23,6 @@ DLL_API std::mutex& get_v_mtx();
 
 
 struct AVPacket;
-struct AVStream;
 
 
 
