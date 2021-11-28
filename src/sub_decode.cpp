@@ -1,5 +1,7 @@
 #include "sub_decode.h"
 #include "tool.h"
+#include <sstream>
+
 
 extern "C" {
 
@@ -30,6 +32,82 @@ SubDecode::SubDecode()
 {
     type  =   AVMEDIA_TYPE_SUBTITLE; 
 }
+
+
+
+
+
+
+
+
+
+/*******************************************************************************
+SubDecode::get_subtitle_param()
+********************************************************************************/
+std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatContext* fmt_ctx, int v_index, int width, int height, std::string src_file, AVPixelFormat pix_fmt, int current_subtitle_index )
+{
+    std::stringstream   ss;
+    std::string     in_param, out_param;;
+
+    int     sar_num     =   fmt_ctx->streams[v_index]->sample_aspect_ratio.num;
+    int     sar_den     =   fmt_ctx->streams[v_index]->sample_aspect_ratio.den;
+
+    int     tb_num      =   fmt_ctx->streams[v_index]->time_base.num;
+    int     tb_den      =   fmt_ctx->streams[v_index]->time_base.den;
+
+    ss << "video_size=" << width << "x" << height << ":pix_fmt=" << static_cast<int>(pix_fmt) 
+       << ":time_base=" << tb_num << "/" << tb_den << ":pixel_aspect=" << sar_num << "/" << sar_den;
+
+    in_param   =   ss.str();
+
+    MYLOG( LOG::INFO, "in = %s", in_param.c_str() );
+
+    ss.str("");
+    ss.clear();   
+
+    // make filename param. 留意絕對路徑的格式, 不能亂改, 會造成錯誤.
+    // 這邊需要加入判斷, 如果檔案裏面有字幕軌, 就開啟檔案. 如果沒有, 就搜尋並開啟 subtitle.   
+    std::string     filename_param  =   "\\";
+    filename_param  +=  src_file;
+    filename_param.insert( 2, 1, '\\' );
+
+    ss << "subtitles=filename='" << filename_param << "':original_size=" << width 
+       << "x" << height << ":stream_index=" << current_subtitle_index;
+
+    out_param    =   ss.str();
+
+    MYLOG( LOG::INFO, "out = %s", out_param.c_str() );
+
+
+    return  std::make_pair( in_param, out_param );
+
+#if 0
+
+    //std::string filterDesc = "subtitles=filename=../../test.ass:original_size=1280x720";
+    //std::string filterDesc = "subtitles=filename='\\D\\:\\\\code\\\\test2.mkv':original_size=1280x720";  // 成功的範例
+    //std::string filterDesc = "subtitles=filename='\\D\\:/code/test.ass':original_size=1280x720";  // 成功的範例
+    std::string filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=1";  // 成功的範例
+
+
+    int ddd = v_decoder.get_decode_context()->sample_aspect_ratio.den;
+    int nnn = v_decoder.get_decode_context()->sample_aspect_ratio.num;
+    //pixel_aspect need equal ddd/nnn
+
+    AVRational time_base = fmt_ctx->streams[vs_idx]->time_base;
+    int num = time_base.num;
+    int den = time_base.den;
+
+    //std::string args = "video_size=1280x720:pix_fmt=0:time_base=1/24000:pixel_aspect=0/1";
+    std::string args = "video_size=1920x1080:pix_fmt=64:time_base=1/1000:pixel_aspect=1/1";
+    //  num den                nnn ddd   
+    //m_width, m_height, videoCodecContext->pix_fmt, time_base.num, time_base.den,
+    //videoCodecContext->sample_aspect_ratio.num, videoCodecContext->sample_aspect_ratio.den);
+
+    subtitleOpened = init_subtitle_filter(buffersrcContext, buffersinkContext, args, filterDesc );
+
+#endif
+}
+
 
 
 

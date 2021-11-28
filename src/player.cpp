@@ -9,9 +9,7 @@ extern "C" {
 
 #include <libavutil/imgutils.h>
 #include <libavutil/samplefmt.h>
-#include <libavutil/timestamp.h>
 #include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
 
 } // end extern "C"
 
@@ -141,7 +139,7 @@ int     Player::init()
         // if exist subtitle, open it.
         // 這邊有執行順序問題, 不能隨便更改執行順序
         // 需要增加從外掛檔案讀取字幕的功能        
-        std::pair<std::string,std::string>  sub_param   =   demuxer.get_subtitle_param( v_index, width, height, sub_src, pix_fmt );
+        std::pair<std::string,std::string>  sub_param   =   s_decoder.get_subtitle_param( fmt_ctx, v_index, width, height, sub_src, pix_fmt, ss_idx );
         s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
     }
 

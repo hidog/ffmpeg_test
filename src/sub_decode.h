@@ -42,6 +42,10 @@ public:
     int     decode_subtitle( AVPacket* pkt );
     void    generate_subtitle_image( AVSubtitle &subtitle );
 
+
+    std::pair<std::string,std::string>  get_subtitle_param( AVFormatContext *fmt_ctx, int v_index, int width, int height, std::string src_file, AVPixelFormat pix_fmt, int current_subtitle_index );
+
+
     //
     int     init() override;
     int     end() override;
