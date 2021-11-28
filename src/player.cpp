@@ -128,7 +128,7 @@ int     Player::init()
         sd.height   =   v_decoder.get_video_height();
         sd.pix_fmt  =    v_decoder.get_pix_fmt();
         sd.video_index  =   v_decoder.current_index();
-        sd.sub_index    =   s_decoder.current_index();
+        sd.sub_index    =   0;
 
         s_decoder.init_sub_image( sd );
         s_decoder.init_sws_ctx( sd );
