@@ -7,18 +7,16 @@
 
 extern "C" {
 
-#include <libavutil/imgutils.h>
-#include <libavutil/samplefmt.h>
 #include <libavcodec/avcodec.h>
 
 } // end extern "C"
 
 
-static std::queue<AudioData> audio_queue;
-static std::queue<VideoData> video_queue;
+static std::queue<AudioData>    audio_queue;
+static std::queue<VideoData>    video_queue;
 
-std::mutex a_mtx;
-std::mutex v_mtx;
+std::mutex  a_mtx;
+std::mutex  v_mtx;
 
 
 
@@ -468,7 +466,21 @@ void    Player::play_QT_multi_thread()
 
 
 
+/*******************************************************************************
+Player::demux_need_wait()
 
+為了避免 queue 被塞爆,量過大的時候會停下來等 UI 端消化.
+********************************************************************************/
+bool    Player::demux_need_wait()
+{
+    if( v_decoder.exist_stream() == true && video_queue.size() >= MAX_QUEUE_SIZE )
+        return  true;
+
+    if( a_decoder.exist_stream() == true && audio_queue.size() >= MAX_QUEUE_SIZE )
+        return  true;
+
+    return  false;
+}
 
 
 
@@ -479,33 +491,25 @@ Player::play_QT()
 ********************************************************************************/
 void    Player::play_QT()
 {
-    int         count   =   0;
     int         ret     =   0;
-    AVPacket*   pkt     =   nullptr;
+    AVPacket    *pkt    =   nullptr;
     Decode      *dc     =   nullptr;
-    AVFrame     *frame  =   nullptr;
-
-    bool first_play_v_and_a = false;
 
     //
     while( true ) 
     {
-        // 有遇到影片檔,解了大量video後才解開audio, 之後要改成任何一個音軌解開後才開始sleep
-        if( first_play_v_and_a == true )
-        {
-            while( video_queue.size() > 300 )  // value 太小有遇到一直跳 audio_queue is empty的warn.
-                SLEEP_10MS;
-        }
+        while( demux_need_wait() == true ) 
+            SLEEP_1MS;
 
-        if( first_play_v_and_a == false && video_queue.size() > 10 && audio_queue.size() > 10 )
-            first_play_v_and_a = true;
-
-        //MYLOG( LOG::DEBUG, "v = %d, a = %d", video_queue.size(), audio_queue.size() );
-
+        //
         ret     =   demuxer.demux();
         if( ret < 0 )
-            break;      
+        {
+            MYLOG( LOG::INFO, "demux finish.");
+            break;
+        }
 
+        //
         pkt     =   demuxer.get_packet();
         if( v_decoder.is_index( pkt->stream_index ) == true )
             dc  =   dynamic_cast<Decode*>(&v_decoder);
@@ -602,8 +606,10 @@ int    Player::decode_video_with_subtitle( AVPacket* pkt )
 {
     int         ret         =   v_decoder.send_packet(pkt);
     AVFrame     *v_frame    =   nullptr;
-    int         count       =   0;
     VideoData   vdata;
+
+
+    int         count       =   0;      // for test.
 
 
     if( ret >= 0 )
@@ -638,7 +644,7 @@ int    Player::decode_video_with_subtitle( AVPacket* pkt )
             }
 
             if( count > 1 )
-                MYLOG( LOG::ERROR, "count > 1. %d", count );
+                MYLOG( LOG::ERROR, "count > 1. %d", count );  // 確認是否出現 loop 跑兩次的 case.
 
             v_decoder.unref_frame();
         }
@@ -667,38 +673,31 @@ int    Player::flush()
 
     VideoData   vdata;
     AudioData   adata;
-    Decode      *dc     =   nullptr;
-    AVFrame     *video_frame    =   nullptr;
-
-    // flush subtitle
-    //s_decoder.decode_subtitle(nullptr);
 
     // flush video
-    dc      =   dynamic_cast<Decode*>(&v_decoder);
-    ret     =   dc->send_packet(nullptr);
+    ret     =   v_decoder.send_packet(nullptr);
     if( ret >= 0 )
     {
         while(true)
         {
-            ret     =   dc->recv_frame(-1);
+            ret     =   v_decoder.recv_frame(-1);
             if( ret <= 0 )
                 break;
 
             // flush 階段本來想處理 subtitle, 但會跳錯誤, 還沒找到解決的做法
             vdata   =   v_decoder.output_video_data();
             video_queue.push(vdata);
-            dc->unref_frame();  
+            v_decoder.unref_frame();  
         }
     }
 
     // flush audio
-    dc      =   dynamic_cast<Decode*>(&a_decoder);
-    ret     =   dc->send_packet(nullptr);
+    ret     =   a_decoder.send_packet(nullptr);
     if( ret >= 0 )
     {
         while(true)
         {
-            ret     =   dc->recv_frame(-1);
+            ret     =   a_decoder.recv_frame(-1);
             if( ret <= 0 )
                 break;
 
@@ -708,11 +707,9 @@ int    Player::flush()
             audio_queue.push(adata);
             a_mtx.unlock();
 
-            dc->unref_frame();
+            a_decoder.unref_frame();
         }
     }
-
-    // need add flush sub
 
     return 0;
 }

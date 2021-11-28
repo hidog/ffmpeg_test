@@ -4,6 +4,7 @@
 #include <string>
 #include <stdio.h>
 #include <queue>
+#include <thread>
 
 #include "demux.h"
 #include "audio_decode.h"
@@ -12,9 +13,6 @@
 #include "tool.h"
 
 #include <QImage>
-#include <thread>
-
-
 
 DLL_API std::queue<AudioData>* get_audio_queue();
 DLL_API std::queue<VideoData>* get_video_queue();
@@ -47,6 +45,7 @@ public:
     int     flush();
 
     //
+    bool    demux_need_wait();
     void    set_input_file( std::string path );
     bool    is_set_input_file();
     int     decode( Decode *dc, AVPacket* pkt );
@@ -70,6 +69,8 @@ public:
 #endif
 
 private:
+
+    static constexpr int   MAX_QUEUE_SIZE  =   50;
 
     Demux           demuxer;
     VideoDecode     v_decoder;
