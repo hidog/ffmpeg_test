@@ -25,17 +25,7 @@ Demux::~Demux()
 ********************************************************************************/
 Demux::~Demux()
 {
-    if( fmt_ctx != nullptr )
-    {
-        avformat_close_input( &fmt_ctx );
-        fmt_ctx     =   nullptr;
-    }
-
-    if( fmt_ctx != nullptr )
-    {
-        av_packet_free( &pkt );
-        pkt         =   nullptr;
-    }
+    end();
 }
 
 

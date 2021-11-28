@@ -124,9 +124,9 @@ int     Player::init()
     if( exist_subtitle == true )
     {
         SubData     sd;
-        sd.width    =   v_decoder.get_video_width();
-        sd.height   =   v_decoder.get_video_height();
-        sd.pix_fmt  =    v_decoder.get_pix_fmt();
+        sd.width        =   v_decoder.get_video_width();
+        sd.height       =   v_decoder.get_video_height();
+        sd.pix_fmt      =   v_decoder.get_pix_fmt();
         sd.video_index  =   v_decoder.current_index();
         sd.sub_index    =   0;
 

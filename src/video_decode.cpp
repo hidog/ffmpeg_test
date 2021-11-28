@@ -11,7 +11,6 @@ extern "C" {
 #include <libswscale/swscale.h>
 
 #include <libavutil/imgutils.h>
-#include <libavutil/samplefmt.h>
 #include <libavutil/timestamp.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -31,9 +30,7 @@ VideoDecode::VideoDecode()
 {
     type        =   AVMEDIA_TYPE_VIDEO;
     pix_fmt     =   AV_PIX_FMT_NONE;
-
     //v_codec_id  =   AV_CODEC_ID_NONE;
-
 }
 
 
@@ -55,7 +52,9 @@ AVPixelFormat   VideoDecode::get_pix_fmt()
 VideoDecode::~VideoDecode()
 ********************************************************************************/
 VideoDecode::~VideoDecode()
-{}
+{
+    end();
+}
 
 
 
@@ -69,7 +68,6 @@ VideoDecode::open_codec_context()
 int     VideoDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
     Decode::open_all_codec( fmt_ctx, type );
-
     //dec_ctx->thread_count = 10;
     return  SUCCESS;
 }
@@ -85,7 +83,6 @@ VideoDecode::init()
 int     VideoDecode::init()
 {
     int ret     =   0;
-    // allocate image where the decoded image will be put
     width       =   dec_ctx->width;
     height      =   dec_ctx->height;
     pix_fmt     =   dec_ctx->pix_fmt;
@@ -99,9 +96,10 @@ int     VideoDecode::init()
         return  ERROR;
     }
 
-    // 先讓 dst 的寬高等於 src 的寬高
-                                    // src                  // dst
-    sws_ctx     =   sws_getContext( width, height, pix_fmt, width, height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);                                    
+    // NOTE : 可以改變寬高. 
+    sws_ctx     =   sws_getContext( width, height, pix_fmt,                     // src
+                                    width, height, AV_PIX_FMT_RGB24,            // dst
+                                    SWS_BICUBIC, NULL, NULL, NULL);                                    
 
     //
 #ifdef FFMPEG_TEST
@@ -117,31 +115,6 @@ int     VideoDecode::init()
 
 
 
-#ifdef FFMPEG_TEST
-/*******************************************************************************
-VideoDecode::output_jpg_by_QT()
-********************************************************************************/
-int    VideoDecode::output_jpg_by_QT()
-{
-    // 1. Get frame and QImage to show 
-    QImage  img     =   QImage( width, height, QImage::Format_RGB888 );
-
-    // 2. Convert and write into image buffer  
-    uint8_t *dst[]  =   { img.bits() };
-    int     linesizes[4];
-
-    av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
-    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
-
-    static int  jpg_count   =   0;
-    char str[1000];
-    sprintf( str, "I:\\%d.jpg", jpg_count++ );
-    img.save(str);
-
-    return  0;
-}
-#endif
-
 
 
 
@@ -155,47 +128,12 @@ void    VideoDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
     MYLOG( LOG::INFO, "video dec name = %s", dec->name );
     MYLOG( LOG::INFO, "video dec long name = %s", dec->long_name );
     MYLOG( LOG::INFO, "video dec codec id = %s", avcodec_get_name(dec->id) );
-
     MYLOG( LOG::INFO, "video bitrate = %lld, pix_fmt = %s", dec_ctx->bit_rate, av_get_pix_fmt_name(dec_ctx->pix_fmt) );
 }
 
 
 
 
-
-
-#ifdef FFMPEG_TEST
-/*******************************************************************************
-VideoDecode::output_jpg_by_openCV()
-********************************************************************************/
-int     VideoDecode::output_jpg_by_openCV()
-{
-    // note: frame 本身有帶 width, height 的資訊
-    //int width = frame->width, height = frame->height;
-
-    /* 
-        yuv420 本身的資料是 width * height * 3 / 2, 一開始沒處理好造成錯誤
-        10bit, 12bit應該會出問題,到時候再研究.
-        有兩個方法可以做轉換. 一個比較暴力, 一個是透過介面做轉換
-    */
-#if 0
-    cv::Mat     img     =   cv::Mat::zeros( height*3/2, width, CV_8UC1 );    
-    memcpy( img.data, frame->data[0], width*height );
-    memcpy( img.data + width*height, frame->data[1], width*height/4 );
-    memcpy( img.data + width*height*5/4, frame->data[2], width*height/4 );
-#else
-    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, static_cast<AVPixelFormat>(pix_fmt), width, height );
-    cv::Mat img( cv::Size( width, height*3/2 ), CV_8UC1, video_dst_data[0] );
-#endif
-
-    cv::Mat     bgr;
-    cv::cvtColor( img, bgr, cv::COLOR_YUV2BGR_I420 );
-    cv::imshow( "RGB frame", bgr );
-    cv::waitKey(1);
-
-    return 0;
-}
-#endif
 
 
 
@@ -225,7 +163,14 @@ VideoDecode::end()
 int     VideoDecode::end()
 {
     av_free( video_dst_data[0] );
-    sws_freeContext( sws_ctx );
+    video_dst_data[0]   =   nullptr;
+
+    if( sws_ctx != nullptr )
+    {
+        sws_freeContext( sws_ctx );
+        sws_ctx;
+    }
+
     Decode::end();
     return  SUCCESS;
 }
@@ -243,10 +188,7 @@ VideoData   VideoDecode::output_video_data()
 {
     VideoData   vd;
 
-    // 1. Get frame and QImage to show 
     QImage  img { width, height, QImage::Format_RGB888 };
-
-    // 2. Convert and write into image buffer  
     uint8_t *dst[]  =   { img.bits() };
     int     linesizes[4];
 
@@ -297,23 +239,15 @@ VideoDecode::get_timestamp()
 ********************************************************************************/
 int64_t     VideoDecode::get_timestamp()
 {
-    //MYLOG( LOG::DEBUG, "%d %d %d %d",  dec_ctx->time_base.den, dec_ctx->time_base.num, stream->time_base.den, stream->time_base.num );
-
-    //frame->pts = frame->best_effort_timestamp; 
-
-    double  dpts    =   av_q2d( stream->time_base) * frame->best_effort_timestamp;
-    int64_t ts      =   dpts * 1000;
-
-    return ts;
+    double  dpts    =   av_q2d(stream->time_base) * frame->best_effort_timestamp;
+    int64_t ts      =   dpts * 1000;  // ms
+    return  ts;
 }
 
 
 
 
  
-
-
-
 
 
 /*******************************************************************************
@@ -405,3 +339,71 @@ int     VideoDecode::video_info()
 
     return SUCCESS;
 }
+
+
+
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoDecode::output_jpg_by_QT()
+********************************************************************************/
+int    VideoDecode::output_jpg_by_QT()
+{
+    // 1. Get frame and QImage to show 
+    QImage  img     =   QImage( width, height, QImage::Format_RGB888 );
+
+    // 2. Convert and write into image buffer  
+    uint8_t *dst[]  =   { img.bits() };
+    int     linesizes[4];
+
+    av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
+    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
+
+    static int  jpg_count   =   0;
+    char str[1000];
+    sprintf( str, "I:\\%d.jpg", jpg_count++ );
+    img.save(str);
+
+    return  0;
+}
+#endif
+
+
+
+
+
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoDecode::output_jpg_by_openCV()
+********************************************************************************/
+int     VideoDecode::output_jpg_by_openCV()
+{
+    // note: frame 本身有帶 width, height 的資訊
+    //int width = frame->width, height = frame->height;
+
+    /* 
+    yuv420 本身的資料是 width * height * 3 / 2, 一開始沒處理好造成錯誤
+    10bit, 12bit應該會出問題,到時候再研究.
+    有兩個方法可以做轉換. 一個比較暴力, 一個是透過介面做轉換
+    */
+#if 0
+    cv::Mat     img     =   cv::Mat::zeros( height*3/2, width, CV_8UC1 );    
+    memcpy( img.data, frame->data[0], width*height );
+    memcpy( img.data + width*height, frame->data[1], width*height/4 );
+    memcpy( img.data + width*height*5/4, frame->data[2], width*height/4 );
+#else
+    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, static_cast<AVPixelFormat>(pix_fmt), width, height );
+    cv::Mat img( cv::Size( width, height*3/2 ), CV_8UC1, video_dst_data[0] );
+#endif
+
+    cv::Mat     bgr;
+    cv::cvtColor( img, bgr, cv::COLOR_YUV2BGR_I420 );
+    cv::imshow( "RGB frame", bgr );
+    cv::waitKey(1);
+
+    return 0;
+}
+#endif
