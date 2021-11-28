@@ -19,13 +19,13 @@
 DLL_API std::queue<AudioData>* get_audio_queue();
 DLL_API std::queue<VideoData>* get_video_queue();
 
+DLL_API std::mutex& get_a_mtx(); 
+DLL_API std::mutex& get_v_mtx(); 
+
 
 struct AVPacket;
 struct AVStream;
 
-
-DLL_API std::mutex& get_a_mtx(); // { return a_mtx; }
-DLL_API std::mutex& get_v_mtx(); // { return a_mtx; }
 
 
 class DLL_API Player

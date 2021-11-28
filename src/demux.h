@@ -54,13 +54,6 @@ public:
     int     audio_info();
     int     sub_info();
 
-
-
-    //int     get_video_width();
-    //int     get_video_height();
-    //int     get_audio_channel();
-    //int     get_audio_sample_rate();
-
     bool    exist_subtitle();
     void    set_exist_subtitle( bool flag );
 
@@ -75,17 +68,9 @@ public:
 
 private:
     // video
-    //int     width       =   0;
-    //int     height      =   0;
-    //int     depth       =   0;
-
     AVCodecID   v_codec_id;
 
     // audio
-    //int     channel         =   0;
-    //int     sample_rate     =   0;
-    //int     sample_size     =   0;
-
     AVCodecID   a_codec_id;
 
     // subtitle

@@ -13,22 +13,67 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 
-#include <libswscale/swscale.h>
-
-
-
 } // end extern "C"
 
 
 static std::queue<AudioData> audio_queue;
 static std::queue<VideoData> video_queue;
 
-
 std::mutex a_mtx;
 std::mutex v_mtx;
 
-std::mutex& get_a_mtx() { return a_mtx; }
-std::mutex& get_v_mtx() { return v_mtx; }
+
+
+
+
+/*******************************************************************************
+get_a_mtx()
+********************************************************************************/
+std::mutex& get_a_mtx() 
+{ 
+    return a_mtx; 
+}
+
+
+
+
+
+/*******************************************************************************
+get_v_mtx()
+********************************************************************************/
+std::mutex& get_v_mtx() 
+{ 
+    return v_mtx; 
+}
+
+
+
+
+
+
+/*******************************************************************************
+get_audio_queue()
+********************************************************************************/
+std::queue<AudioData>* get_audio_queue()
+{
+    return  &audio_queue;
+}
+
+
+
+
+/*******************************************************************************
+get_video_queue
+********************************************************************************/
+std::queue<VideoData>* get_video_queue()
+{
+    return &video_queue;
+}
+
+
+
+
+
 
 
 /*******************************************************************************
@@ -47,25 +92,17 @@ int     Player::init()
 
     //
     ret     =   demuxer.open_input( src_filename );
-    assert( ret == SUCCESS );
-
     ret     =   demuxer.init();
-    assert( ret == SUCCESS );
     fmt_ctx =   demuxer.get_format_context();
 
     //
     ret     =   v_decoder.open_codec_context( fmt_ctx );
-    assert( ret == SUCCESS );
     ret     =   a_decoder.open_codec_context( fmt_ctx );
-    assert( ret == SUCCESS );
     ret     =   s_decoder.open_codec_context( fmt_ctx );
-    assert( ret == SUCCESS );
 
     //
     ret     =   v_decoder.init();
-    assert( ret == SUCCESS );
     ret     =   a_decoder.init();
-    assert( ret == SUCCESS );
 
     //
     int     ss_idx  =   s_decoder.current_index();
@@ -112,27 +149,6 @@ int     Player::init()
 }
 
 
-
-
-
-/*******************************************************************************
-get_audio_queue()
-********************************************************************************/
-std::queue<AudioData>* get_audio_queue()
-{
-    return  &audio_queue;
-}
-
-
-
-
-/*******************************************************************************
-get_video_queue
-********************************************************************************/
-std::queue<VideoData>* get_video_queue()
-{
-    return &video_queue;
-}
 
 
 
@@ -193,8 +209,6 @@ Player::get_video_setting()
 VideoSetting    Player::get_video_setting()
 {
     VideoSetting    vs;
-    //vs.width    =   demuxer.get_video_width();
-    //vs.height   =   demuxer.get_video_height();
     vs.width    =   v_decoder.get_video_width();
     vs.height   =   v_decoder.get_video_height();
     return  vs;
@@ -210,10 +224,8 @@ Player::get_audio_setting()
 AudioSetting    Player::get_audio_setting()
 {
     AudioSetting    as;
-
     as.channel      =   a_decoder.get_audio_channel();
     as.sample_rate  =   a_decoder.get_audio_sample_rate();
-
     return  as;
 }
 
@@ -255,12 +267,12 @@ void    Player::play()
         }
         
         pkt     =   demuxer.get_packet();
-        if( pkt->stream_index == demuxer.get_video_index() )
+        if( v_decoder.is_index(pkt->stream_index) )
             dc  =   dynamic_cast<Decode*>(&v_decoder);        
-        else if( pkt->stream_index == demuxer.get_audio_index() )
+        else if( a_decoder.is_index(pkt->stream_index) )
             dc  =   dynamic_cast<Decode*>(&a_decoder);
         else        
-            MYLOG( LOG::ERROR, "stream type not handle.");        
+            MYLOG( LOG::WARN, "stream type not handle.");        
 
         //
         ret     =   dc->send_packet(pkt);
@@ -268,10 +280,9 @@ void    Player::play()
         {
             while(true)
             {
-                ret     =   dc->recv_frame();
+                ret     =   dc->recv_frame(pkt->stream_index);
                 if( ret <= 0 )
                     break;
-
 
                 dc->output_frame_func();
                 dc->unref_frame();
