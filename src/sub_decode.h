@@ -58,7 +58,7 @@ private:
 
     AVFilterContext     *bf_src_ctx     =   nullptr;
     AVFilterContext     *bf_sink_ctx    =   nullptr;
-    AVFilterGraph       *filter_graph   =   nullptr; 
+    AVFilterGraph       *graph          =   nullptr; 
     SwsContext          *sws_ctx        =   nullptr;  
     std::string         sub_file;
 
