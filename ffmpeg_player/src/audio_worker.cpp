@@ -30,12 +30,13 @@ void    AudioWorker::open_audio_output( AudioSetting as )
 
     // Set up the format, eg.
     format.setSampleRate(as.sample_rate);
-    format.setChannelCount(as.channel);
+    //format.setChannelCount(as.channel);
+    format.setChannelCount(2);  // 目前強制兩聲道,未來改成可以多聲道或單聲道
     format.setSampleSize(16);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
     format.setSampleType(QAudioFormat::UnSignedInt);
-
+    
     //
     QAudioDeviceInfo info { QAudioDeviceInfo::defaultOutputDevice() };
     if( false == info.isFormatSupported(format) ) 
@@ -57,7 +58,11 @@ void    AudioWorker::open_audio_output( AudioSetting as )
     connect( audio, SIGNAL(stateChanged(QAudio::State)), this, SLOT(handleStateChanged(QAudio::State)) );
     audio->stop();
 
+    //audio->setBufferSize( 1000000 );  // 遇到影片檔必須開大buffer不然會出問題. 這是一個解法,目前用分批寫入的方式解決
+
     io      =   audio->start();
+
+
 }
 
 
@@ -150,7 +155,19 @@ void AudioWorker::audio_play()
     while( v_start == false )
         SLEEP_10MS;        
 
+    std::chrono::steady_clock::time_point       last, now;
+    std::chrono::duration<int64_t, std::milli>  duration;
+    int64_t last_ts = 0;
+    
+    // 一次寫入4096的效果比較好. 用原本的作法會有機會破音. 記得修改變數名稱
+    int     wanted_buffer_size  =   4096; //audio->bufferSize()/2;
+
     //
+    int     remain          =   0;
+    int     remain_bytes    =   0;
+    uint8_t *ptr            =   nullptr; 
+
+    last   =   std::chrono::steady_clock::now();
     while( is_play_end == false )
     {        
         if( a_queue->size() <= 0 )
@@ -166,42 +183,98 @@ void AudioWorker::audio_play()
         a_queue->pop();
         a_mtx.unlock();
 
-        //
-        while( audio->bytesFree() < ad.bytes )
-        {      
-            //printf("bytesFree = %d\n",r);
-        }   
+        while(true)
+        {
+            now         =   std::chrono::steady_clock::now();
+            duration    =   std::chrono::duration_cast<std::chrono::milliseconds>( now - last );
 
-        //
-        int r = io->write( (const char*)ad.pcm, ad.bytes );
-        if( r != ad.bytes )
-            MYLOG( LOG::WARN, "r != ad.bytes" );
+            if( duration.count() >= ad.timestamp - last_ts )
+                break;
+        }
+  
+        remain_bytes    =   ad.bytes;
+        ptr             =   ad.pcm; 
+        
+        while(true)
+        {
+            //MYLOG( LOG::DEBUG, "bytesFree = %d\n", audio->bytesFree() );
 
-        //
-        delete [] ad.pcm;
-        ad.pcm      =   nullptr;
-        ad.bytes    =   0;
+            if( audio->bytesFree() < wanted_buffer_size )
+                continue;
+            else if( remain_bytes <= wanted_buffer_size )
+            {
+                remain  =   io->write( (const char*)ptr, remain_bytes );
+                if( remain != remain_bytes )
+                    MYLOG( LOG::WARN, "remain != remain_bytes" );
+                delete [] ad.pcm;
+                ad.pcm      =   nullptr;
+                ad.bytes    =   0;
+                break;
+            }
+            else
+            {
+                remain  =   io->write( (const char*)ptr, wanted_buffer_size );
+                if( remain != wanted_buffer_size )
+                    MYLOG( LOG::WARN, "r != wanted_buffer_size" );
+                ptr             +=  wanted_buffer_size;
+                remain_bytes    -=  wanted_buffer_size;
+            }
+        }
+
+        last_ts = ad.timestamp;
     }
 
     // flush
     while( a_queue->empty() == false )
     {      
+        if( a_queue->size() <= 0 )
+        {
+            MYLOG( LOG::WARN, "audio queue empty." );
+            SLEEP_10MS;
+            continue;
+        }
+
         //
-        ad = a_queue->front();
+        a_mtx.lock();
+        ad = a_queue->front();       
         a_queue->pop();
+        a_mtx.unlock();
 
-        //
-        while( audio->bytesFree() < ad.bytes )
-        {      
-            //printf("bytesFree = %d\n",r);
-        }   
+        while(true)
+        {
+            now         =   std::chrono::steady_clock::now();
+            duration    =   std::chrono::duration_cast<std::chrono::milliseconds>( now - last );
+            if( duration.count() >= ad.timestamp - last_ts )
+                break;
+        }
 
-        //
-        io->write( (const char*)ad.pcm, ad.bytes );
+        remain_bytes    =   ad.bytes;
+        ptr             =   ad.pcm; 
 
-        //
-        delete [] ad.pcm;
-        ad.pcm      =   nullptr;
-        ad.bytes    =   0;
+        while(true)
+        {
+            if( audio->bytesFree() < wanted_buffer_size )
+                continue;
+            else if( remain_bytes <= wanted_buffer_size )
+            {
+                remain  =   io->write( (const char*)ptr, remain_bytes );
+                if( remain != remain_bytes )
+                    MYLOG( LOG::WARN, "remain != remain_bytes" );
+                delete [] ad.pcm;
+                ad.pcm      =   nullptr;
+                ad.bytes    =   0;
+                break;
+            }
+            else
+            {
+                remain  =   io->write( (const char*)ptr, wanted_buffer_size );
+                if( remain != wanted_buffer_size )
+                    MYLOG( LOG::WARN, "r != wanted_buffer_size" );
+                ptr             +=  wanted_buffer_size;
+                remain_bytes    -=  wanted_buffer_size;
+            }
+        }
+
+        last_ts = ad.timestamp;
     }
 }

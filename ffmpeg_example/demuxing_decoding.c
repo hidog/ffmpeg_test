@@ -205,9 +205,9 @@ int play_demuxing_decodeing()
 {
     int ret = 0;
 
-    src_filename = "D:\\code\\test.mp4";
-    video_dst_filename = "I:\\v.data";
-    audio_dst_filename = "I:\\a.data";
+    src_filename = "D:\\code\\test.avi";
+    video_dst_filename = "H:\\v.data";
+    audio_dst_filename = "H:\\a.data";
 
     /* open input file, and allocate format context */
     if (avformat_open_input(&fmt_ctx, src_filename, NULL, NULL) < 0) 

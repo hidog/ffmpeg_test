@@ -12,6 +12,7 @@ struct AVCodecContext;
 struct AVFrame;
 struct AVPacket;
 struct AVCodec;
+struct AVStream;
 enum   AVMediaType;
 
 //template class __declspec( dllexport ) std::function<int()>; // fix compiler warning. 主要是匯出成dll的話需要顯式具現化樣板
@@ -30,23 +31,21 @@ public:
 
     Decode& operator = ( const Decode& ) = delete;
     Decode& operator = ( Decode&& ) = delete;
-
-    //
+    
     virtual int     init();
     virtual int     end();
-
-    //
+    
     virtual void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) = 0;
-    virtual int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx ) = 0;
+    virtual int     open_codec_context( AVFormatContext *fmt_ctx ) = 0;
+    virtual bool    exist_stream();
 
     int     send_packet( const AVPacket *pkt );
-    int     recv_frame();
+    int     recv_frame( int index );
     void    unref_frame();
-
-    int get_frame_count();
-
-
-    //
+    int     get_frame_count();
+    bool    find_index( int index );
+    int     current_index();
+    
     AVFrame*        get_frame();
     AVMediaType     get_decode_context_type();
     AVCodecContext* get_decode_context();
@@ -59,11 +58,15 @@ public:
 protected:
 
     int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type );
+    int     open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type );
 
     std::map<int,AVCodecContext*>   dec_map;
-    int current_stream_idx = -1;
+    std::map<int,AVStream*>         stream_map;
+
+    int cs_index    =   -1;     // current stream index.
 
     AVCodecContext  *dec_ctx    =   nullptr;
+    AVStream        *stream     =   nullptr;
     AVFrame         *frame      =   nullptr;
 
     int     frame_count =   0;

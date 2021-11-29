@@ -11,7 +11,6 @@ extern "C" {
 #include <libswscale/swscale.h>
 
 #include <libavutil/imgutils.h>
-#include <libavutil/samplefmt.h>
 #include <libavutil/timestamp.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -31,7 +30,7 @@ VideoDecode::VideoDecode()
 {
     type        =   AVMEDIA_TYPE_VIDEO;
     pix_fmt     =   AV_PIX_FMT_NONE;
-
+    //v_codec_id  =   AV_CODEC_ID_NONE;
 }
 
 
@@ -53,7 +52,9 @@ AVPixelFormat   VideoDecode::get_pix_fmt()
 VideoDecode::~VideoDecode()
 ********************************************************************************/
 VideoDecode::~VideoDecode()
-{}
+{
+    end();
+}
 
 
 
@@ -64,10 +65,10 @@ VideoDecode::~VideoDecode()
 /*******************************************************************************
 VideoDecode::open_codec_context()
 ********************************************************************************/
-int     VideoDecode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx )
+int     VideoDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
-    Decode::open_codec_context( stream_index, fmt_ctx, type );
-    dec_ctx->thread_count = 10;
+    Decode::open_all_codec( fmt_ctx, type );
+    //dec_ctx->thread_count = 10;
     return  SUCCESS;
 }
 
@@ -82,7 +83,6 @@ VideoDecode::init()
 int     VideoDecode::init()
 {
     int ret     =   0;
-    // allocate image where the decoded image will be put
     width       =   dec_ctx->width;
     height      =   dec_ctx->height;
     pix_fmt     =   dec_ctx->pix_fmt;
@@ -96,9 +96,10 @@ int     VideoDecode::init()
         return  ERROR;
     }
 
-    // 先讓 dst 的寬高等於 src 的寬高
-                                    // src                  // dst
-    sws_ctx     =   sws_getContext( width, height, pix_fmt, width, height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);                                    
+    // NOTE : 可以改變寬高. 
+    sws_ctx     =   sws_getContext( width, height, pix_fmt,                     // src
+                                    width, height, AV_PIX_FMT_RGB24,            // dst
+                                    SWS_BICUBIC, NULL, NULL, NULL);                                    
 
     //
 #ifdef FFMPEG_TEST
@@ -111,6 +112,252 @@ int     VideoDecode::init()
 
     return  SUCCESS;
 }
+
+
+
+
+
+
+
+
+/*******************************************************************************
+VideoDecode::output_decode_info()
+********************************************************************************/
+void    VideoDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
+{
+    MYLOG( LOG::INFO, "video dec name = %s", dec->name );
+    MYLOG( LOG::INFO, "video dec long name = %s", dec->long_name );
+    MYLOG( LOG::INFO, "video dec codec id = %s", avcodec_get_name(dec->id) );
+    MYLOG( LOG::INFO, "video bitrate = %lld, pix_fmt = %s", dec_ctx->bit_rate, av_get_pix_fmt_name(dec_ctx->pix_fmt) );
+}
+
+
+
+
+
+
+
+
+/*******************************************************************************
+VideoDecode::output_video_frame_info()
+********************************************************************************/
+void    VideoDecode::output_video_frame_info()
+{
+    const char  *frame_format_str   =   av_get_pix_fmt_name( static_cast<AVPixelFormat>(frame->format) );
+
+    MYLOG( LOG::INFO, "frame width = %d, height = %d", frame->width, frame->height );
+    MYLOG( LOG::INFO, "frame format = %s", frame_format_str );
+
+    char        buf[AV_TS_MAX_STRING_SIZE]{0};
+    const char* time_str    =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
+    MYLOG( LOG::INFO, "video_frame = %d, coded_n : %d, time = %s", frame_count, frame->coded_picture_number, time_str );
+}
+
+
+
+
+
+/*******************************************************************************
+VideoDecode::end()
+********************************************************************************/
+int     VideoDecode::end()
+{
+    if( video_dst_data[0] != nullptr )
+    {
+        av_free( video_dst_data[0] );
+        video_dst_data[0]   =   nullptr;
+        video_dst_data[1]   =   nullptr;
+        video_dst_data[2]   =   nullptr;
+        video_dst_data[3]   =   nullptr;
+    }
+    
+    video_dst_linesize[0]   =   0;
+    video_dst_linesize[1]   =   0;
+    video_dst_linesize[2]   =   0;
+    video_dst_linesize[3]   =   0;
+    video_dst_bufsize       =   0;
+
+
+    if( sws_ctx != nullptr )
+    {
+        sws_freeContext( sws_ctx );
+        sws_ctx;
+    }
+
+    pix_fmt =   AV_PIX_FMT_NONE;
+    width   =   0;
+    height  =   0;
+
+    Decode::end();
+    return  SUCCESS;
+}
+
+
+
+
+
+
+
+/*******************************************************************************
+VideoDecode::output_video_data()
+********************************************************************************/
+VideoData   VideoDecode::output_video_data()
+{
+    VideoData   vd;
+
+    QImage  img { width, height, QImage::Format_RGB888 };
+    uint8_t *dst[]  =   { img.bits() };
+    int     linesizes[4];
+
+    av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
+    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
+
+    //
+    vd.index        =   frame_count;
+    vd.frame        =   img;
+    vd.timestamp    =   get_timestamp();
+
+    return  vd;
+}
+
+
+
+
+
+
+
+/*******************************************************************************
+VideoDecode::get_video_width()
+********************************************************************************/
+int     VideoDecode::get_video_width()
+{
+    return  stream->codecpar->width;
+}
+
+
+
+
+/*******************************************************************************
+VideoDecode::get_video_height()
+********************************************************************************/
+int     VideoDecode::get_video_height()
+{
+    return  stream->codecpar->height;
+}
+
+
+
+
+
+
+
+/*******************************************************************************
+VideoDecode::get_timestamp()
+********************************************************************************/
+int64_t     VideoDecode::get_timestamp()
+{
+    double  dpts    =   av_q2d(stream->time_base) * frame->best_effort_timestamp;
+    int64_t ts      =   dpts * 1000;  // ms
+    return  ts;
+}
+
+
+
+
+ 
+
+
+/*******************************************************************************
+VideoDecode::video_info()
+
+NOTE: 假設影片只有一個視訊軌,先不處理多重視訊軌的問題.
+********************************************************************************/
+int     VideoDecode::video_info()
+{
+#if 0
+    vs_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0 );
+
+    //
+    AVStream    *video_stream   =   fmt_ctx->streams[vs_idx];
+    if( video_stream == nullptr )
+    {
+        MYLOG( LOG::INFO, "this stream has no video stream" );
+        return  SUCCESS;
+    }
+
+    //if( fmt_ctx->streams[vs_idx]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
+    //  printf("Test");
+
+    //
+    AVCodecID   v_codec_id    =   fmt_ctx->streams[vs_idx]->codecpar->codec_id;
+
+    width   =   fmt_ctx->streams[vs_idx]->codecpar->width;
+    height  =   fmt_ctx->streams[vs_idx]->codecpar->height;
+    depth   =   8;
+    if( fmt_ctx->streams[vs_idx]->codecpar->format == AV_PIX_FMT_YUV420P10LE )
+        depth = 10;
+    if( fmt_ctx->streams[vs_idx]->codecpar->format == AV_PIX_FMT_YUV420P12LE )
+        depth = 12;
+
+    MYLOG( LOG::INFO, "width = %d, height = %d, depth = %d", width, height, depth );
+    MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(v_codec_id) );
+
+    //
+    double  fps     =   av_q2d( fmt_ctx->streams[vs_idx]->r_frame_rate );
+    MYLOG( LOG::INFO, "fps = %lf", fps );
+#endif
+
+#if 0
+    // use for NVDEC
+    bool flag1  =   !strcmp( fmt_ctx->iformat->long_name, "QuickTime / MOV" )   ||
+        !strcmp( fmt_ctx->iformat->long_name, "FLV (Flash Video)" ) ||
+        !strcmp( fmt_ctx->iformat->long_name, "Matroska / WebM" );
+    bool flag2  =   codec_id == AV_CODEC_ID_H264 || codec_id == AV_CODEC_ID_HEVC;
+
+    use_bsf     =   flag1 && flag2;
+#endif
+
+#if 0
+    // use for NVDEC
+    if( use_bsf == true )
+    {
+        const AVBitStreamFilter*  bsf   =   nullptr;
+        if( codec_id == AV_CODEC_ID_H264 )
+            bsf     =   av_bsf_get_by_name("h264_mp4toannexb");
+        else if( codec_id == AV_CODEC_ID_HEVC )
+            bsf     =   av_bsf_get_by_name("hevc_mp4toannexb");
+        else 
+            assert(0);
+
+        av_bsf_alloc( bsf, &v_bsf_ctx );
+        v_bsf_ctx->par_in   =   fmt_ctx->streams[vs_idx]->codecpar;
+        av_bsf_init( v_bsf_ctx );
+    }
+
+#endif
+
+
+
+
+#if 0
+    用 bsf 處理 pkt, 再丟給 nv decode 的參考.
+    if( use_bsf && pkt->stream_index == vs_idx )
+    {
+        av_bsf_send_packet( v_bsf_ctx, pkt );
+        av_bsf_receive_packet( v_bsf_ctx, pkt_bsf );
+    }
+    else if( pkt->stream_index == as_idx )
+    {
+        av_bsf_send_packet( a_bsf_ctx, pkt );
+        av_bsf_receive_packet( a_bsf_ctx, pkt );
+    }
+#endif
+
+
+    return SUCCESS;
+}
+
+
 
 
 
@@ -144,22 +391,6 @@ int    VideoDecode::output_jpg_by_QT()
 
 
 
-/*******************************************************************************
-VideoDecode::output_decode_info()
-********************************************************************************/
-void    VideoDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
-{
-    MYLOG( LOG::INFO, "video dec name = %s", dec->name );
-    MYLOG( LOG::INFO, "video dec long name = %s", dec->long_name );
-    MYLOG( LOG::INFO, "video dec codec id = %s", avcodec_get_name(dec->id) );
-
-    MYLOG( LOG::INFO, "video bitrate = %d, pix_fmt = %s", dec_ctx->bit_rate, av_get_pix_fmt_name(dec_ctx->pix_fmt) );
-}
-
-
-
-
-
 
 #ifdef FFMPEG_TEST
 /*******************************************************************************
@@ -171,9 +402,9 @@ int     VideoDecode::output_jpg_by_openCV()
     //int width = frame->width, height = frame->height;
 
     /* 
-        yuv420 本身的資料是 width * height * 3 / 2, 一開始沒處理好造成錯誤
-        10bit, 12bit應該會出問題,到時候再研究.
-        有兩個方法可以做轉換. 一個比較暴力, 一個是透過介面做轉換
+    yuv420 本身的資料是 width * height * 3 / 2, 一開始沒處理好造成錯誤
+    10bit, 12bit應該會出問題,到時候再研究.
+    有兩個方法可以做轉換. 一個比較暴力, 一個是透過介面做轉換
     */
 #if 0
     cv::Mat     img     =   cv::Mat::zeros( height*3/2, width, CV_8UC1 );    
@@ -193,123 +424,3 @@ int     VideoDecode::output_jpg_by_openCV()
     return 0;
 }
 #endif
-
-
-
-
-/*******************************************************************************
-VideoDecode::output_video_frame_info()
-********************************************************************************/
-void    VideoDecode::output_video_frame_info()
-{
-    const char  *frame_format_str   =   av_get_pix_fmt_name( static_cast<AVPixelFormat>(frame->format) );
-
-    MYLOG( LOG::INFO, "frame width = %d, height = %d", frame->width, frame->height );
-    MYLOG( LOG::INFO, "frame format = %s", frame_format_str );
-
-    char        buf[AV_TS_MAX_STRING_SIZE]{0};
-    const char* time_str    =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
-    MYLOG( LOG::INFO, "video_frame = %d, coded_n : %d, time = %s", frame_count, frame->coded_picture_number, time_str );
-}
-
-
-
-
-
-/*******************************************************************************
-VideoDecode::end()
-********************************************************************************/
-int     VideoDecode::end()
-{
-    av_free( video_dst_data[0] );
-    sws_freeContext( sws_ctx );
-    Decode::end();
-    return  SUCCESS;
-}
-
-
-
-
-
-
-
-/*******************************************************************************
-VideoDecode::output_video_data()
-********************************************************************************/
-VideoData   VideoDecode::output_video_data()
-{
-    VideoData   vd;
-
-    // 1. Get frame and QImage to show 
-    //QImage  img { width, height, QImage::Format_RGB888 };
-
-    // 2. Convert and write into image buffer  
-    //uint8_t *dst[]  =   { img.bits() };
-    //int     linesizes[4];
-
-    //av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
-    //sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
-
-    //
-    vd.index        =   frame_count;
-    //vd.frame        =   img;
-    vd.timestamp    =   get_timestamp();
-
-    return  vd;
-}
-
-
-
-
-
-
-
-/*******************************************************************************
-VideoDecode::get_timestamp()
-
-試了很多方法都沒成功
-最後選擇用土法煉鋼
-
-AVRational avr = {1, AV_TIME_BASE};
-
-需要拿浮動 fps 的影片做測試, 應該會出問題
-********************************************************************************/
-int64_t     VideoDecode::get_timestamp()
-{
-    int64_t ts;
-
-    // MYLOG( LOG::DEBUG, "frame rate = %lf", dec_ctx->framerate ); 印出的數字不是 fps
-
-    int     num     =   dec_ctx->time_base.num;
-    int     den     =   dec_ctx->time_base.den;
-    double  base_ms =   1000.f;  // 表示單位為 mili sec
-
-    //int     interlaced  =   frame->interlaced_frame;
-    //MYLOG( LOG::DEBUG, "is interlaced = %d", interlaced );
-
-    int     tpf     =   dec_ctx->ticks_per_frame;
-
-    /* 
-        不知道為何要乘 2, 還沒搜尋到原因
-        fps = 23.97  ( 24000 / 1001 ) 的時候預期 den = 24000, 實際上卻是 48000
-        某些情況又不用 * 2, 是否跟1080p, 1080i 有關??
-
-        https://stackoverflow.com/questions/12234949/ffmpeg-time-unit-explanation-and-av-seek-frame-method
-        http://runxinzhi.com/welhzh-p-4835864.html  似乎可以參考這個做判斷, 跟interlace無關
-
-        https://blog.csdn.net/chinabinlang/article/details/49885765
-    */
-    //ts = base_ms * frame_count * 2 * num / den;  
-    ts = base_ms * frame_count *  tpf * num / den;  
-
-
-    //MYLOG( LOG::DEBUG, "pts = %d", frame->pts );
-    //MYLOG( LOG::DEBUG, "coded number = %d", frame->coded_picture_number );
-
-    return ts;
-}
-
-
-
-
-
