@@ -361,6 +361,24 @@ int     VideoDecode::video_info()
 
 
 
+
+/*******************************************************************************
+VideoDecode::recv_frame()
+********************************************************************************/
+int     VideoDecode::recv_frame( int index )
+{
+    int     ret     =   Decode::recv_frame(index);
+    if( ret >= 0 )
+        frame->pts  =   frame->best_effort_timestamp; 
+
+    return  ret;
+/*
+    某個測試影片, 少了這個處理, 造成無法顯示字幕
+*/
+}
+
+
+
 #ifdef FFMPEG_TEST
 /*******************************************************************************
 VideoDecode::output_jpg_by_QT()
