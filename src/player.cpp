@@ -107,22 +107,22 @@ int     Player::init()
     if( s_decoder.exist_stream() == true )
     {
         exist_subtitle  =   true;
-        ret     =   s_decoder.init();
-        sub_src =   src_file;
+        s_decoder.set_subfile( src_file );
     }
     else
     {
         if( sub_name.empty() == false )
         {
             exist_subtitle  =   true;
-            ret         =   s_decoder.init();
-            sub_src     =   sub_name;
+            s_decoder.set_subfile( sub_name );
         }     
     }
 
     //
     if( exist_subtitle == true )
     {
+        ret     =   s_decoder.init();
+
         SubData     sd;
         sd.width        =   v_decoder.get_video_width();
         sd.height       =   v_decoder.get_video_height();
@@ -130,8 +130,10 @@ int     Player::init()
         sd.video_index  =   v_decoder.current_index();
         sd.sub_index    =   0;
 
-        s_decoder.init_sub_image( sd );
+        std::string     sub_src     =   s_decoder.get_subfile();
+
         s_decoder.init_sws_ctx( sd );
+        s_decoder.init_sub_image( sd );
 
         // if exist subtitle, open it.
         // 這邊有執行順序問題, 不能隨便更改執行順序      
@@ -470,16 +472,24 @@ void    Player::play_QT_multi_thread()
 Player::demux_need_wait()
 
 為了避免 queue 被塞爆,量過大的時候會停下來等 UI 端消化.
+要考慮只有video or audio stream.
+
 ********************************************************************************/
 bool    Player::demux_need_wait()
 {
-    if( v_decoder.exist_stream() == true && video_queue.size() >= MAX_QUEUE_SIZE )
+    if( v_decoder.exist_stream() == true && a_decoder.exist_stream() == true )
+    {
+        if( video_queue.size() >= MAX_QUEUE_SIZE && audio_queue.size() >= MAX_QUEUE_SIZE )
+            return  true;
+        else
+            return  false;
+    }
+    else if( v_decoder.exist_stream() == true && video_queue.size() >= MAX_QUEUE_SIZE )    
+        return  true;  
+    else if( a_decoder.exist_stream() == true && audio_queue.size() >= MAX_QUEUE_SIZE )
         return  true;
-
-    if( a_decoder.exist_stream() == true && audio_queue.size() >= MAX_QUEUE_SIZE )
-        return  true;
-
-    return  false;
+    else
+        return  false;
 }
 
 

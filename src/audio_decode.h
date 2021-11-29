@@ -4,10 +4,10 @@
 #include "decode.h"
 
 
-struct SwrContext;
-struct AVCodec;
-struct AVCodecContext;
-enum   AVSampleFormat;
+struct  SwrContext;
+struct  AVCodec;
+struct  AVCodecContext;
+enum    AVSampleFormat;
 
 
 // 試著要轉sample rate但沒成功,有機會再試試看.

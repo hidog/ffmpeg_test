@@ -6,16 +6,11 @@
 extern "C" {
 
 #include <libavutil/imgutils.h>
-#include <libavutil/samplefmt.h>
-#include <libavutil/timestamp.h>
-#include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
 
 #include <libavfilter/buffersrc.h>  // use for subtitle
 #include <libavfilter/buffersink.h>
-
-#include <libswscale/swscale.h>
-
 
 } // end extern "C"
 
@@ -105,7 +100,9 @@ void    SubDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
 SubDecode::~SubDecode()
 ********************************************************************************/
 SubDecode::~SubDecode()
-{}
+{
+    end();
+}
 
 
 
@@ -117,7 +114,6 @@ SubDecode::open_codec_context()
 int     SubDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
     Decode::open_all_codec( fmt_ctx, type );
-    //dec_ctx->thread_count = 4;
     return  SUCCESS;
 }
 
@@ -130,11 +126,13 @@ SubDecode::init()
 ********************************************************************************/
 int     SubDecode::init()
 {
-    filterGraph = avfilter_graph_alloc();
+    filter_graph    =   avfilter_graph_alloc();
 
     Decode::init();
     return  SUCCESS;
 }
+
+
 
 
 
@@ -144,20 +142,7 @@ SubDecode::send_video_frame()
 ********************************************************************************/
 int SubDecode::send_video_frame( AVFrame *video_frame )
 {
-    int ret =   av_buffersrc_add_frame_flags( buffersrcContext, video_frame, AV_BUFFERSRC_FLAG_KEEP_REF );    
-    if( ret < 0 )    
-        MYLOG( LOG::ERROR, "add frame flag fail." );
-    return  ret;
-}
-
-
-
-/*******************************************************************************
-SubDecode::flush()
-********************************************************************************/
-int SubDecode::flush( AVFrame *video_frame )
-{
-    int ret =   av_buffersrc_add_frame_flags( buffersrcContext, video_frame, AV_BUFFERSRC_FLAG_PUSH );    
+    int ret =   av_buffersrc_add_frame_flags( bf_src_ctx, video_frame, AV_BUFFERSRC_FLAG_KEEP_REF );    
     if( ret < 0 )    
         MYLOG( LOG::ERROR, "add frame flag fail." );
     return  ret;
@@ -185,9 +170,12 @@ SubDecode::init_sws_ctx()
 int SubDecode::init_sws_ctx( SubData sd )
 {
     AVPixelFormat   pix_fmt     =   static_cast<AVPixelFormat>(sd.pix_fmt);
-    sws_ctx     =   sws_getContext( sd.width, sd.height, pix_fmt, sd.width, sd.height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);   
+    sws_ctx     =   sws_getContext( sd.width, sd.height, pix_fmt, sd.width, sd.height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL );   
     return  SUCCESS;
 }
+
+
+
 
 
 
@@ -196,7 +184,8 @@ SubDecode::render_subtitle()
 ********************************************************************************/
 int SubDecode::render_subtitle()
 {
-    int ret     =   av_buffersink_get_frame( buffersinkContext, frame );    
+    int ret     =   av_buffersink_get_frame( bf_sink_ctx, frame );    
+
     if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF ) 
         return  0;  // 沒資料,但沒錯誤.
     else if( ret < 0 )
@@ -213,7 +202,6 @@ int SubDecode::render_subtitle()
     av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
     sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
 
-    //av_frame_unref(frame);
     return 1;
 }
 
@@ -226,15 +214,51 @@ SubDecode::end()
 ********************************************************************************/
 int     SubDecode::end()
 {
-    avfilter_free( buffersrcContext );
-    avfilter_free( buffersinkContext );
-    sws_freeContext( sws_ctx );
-    avfilter_graph_free(&filterGraph);
+    if( bf_src_ctx != nullptr )
+    {
+        avfilter_free( bf_src_ctx );
+        bf_src_ctx  =   nullptr;
+    }
 
+    if( bf_sink_ctx != nullptr )
+    {
+        avfilter_free( bf_sink_ctx );
+        bf_sink_ctx     =   nullptr;
+    }
+
+    if( sws_ctx != nullptr )
+    {
+        sws_freeContext( sws_ctx );
+        sws_ctx     =   nullptr;
+    }
+
+    if( filter_graph != nullptr )
+    {
+        avfilter_graph_free(&filter_graph);
+        filter_graph    =   nullptr;
+    }
+
+    sub_file.clear();
 
     Decode::end();
     return  SUCCESS;
 }
+
+
+
+
+
+/*******************************************************************************
+SubDecode::set_subfile()
+********************************************************************************/
+void    SubDecode::set_subfile( std::string path )
+{
+    sub_file    =   path;
+}
+
+
+
+
 
 
 
@@ -253,39 +277,6 @@ void    SubDecode::output_sub_frame_info()
 
 
 
-/*******************************************************************************
-SubDecode::output_audio_data()
-********************************************************************************/
-SubData   SubDecode::output_sub_data()
-{
-#if 0
-    AudioData   ad { nullptr, 0 };
-
-    // 有空來修改這邊 要能動態根據 mp4 檔案做調整
-
-    uint8_t     *data[2]    =   { 0 };  // S16 改 S32, 不確定是不是這邊的 array 要改成 4
-    int         byte_count     =   frame->nb_samples * 2 * 2;  // S16 改 S32, 改成 *4, 理論上資料量會增加, 但不確定是否改的是這邊
-
-    unsigned char   *pcm    =   new uint8_t[byte_count];     // frame->nb_samples * 2 * 2     表示     分配樣本資料量 * 兩通道 * 每通道2位元組大小
-
-    if( pcm == nullptr )
-        MYLOG( LOG::WARN, "pcm is null" );
-
-    data[0]     =   pcm;    // 輸出格式為AV_SAMPLE_FMT_S16(packet型別),所以轉換後的 LR 兩通道都存在data[0]中
-    int ret     =   swr_convert( swr_ctx,
-                                 data, sample_rate,                                    //輸出
-                                 //data, frame->nb_samples,                              //輸出
-                                 (const uint8_t**)frame->data, frame->nb_samples );    //輸入
-
-    ad.pcm      =   pcm;
-    ad.bytes    =   byte_count;
-
-    return ad;
-#endif
-    SubData     sd { 0 };
-    return  sd;
-}
-
 
 
 
@@ -294,79 +285,79 @@ SubData   SubDecode::output_sub_data()
 
 
 /*******************************************************************************
-SubDecode::init_subtitle_filter()
+SubDecode::open_subtitle_filter()
 ********************************************************************************/
 bool SubDecode::open_subtitle_filter( std::string args, std::string filterDesc)
 {
     int     ret     =   0;
 
-    const AVFilter *buffersrc = avfilter_get_by_name("buffer");
-    const AVFilter *buffersink = avfilter_get_by_name("buffersink");
-    AVFilterInOut *output = avfilter_inout_alloc();
-    AVFilterInOut *input = avfilter_inout_alloc();
-    //AVFilterGraph *filterGraph = avfilter_graph_alloc();
-    //filterGraph = avfilter_graph_alloc();
+    const AVFilter  *buffersrc      =   avfilter_get_by_name("buffer");
+    const AVFilter  *buffersink     =   avfilter_get_by_name("buffersink");
+    AVFilterInOut   *output         =   avfilter_inout_alloc();
+    AVFilterInOut   *input          =   avfilter_inout_alloc();
 
     // lambda operator, 省略了傳入參數括號. 
-    auto release = [&output, &input] 
+    auto release    =   [ &output, &input ]
     {
-        avfilter_inout_free(&output);
-        avfilter_inout_free(&input);
-        //avfilter_graph_free(&filterGraph);
+        avfilter_inout_free( &output );
+        avfilter_inout_free( &input );
     };
 
-    if (!output || !input || !filterGraph) 
+    //
+    if( output == nullptr || input == nullptr || filter_graph == nullptr ) 
     {
+        MYLOG( LOG::ERROR, "alloc fail." );
         release();
         return false;
     }
 
     // Crear filtro de entrada, necesita arg
-    ret     =   avfilter_graph_create_filter( &buffersrcContext, buffersrc, "in", args.c_str(), nullptr, filterGraph );
+    ret     =   avfilter_graph_create_filter( &bf_src_ctx, buffersrc, "in", args.c_str(), nullptr, filter_graph );
     if( ret < 0 ) 
     {
         release();
-        MYLOG( LOG::ERROR, "error" );
+        MYLOG( LOG::ERROR, "avfilter_graph_create_filter error" );
         return false;
     }
 
-    if( avfilter_graph_create_filter( &buffersinkContext, buffersink, "out", nullptr, nullptr, filterGraph) < 0 )
+    ret     =   avfilter_graph_create_filter( &bf_sink_ctx, buffersink, "out", nullptr, nullptr, filter_graph );
+    if( ret < 0 )
     {
-        //qDebug() << "Has Error: line =" << __LINE__;
-        MYLOG( LOG::ERROR, "error" );
+        MYLOG( LOG::ERROR, "avfilter_graph_create_filter error" );
         release();
         return false;
     }
 
-    output->name = av_strdup("in");
-    output->next = nullptr;
-    output->pad_idx = 0;
-    output->filter_ctx = buffersrcContext;
+    //
+    output->name        =   av_strdup("in");
+    output->next        =   nullptr;
+    output->pad_idx     =   0;
+    output->filter_ctx  =   bf_src_ctx;
 
-    input->name = av_strdup("out");
-    input->next = nullptr;
-    input->pad_idx = 0;
-    input->filter_ctx = buffersinkContext;
+    input->name         =   av_strdup("out");
+    input->next         =   nullptr;
+    input->pad_idx      =   0;
+    input->filter_ctx   =   bf_sink_ctx;
 
-    ret     =   avfilter_graph_parse_ptr(filterGraph, filterDesc.c_str(), &input, &output, nullptr);
-    if (ret < 0) 
+    //
+    ret     =   avfilter_graph_parse_ptr( filter_graph, filterDesc.c_str(), &input, &output, nullptr );
+    if( ret < 0 )
     {
-        //qDebug() << "Has Error: line =" << __LINE__;
-        MYLOG( LOG::ERROR, "error" );
+        MYLOG( LOG::ERROR, "avfilter_graph_parse_ptr error" );
         release();
         return false;
     }
 
-    char *str = avfilter_graph_dump( filterGraph, NULL );
+    ret     =   avfilter_graph_config( filter_graph, nullptr );
+    if( ret < 0 )
+    {
+        MYLOG( LOG::DEBUG, "avfilter_graph_config error" );
+        release();
+        return false;
+    }
+
+    char *str   =   avfilter_graph_dump( filter_graph, NULL );
     MYLOG( LOG::DEBUG, "options = %s", str );
-
-    if (avfilter_graph_config(filterGraph, nullptr) < 0) 
-    {
-        //qDebug() << "Has Error: line =" << __LINE__;
-        MYLOG( LOG::DEBUG, "error" );
-        release();
-        return false;
-    }
 
     release();
     return true;
@@ -382,6 +373,8 @@ SubDecode::generate_subtitle_image()
 ********************************************************************************/
 void    SubDecode::generate_subtitle_image(  AVSubtitle &subtitle )
 {
+    MYLOG( LOG::DEBUG, "first run generate_subtitle_image subtitle" );
+
     int     i;
 
     for( i = 0; i < subtitle.num_rects; i++ )
@@ -401,7 +394,7 @@ void    SubDecode::generate_subtitle_image(  AVSubtitle &subtitle )
         sws_scale( swsContext, sub_rect->data, sub_rect->linesize, 0, sub_rect->h, dst_data, dst_linesize );
         sws_freeContext(swsContext);        
 
-        sub_image  =   QImage(dst_data[0], sub_rect->w, sub_rect->h, QImage::Format_RGBA8888).copy();
+        sub_image  =   QImage( dst_data[0], sub_rect->w, sub_rect->h, QImage::Format_RGBA8888).copy();
         av_freep(&dst_data[0]);
     }
 }
@@ -425,8 +418,6 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
     {
         if( got_sub > 0 )
         {
-            //MYLOG( LOG::DEBUG, "decode subtitle.");
-
             // 代表字幕是圖片格式, 需要產生對應的字幕圖檔.
             if (subtitle.format == 0)
                 generate_subtitle_image( subtitle );
@@ -489,81 +480,24 @@ QImage  SubDecode::get_subtitle_image()
 
 /*******************************************************************************
 SubDecode::get_subtitle_image()
-
-sws_ctx 先共用, 下一個階段必須移走
 ********************************************************************************/
-int     SubDecode::generate_subtitle_image( AVFrame *video_frame, SwsContext *sws_ctx )
+bool    SubDecode::exist_stream()
 {
-    //v_decoder.output_video_frame_info();
-    //vdata   =   v_decoder.output_video_data();
+    if( sub_file.empty() == false )
+        return  true;
 
-    //AVFrame *frame = v_decoder.get_frame();
-    //AVFrame *filter_frame = av_frame_alloc();
-
-    int     ret     =   0;   
-
-    ret     =   av_buffersrc_add_frame_flags( buffersrcContext, video_frame, AV_BUFFERSRC_FLAG_KEEP_REF );    
-    if( ret < 0 )
-    {
-        MYLOG( LOG::ERROR, "add frame flag fail." );
-        return  -1;
-    }
-
-    //
-    ret     =   av_buffersink_get_frame( buffersinkContext, frame );    
-    if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF ) 
-        return  0;  // 沒資料,但沒錯誤.
-    else if( ret < 0 )
-    {
-        MYLOG( LOG::ERROR, "get frame fail." );
-        return  -1;
-    }
-    
-    // generate image.
-    // 1. Get frame and QImage to show 
-    sub_image  =   QImage{ video_frame->width, video_frame->height, QImage::Format_RGB888 };  // 未來考慮移走這邊的code, 避免重複初始化.
-    
-    // 2. Convert and write into image buffer  
-    uint8_t *dst[]  =   { sub_image.bits() };
-    int     linesizes[4];
-    
-    //SwsContext      *sws_ctx   =   v_decoder.get_sws_ctx();    
-    
-    av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
-    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
-    
-    av_frame_unref(frame);
-
-    return 1;
-
-    // 網路參考的程式碼會用 loop 多次執行, 檢查一下是否真的有這種case. 目前測試都是一次只傳回一張圖
-    /*ret     =   av_buffersink_get_frame( buffersinkContext, frame );    
-    if( ret >= 0 )
-        MYLOG( LOG::ERROR, "get two data. fail" );*/
-
-
-    //
-    //vd.index        =   frame_count;
-    //vd.frame        =   img;
-    //vd.timestamp    =   get_timestamp();
-    //vdata.frame = img;
-    //dc->unref_frame();
-    //av_frame_unref(filter_frame);
-    //av_frame_free(&filter_frame);
-    
-    //video_queue.push(vdata);
-    
-
+    return  Decode::exist_stream();
 }
 
 
 
-
-
-
-
-
-
+/*******************************************************************************
+SubDecode::get_subfile()
+********************************************************************************/
+std::string     SubDecode::get_subfile()
+{
+    return  sub_file;
+}
 
 
 
@@ -579,7 +513,6 @@ https://www.jianshu.com/p/89f2da631e16
 int     SubDecode::sub_info()
 {  
 #if 0
-    // 這邊需要改成loop, 判斷有幾個音軌,並且呈現在UI上.
     ss_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0 );
     if( ss_idx < 0 )
     {
@@ -643,26 +576,6 @@ std::thread *thr = new std::thread( [this]() -> void {
 #endif
 
 
-
-// 測試切換subtitle的程式碼
-#if 0
-{
-    static int aaaa = 0;
-
-    // 可以動態切換, 但要做mutex lock
-    std::string filterDesc;
-    if( aaaa % 2 == 0 )
-        filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=0";  
-    else
-        filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=1";  
-
-    std::string args = "video_size=1920x1080:pix_fmt=64:time_base=1/1000:pixel_aspect=1/1";
-
-    init_subtitle_filter( buffersrcContext, buffersinkContext,  args,  filterDesc);
-
-}
-aaaa++;
-#endif
 
 
 
