@@ -9,8 +9,6 @@
 #include "player.h"
 #include "tool.h"
 
-#include <thread>
-
 
 class AudioWorker : public QThread
 {

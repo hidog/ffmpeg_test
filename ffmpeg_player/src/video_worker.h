@@ -22,12 +22,9 @@ public:
     void    video_play();
     bool&   get_video_start_state();
 
-
 public slots:
 
-
-signals:
-    
+signals:    
     void	recv_video_frame_signal();
 
 private:

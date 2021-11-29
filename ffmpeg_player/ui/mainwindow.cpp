@@ -11,9 +11,9 @@
 #include <QFileDialog>
 #include <QDebug>
 
-#include "player.h"
 #include <mutex>
 
+#include "player.h"
 
 #include "worker.h"
 #include "video_worker.h"
@@ -90,7 +90,7 @@ void MainWindow::recv_video_frame_slot()
 
     QVideoWidget    *video_widget   =   ui->widget;
 
-    static int  last_index  =   -1;
+    static int  last_index  =   0;
 
     //
     video_mtx->lock();
