@@ -270,9 +270,9 @@ void    Player::play()
         }
         
         pkt     =   demuxer.get_packet();
-        if( v_decoder.is_index(pkt->stream_index) )
+        if( v_decoder.find_index(pkt->stream_index) )
             dc  =   dynamic_cast<Decode*>(&v_decoder);        
-        else if( a_decoder.is_index(pkt->stream_index) )
+        else if( a_decoder.find_index(pkt->stream_index) )
             dc  =   dynamic_cast<Decode*>(&a_decoder);
         else        
             MYLOG( LOG::WARN, "stream type not handle.");        

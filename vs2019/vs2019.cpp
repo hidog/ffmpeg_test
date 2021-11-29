@@ -56,6 +56,13 @@ int main()
     char **argv = new char* [10];
     argv[1] = str;
 
+#if 0
+    char str2[100] = "-vf";
+    argv[1] = str2;
+    char str3[100] = "subtitles='../../test.ssa':stream_index=0";
+    argv[2] = str3;
+#endif
+
     ffplay_main( 2, argv );
     //play_demuxing_decodeing();
 #else
