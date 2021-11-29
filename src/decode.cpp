@@ -310,10 +310,23 @@ Decode::end()
 ********************************************************************************/
 int     Decode::end()
 {
-    avcodec_free_context( &dec_ctx );
-    av_frame_free( &frame );
+    //avcodec_free_context( &dec_ctx );
 
-    cs_index  =   -1;
+    av_frame_free( &frame );
+    frame   =   nullptr;
+
+    //
+    for( auto itr : dec_map )    
+        avcodec_free_context( &itr.second );
+    dec_map.clear();
+    dec_ctx     =   nullptr;
+
+    //
+    stream_map.clear();
+    stream      =   nullptr;
+
+    //
+    cs_index    =   -1;
 
     return  SUCCESS;
 }

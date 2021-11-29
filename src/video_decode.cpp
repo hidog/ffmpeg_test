@@ -181,7 +181,7 @@ int     VideoDecode::end()
     if( sws_ctx != nullptr )
     {
         sws_freeContext( sws_ctx );
-        sws_ctx;
+        sws_ctx     =   nullptr;
     }
 
     pix_fmt =   AV_PIX_FMT_NONE;
