@@ -1,12 +1,9 @@
-ï»¿#include "audio_decode.h"
+#include "audio_decode.h"
 #include "tool.h"
 
 extern "C" {
 
-#include <libavutil/imgutils.h>
-#include <libavutil/samplefmt.h>
 #include <libavutil/timestamp.h>
-#include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 
 #include <libswresample/swresample.h>
@@ -24,7 +21,8 @@ AudioDecode::AudioDecode()
 AudioDecode::AudioDecode()
     :   Decode()
 {
-    AVMediaType   type  =   AVMEDIA_TYPE_AUDIO; 
+    type  =   AVMEDIA_TYPE_AUDIO;
+    //a_codec_id  =   AV_CODEC_ID_NONE;
 }
 
 
@@ -40,9 +38,9 @@ void    AudioDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
     MYLOG( LOG::INFO, "audio dec name = %s", dec->name );
     MYLOG( LOG::INFO, "audio dec long name = %s", dec->long_name );
     MYLOG( LOG::INFO, "audio dec codec id = %s", avcodec_get_name(dec->id) );
-
     MYLOG( LOG::INFO, "audio bitrate = %d", dec_ctx->bit_rate );
 }
+
 
 
 
@@ -51,7 +49,9 @@ void    AudioDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
 AudioDecode::~AudioDecode()
 ********************************************************************************/
 AudioDecode::~AudioDecode()
-{}
+{
+    end();
+}
 
 
 
@@ -60,9 +60,9 @@ AudioDecode::~AudioDecode()
 /*******************************************************************************
 AudioDecode::open_codec_context()
 ********************************************************************************/
-int     AudioDecode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx )
+int     AudioDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
-    Decode::open_codec_context( stream_index, fmt_ctx, type );
+    Decode::open_all_codec( fmt_ctx, type );
     //dec_ctx->thread_count = 4;
     return  SUCCESS;
 }
@@ -73,34 +73,26 @@ int     AudioDecode::open_codec_context( int stream_index, AVFormatContext *fmt_
 
 /*******************************************************************************
 AudioDecode::init()
+
+av_get_channel_layout_nb_channels   Âà¦¨Án¹D¼Æ
+av_get_default_channel_layout       Âà¦¨ layout
 ********************************************************************************/
 int     AudioDecode::init()
 {
     sample_rate     =   dec_ctx->sample_rate;
     sample_fmt      =   dec_ctx->sample_fmt;
-    channel_layout  =   dec_ctx->channel_layout;  //dec_ctx->channels;
+    channel_layout  =   av_get_default_channel_layout( dec_ctx->channels );
 
-    //assert( dec_ctx->sample_fmt == AV_SAMPLE_FMT_FLTP ); // å¦‚æžœé‡åˆ°ä¸åŒçš„  åœ¨çœ‹æ˜¯ä¸æ˜¯è¦èª¿æ•´audio outputçš„sample size
-
-
-
-    // æœ‰äº›å½±ç‰‡è¦ç”¨é€™å€‹ä¾†åˆå§‹åŒ–swr_ctx, ç ”ç©¶ä¸€ä¸‹é€™å€‹å•é¡Œ
-    int aaa = av_get_default_channel_layout( dec_ctx->channels );
-
-    //int aaa = av_get_channel_layout_nb_channels( dec_ctx->channel_layout );
-    MYLOG( LOG::DEBUG, "aaa = %d", aaa );
-
-    // è©¦è‘—æƒ³è¦æ”¹è®Š sample rate, ä½†æ²’æˆåŠŸ.                                                  
-    // S16 æ”¹ S32, éœ€è¦ä¿®æ”¹pcmçš„éƒ¨åˆ†. éœ€è¦æ‰¾æ™‚é–“ç ”ç©¶
+    // ¸ÕµÛ·Q­n§ïÅÜ sample rate, ¦ý¨S¦¨¥\.                                                  
+    // S16 §ï S32, »Ý­n­×§ïpcmªº³¡¤À. »Ý­n§ä®É¶¡¬ã¨s
     swr_ctx     =   swr_alloc_set_opts( swr_ctx,
-                                        av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16, sample_rate,           // output
-                                        //channel_layout, dec_ctx->sample_fmt, dec_ctx->sample_rate,         // input  æœ‰äº›caseè¦ç”¨åº•ä¸‹çš„åšåˆå§‹åŒ–,ç ”ç©¶æ­£ç¢ºç”¨æ³•
-                                        aaa, dec_ctx->sample_fmt, dec_ctx->sample_rate,         // input
+                                        av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16, sample_rate,  // output
+                                        channel_layout, dec_ctx->sample_fmt, dec_ctx->sample_rate,         // input 
                                         NULL, NULL );
     swr_init(swr_ctx);
 
     MYLOG( LOG::INFO, "audio sample format = %s", av_get_sample_fmt_name(sample_fmt) );
-    MYLOG( LOG::INFO, "audio channel = %d, sample rate = %d", channel_layout, sample_rate );
+    MYLOG( LOG::INFO, "audio channel = %d, sample rate = %d", av_get_channel_layout_nb_channels(channel_layout), sample_rate );
 
     Decode::init();
     return  SUCCESS;
@@ -115,11 +107,21 @@ AudioDecode::end()
 ********************************************************************************/
 int     AudioDecode::end()
 {
-    swr_close(swr_ctx);
+    if( swr_ctx != nullptr )
+    {
+        swr_close(swr_ctx);
+        swr_ctx     =   nullptr;
+    }
+    
+    sample_rate     =   0;
+    channel_layout  =   0;
+    sample_fmt      =   AV_SAMPLE_FMT_NONE;
 
     Decode::end();
     return  SUCCESS;
 }
+
+
 
 
 
@@ -138,31 +140,72 @@ void    AudioDecode::output_audio_frame_info()
 
 
 
+
+/*******************************************************************************
+AudioDecode::get_audio_channel()
+********************************************************************************/
+int     AudioDecode::get_audio_channel()
+{
+    return  stream->codecpar->channels;
+}
+
+
+
+
+
+/*******************************************************************************
+AudioDecode::get_audio_sample_rate()
+********************************************************************************/
+int     AudioDecode::get_audio_sample_rate()
+{
+    return  stream->codecpar->sample_rate;
+}
+
+
+
+
+
+
+
+
 /*******************************************************************************
 AudioDecode::output_audio_data()
+
+¦³ªÅ¨Ó­×§ï³oÃä ­n¯à°ÊºA®Ú¾Ú mp4 ÀÉ®×°µ½Õ¾ã
+
+int out_count = (int64_t)wanted_nb_samples * is->audio_tgt.freq / af->frame->sample_rate + 256;
+­n§ï¦¨¤£¦P sample rate ¥i¥H°Ñ¦Ò³o­Ó¤è¦¡°µ½Õ¾ã
 ********************************************************************************/
 AudioData   AudioDecode::output_audio_data()
 {
-    AudioData   ad { nullptr, 0 };
+    static constexpr int    out_channel =   2; // ¥Ø«e¹w³]¿é¥X¦¨¨âÁn¹D. ¦³ªÅ¦A§ï
 
-    // æœ‰ç©ºä¾†ä¿®æ”¹é€™é‚Š è¦èƒ½å‹•æ…‹æ ¹æ“š mp4 æª”æ¡ˆåšèª¿æ•´
+    AudioData   ad;
+    ad.pcm          =   nullptr;
+    ad.bytes        =   0;
+    ad.timestamp    =   0;
 
-    uint8_t     *data[2]    =   { 0 };  // S16 æ”¹ S32, ä¸ç¢ºå®šæ˜¯ä¸æ˜¯é€™é‚Šçš„ array è¦æ”¹æˆ 4
-    int         byte_count     =   frame->nb_samples * 2 * 2;  // S16 æ”¹ S32, æ”¹æˆ *4, ç†è«–ä¸Šè³‡æ–™é‡æœƒå¢žåŠ , ä½†ä¸ç¢ºå®šæ˜¯å¦æ”¹çš„æ˜¯é€™é‚Š
 
-    unsigned char   *pcm    =   new uint8_t[byte_count];     // frame->nb_samples * 2 * 2     è¡¨ç¤º     åˆ†é…æ¨£æœ¬è³‡æ–™é‡ * å…©é€šé“ * æ¯é€šé“2ä½å…ƒçµ„å¤§å°
+    uint8_t     *data[2]    =   { 0 };  // S16 §ï S32, ¤£½T©w¬O¤£¬O³oÃäªº array ­n§ï¦¨ 4
+    //int         byte_count     =   frame->nb_samples * 2 * 2;  // S16 §ï S32, §ï¦¨ *4, ²z½×¤W¸ê®Æ¶q·|¼W¥[, ¦ý¤£½T©w¬O§_§ïªº¬O³oÃä
+                                                                 // frame->nb_samples * 2 * 2     ªí¥Ü     ¤À°t¼Ë¥»¸ê®Æ¶q * ¨â³q¹D * ¨C³q¹D2¦ì¤¸²Õ¤j¤p
+    int         byte_count  =   av_samples_get_buffer_size( NULL, out_channel, frame->nb_samples, AV_SAMPLE_FMT_S16, 0 );
+
+    unsigned char   *pcm    =   new uint8_t[byte_count];     
 
     if( pcm == nullptr )
         MYLOG( LOG::WARN, "pcm is null" );
 
-    data[0]     =   pcm;    // è¼¸å‡ºæ ¼å¼ç‚ºAV_SAMPLE_FMT_S16(packetåž‹åˆ¥),æ‰€ä»¥è½‰æ›å¾Œçš„ LR å…©é€šé“éƒ½å­˜åœ¨data[0]ä¸­
+    data[0]     =   pcm;    // ¿é¥X®æ¦¡¬° AV_SAMPLE_FMT_S16(packet«¬§O), ©Ò¥HÂà´««áªº LR ¨â³q¹D³£¦s¦bdata[0]¤¤
+                            // ¬ã¨s¤@¤U S32 ¬O¤£¬O¦s¨â­Ó¸ê®Æ
     int ret     =   swr_convert( swr_ctx,
-                                 //data, sample_rate,                                    //è¼¸å‡º
-                                 data, frame->nb_samples,                              //è¼¸å‡º   é‡åˆ°è³‡æ–™éŽé•·è¶…éŽbufferé™åˆ¶çš„æ™‚å€™å‡ºéŒ¯
-                                 (const uint8_t**)frame->data, frame->nb_samples );    //è¼¸å…¥
+                                 data, frame->nb_samples,                              //¿é¥X 
+                                 (const uint8_t**)frame->data, frame->nb_samples );    //¿é¤J
 
-    ad.pcm      =   pcm;
-    ad.bytes    =   byte_count;
+    //
+    ad.pcm          =   pcm;
+    ad.bytes        =   byte_count;
+    ad.timestamp    =   get_timestamp();
 
     return ad;
 }
@@ -171,115 +214,56 @@ AudioData   AudioDecode::output_audio_data()
 
 
 
-// https://stackoverflow.com/questions/16904841/how-to-encode-resampled-pcm-audio-to-aac-using-ffmpeg-api-when-input-pcm-samples
-// put frame data into buffer of fixed size
+/*******************************************************************************
+AudioDecode::get_timestamp()
+********************************************************************************/
+int64_t     AudioDecode::get_timestamp()
+{
+    AVRational  tb;
+    tb.num  =   stream->time_base.num;
+    tb.den  =   stream->time_base.den;
+
+    double      dpts    =   frame->pts * av_q2d(tb);
+    int64_t     ts      =   1000 * dpts; // ms
+
+    return  ts;
+}
+
+
+
+
+
+
+
+/*******************************************************************************
+AudioDecode::audio_info()
+********************************************************************************/
+int     AudioDecode::audio_info()
+{
 #if 0
-bool ffmpegHelper::putAudioBuffer(const AVFrame *pAvFrameIn, AVFrame **pAvFrameBuffer, AVCodecContext *dec_ctx, int frame_size, int &k0) 
-{
-    // prepare pFrameAudio
-    if (!(*pAvFrameBuffer)) 
+    as_idx      =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0 );
+
+    //
+    AVStream    *audio_stream   =   fmt_ctx->streams[as_idx];
+    if( audio_stream == nullptr )
     {
-        if (!(*pAvFrameBuffer = av_frame_alloc())) 
-        {
-            av_log(NULL, AV_LOG_ERROR, "Alloc frame failed\n");
-            return false;
-        } 
-        else 
-        {
-            (*pAvFrameBuffer)->format = dec_ctx->sample_fmt;
-            (*pAvFrameBuffer)->channels = dec_ctx->channels;
-            (*pAvFrameBuffer)->sample_rate = dec_ctx->sample_rate;
-            (*pAvFrameBuffer)->nb_samples = frame_size;
-            int ret = av_frame_get_buffer(*pAvFrameBuffer, 0);
-            if (ret < 0) 
-            {
-                char err[500];
-                av_log(NULL, AV_LOG_ERROR, "get audio buffer failed: %s\n",
-                                            av_make_error_string(err, AV_ERROR_MAX_STRING_SIZE, ret));
-                return false;
-            }
-            (*pAvFrameBuffer)->nb_samples = 0;
-            (*pAvFrameBuffer)->pts = pAvFrameIn->pts;
-        }
+        MYLOG( LOG::INFO, "this stream has no audio stream" );
+        return  SUCCESS;
     }
 
-    // copy input data to buffer
-    int n_channels = pAvFrameIn->channels;
-    int new_samples = min(pAvFrameIn->nb_samples - k0, frame_size - (*pAvFrameBuffer)->nb_samples);
-    int k1 = (*pAvFrameBuffer)->nb_samples;
+    //
+    a_codec_id   =   fmt_ctx->streams[as_idx]->codecpar->codec_id;
+    MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(a_codec_id) );
 
-    if (pAvFrameIn->format == AV_SAMPLE_FMT_S16) 
-    {
-        int16_t *d_in = (int16_t *)pAvFrameIn->data[0];
-        d_in += n_channels * k0;
-        int16_t *d_out = (int16_t *)(*pAvFrameBuffer)->data[0];
-        d_out += n_channels * k1;
+    //
+    channel     =   fmt_ctx->streams[as_idx]->codecpar->channels;
+    sample_rate =   fmt_ctx->streams[as_idx]->codecpar->sample_rate;
+    MYLOG( LOG::INFO, "channel = %d, sample rate = %d", channel, sample_rate );
 
-        for (int i = 0; i < new_samples; ++i) 
-        {
-            for (int j = 0; j < pAvFrameIn->channels; ++j) 
-            {
-                *d_out++ = *d_in++;
-            }
-        }
-    } 
-    else 
-    {
-        printf("not handled format for audio buffer\n");
-        return false;
-    }
+    //
+    double a_dur_ms = av_q2d( fmt_ctx->streams[as_idx]->time_base) * fmt_ctx->streams[as_idx]->duration;
+    MYLOG( LOG::INFO, "frame duration = %lf ms", a_dur_ms );
 
-    (*pAvFrameBuffer)->nb_samples += new_samples;
-    k0 += new_samples;
-
-    return true;
-}
-
-
-// transcoding needed
-int got_frame;
-AVMediaType stream_type;
-// decode the packet (do it your self)
-decodePacket(packet, dec_ctx, &pAvFrame_, got_frame);
-
-if (enc_ctx->codec_type == AVMEDIA_TYPE_AUDIO) 
-{
-    ret = 0;
-    // break audio packet down to buffer
-    if (enc_ctx->frame_size > 0) 
-    {
-        int k = 0;
-        while (k < pAvFrame_->nb_samples) 
-        {
-            if (!putAudioBuffer(pAvFrame_, &pFrameAudio_, dec_ctx, enc_ctx->frame_size, k))
-                return false;
-            if (pFrameAudio_->nb_samples == enc_ctx->frame_size) 
-            {
-                // the buffer is full, encode it (do it yourself)
-                ret = encodeFrame(pFrameAudio_, stream_index, got_frame, false);
-                if (ret < 0)
-                    return false;
-                pFrameAudio_->pts += enc_ctx->frame_size;
-                pFrameAudio_->nb_samples = 0;
-            }
-        }
-    } 
-    else 
-    {
-        ret = encodeFrame(pAvFrame_, stream_index, got_frame, false);
-    }
-} 
-else 
-{
-    // encode packet directly
-    ret = encodeFrame(pAvFrame_, stream_index, got_frame, false);
-}
-
-
-uint8_t *buffer = (uint8_t*) malloc(1024);
-AVFrame *frame = av_frame_alloc();
-while((fread(buffer, 1024, 1, fp)) == 1) 
-{
-    frame->data[0] = buffer;
-}
 #endif
+    return  SUCCESS;
+}

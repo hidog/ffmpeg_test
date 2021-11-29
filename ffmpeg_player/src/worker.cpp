@@ -5,8 +5,8 @@
 
 #include "audio_worker.h"
 #include "video_worker.h"
-
 #include "mainwindow.h"
+
 
 
 
@@ -34,46 +34,37 @@ Worker::get_subtitle_files()
 ********************************************************************************/
 QStringList Worker::get_subtitle_files( std::string filename )
 {
-    QString qstr { filename.c_str() };
+    QString     qstr { filename.c_str() };
+    QDir        dir { qstr };
 
-    QDir dir { qstr };
-
-    qDebug() << dir.dirName();
-    int len = dir.dirName().size() - dir.dirName().indexOf('.');
-    QString filename_only = dir.dirName().chopped(len);
-
-    qDebug() << filename_only;
+    int     len             =   dir.dirName().size() - dir.dirName().indexOf('.');
+    QString filename_only   =   dir.dirName().chopped(len);
 
     dir.cdUp();
-    qDebug() << dir.dirName();
 
-    QStringList filter;
+    //
+    QStringList     filter;
     filter.push_back("*.ass");
     filter.push_back("*.ssa");
     //filter.push_back("*.sub");
 
-
-    QStringList sub_list;
-
-    auto list = dir.entryInfoList( filter );
+    //
+    QStringList     sub_list;
+    QString         subname;
+    auto    list    =   dir.entryInfoList( filter );
     for( auto itr : list )
     {
-        qDebug() << itr.fileName();
-
-        int len = itr.fileName().size() - itr.fileName().indexOf('.');
-        QString subname = itr.fileName().chopped(len);
+        len     =   itr.fileName().size() - itr.fileName().indexOf('.');
+        subname =   itr.fileName().chopped(len);
 
         if( subname == filename_only )
             sub_list.push_back( itr.absoluteFilePath() );
     }
 
-    for( auto itr : sub_list )
-    {
-        qDebug() << itr;
-    }
-
     return sub_list;
 }
+
+
 
 
 
@@ -82,8 +73,6 @@ Worker::run()
 ********************************************************************************/
 void    Worker::run()  
 {
-    //while(true) {
-
     VideoSetting    vs;
     AudioSetting    as;
     AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
@@ -100,10 +89,9 @@ void    Worker::run()
     as  =   player.get_audio_setting();
     aw->open_audio_output(as);
     
+    // wait for setting video.
     while( is_set_video == false )
         SLEEP_10MS;
-    
-    // need implement, send subtitle setting to UI.
     
     //
     is_play_end     =   false;
@@ -116,13 +104,14 @@ void    Worker::run()
     player.end();
     is_play_end     =   true;
     
+    // 等待其他兩個thread完成
+    while( aw->isFinished() == false )
+        SLEEP_10MS;
+    while( vw->isFinished() == false )
+        SLEEP_10MS;
+
     MYLOG( LOG::INFO, "finish decode." );
 
-
-        // 應該要做處理,判斷其他兩個thread結束後,才跑下一個loop
-        // 暫時先省略       
-        //std::this_thread::sleep_for( std::chrono::seconds(10) );
-    //}
 }
 
 
@@ -159,14 +148,15 @@ Worker::set_src_file()
 ********************************************************************************/
 void    Worker::set_src_file( std::string file )
 {
-    player.set_input_file(file);
+    QString     str;
 
-    auto list = get_subtitle_files(file);
+    player.set_input_file(file);
+    auto list   =   get_subtitle_files(file);
 
     if( list.size() > 0 )
     {
-        QString str = list.at(0);
-        player.set_sub_file(str.toStdString()); // 未來做成可以多重輸入
+        str     =   list.at(0);
+        player.set_sub_file( str.toStdString() ); // 未來做成可以多重輸入
     }
 }
 

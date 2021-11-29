@@ -9,7 +9,11 @@
 
 struct SubData
 {
-    int test;
+    int     video_index;
+    int     width;
+    int     height;
+    int     sub_index;
+    int     pix_fmt;
 };
 
 
@@ -18,6 +22,7 @@ struct AudioData
 {
     uint8_t     *pcm;
     int         bytes;
+    int64_t     timestamp;
 };
 
 
