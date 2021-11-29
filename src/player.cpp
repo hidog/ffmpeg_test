@@ -521,11 +521,11 @@ void    Player::play_QT()
 
         //
         pkt     =   demuxer.get_packet();
-        if( v_decoder.is_index( pkt->stream_index ) == true )
+        if( v_decoder.find_index( pkt->stream_index ) == true )
             dc  =   dynamic_cast<Decode*>(&v_decoder);
-        else if( a_decoder.is_index( pkt->stream_index ) == true )
+        else if( a_decoder.find_index( pkt->stream_index ) == true )
             dc  =   dynamic_cast<Decode*>(&a_decoder);
-        else if( s_decoder.is_index( pkt->stream_index ) == true )
+        else if( s_decoder.find_index( pkt->stream_index ) == true )
             dc  =   dynamic_cast<Decode*>(&s_decoder);  
         else
         {
@@ -556,14 +556,14 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
     int     ret     =   0;
 
     // 必須對 subtitle 進行decode, 不然 filter 會出錯
-    if( s_decoder.is_index( pkt->stream_index ) == true )
+    if( s_decoder.find_index( pkt->stream_index ) == true )
     {
         ret     =   s_decoder.decode_subtitle(pkt);
         return  ret;
     }
 
     // handle video stream with subtitle
-    if( s_decoder.exist_stream() == true && v_decoder.is_index( pkt->stream_index ) == true )
+    if( s_decoder.exist_stream() == true && v_decoder.find_index( pkt->stream_index ) == true )
     {
         decode_video_with_subtitle(pkt);
         return  SUCCESS;

@@ -31,12 +31,10 @@ public:
 
     Decode& operator = ( const Decode& ) = delete;
     Decode& operator = ( Decode&& ) = delete;
-
-    //
+    
     virtual int     init();
     virtual int     end();
-
-    //
+    
     virtual void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) = 0;
     virtual int     open_codec_context( AVFormatContext *fmt_ctx ) = 0;
     virtual bool    exist_stream();
@@ -45,11 +43,9 @@ public:
     int     recv_frame( int index );
     void    unref_frame();
     int     get_frame_count();
-    bool    is_index( int index );
+    bool    find_index( int index );
     int     current_index();
-
-
-    //
+    
     AVFrame*        get_frame();
     AVMediaType     get_decode_context_type();
     AVCodecContext* get_decode_context();
@@ -59,13 +55,10 @@ public:
     std::function<int()>    output_frame_func;
 #endif
 
-
-
 protected:
 
     int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type );
     int     open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type );
-
 
     std::map<int,AVCodecContext*>   dec_map;
     std::map<int,AVStream*>         stream_map;
