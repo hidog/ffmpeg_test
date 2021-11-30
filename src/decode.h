@@ -45,6 +45,8 @@ public:
     int     get_frame_count();
     bool    find_index( int index );
     int     current_index();
+    int     get_dec_map_size();
+    void    flush_all_stresam();
     
     AVFrame*        get_frame();
     AVMediaType     get_decode_context_type();

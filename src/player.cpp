@@ -680,6 +680,7 @@ flush 過程基本上同 decode, 送 nullptr 進去
 int    Player::flush()
 {
     int     ret     =   0;
+    int     i;
 
     VideoData   vdata;
     AudioData   adata;
@@ -687,7 +688,7 @@ int    Player::flush()
     // flush video
     ret     =   v_decoder.send_packet(nullptr);
     if( ret >= 0 )
-    {
+    {       
         while(true)
         {
             ret     =   v_decoder.recv_frame(-1);
@@ -700,6 +701,7 @@ int    Player::flush()
             v_decoder.unref_frame();  
         }
     }
+    v_decoder.flush_all_stresam();
 
     // flush audio
     ret     =   a_decoder.send_packet(nullptr);
@@ -720,6 +722,7 @@ int    Player::flush()
             a_decoder.unref_frame();
         }
     }
+    a_decoder.flush_all_stresam();
 
     return 0;
 }

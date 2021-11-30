@@ -256,6 +256,9 @@ VideoDecode::get_timestamp()
 ********************************************************************************/
 int64_t     VideoDecode::get_timestamp()
 {
+    if( frame->best_effort_timestamp == AV_NOPTS_VALUE )
+        return  0;
+
     double  dpts    =   av_q2d(stream->time_base) * frame->best_effort_timestamp;
     int64_t ts      =   dpts * 1000;  // ms
     return  ts;
