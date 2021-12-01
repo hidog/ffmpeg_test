@@ -89,11 +89,7 @@ int     VideoDecode::init()
 
     MYLOG( LOG::INFO, "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
     
-#ifdef FFMPEG_TEST
     video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
-#else
-    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, pix_fmt, 1 );
-#endif
     if( video_dst_bufsize < 0 )
     {
         MYLOG( LOG::ERROR, "Could not allocate raw video buffer" );
@@ -204,21 +200,22 @@ int     VideoDecode::end()
 
 /*******************************************************************************
 VideoDecode::output_video_data()
+
+某些影片不能直接複製到QImage的記憶體,需要先複製到ffmpeg create的video_dst_data.
 ********************************************************************************/
 VideoData   VideoDecode::output_video_data()
 {
     VideoData   vd;
 
-    QImage  img { width, height, QImage::Format_RGB888 };
-    uint8_t *dst[]  =   { img.bits() };
-    int     linesizes[4];
+    QImage  image { width, height, QImage::Format_RGB888 };
 
-    av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
-    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
+    //av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
+    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, video_dst_data, video_dst_linesize );
+    memcpy( image.bits(), video_dst_data[0], video_dst_bufsize );
 
     //
     vd.index        =   frame_count;
-    vd.frame        =   img;
+    vd.frame        =   image;
     vd.timestamp    =   get_timestamp();
 
     return  vd;
