@@ -64,6 +64,10 @@ private:
 
     QImage  sub_image;     // 將video frame打上字幕後存在這邊
 
+    uint8_t  *sub_dst_data[4]     =   { nullptr };
+    int      sub_dst_linesize[4]  =   { 0 };
+    int      sub_dst_bufsize      =   0;
+
 };
 
 

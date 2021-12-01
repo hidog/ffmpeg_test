@@ -174,6 +174,13 @@ SubDecode::init_sws_ctx()
 ********************************************************************************/
 int SubDecode::init_sws_ctx( SubData sd )
 {
+    sub_dst_bufsize   =   av_image_alloc( sub_dst_data, sub_dst_linesize, sd.width, sd.height, AV_PIX_FMT_RGB24, 1 );
+    if( sub_dst_bufsize < 0 )
+    {
+        MYLOG( LOG::ERROR, "Could not allocate subtitle image buffer" );
+        return  ERROR;
+    }
+
     AVPixelFormat   pix_fmt     =   static_cast<AVPixelFormat>(sd.pix_fmt);
     sws_ctx     =   sws_getContext( sd.width, sd.height, pix_fmt, sd.width, sd.height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL );   
     return  SUCCESS;
@@ -199,13 +206,8 @@ int SubDecode::render_subtitle()
         return  -1;
     }
 
-    // render subtitle and generate image.
-    uint8_t *dst[]  =   { sub_image.bits() };
-    int     linesizes[4];
-
-    //
-    av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
-    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
+    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, sub_dst_data, sub_dst_linesize );
+    memcpy( sub_image.bits(), sub_dst_data[0], sub_dst_bufsize );
 
     return 1;
 }

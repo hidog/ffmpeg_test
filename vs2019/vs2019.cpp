@@ -50,7 +50,7 @@ extern "C" {
 
 int main()
 {
-#if 1
+#if 0
     char str[100] = "D:\\code\\fmp2.avi";
 
     char **argv = new char* [10];
@@ -69,6 +69,7 @@ int main()
 
     Player  player;  
 
+    player.set_input_file("D:\\code\\test.rmvb");
     player.init();
     player.play();
     player.end();

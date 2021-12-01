@@ -89,7 +89,7 @@ int     VideoDecode::init()
 
     MYLOG( LOG::INFO, "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
     
-    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, pix_fmt, 1 );
+    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
     if( video_dst_bufsize < 0 )
     {
         MYLOG( LOG::ERROR, "Could not allocate raw video buffer" );
@@ -103,8 +103,8 @@ int     VideoDecode::init()
 
     //
 #ifdef FFMPEG_TEST
-    //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
-    output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
+    output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
+    //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
 #endif
 
     //
@@ -200,21 +200,22 @@ int     VideoDecode::end()
 
 /*******************************************************************************
 VideoDecode::output_video_data()
+
+某些影片不能直接複製到QImage的記憶體,需要先複製到ffmpeg create的video_dst_data.
 ********************************************************************************/
 VideoData   VideoDecode::output_video_data()
 {
     VideoData   vd;
 
-    QImage  img { width, height, QImage::Format_RGB888 };
-    uint8_t *dst[]  =   { img.bits() };
-    int     linesizes[4];
+    QImage  image { width, height, QImage::Format_RGB888 };
 
-    av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
-    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
+    //av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
+    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, video_dst_data, video_dst_linesize );
+    memcpy( image.bits(), video_dst_data[0], video_dst_bufsize );
 
     //
     vd.index        =   frame_count;
-    vd.frame        =   img;
+    vd.frame        =   image;
     vd.timestamp    =   get_timestamp();
 
     return  vd;
@@ -388,6 +389,8 @@ VideoDecode::output_jpg_by_QT()
 ********************************************************************************/
 int    VideoDecode::output_jpg_by_QT()
 {
+#if 0
+    // 網路範例 某些情況下這段code會失效
     // 1. Get frame and QImage to show 
     QImage  img     =   QImage( width, height, QImage::Format_RGB888 );
 
@@ -404,6 +407,19 @@ int    VideoDecode::output_jpg_by_QT()
     img.save(str);
 
     return  0;
+#else
+    QImage  img     =   QImage( width, height, QImage::Format_RGB888 );
+    
+    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, video_dst_data, video_dst_linesize );
+    memcpy( img.bits(), video_dst_data[0], video_dst_bufsize );
+
+    static int  jpg_count   =   0;
+    char str[1000];
+    sprintf( str, "H:\\%d.jpg", jpg_count++ );
+    img.save(str);
+
+    return  0;
+#endif
 }
 #endif
 
@@ -428,6 +444,8 @@ int     VideoDecode::output_jpg_by_openCV()
     有兩個方法可以做轉換. 一個比較暴力, 一個是透過介面做轉換
     */
 #if 0
+    // 某些情況下這段程式碼會出錯.
+    // 那時候 linesize 會出現不match的現象
     cv::Mat     img     =   cv::Mat::zeros( height*3/2, width, CV_8UC1 );    
     memcpy( img.data, frame->data[0], width*height );
     memcpy( img.data + width*height, frame->data[1], width*height/4 );
