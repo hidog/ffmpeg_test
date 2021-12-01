@@ -287,7 +287,8 @@ void    Player::play()
                 if( ret <= 0 )
                     break;
 
-                dc->output_frame_func();
+                if( dc->output_frame_func != nullptr )
+                    dc->output_frame_func();
                 dc->unref_frame();
             }
         }
