@@ -43,15 +43,20 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
 {
     std::stringstream   ss;
     std::string     in_param, out_param;;
+    
+    AVRational  frame_rate  =   av_guess_frame_rate( fmt_ctx, fmt_ctx->streams[sd.video_index], NULL );
 
-    int     sar_num     =   fmt_ctx->streams[sd.video_index]->sample_aspect_ratio.num;
-    int     sar_den     =   fmt_ctx->streams[sd.video_index]->sample_aspect_ratio.den;
+    int     sar_num     =   fmt_ctx->streams[sd.video_index]->codecpar->sample_aspect_ratio.num; // old code use fmt_ctx->streams[sd.video_index]->sample_aspect_ratio.num
+    int     sar_den     =   FFMAX( fmt_ctx->streams[sd.video_index]->codecpar->sample_aspect_ratio.den, 1 );
 
     int     tb_num      =   fmt_ctx->streams[sd.video_index]->time_base.num;
     int     tb_den      =   fmt_ctx->streams[sd.video_index]->time_base.den;
 
     ss << "video_size=" << sd.width << "x" << sd.height << ":pix_fmt=" << static_cast<int>(sd.pix_fmt) 
        << ":time_base=" << tb_num << "/" << tb_den << ":pixel_aspect=" << sar_num << "/" << sar_den;
+
+    if( frame_rate.num != 0 && frame_rate.den != 0 )
+        ss << ":frame_rate=" << frame_rate.num << "/" << frame_rate.den;
 
     in_param   =   ss.str();
 
@@ -65,8 +70,8 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     filename_param  +=  src_file;
     filename_param.insert( 2, 1, '\\' );
 
-    ss << "subtitles=filename='" << filename_param << "':original_size=" << sd.width << "x" << sd.height 
-       << ":stream_index=" << sd.sub_index;
+    ss << "subtitles=filename='" << filename_param << "':original_size=" 
+       << sd.width << "x" << sd.height << ":stream_index=" << sd.sub_index;
 
     out_param    =   ss.str();
 
@@ -126,7 +131,7 @@ SubDecode::init()
 ********************************************************************************/
 int     SubDecode::init()
 {
-    filter_graph    =   avfilter_graph_alloc();
+    graph    =   avfilter_graph_alloc();
 
     Decode::init();
     return  SUCCESS;
@@ -169,6 +174,13 @@ SubDecode::init_sws_ctx()
 ********************************************************************************/
 int SubDecode::init_sws_ctx( SubData sd )
 {
+    sub_dst_bufsize   =   av_image_alloc( sub_dst_data, sub_dst_linesize, sd.width, sd.height, AV_PIX_FMT_RGB24, 1 );
+    if( sub_dst_bufsize < 0 )
+    {
+        MYLOG( LOG::ERROR, "Could not allocate subtitle image buffer" );
+        return  ERROR;
+    }
+
     AVPixelFormat   pix_fmt     =   static_cast<AVPixelFormat>(sd.pix_fmt);
     sws_ctx     =   sws_getContext( sd.width, sd.height, pix_fmt, sd.width, sd.height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL );   
     return  SUCCESS;
@@ -194,13 +206,8 @@ int SubDecode::render_subtitle()
         return  -1;
     }
 
-    // render subtitle and generate image.
-    uint8_t *dst[]  =   { sub_image.bits() };
-    int     linesizes[4];
-
-    //
-    av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
-    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, dst, linesizes );
+    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, sub_dst_data, sub_dst_linesize );
+    memcpy( sub_image.bits(), sub_dst_data[0], sub_dst_bufsize );
 
     return 1;
 }
@@ -232,10 +239,10 @@ int     SubDecode::end()
         sws_ctx     =   nullptr;
     }
 
-    if( filter_graph != nullptr )
+    if( graph != nullptr )
     {
-        avfilter_graph_free(&filter_graph);
-        filter_graph    =   nullptr;
+        avfilter_graph_free(&graph);
+        graph    =   nullptr;
     }
 
     sub_file.clear();
@@ -279,11 +286,6 @@ void    SubDecode::output_sub_frame_info()
 
 
 
-
-
-
-
-
 /*******************************************************************************
 SubDecode::open_subtitle_filter()
 ********************************************************************************/
@@ -304,7 +306,7 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string filterDesc)
     };
 
     //
-    if( output == nullptr || input == nullptr || filter_graph == nullptr ) 
+    if( output == nullptr || input == nullptr || graph == nullptr ) 
     {
         MYLOG( LOG::ERROR, "alloc fail." );
         release();
@@ -312,7 +314,7 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string filterDesc)
     }
 
     // Crear filtro de entrada, necesita arg
-    ret     =   avfilter_graph_create_filter( &bf_src_ctx, buffersrc, "in", args.c_str(), nullptr, filter_graph );
+    ret     =   avfilter_graph_create_filter( &bf_src_ctx, buffersrc, "in", args.c_str(), nullptr, graph );
     if( ret < 0 ) 
     {
         release();
@@ -320,7 +322,7 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string filterDesc)
         return false;
     }
 
-    ret     =   avfilter_graph_create_filter( &bf_sink_ctx, buffersink, "out", nullptr, nullptr, filter_graph );
+    ret     =   avfilter_graph_create_filter( &bf_sink_ctx, buffersink, "out", nullptr, nullptr, graph );
     if( ret < 0 )
     {
         MYLOG( LOG::ERROR, "avfilter_graph_create_filter error" );
@@ -340,7 +342,7 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string filterDesc)
     input->filter_ctx   =   bf_sink_ctx;
 
     //
-    ret     =   avfilter_graph_parse_ptr( filter_graph, filterDesc.c_str(), &input, &output, nullptr );
+    ret     =   avfilter_graph_parse_ptr( graph, filterDesc.c_str(), &input, &output, nullptr );
     if( ret < 0 )
     {
         MYLOG( LOG::ERROR, "avfilter_graph_parse_ptr error" );
@@ -348,7 +350,7 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string filterDesc)
         return false;
     }
 
-    ret     =   avfilter_graph_config( filter_graph, nullptr );
+    ret     =   avfilter_graph_config( graph, nullptr );
     if( ret < 0 )
     {
         MYLOG( LOG::DEBUG, "avfilter_graph_config error" );
@@ -356,7 +358,7 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string filterDesc)
         return false;
     }
 
-    char *str   =   avfilter_graph_dump( filter_graph, NULL );
+    char *str   =   avfilter_graph_dump( graph, nullptr );
     MYLOG( LOG::DEBUG, "options = %s", str );
 
     release();

@@ -260,6 +260,28 @@ AVMediaType     Decode::get_decode_context_type()
 
 
 /*******************************************************************************
+Decode::flush_all_stresam()
+********************************************************************************/
+void    Decode::flush_all_stresam()
+{
+    int     ret;
+
+    for( auto itr : dec_map )
+    {
+        while(true)
+        {
+            ret     =   avcodec_receive_frame( itr.second, frame );
+            if( ret < 0 )
+                break;
+            av_frame_unref(frame);
+        }
+    }
+}
+
+
+
+
+/*******************************************************************************
 Decode::recv_frame()
 ********************************************************************************/
 int     Decode::recv_frame( int index )
@@ -290,6 +312,16 @@ int     Decode::recv_frame( int index )
 
 
 
+/*******************************************************************************
+Decode::get_dec_map_size()
+********************************************************************************/
+int     Decode::get_dec_map_size()
+{
+    return  dec_map.size();
+}
+
+
+
 
 
 
@@ -310,10 +342,23 @@ Decode::end()
 ********************************************************************************/
 int     Decode::end()
 {
-    avcodec_free_context( &dec_ctx );
-    av_frame_free( &frame );
+    //avcodec_free_context( &dec_ctx );
 
-    cs_index  =   -1;
+    av_frame_free( &frame );
+    frame   =   nullptr;
+
+    //
+    for( auto itr : dec_map )    
+        avcodec_free_context( &itr.second );
+    dec_map.clear();
+    dec_ctx     =   nullptr;
+
+    //
+    stream_map.clear();
+    stream      =   nullptr;
+
+    //
+    cs_index    =   -1;
 
     return  SUCCESS;
 }

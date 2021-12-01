@@ -50,11 +50,18 @@ extern "C" {
 
 int main()
 {
-#if 1
+#if 0
     char str[100] = "D:\\code\\fmp2.avi";
 
     char **argv = new char* [10];
     argv[1] = str;
+
+#if 0
+    char str2[100] = "-vf";
+    argv[1] = str2;
+    char str3[100] = "subtitles='../../test.ssa':stream_index=0";
+    argv[2] = str3;
+#endif
 
     ffplay_main( 2, argv );
     //play_demuxing_decodeing();
@@ -62,6 +69,7 @@ int main()
 
     Player  player;  
 
+    player.set_input_file("D:\\code\\test.rmvb");
     player.init();
     player.play();
     player.end();

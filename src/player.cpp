@@ -270,9 +270,9 @@ void    Player::play()
         }
         
         pkt     =   demuxer.get_packet();
-        if( v_decoder.is_index(pkt->stream_index) )
+        if( v_decoder.find_index(pkt->stream_index) )
             dc  =   dynamic_cast<Decode*>(&v_decoder);        
-        else if( a_decoder.is_index(pkt->stream_index) )
+        else if( a_decoder.find_index(pkt->stream_index) )
             dc  =   dynamic_cast<Decode*>(&a_decoder);
         else        
             MYLOG( LOG::WARN, "stream type not handle.");        
@@ -287,7 +287,8 @@ void    Player::play()
                 if( ret <= 0 )
                     break;
 
-                dc->output_frame_func();
+                if( dc->output_frame_func != nullptr )
+                    dc->output_frame_func();
                 dc->unref_frame();
             }
         }
@@ -680,6 +681,7 @@ flush 過程基本上同 decode, 送 nullptr 進去
 int    Player::flush()
 {
     int     ret     =   0;
+    int     i;
 
     VideoData   vdata;
     AudioData   adata;
@@ -687,7 +689,7 @@ int    Player::flush()
     // flush video
     ret     =   v_decoder.send_packet(nullptr);
     if( ret >= 0 )
-    {
+    {       
         while(true)
         {
             ret     =   v_decoder.recv_frame(-1);
@@ -700,6 +702,7 @@ int    Player::flush()
             v_decoder.unref_frame();  
         }
     }
+    v_decoder.flush_all_stresam();
 
     // flush audio
     ret     =   a_decoder.send_packet(nullptr);
@@ -720,6 +723,7 @@ int    Player::flush()
             a_decoder.unref_frame();
         }
     }
+    a_decoder.flush_all_stresam();
 
     return 0;
 }
