@@ -10,6 +10,7 @@
 
 #include <QFileDialog>
 #include <QDebug>
+#include <QKeyEvent>
 
 #include <mutex>
 
@@ -237,4 +238,22 @@ MainWindow::get_audio_worker()
 AudioWorker*    MainWindow::get_audio_worker()
 {
     return  audio_worker;
+}
+
+
+
+
+/*******************************************************************************
+MainWindow::keyPressEvent()
+********************************************************************************/
+void    MainWindow::keyPressEvent( QKeyEvent *event )
+{
+    switch( event->key() )
+    {
+        case Qt::Key_F :
+            QVideoWidget    *video_widget   =   ui->widget;
+            bool    flag    =   video_widget->isFullScreen();
+            video_widget->setFullScreen( !flag );
+            break;
+    }
 }

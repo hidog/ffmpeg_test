@@ -41,6 +41,8 @@ public:
     VideoWorker*    get_video_worker();
     AudioWorker*    get_audio_worker();
 
+    void    keyPressEvent(QKeyEvent *event) override;
+
 
 public slots:
 
