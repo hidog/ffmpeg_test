@@ -38,12 +38,17 @@ public:
     void    output_sub_frame_info();
     void    set_subfile( std::string path );
 
-    bool    open_subtitle_filter( std::string args, std::string filterDesc );
+    bool    open_subtitle_filter( std::string args, std::string desc );
     QImage  get_subtitle_image();
 
     int     send_video_frame( AVFrame *video_frame );
     int     render_subtitle();
     int     init_sws_ctx( SubData sd );
+    void    switch_subtltle( std::string path );
+    void    set_filter_args( std::string args );
+
+    SubSourceType   get_sub_src_type();
+    void            set_sub_src_type( SubSourceType type );
 
     std::string     get_subfile();
     std::pair<std::string,std::string>  get_subtitle_param( AVFormatContext *fmt_ctx, std::string src_file, SubData sd );
@@ -61,6 +66,10 @@ private:
     AVFilterGraph       *graph          =   nullptr; 
     SwsContext          *sws_ctx        =   nullptr;  
     std::string         sub_file;
+    std::string         subtitle_args;
+    SubSourceType       sub_src_type    =   SubSourceType::NONE;
+
+
 
     QImage  sub_image;     // 將video frame打上字幕後存在這邊
 

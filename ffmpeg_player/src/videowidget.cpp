@@ -19,9 +19,7 @@ VideoWidget::VideoWidget( QWidget *parent )
 VideoWidget::~VideoWidget()
 ********************************************************************************/
 VideoWidget::~VideoWidget()
-{
-    QVideoWidget::~QVideoWidget();
-}
+{}
 
 
 

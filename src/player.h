@@ -51,6 +51,7 @@ public:
     int     decode( Decode *dc, AVPacket* pkt );
     void    set_sub_file( std::string str );
     int     decode_video_with_subtitle( AVPacket* pkt );
+    void    switch_subtitle( std::string path );
 
     VideoSetting    get_video_setting();
     AudioSetting    get_audio_setting();
@@ -80,6 +81,9 @@ private:
     std::string     src_file;
     std::string     sub_name;   // 外掛字幕檔名
     //std::string     sub_src;    // 因為可能是使用內嵌字幕,也可能用外掛字幕. 將最後的結果存在這個字串內.
+
+    bool            switch_subtitle_flag    =   false;
+    std::string     new_subtitle_path;
 
 #ifdef USE_MT
     bool    v_thr_start     =   false,

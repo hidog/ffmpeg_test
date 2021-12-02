@@ -120,12 +120,14 @@ MainWindow::set_signal_slot()
 void MainWindow::set_signal_slot()
 {
     // ÂÂ¦¡¼gªk
-    connect(    worker,     SIGNAL(video_setting_singal(VideoSetting)),     this,   SLOT(set_video_setting_slot(VideoSetting)) );
-    //connect(    worker,     &Worker::video_setting_singal,     this,   &MainWindow::set_video_setting_slot );
+    connect(    worker,     SIGNAL(video_setting_signal(VideoSetting)),     this,   SLOT(set_video_setting_slot(VideoSetting))  );
+    //connect(    worker,           &Worker::video_setting_singal,          this,   &MainWindow::set_video_setting_slot );
+    connect(    worker,             &Worker::subtitle_list_signal,          this,   &MainWindow::set_subtitle_list_slot         );
 
-    connect(    ui->startButton,    &QPushButton::clicked,                  this,   &MainWindow::start_slot );
-    connect(    ui->loadFileButton, &QPushButton::clicked,                  this,   &MainWindow::load_file_slot );
-    connect(    video_worker,       &VideoWorker::recv_video_frame_signal,  this,   &MainWindow::recv_video_frame_slot );
+    connect(    ui->startButton,    &QPushButton::clicked,                  this,   &MainWindow::start_slot                     );
+    connect(    ui->loadFileButton, &QPushButton::clicked,                  this,   &MainWindow::load_file_slot                 );
+    connect(    video_worker,       &VideoWorker::recv_video_frame_signal,  this,   &MainWindow::recv_video_frame_slot          );
+    connect(    ui->subCBox,        &QComboBox::currentTextChanged,         this,   &MainWindow::switch_subtitle_slot           );
 }
 
 
@@ -257,4 +259,32 @@ void    MainWindow::keyPressEvent( QKeyEvent *event )
             video_widget->setFullScreen( !flag );
             break;
     }
+}
+
+
+
+
+/*******************************************************************************
+MainWindow::set_subtitle_list_slot()
+********************************************************************************/
+void    MainWindow::set_subtitle_list_slot( QStringList list )
+{
+    int     i;
+    auto    sub_combobox    =   ui->subCBox;
+
+    for( i = 0; i < list.size(); i++ )
+        sub_combobox->addItem( list.at(i) );
+}
+
+
+
+
+
+/*******************************************************************************
+MainWindow::switch_subtitle_slot()
+********************************************************************************/
+void    MainWindow::switch_subtitle_slot( QString path )
+{
+    qDebug() << path;
+    worker->switch_subtitle(path);
 }

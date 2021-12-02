@@ -83,7 +83,7 @@ void    Worker::run()
     // send video setting to UI
     is_set_video    =   false;
     vs              =   player.get_video_setting();
-    emit video_setting_singal(vs);
+    emit video_setting_signal(vs);
     
     // send audio setting to UI
     as  =   player.get_audio_setting();
@@ -157,6 +157,8 @@ void    Worker::set_src_file( std::string file )
     {
         str     =   list.at(0);
         player.set_sub_file( str.toStdString() ); // 未來做成可以多重輸入
+
+        emit subtitle_list_signal(list);
     }
 }
 
@@ -169,4 +171,16 @@ Worker::is_set_src_file()
 bool    Worker::is_set_src_file()
 {
     return  player.is_set_input_file();
+}
+
+
+
+
+
+/*******************************************************************************
+Worker::is_set_src_file()
+********************************************************************************/
+void    Worker::switch_subtitle( QString path )
+{
+    player.switch_subtitle( path.toStdString() );
 }
