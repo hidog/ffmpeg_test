@@ -18,14 +18,16 @@ SOURCES += \
     ui/mainwindow.cpp \
 	src/worker.cpp \
 	src/audio_worker.cpp \
-	src/video_worker.cpp
+	src/video_worker.cpp \
+	src/videowidget.cpp
 
 
 HEADERS += \
     ui/mainwindow.h \
 	src/worker.h \
 	src/audio_worker.h \
-	src/video_worker.h
+	src/video_worker.h \
+	src/videowidget.h
 
 
 

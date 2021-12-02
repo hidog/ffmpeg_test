@@ -5,11 +5,13 @@
 #include <QMessageBox>
 
 #include <QVideoWidget>
+
 #include <QAbstractVideoSurface>
 #include <QVideoSurfaceFormat>
 
 #include <QFileDialog>
 #include <QDebug>
+#include <QKeyEvent>
 
 #include <mutex>
 
@@ -88,7 +90,7 @@ void MainWindow::recv_video_frame_slot()
     /*if( video_widget->isVisible() == false )
         return;*/
 
-    QVideoWidget    *video_widget   =   ui->widget;
+    QVideoWidget    *video_widget   =   ui->videoWidget;
 
     static int  last_index  =   0;
 
@@ -137,7 +139,7 @@ void    MainWindow::set_video_setting_slot( VideoSetting vs )
     /*if( video_widget->videoSurface()->isActive() )
         video_widget->videoSurface()->stop();*/
 
-    QVideoWidget    *video_widget   =   ui->widget;
+    QVideoWidget    *video_widget   =   ui->videoWidget;
 
 
     QSize   size { vs.width, vs.height };
@@ -237,4 +239,22 @@ MainWindow::get_audio_worker()
 AudioWorker*    MainWindow::get_audio_worker()
 {
     return  audio_worker;
+}
+
+
+
+
+/*******************************************************************************
+MainWindow::keyPressEvent()
+********************************************************************************/
+void    MainWindow::keyPressEvent( QKeyEvent *event )
+{
+    switch( event->key() )
+    {
+        case Qt::Key_F :
+            QVideoWidget    *video_widget   =   ui->videoWidget;
+            bool    flag    =   video_widget->isFullScreen();
+            video_widget->setFullScreen( !flag );
+            break;
+    }
 }

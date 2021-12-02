@@ -49,6 +49,9 @@
     <ClCompile Include="src\video_worker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\videowidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\worker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -63,6 +66,9 @@
     <QtMoc Include="src\video_worker.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <ClInclude Include="src\videowidget.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <QtMoc Include="src\worker.h">
       <Filter>Header Files</Filter>
     </QtMoc>
