@@ -70,8 +70,10 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     filename_param  +=  src_file;
     filename_param.insert( 2, 1, '\\' );
 
+    // 理論上這邊的字串可以精簡...
+    sub_index   =   sd.sub_index;
     ss << "subtitles=filename='" << filename_param << "':original_size=" 
-       << sd.width << "x" << sd.height << ":stream_index=" << sd.sub_index;
+       << sd.width << "x" << sd.height << ":stream_index=" << sub_index;
 
     out_param    =   ss.str();
 
@@ -82,6 +84,17 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
 }
 
 
+
+
+
+
+/*******************************************************************************
+SubDecode::set_filter_args()
+********************************************************************************/
+void    SubDecode::set_filter_args( std::string args )
+{
+    subtitle_args   =   args;
+}
 
 
 
@@ -131,8 +144,7 @@ SubDecode::init()
 ********************************************************************************/
 int     SubDecode::init()
 {
-    graph    =   avfilter_graph_alloc();
-
+    //graph    =   avfilter_graph_alloc();
     Decode::init();
     return  SUCCESS;
 }
@@ -217,6 +229,29 @@ int SubDecode::render_subtitle()
 
 
 /*******************************************************************************
+SubDecode::get_sub_src_type()
+********************************************************************************/
+SubSourceType   SubDecode::get_sub_src_type()
+{
+    return  sub_src_type;
+}
+
+
+
+
+/*******************************************************************************
+SubDecode::set_sub_src_type()
+********************************************************************************/
+void    SubDecode::set_sub_src_type( SubSourceType type )
+{
+    sub_src_type    =   type;
+}
+
+
+
+
+
+/*******************************************************************************
 SubDecode::end()
 ********************************************************************************/
 int     SubDecode::end()
@@ -246,6 +281,8 @@ int     SubDecode::end()
     }
 
     sub_file.clear();
+    subtitle_args.clear();
+    sub_src_type  =   SubSourceType::NONE;
 
     Decode::end();
     return  SUCCESS;
@@ -289,8 +326,28 @@ void    SubDecode::output_sub_frame_info()
 /*******************************************************************************
 SubDecode::open_subtitle_filter()
 ********************************************************************************/
-bool SubDecode::open_subtitle_filter( std::string args, std::string filterDesc)
+bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
 {
+    // release and re create
+    if( bf_src_ctx != nullptr )
+    {
+        avfilter_free( bf_src_ctx );
+        bf_src_ctx  =   nullptr;
+    }
+
+    if( bf_sink_ctx != nullptr )
+    {
+        avfilter_free( bf_sink_ctx );
+        bf_sink_ctx     =   nullptr;
+    }
+
+    if( graph != nullptr )
+    {
+        avfilter_graph_free(&graph);
+        graph   =   nullptr;
+    }
+
+    //
     int     ret     =   0;
 
     const AVFilter  *buffersrc      =   avfilter_get_by_name("buffer");
@@ -305,7 +362,7 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string filterDesc)
         avfilter_inout_free( &input );
     };
 
-    //
+    graph    =   avfilter_graph_alloc();    
     if( output == nullptr || input == nullptr || graph == nullptr ) 
     {
         MYLOG( LOG::ERROR, "alloc fail." );
@@ -342,7 +399,7 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string filterDesc)
     input->filter_ctx   =   bf_sink_ctx;
 
     //
-    ret     =   avfilter_graph_parse_ptr( graph, filterDesc.c_str(), &input, &output, nullptr );
+    ret     =   avfilter_graph_parse_ptr( graph, desc.c_str(), &input, &output, nullptr );
     if( ret < 0 )
     {
         MYLOG( LOG::ERROR, "avfilter_graph_parse_ptr error" );
@@ -364,6 +421,9 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string filterDesc)
     release();
     return true;
 }
+
+
+
 
 
 
@@ -505,6 +565,29 @@ std::string     SubDecode::get_subfile()
 
 
 
+
+/*******************************************************************************
+SubDecode::get_embedded_subtitle_list().
+********************************************************************************/
+std::vector<std::string>    SubDecode::get_embedded_subtitle_list()
+{
+    std::vector<std::string>    list;
+
+    for( auto itr : stream_map )
+    {
+        AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)itr.second->metadata, "title", NULL, AV_DICT_MATCH_CASE );
+        MYLOG( LOG::DEBUG, "title %s", dic->value );
+        list.emplace_back( std::string(dic->value) );
+    }
+
+    return  list;
+}
+
+
+
+
+
+
 /*******************************************************************************
 SubDecode::sub_info()
 
@@ -514,6 +597,12 @@ https://www.jianshu.com/p/89f2da631e16
 ********************************************************************************/
 int     SubDecode::sub_info()
 {  
+    for( auto itr : stream_map )
+    {
+        AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)itr.second->metadata, "title", NULL, AV_DICT_MATCH_CASE );
+        MYLOG( LOG::DEBUG, "title %s", dic->value );
+    }
+
 #if 0
     ss_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0 );
     if( ss_idx < 0 )
@@ -547,37 +636,47 @@ int     SubDecode::sub_info()
 
 
 
+/*******************************************************************************
+SubDecode::switch_subtltle()
+********************************************************************************/
+void    SubDecode::switch_subtltle( std::string path )
+{
+    sub_file    =   path;
+
+    std::string     filename    =   "\\";    
+    filename    +=  sub_file;
+    filename.insert( 2, 1, '\\' );
+
+    std::stringstream   ss;
+    ss << "subtitles='" << filename << "':stream_index=" << 0;
+
+    std::string     desc    =   ss.str();
+
+    open_subtitle_filter( subtitle_args, desc );
+}
 
 
 
 
-// 測試切換subtitle的程式碼
-#if 0
-必須加上mutex lock, 不然會出問題
-std::thread *thr = new std::thread( [this]() -> void {
 
-    static int aaaa = 0;
+/*******************************************************************************
+SubDecode::switch_subtltle()
+********************************************************************************/
+void    SubDecode::switch_subtltle( int index )
+{
+    sub_index   =   index;
 
-    while(true) 
-    {
-        std::this_thread::sleep_for( std::chrono::seconds(1) );
-        aaaa++;
+    std::string     filename    =   "\\";    
+    filename    +=  sub_file;
+    filename.insert( 2, 1, '\\' );
 
-        // 可以動態切換
-        std::string filterDesc;
-        if( aaaa % 2 == 0 )
-            filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=0";  
-        else
-            filterDesc = "subtitles=filename='\\D\\:/code/test2.mkv':original_size=1920x1080:stream_index=1";  
+    std::stringstream   ss;
+    ss << "subtitles='" << filename << "':stream_index=" << sub_index;
 
-        std::string args = "video_size=1920x1080:pix_fmt=64:time_base=1/1000:pixel_aspect=1/1";
+    std::string     desc    =   ss.str();
 
-        init_subtitle_filter( buffersrcContext, buffersinkContext,  args,  filterDesc);
-    }
-    } );
-#endif
-
-
+    open_subtitle_filter( subtitle_args, desc );
+}
 
 
 

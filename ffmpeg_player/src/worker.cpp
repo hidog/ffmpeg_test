@@ -79,11 +79,16 @@ void    Worker::run()
     VideoWorker     *vw     =   dynamic_cast<MainWindow*>(parent())->get_video_worker();
     
     player.init();
+    if( player.is_embedded_subtitle() == true )
+    {
+        auto    list    =   player.get_embedded_subtitle_list();
+        emit embedded_sublist_signal(list);
+    }
     
     // send video setting to UI
     is_set_video    =   false;
     vs              =   player.get_video_setting();
-    emit video_setting_singal(vs);
+    emit video_setting_signal(vs);
     
     // send audio setting to UI
     as  =   player.get_audio_setting();
@@ -157,6 +162,8 @@ void    Worker::set_src_file( std::string file )
     {
         str     =   list.at(0);
         player.set_sub_file( str.toStdString() ); // 未來做成可以多重輸入
+
+        emit subtitle_list_signal(list);
     }
 }
 
@@ -169,4 +176,29 @@ Worker::is_set_src_file()
 bool    Worker::is_set_src_file()
 {
     return  player.is_set_input_file();
+}
+
+
+
+
+
+/*******************************************************************************
+Worker::switch_subtitle()
+********************************************************************************/
+void    Worker::switch_subtitle( QString path )
+{
+    if( player.is_file_subtitle() == true )
+        player.switch_subtitle( path.toStdString() );
+}
+
+
+
+
+/*******************************************************************************
+Worker::switch_subtitle()
+********************************************************************************/
+void    Worker::switch_subtitle( int index )
+{
+    if( player.is_embedded_subtitle() == true )
+        player.switch_subtitle(index);
 }

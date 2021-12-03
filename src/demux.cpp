@@ -39,12 +39,13 @@ Demux::init()
 ********************************************************************************/
 int    Demux::init()
 {
-    int     ret, i;
+    int     ret;
 
     /*
         use for multi-thread
     */
 #ifdef USE_MT
+    int     i;
     for( i = 0; i < 10; i++ )
     {
         pkt_array[i]    =   av_packet_alloc();

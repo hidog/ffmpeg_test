@@ -108,6 +108,7 @@ int     Player::init()
     {
         exist_subtitle  =   true;
         s_decoder.set_subfile( src_file );
+        s_decoder.set_sub_src_type( SubSourceType::EMBEDDED );
     }
     else
     {
@@ -115,6 +116,7 @@ int     Player::init()
         {
             exist_subtitle  =   true;
             s_decoder.set_subfile( sub_name );
+            s_decoder.set_sub_src_type( SubSourceType::FROM_FILE );
         }     
     }
 
@@ -139,6 +141,7 @@ int     Player::init()
         // 這邊有執行順序問題, 不能隨便更改執行順序      
         std::pair<std::string,std::string>  sub_param   =   s_decoder.get_subtitle_param( fmt_ctx, sub_src, sd );
         s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
+        s_decoder.set_filter_args( sub_param.first );
     }
 
     return SUCCESS;
@@ -496,6 +499,40 @@ bool    Player::demux_need_wait()
 
 
 
+/*******************************************************************************
+Player::is_embedded_subtitle()
+********************************************************************************/
+bool    Player::is_embedded_subtitle()
+{
+    return  s_decoder.get_sub_src_type() == SubSourceType::EMBEDDED;
+}
+
+
+
+
+
+
+/*******************************************************************************
+Player::is_file_subtitle()
+********************************************************************************/
+bool    Player::is_file_subtitle()
+{
+    return  s_decoder.get_sub_src_type() == SubSourceType::FROM_FILE;
+}
+
+
+
+
+
+/*******************************************************************************
+Player::is_embedded_subtitle()
+********************************************************************************/
+std::vector<std::string>    Player::get_embedded_subtitle_list()
+{
+    return  s_decoder.get_embedded_subtitle_list();
+}
+
+
 
 /*******************************************************************************
 Player::play_QT()
@@ -554,6 +591,17 @@ Player::decode
 ********************************************************************************/
 int     Player::decode( Decode *dc, AVPacket* pkt )
 {
+    if( switch_subtitle_flag == true )
+    {
+        switch_subtitle_flag    =   false;
+        if( s_decoder.get_sub_src_type() == SubSourceType::FROM_FILE )
+            s_decoder.switch_subtltle(new_subtitle_path);
+        else if( s_decoder.get_sub_src_type() == SubSourceType::EMBEDDED )
+            s_decoder.switch_subtltle(new_subtitle_index);
+        else
+            MYLOG( LOG::ERROR, "no subtitle.");
+    }
+
     int     ret     =   0;
 
     // 必須對 subtitle 進行decode, 不然 filter 會出錯
@@ -750,6 +798,26 @@ int     Player::end()
 
 
 
+/*******************************************************************************
+Player::switch_subtitle()
+********************************************************************************/
+void    Player::switch_subtitle( std::string path )
+{
+    switch_subtitle_flag    =   true;
+    new_subtitle_path       =   path;
+}
 
+
+
+
+
+/*******************************************************************************
+Player::switch_subtitle()
+********************************************************************************/
+void    Player::switch_subtitle( int index )
+{
+    switch_subtitle_flag    =   true;
+    new_subtitle_index      =   index;
+}
 
 

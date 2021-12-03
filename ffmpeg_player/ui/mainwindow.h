@@ -50,6 +50,11 @@ public slots:
     void    start_slot();
     void    recv_video_frame_slot();
     void    set_video_setting_slot( VideoSetting vs );
+    void    set_subtitle_list_slot( QStringList list );
+
+    void    switch_subtitle_slot_str( QString path );
+    void    switch_subtitle_slot_int( int index );
+    void    embedded_sublist_slot( std::vector<std::string> );
 
 private:
 

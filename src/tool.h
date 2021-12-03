@@ -7,6 +7,14 @@
 
 
 
+enum class SubSourceType
+{
+    NONE,
+    FROM_FILE,
+    EMBEDDED,
+};
+
+
 struct SubData
 {
     int     video_index;

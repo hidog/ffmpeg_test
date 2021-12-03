@@ -14,7 +14,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="VideoWidget" name="videoWidget" native="false">
+   <widget class="VideoWidget" name="videoWidget" native="true">
     <property name="geometry">
      <rect>
       <x>70</x>
@@ -114,6 +114,16 @@
      <string>Start</string>
     </property>
    </widget>
+   <widget class="QComboBox" name="subCBox">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>20</y>
+      <width>111</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -129,9 +139,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QVideoWidget</class>
+   <class>VideoWidget</class>
    <extends>QWidget</extends>
-   <header>qvideowidget.h</header>
+   <header>videowidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
