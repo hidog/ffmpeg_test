@@ -499,6 +499,40 @@ bool    Player::demux_need_wait()
 
 
 
+/*******************************************************************************
+Player::is_embedded_subtitle()
+********************************************************************************/
+bool    Player::is_embedded_subtitle()
+{
+    return  s_decoder.get_sub_src_type() == SubSourceType::EMBEDDED;
+}
+
+
+
+
+
+
+/*******************************************************************************
+Player::is_file_subtitle()
+********************************************************************************/
+bool    Player::is_file_subtitle()
+{
+    return  s_decoder.get_sub_src_type() == SubSourceType::FROM_FILE;
+}
+
+
+
+
+
+/*******************************************************************************
+Player::is_embedded_subtitle()
+********************************************************************************/
+std::vector<std::string>    Player::get_embedded_subtitle_list()
+{
+    return  s_decoder.get_embedded_subtitle_list();
+}
+
+
 
 /*******************************************************************************
 Player::play_QT()
@@ -563,7 +597,7 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
         if( s_decoder.get_sub_src_type() == SubSourceType::FROM_FILE )
             s_decoder.switch_subtltle(new_subtitle_path);
         else if( s_decoder.get_sub_src_type() == SubSourceType::EMBEDDED )
-        {}
+            s_decoder.switch_subtltle(new_subtitle_index);
         else
             MYLOG( LOG::ERROR, "no subtitle.");
     }
@@ -765,7 +799,7 @@ int     Player::end()
 
 
 /*******************************************************************************
-Player::end()
+Player::switch_subtitle()
 ********************************************************************************/
 void    Player::switch_subtitle( std::string path )
 {
@@ -774,5 +808,16 @@ void    Player::switch_subtitle( std::string path )
 }
 
 
+
+
+
+/*******************************************************************************
+Player::switch_subtitle()
+********************************************************************************/
+void    Player::switch_subtitle( int index )
+{
+    switch_subtitle_flag    =   true;
+    new_subtitle_index      =   index;
+}
 
 

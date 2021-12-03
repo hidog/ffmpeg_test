@@ -37,6 +37,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 必須註冊自定義的物件.
     qRegisterMetaType<VideoSetting>("VideoSetting");
+    qRegisterMetaType<std::vector<std::string>>("std::vector<std::string>");
+
 
     //video_widget    =   new QVideoWidget();
 
@@ -123,11 +125,13 @@ void MainWindow::set_signal_slot()
     connect(    worker,     SIGNAL(video_setting_signal(VideoSetting)),     this,   SLOT(set_video_setting_slot(VideoSetting))  );
     //connect(    worker,           &Worker::video_setting_singal,          this,   &MainWindow::set_video_setting_slot );
     connect(    worker,             &Worker::subtitle_list_signal,          this,   &MainWindow::set_subtitle_list_slot         );
+    connect(    worker,             &Worker::embedded_sublist_signal,       this,   &MainWindow::embedded_sublist_slot          );
 
     connect(    ui->startButton,    &QPushButton::clicked,                  this,   &MainWindow::start_slot                     );
     connect(    ui->loadFileButton, &QPushButton::clicked,                  this,   &MainWindow::load_file_slot                 );
     connect(    video_worker,       &VideoWorker::recv_video_frame_signal,  this,   &MainWindow::recv_video_frame_slot          );
-    connect(    ui->subCBox,        &QComboBox::currentTextChanged,         this,   &MainWindow::switch_subtitle_slot           );
+    connect(    ui->subCBox,        &QComboBox::currentTextChanged,         this,   &MainWindow::switch_subtitle_slot_str       );
+    connect(    ui->subCBox,        SIGNAL(currentIndexChanged(int)),       this,   SLOT(switch_subtitle_slot_int(int))         );   // 用另一個方式會跳錯誤
 }
 
 
@@ -281,10 +285,36 @@ void    MainWindow::set_subtitle_list_slot( QStringList list )
 
 
 /*******************************************************************************
+MainWindow::embedded_sublist_slot()
+********************************************************************************/
+void    MainWindow::embedded_sublist_slot(  std::vector<std::string> list )
+{
+    int     i;
+    auto    sub_combobox    =   ui->subCBox;
+
+    for( i = 0; i < list.size(); i++ )
+        sub_combobox->addItem( list.at(i).c_str() );
+}
+
+
+
+
+
+/*******************************************************************************
 MainWindow::switch_subtitle_slot()
 ********************************************************************************/
-void    MainWindow::switch_subtitle_slot( QString path )
+void    MainWindow::switch_subtitle_slot_str( QString path )
 {
     qDebug() << path;
     worker->switch_subtitle(path);
+}
+
+
+
+/*******************************************************************************
+MainWindow::switch_subtitle_slot()
+********************************************************************************/
+void    MainWindow::switch_subtitle_slot_int( int index )
+{
+    worker->switch_subtitle(index);
 }

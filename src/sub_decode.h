@@ -45,6 +45,8 @@ public:
     int     render_subtitle();
     int     init_sws_ctx( SubData sd );
     void    switch_subtltle( std::string path );
+    void    switch_subtltle( int index );
+
     void    set_filter_args( std::string args );
 
     SubSourceType   get_sub_src_type();
@@ -52,6 +54,7 @@ public:
 
     std::string     get_subfile();
     std::pair<std::string,std::string>  get_subtitle_param( AVFormatContext *fmt_ctx, std::string src_file, SubData sd );
+    std::vector<std::string>            get_embedded_subtitle_list();
 
 
     int sub_info(); // 目前無作用
@@ -69,7 +72,7 @@ private:
     std::string         subtitle_args;
     SubSourceType       sub_src_type    =   SubSourceType::NONE;
 
-
+    int     sub_index   =   0;
 
     QImage  sub_image;     // 將video frame打上字幕後存在這邊
 

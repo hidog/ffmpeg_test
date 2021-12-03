@@ -71,8 +71,9 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     filename_param.insert( 2, 1, '\\' );
 
     // 理論上這邊的字串可以精簡...
+    sub_index   =   sd.sub_index;
     ss << "subtitles=filename='" << filename_param << "':original_size=" 
-       << sd.width << "x" << sd.height << ":stream_index=" << sd.sub_index;
+       << sd.width << "x" << sd.height << ":stream_index=" << sub_index;
 
     out_param    =   ss.str();
 
@@ -342,8 +343,8 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
 
     if( graph != nullptr )
     {
-        avfilter_graph_free(&graph);    
-        graph    =   avfilter_graph_alloc();
+        avfilter_graph_free(&graph);
+        graph   =   nullptr;
     }
 
     //
@@ -361,7 +362,7 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
         avfilter_inout_free( &input );
     };
 
-    //
+    graph    =   avfilter_graph_alloc();    
     if( output == nullptr || input == nullptr || graph == nullptr ) 
     {
         MYLOG( LOG::ERROR, "alloc fail." );
@@ -564,6 +565,29 @@ std::string     SubDecode::get_subfile()
 
 
 
+
+/*******************************************************************************
+SubDecode::get_embedded_subtitle_list().
+********************************************************************************/
+std::vector<std::string>    SubDecode::get_embedded_subtitle_list()
+{
+    std::vector<std::string>    list;
+
+    for( auto itr : stream_map )
+    {
+        AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)itr.second->metadata, "title", NULL, AV_DICT_MATCH_CASE );
+        MYLOG( LOG::DEBUG, "title %s", dic->value );
+        list.emplace_back( std::string(dic->value) );
+    }
+
+    return  list;
+}
+
+
+
+
+
+
 /*******************************************************************************
 SubDecode::sub_info()
 
@@ -573,6 +597,12 @@ https://www.jianshu.com/p/89f2da631e16
 ********************************************************************************/
 int     SubDecode::sub_info()
 {  
+    for( auto itr : stream_map )
+    {
+        AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)itr.second->metadata, "title", NULL, AV_DICT_MATCH_CASE );
+        MYLOG( LOG::DEBUG, "title %s", dic->value );
+    }
+
 #if 0
     ss_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0 );
     if( ss_idx < 0 )
@@ -619,6 +649,29 @@ void    SubDecode::switch_subtltle( std::string path )
 
     std::stringstream   ss;
     ss << "subtitles='" << filename << "':stream_index=" << 0;
+
+    std::string     desc    =   ss.str();
+
+    open_subtitle_filter( subtitle_args, desc );
+}
+
+
+
+
+
+/*******************************************************************************
+SubDecode::switch_subtltle()
+********************************************************************************/
+void    SubDecode::switch_subtltle( int index )
+{
+    sub_index   =   index;
+
+    std::string     filename    =   "\\";    
+    filename    +=  sub_file;
+    filename.insert( 2, 1, '\\' );
+
+    std::stringstream   ss;
+    ss << "subtitles='" << filename << "':stream_index=" << sub_index;
 
     std::string     desc    =   ss.str();
 
