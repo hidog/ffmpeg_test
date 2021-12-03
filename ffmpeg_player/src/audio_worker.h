@@ -18,17 +18,18 @@ public:
 
     AudioWorker( QObject *parent );
     ~AudioWorker();
-
-    //
+    
     void    run() override;
 
-    //
     void    open_audio_output( AudioSetting as );
     void    audio_play();
     bool&   get_audio_start_state();
 
+    int     get_volume();
+
 public slots:
-    void handleStateChanged( QAudio::State state );
+    void    handleStateChanged( QAudio::State state );
+    void    volume_slot( int value );
 
 signals:
 

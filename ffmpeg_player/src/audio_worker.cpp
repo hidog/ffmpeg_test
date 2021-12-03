@@ -35,7 +35,9 @@ void    AudioWorker::open_audio_output( AudioSetting as )
     format.setSampleSize(16);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
-    format.setSampleType(QAudioFormat::UnSignedInt);
+    //format.setSampleType(QAudioFormat::UnSignedInt);
+    format.setSampleType(QAudioFormat::SignedInt);   // 用unsigned int 在調整音量的時候會爆音
+
     
     //
     QAudioDeviceInfo info { QAudioDeviceInfo::defaultOutputDevice() };
@@ -129,9 +131,6 @@ void AudioWorker::run()
 }
 
 
-
-
-//extern std::mutex a_mtx;
 
 
 
@@ -277,4 +276,36 @@ void AudioWorker::audio_play()
 
         last_ts = ad.timestamp;
     }
+}
+
+
+
+
+
+
+
+/*******************************************************************************
+AudioWorker::volume_slot()
+********************************************************************************/
+void    AudioWorker::volume_slot( int value )
+{
+    // 直接設置數字會出問題, 參考官方寫法做轉換
+    qreal   linear_value    =   QAudio::convertVolume( value / qreal(100.0),
+                                                       QAudio::LogarithmicVolumeScale,
+                                                       QAudio::LinearVolumeScale );
+
+    audio->setVolume(linear_value);
+}
+
+
+
+
+/*******************************************************************************
+AudioWorker::get_volume()
+********************************************************************************/
+int     AudioWorker::get_volume()
+{
+    qreal   rv      =   audio->volume();
+    int     value   =   qRound( rv*100 );
+    return  value;
 }
