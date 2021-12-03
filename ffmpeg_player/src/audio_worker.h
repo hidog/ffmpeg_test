@@ -26,6 +26,7 @@ public:
     bool&   get_audio_start_state();
 
     int     get_volume();
+    void    stop();
 
 public slots:
     void    handleStateChanged( QAudio::State state );
@@ -36,10 +37,11 @@ signals:
 
 private:
 
-    QAudioOutput *audio     =   nullptr;
-    QIODevice    *io        =   nullptr;
+    QAudioOutput    *audio     =   nullptr;
+    QIODevice       *io        =   nullptr;
 
     bool    a_start     =   false;
+    bool    force_stop  =   false;
 
 };
 

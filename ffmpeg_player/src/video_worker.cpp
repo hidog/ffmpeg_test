@@ -51,10 +51,24 @@ VideoWorker::run()
 ********************************************************************************/
 void VideoWorker::run()  
 {
+    force_stop  =   false;
     video_play();
-
     MYLOG( LOG::INFO, "finish video play." );
 }
+
+
+
+
+
+
+/*******************************************************************************
+VideoWorker::stop()
+********************************************************************************/
+void    VideoWorker::stop()
+{
+    force_stop  =   true;
+}
+
 
 
 
@@ -97,7 +111,7 @@ void VideoWorker::video_play()
 
     //
     last   =   std::chrono::steady_clock::now();
-    while( is_play_end == false )
+    while( is_play_end == false && force_stop == false )
     {       
         if( v_queue->size() <= 0 )
         {
@@ -132,7 +146,7 @@ void VideoWorker::video_play()
     }
 
     // flush
-    while( v_queue->empty() == false )
+    while( v_queue->empty() == false && force_stop == false )
     {       
         v_mtx.lock();
         VideoData vd    =   v_queue->front();
@@ -158,5 +172,13 @@ void VideoWorker::video_play()
 
         last    =   now;
     }
+
+    // 等 player 結束, 確保不會再增加資料進去queue
+    while( is_play_end == false )
+        SLEEP_10MS;
+
+    // force stop 的時候需要手動清除資料
+    while( v_queue->empty() == false )
+        v_queue->pop();
 }
 

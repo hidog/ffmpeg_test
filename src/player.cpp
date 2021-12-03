@@ -83,6 +83,8 @@ int     Player::init()
         return  ERROR;
     }
 
+    stop_flag   =   false;
+
     int     ret     =   -1;
     AVFormatContext *fmt_ctx    =   nullptr;
 
@@ -534,6 +536,20 @@ std::vector<std::string>    Player::get_embedded_subtitle_list()
 
 
 
+
+
+/*******************************************************************************
+Player::stop()
+********************************************************************************/
+void    Player::stop()
+{
+    stop_flag   =   true;
+}
+
+
+
+
+
 /*******************************************************************************
 Player::play_QT()
 ********************************************************************************/
@@ -544,10 +560,14 @@ void    Player::play_QT()
     Decode      *dc     =   nullptr;
 
     //
-    while( true ) 
+    while( stop_flag == false ) 
     {
-        while( demux_need_wait() == true ) 
+        while( demux_need_wait() == true )
+        {
+            if( stop_flag == true )
+                break;
             SLEEP_1MS;
+        }
 
         //
         ret     =   demuxer.demux();
@@ -791,6 +811,8 @@ int     Player::end()
     demuxer.end();
 
     sub_name.clear();
+
+    stop_flag   =   false;
 
     return  SUCCESS;
 }

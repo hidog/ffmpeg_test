@@ -46,12 +46,12 @@ public:
 
 public slots:
 
-    void    load_file_slot();
-    void    start_slot();
+    void    play_slot();
     void    recv_video_frame_slot();
     void    set_video_setting_slot( VideoSetting vs );
     void    set_subtitle_list_slot( QStringList list );
     void    embedded_sublist_slot( std::vector<std::string> );
+    void    finish_slot();
 
 private:
 

@@ -43,6 +43,7 @@ public:
     int     init();
     int     end();
     int     flush();
+    void    stop();
 
     //
     bool    demux_need_wait();
@@ -85,12 +86,12 @@ private:
     SubDecode       s_decoder;
 
     std::string     src_file;
-    std::string     sub_name;   // 外掛字幕檔名
-    //std::string     sub_src;    // 因為可能是使用內嵌字幕,也可能用外掛字幕. 將最後的結果存在這個字串內.
+    std::string     sub_name;           // 外掛字幕檔名
+    std::string     new_subtitle_path;  // switch subtitle使用
 
-    bool            switch_subtitle_flag    =   false;
-    std::string     new_subtitle_path;
-    int             new_subtitle_index      =   0;
+    bool    switch_subtitle_flag    =   false;
+    int     new_subtitle_index      =   0;
+    bool    stop_flag               =   false;
 
 #ifdef USE_MT
     bool    v_thr_start     =   false,

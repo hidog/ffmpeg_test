@@ -87,7 +87,9 @@ bool&   AudioWorker::get_audio_start_state()
 AudioWorker::handleStateChanged()
 ********************************************************************************/
 void    AudioWorker::handleStateChanged( QAudio::State state )
-{}
+{
+    MYLOG( LOG::DEBUG, "state = %d", state );
+}
 
 
 
@@ -118,6 +120,8 @@ void AudioWorker::run()
         MYLOG( LOG::ERROR, "audio is null." );
         return;
     }
+
+    force_stop  =   false;
 
     // start play
     audio_play();
@@ -167,7 +171,7 @@ void AudioWorker::audio_play()
     uint8_t *ptr            =   nullptr; 
 
     last   =   std::chrono::steady_clock::now();
-    while( is_play_end == false )
+    while( is_play_end == false && force_stop == false )
     {        
         if( a_queue->size() <= 0 )
         {
@@ -178,7 +182,7 @@ void AudioWorker::audio_play()
 
         //
         a_mtx.lock();
-        ad = a_queue->front();       
+        ad  =   a_queue->front();       
         a_queue->pop();
         a_mtx.unlock();
 
@@ -224,7 +228,7 @@ void AudioWorker::audio_play()
     }
 
     // flush
-    while( a_queue->empty() == false )
+    while( a_queue->empty() == false && force_stop == false )
     {      
         if( a_queue->size() <= 0 )
         {
@@ -235,7 +239,7 @@ void AudioWorker::audio_play()
 
         //
         a_mtx.lock();
-        ad = a_queue->front();       
+        ad  =   a_queue->front();       
         a_queue->pop();
         a_mtx.unlock();
 
@@ -276,8 +280,33 @@ void AudioWorker::audio_play()
 
         last_ts = ad.timestamp;
     }
+
+    // 等 player 結束, 確保不會再增加資料進去queue
+    while( is_play_end == false )
+        SLEEP_10MS;
+
+    // force stop 需要手動清除 queue.
+    while( a_queue->empty() == false )
+    {
+        ad  =   a_queue->front();
+        delete [] ad.pcm;
+        a_queue->pop();
+    }
 }
 
+
+
+
+
+
+/*******************************************************************************
+AudioWorker::stop()
+********************************************************************************/
+void    AudioWorker::stop()
+{
+    force_stop  =   true;
+    //audio->stop();
+}
 
 
 
@@ -309,3 +338,6 @@ int     AudioWorker::get_volume()
     int     value   =   qRound( rv*100 );
     return  value;
 }
+
+
+
