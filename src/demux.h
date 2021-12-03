@@ -10,8 +10,6 @@ struct AVPacket;
 struct AVFormatContext;
 
 /*
-https://cloud.tencent.com/developer/article/1333501
-
 直接demux出來的東西不能用ffplay播放
 要用 av_bsf_send_packet( v_bsf_ctx, pkt );
      av_bsf_receive_packet( v_bsf_ctx, pkt_bsf );

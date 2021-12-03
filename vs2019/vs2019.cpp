@@ -4,43 +4,21 @@
 
 
 /*
-http://dranger.com/ffmpeg/tutorial05.html
+https://github.com/leandromoreira/ffmpeg-libav-tutorial     教學
+https://kkc.github.io/2019/01/12/ffmpeg-libav-decode-note/
+
+http://dranger.com/ffmpeg/tutorial05.html  // 教學
 http://dranger.com/ffmpeg/tutorial01.html
 
-https://cpp.hotexamples.com/examples/-/-/avsubtitle_free/cpp-avsubtitle_free-function-examples.html
+https://github.com/wang-bin/QtAV   // 其他人用QT寫的播放器
 
+https://cloud.tencent.com/developer/article/1357993  // 可參考的教學
+https://www.itread01.com/content/1546569392.html     // ffmpeg 參數
 
-
-https://www.twblogs.net/a/5ef2639e26bc8c4a8eb3c99e
-https://github.com/wang-bin/QtAV/blob/master/src/subtitle/SubtitleProcessorFFmpeg.cpp
-
-
-
-
-ass_encode_frame
-show_subtitle
-
-
-decoder_decode_frame   ****
-sub2video_update       *
-
-try_decode_frame
-init_subtitles
-
-
-decode_frame
-
-
-http://underpop.online.fr/f/ffmpeg/help/subtitles.htm.gz
-
-
-
-https://cloud.tencent.com/developer/article/1357993
-調用 avformat_match_stream_specifier： 分離audio，video流訊息，判断当前流的类型
-
-https://www.itread01.com/content/1546569392.html
-
+https://www.programmersought.com/article/85494009767/   ffmpeg教學
+https://github.com/mengps/FFmpeg-Learn
 */
+
 
 extern "C" {
 #include "../ffmpeg_example/demuxing_decoding.h"
@@ -77,5 +55,3 @@ int main()
 
     return 0;
 }
-
-//http://blog.360converter.com/archives/2931  youtube

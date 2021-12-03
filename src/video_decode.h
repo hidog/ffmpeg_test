@@ -7,8 +7,6 @@
 #include <QImage>
 
 
-// https://stackoverflow.com/questions/13088749/efficient-conversion-of-avframe-to-qimage
-
 struct  SwsContext;
 struct  AVCodec;
 struct  AVCodecContext;
