@@ -185,7 +185,7 @@ bool    Worker::is_set_src_file()
 /*******************************************************************************
 Worker::switch_subtitle()
 ********************************************************************************/
-void    Worker::switch_subtitle( QString path )
+void    Worker::switch_subtitle_slot_str( QString path )
 {
     if( player.is_file_subtitle() == true )
         player.switch_subtitle( path.toStdString() );
@@ -197,7 +197,7 @@ void    Worker::switch_subtitle( QString path )
 /*******************************************************************************
 Worker::switch_subtitle()
 ********************************************************************************/
-void    Worker::switch_subtitle( int index )
+void    Worker::switch_subtitle_slot_int( int index )
 {
     if( player.is_embedded_subtitle() == true )
         player.switch_subtitle(index);

@@ -53,7 +53,6 @@ MainWindow::MainWindow(QWidget *parent)
     audio_worker    =   new AudioWorker(this);
 
     set_signal_slot();
-
 }
 
 
@@ -122,16 +121,19 @@ MainWindow::set_signal_slot()
 void MainWindow::set_signal_slot()
 {
     // 舊式寫法
-    connect(    worker,     SIGNAL(video_setting_signal(VideoSetting)),     this,   SLOT(set_video_setting_slot(VideoSetting))  );
-    //connect(    worker,           &Worker::video_setting_singal,          this,   &MainWindow::set_video_setting_slot );
-    connect(    worker,             &Worker::subtitle_list_signal,          this,   &MainWindow::set_subtitle_list_slot         );
-    connect(    worker,             &Worker::embedded_sublist_signal,       this,   &MainWindow::embedded_sublist_slot          );
+    connect(    worker,             SIGNAL(video_setting_signal(VideoSetting)),     this,           SLOT(set_video_setting_slot(VideoSetting))  );
+    //connect(    worker,           &Worker::video_setting_singal,                  this,           &MainWindow::set_video_setting_slot         );
+    connect(    worker,             &Worker::subtitle_list_signal,                  this,           &MainWindow::set_subtitle_list_slot         );
+    connect(    worker,             &Worker::embedded_sublist_signal,               this,           &MainWindow::embedded_sublist_slot          );
 
-    connect(    ui->startButton,    &QPushButton::clicked,                  this,   &MainWindow::start_slot                     );
-    connect(    ui->loadFileButton, &QPushButton::clicked,                  this,   &MainWindow::load_file_slot                 );
-    connect(    video_worker,       &VideoWorker::recv_video_frame_signal,  this,   &MainWindow::recv_video_frame_slot          );
-    connect(    ui->subCBox,        &QComboBox::currentTextChanged,         this,   &MainWindow::switch_subtitle_slot_str       );
-    connect(    ui->subCBox,        SIGNAL(currentIndexChanged(int)),       this,   SLOT(switch_subtitle_slot_int(int))         );   // 用另一個方式會跳錯誤
+    connect(    ui->subCBox,        &QComboBox::currentTextChanged,                 worker,         &Worker::switch_subtitle_slot_str           );
+    connect(    ui->subCBox,        SIGNAL(currentIndexChanged(int)),               worker,         SLOT(switch_subtitle_slot_int(int))         );   // 用另一個方式會跳錯誤
+    connect(    ui->startButton,    &QPushButton::clicked,                          this,           &MainWindow::start_slot                     );
+    connect(    ui->loadFileButton, &QPushButton::clicked,                          this,           &MainWindow::load_file_slot                 );
+
+    connect(    video_worker,       &VideoWorker::recv_video_frame_signal,          this,           &MainWindow::recv_video_frame_slot          );
+
+    connect(    ui->audioSlider,    &QSlider::valueChanged,                         audio_worker,   &AudioWorker::volume_slot                   );
 }
 
 
@@ -298,23 +300,3 @@ void    MainWindow::embedded_sublist_slot(  std::vector<std::string> list )
 
 
 
-
-
-/*******************************************************************************
-MainWindow::switch_subtitle_slot()
-********************************************************************************/
-void    MainWindow::switch_subtitle_slot_str( QString path )
-{
-    qDebug() << path;
-    worker->switch_subtitle(path);
-}
-
-
-
-/*******************************************************************************
-MainWindow::switch_subtitle_slot()
-********************************************************************************/
-void    MainWindow::switch_subtitle_slot_int( int index )
-{
-    worker->switch_subtitle(index);
-}
