@@ -141,7 +141,7 @@ void VideoWorker::video_play()
     last   =   std::chrono::steady_clock::now();
     while( is_play_end == false && force_stop == false )
     {   
-        if( pause_flag == true )
+        while( pause_flag == true )
             SLEEP_10MS;
 
         if( v_queue->size() <= 0 )
@@ -157,7 +157,7 @@ void VideoWorker::video_play()
     // flush
     while( v_queue->empty() == false && force_stop == false )
     {       
-        if( pause_flag == true )
+        while( pause_flag == true )
             SLEEP_10MS;
 
         handle_func();

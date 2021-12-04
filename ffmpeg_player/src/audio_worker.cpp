@@ -326,5 +326,13 @@ AudioWorker::pause()
 void    AudioWorker::pause()
 {
     if( audio != nullptr )
-        audio->suspend();
+    {
+        QAudio::State    st  =   audio->state();
+        if( st == QAudio::SuspendedState )
+            audio->resume();
+        else if( st == QAudio::ActiveState )
+            audio->suspend();
+        else
+            MYLOG( LOG::ERROR, "not handle");
+    }
 }
