@@ -21,6 +21,8 @@ public:
     void    run() override;
     void    video_play();
     bool&   get_video_start_state();
+    void    stop();
+    void    pause();
 
 public slots:
 
@@ -30,7 +32,8 @@ signals:
 private:
     bool        v_start     =   false;
     QMutex*     video_mtx   =   nullptr;    // ¸ò mainwindows ¦@¥Î
-
+    bool        force_stop  =   false;
+    bool        pause_flag  =   false;
 };
 
 

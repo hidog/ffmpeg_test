@@ -573,11 +573,21 @@ std::vector<std::string>    SubDecode::get_embedded_subtitle_list()
 {
     std::vector<std::string>    list;
 
+    char    *buf    =   nullptr;
+
+    av_dict_get_string( stream->metadata, &buf, '=', ',' );
+    MYLOG( LOG::INFO, "buf = %s\n", buf );
+
     for( auto itr : stream_map )
     {
         AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)itr.second->metadata, "title", NULL, AV_DICT_MATCH_CASE );
-        MYLOG( LOG::DEBUG, "title %s", dic->value );
-        list.emplace_back( std::string(dic->value) );
+        if( dic != nullptr )
+        {
+            MYLOG( LOG::DEBUG, "title %s", dic->value );
+            list.emplace_back( std::string(dic->value) );
+        }
+        else
+            list.emplace_back( std::string("default") );  // 遇到多字幕都沒有定義 title 再來調整這裡的程式碼...
     }
 
     return  list;

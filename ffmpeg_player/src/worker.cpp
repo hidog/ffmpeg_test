@@ -116,8 +116,25 @@ void    Worker::run()
         SLEEP_10MS;
 
     MYLOG( LOG::INFO, "finish decode." );
-
 }
+
+
+
+
+/*******************************************************************************
+Worker::stop_slot()
+********************************************************************************/
+void    Worker::stop_slot()
+{
+    player.stop();
+
+    AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
+    VideoWorker     *vw     =   dynamic_cast<MainWindow*>(parent())->get_video_worker();
+
+    vw->stop();
+    aw->stop();
+}
+
 
 
 
