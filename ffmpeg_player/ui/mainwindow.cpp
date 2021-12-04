@@ -190,11 +190,21 @@ MainWindow::pause_slot()
 ********************************************************************************/
 void    MainWindow::pause_slot()
 {
-    video_worker->pause();
-    audio_worker->pause();
+    pause();
 }
 
 
+
+
+
+/*******************************************************************************
+MainWindow::pause()
+********************************************************************************/
+void    MainWindow::pause()
+{
+    video_worker->pause();
+    audio_worker->pause();
+}
 
 
 
@@ -207,6 +217,9 @@ void    MainWindow::finish_slot()
     ui->playButton->setEnabled(true);
     ui->videoWidget->videoSurface()->stop();
     ui->subCBox->clear();
+
+    QVideoWidget    *video_widget   =   ui->videoWidget;
+    video_widget->setFullScreen( false );
 }
 
 
@@ -272,6 +285,9 @@ AudioWorker*    MainWindow::get_audio_worker()
 
 
 
+
+
+
 /*******************************************************************************
 MainWindow::keyPressEvent()
 ********************************************************************************/
@@ -280,10 +296,17 @@ void    MainWindow::keyPressEvent( QKeyEvent *event )
     switch( event->key() )
     {
         case Qt::Key_F :
+        {
             QVideoWidget    *video_widget   =   ui->videoWidget;
             bool    flag    =   video_widget->isFullScreen();
             video_widget->setFullScreen( !flag );
             break;
+        }
+        case Qt::Key_Space :
+        {
+            pause();
+            break;
+        }
     }
 }
 

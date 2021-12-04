@@ -32,6 +32,7 @@ public:
 
     void    set_signal_slot();
     int     volume();
+    void    pause();
 
     QMutex*     get_video_mutex();
     VideoData*  get_view_data();
