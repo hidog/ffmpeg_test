@@ -41,6 +41,7 @@ public:
     AudioWorker*    get_audio_worker();
 
     void    keyPressEvent(QKeyEvent *event) override;
+    void    closeEvent(QCloseEvent *event) override;
 
 public slots:
 
@@ -53,8 +54,7 @@ public slots:
     void    embedded_sublist_slot( std::vector<std::string> );
     void    finish_slot();
 
-private:
-
+private: 
     Ui::MainWindow *ui;
 
     //QVideoWidget    *video_widget; 可以用這個方式產生 video 視窗, 但是會遇到直接關掉此視窗,造成關閉軟體的時候會crash. 在研究怎麼修

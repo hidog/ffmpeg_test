@@ -328,3 +328,21 @@ int     MainWindow::volume()
 {
     return  ui->volumeSlider->value();
 }
+
+
+
+
+/*******************************************************************************
+MainWindow::closeEvent()
+********************************************************************************/
+void    MainWindow::closeEvent( QCloseEvent *event )
+{
+    worker->stop_slot();
+
+    while( worker->isFinished() == false )
+        SLEEP_10MS;
+    while( video_worker->isFinished() == false )
+        SLEEP_10MS;
+    while( audio_worker->isFinished() == false )
+        SLEEP_10MS;
+}
