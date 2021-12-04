@@ -151,33 +151,7 @@ void VideoWorker::video_play()
             continue;
         }
 
-#if 1
         handle_func();
-#else
-        v_mtx.lock();
-        VideoData vd    =   v_queue->front();
-        v_queue->pop();
-        v_mtx.unlock();
-
-        while(true)
-        {
-            now         =   std::chrono::steady_clock::now();
-            duration    =   std::chrono::duration_cast<std::chrono::milliseconds>( now - last );
-
-            if( duration.count() >= vd.timestamp - view_data->timestamp )
-                break;
-        }
-
-        video_mtx->lock();
-        view_data->index        =   vd.index;
-        view_data->frame        =   vd.frame;
-        view_data->timestamp    =   vd.timestamp;
-        video_mtx->unlock();
-            
-        emit recv_video_frame_signal();
-
-        last    =   now;
-#endif
     }
 
     // flush
@@ -186,33 +160,7 @@ void VideoWorker::video_play()
         if( pause_flag == true )
             SLEEP_10MS;
 
-#if 1
         handle_func();
-#else
-        v_mtx.lock();
-        VideoData vd    =   v_queue->front();
-        v_queue->pop();
-        v_mtx.unlock();
-
-        while(true)
-        {
-            now         =   std::chrono::steady_clock::now();
-            duration    =   std::chrono::duration_cast<std::chrono::milliseconds>( now - last );
-
-            if( duration.count() >= vd.timestamp - view_data->timestamp )
-                break;
-        }
-
-        video_mtx->lock();
-        view_data->index        =   vd.index;
-        view_data->frame        =   vd.frame;
-        view_data->timestamp    =   vd.timestamp;
-        video_mtx->unlock();
-
-        emit recv_video_frame_signal();
-
-        last    =   now;
-#endif
     }
 
     // 等 player 結束, 確保不會再增加資料進去queue

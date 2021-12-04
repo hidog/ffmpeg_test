@@ -237,55 +237,7 @@ void AudioWorker::audio_play()
             continue;
         }
 
-#if 1
         handle_func();
-#else
-        //
-        a_mtx.lock();
-        ad  =   a_queue->front();       
-        a_queue->pop();
-        a_mtx.unlock();
-
-        while(true)
-        {
-            now         =   std::chrono::steady_clock::now();
-            duration    =   std::chrono::duration_cast<std::chrono::milliseconds>( now - last );
-
-            if( duration.count() >= ad.timestamp - last_ts )
-                break;
-        }
-  
-        remain_bytes    =   ad.bytes;
-        ptr             =   ad.pcm; 
-        
-        while(true)
-        {
-            //MYLOG( LOG::DEBUG, "bytesFree = %d\n", audio->bytesFree() );
-
-            if( audio->bytesFree() < wanted_buffer_size )
-                continue;
-            else if( remain_bytes <= wanted_buffer_size )
-            {
-                remain  =   io->write( (const char*)ptr, remain_bytes );
-                if( remain != remain_bytes )
-                    MYLOG( LOG::WARN, "remain != remain_bytes" );
-                delete [] ad.pcm;
-                ad.pcm      =   nullptr;
-                ad.bytes    =   0;
-                break;
-            }
-            else
-            {
-                remain  =   io->write( (const char*)ptr, wanted_buffer_size );
-                if( remain != wanted_buffer_size )
-                    MYLOG( LOG::WARN, "r != wanted_buffer_size" );
-                ptr             +=  wanted_buffer_size;
-                remain_bytes    -=  wanted_buffer_size;
-            }
-        }
-
-        last_ts = ad.timestamp;
-#endif
     }
 
     // flush
@@ -298,52 +250,7 @@ void AudioWorker::audio_play()
             continue;
         }
 
-#if 1
         handle_func();
-#else
-        //
-        a_mtx.lock();
-        ad  =   a_queue->front();       
-        a_queue->pop();
-        a_mtx.unlock();
-
-        while(true)
-        {
-            now         =   std::chrono::steady_clock::now();
-            duration    =   std::chrono::duration_cast<std::chrono::milliseconds>( now - last );
-            if( duration.count() >= ad.timestamp - last_ts )
-                break;
-        }
-
-        remain_bytes    =   ad.bytes;
-        ptr             =   ad.pcm; 
-
-        while(true)
-        {
-            if( audio->bytesFree() < wanted_buffer_size )
-                continue;
-            else if( remain_bytes <= wanted_buffer_size )
-            {
-                remain  =   io->write( (const char*)ptr, remain_bytes );
-                if( remain != remain_bytes )
-                    MYLOG( LOG::WARN, "remain != remain_bytes" );
-                delete [] ad.pcm;
-                ad.pcm      =   nullptr;
-                ad.bytes    =   0;
-                break;
-            }
-            else
-            {
-                remain  =   io->write( (const char*)ptr, wanted_buffer_size );
-                if( remain != wanted_buffer_size )
-                    MYLOG( LOG::WARN, "r != wanted_buffer_size" );
-                ptr             +=  wanted_buffer_size;
-                remain_bytes    -=  wanted_buffer_size;
-            }
-        }
-
-        last_ts = ad.timestamp;
-#endif
     }
 
     // 等 player 結束, 確保不會再增加資料進去queue
