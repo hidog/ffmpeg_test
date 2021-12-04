@@ -220,6 +220,7 @@ void    MainWindow::finish_slot()
 
     QVideoWidget    *video_widget   =   ui->videoWidget;
     video_widget->setFullScreen( false );
+    video_widget->setGeometry( QRect(70,70,1401,851) );  // 先寫死 之後改成能動態調整
 }
 
 
