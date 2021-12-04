@@ -59,12 +59,16 @@ void    AudioWorker::open_audio_output( AudioSetting as )
     audio   =   new QAudioOutput( info, format );
     connect( audio, SIGNAL(stateChanged(QAudio::State)), this, SLOT(handleStateChanged(QAudio::State)) );
     audio->stop();
-
     //audio->setBufferSize( 1000000 );  // 遇到影片檔必須開大buffer不然會出問題. 這是一個解法,目前用分批寫入的方式解決
 
-    io      =   audio->start();
 
+    int     volume  =   dynamic_cast<MainWindow*>(parent())->volume();
+    volume_slot(volume);
 
+    if( io != nullptr )
+        MYLOG( LOG::ERROR, "io is not null." );
+
+    io  =   audio->start();
 }
 
 
@@ -127,9 +131,11 @@ void AudioWorker::run()
     audio_play();
 
     io->close();
+    io  =   nullptr;
+
     audio->stop();
     delete audio;
-    audio = nullptr;
+    audio   =   nullptr;
 
     MYLOG( LOG::INFO, "finish audio play." );
 }
@@ -170,6 +176,57 @@ void AudioWorker::audio_play()
     int     remain_bytes    =   0;
     uint8_t *ptr            =   nullptr; 
 
+    //
+    auto    handle_func    =   [&]() 
+    {
+        //
+        a_mtx.lock();
+        ad  =   a_queue->front();       
+        a_queue->pop();
+        a_mtx.unlock();
+
+        while(true)
+        {
+            now         =   std::chrono::steady_clock::now();
+            duration    =   std::chrono::duration_cast<std::chrono::milliseconds>( now - last );
+
+            if( duration.count() >= ad.timestamp - last_ts )
+                break;
+        }
+
+        remain_bytes    =   ad.bytes;
+        ptr             =   ad.pcm; 
+
+        while(true)
+        {
+            //MYLOG( LOG::DEBUG, "bytesFree = %d\n", audio->bytesFree() );
+
+            if( audio->bytesFree() < wanted_buffer_size )
+                continue;
+            else if( remain_bytes <= wanted_buffer_size )
+            {
+                remain  =   io->write( (const char*)ptr, remain_bytes );
+                if( remain != remain_bytes )
+                    MYLOG( LOG::WARN, "remain != remain_bytes" );
+                delete [] ad.pcm;
+                ad.pcm      =   nullptr;
+                ad.bytes    =   0;
+                break;
+            }
+            else
+            {
+                remain  =   io->write( (const char*)ptr, wanted_buffer_size );
+                if( remain != wanted_buffer_size )
+                    MYLOG( LOG::WARN, "r != wanted_buffer_size" );
+                ptr             +=  wanted_buffer_size;
+                remain_bytes    -=  wanted_buffer_size;
+            }
+        }
+
+        last_ts = ad.timestamp;
+    };
+
+    //
     last   =   std::chrono::steady_clock::now();
     while( is_play_end == false && force_stop == false )
     {        
@@ -180,6 +237,9 @@ void AudioWorker::audio_play()
             continue;
         }
 
+#if 1
+        handle_func();
+#else
         //
         a_mtx.lock();
         ad  =   a_queue->front();       
@@ -225,6 +285,7 @@ void AudioWorker::audio_play()
         }
 
         last_ts = ad.timestamp;
+#endif
     }
 
     // flush
@@ -237,6 +298,9 @@ void AudioWorker::audio_play()
             continue;
         }
 
+#if 1
+        handle_func();
+#else
         //
         a_mtx.lock();
         ad  =   a_queue->front();       
@@ -279,6 +343,7 @@ void AudioWorker::audio_play()
         }
 
         last_ts = ad.timestamp;
+#endif
     }
 
     // 等 player 結束, 確保不會再增加資料進去queue
@@ -305,7 +370,6 @@ AudioWorker::stop()
 void    AudioWorker::stop()
 {
     force_stop  =   true;
-    //audio->stop();
 }
 
 
@@ -318,12 +382,15 @@ AudioWorker::volume_slot()
 ********************************************************************************/
 void    AudioWorker::volume_slot( int value )
 {
-    // 直接設置數字會出問題, 參考官方寫法做轉換
-    qreal   linear_value    =   QAudio::convertVolume( value / qreal(100.0),
-                                                       QAudio::LogarithmicVolumeScale,
-                                                       QAudio::LinearVolumeScale );
+    if( audio != nullptr )
+    {
+        // 直接設置數字會出問題, 參考官方寫法做轉換
+        qreal   linear_value    =   QAudio::convertVolume( value / qreal(100.0),
+                                                           QAudio::LogarithmicVolumeScale,
+                                                           QAudio::LinearVolumeScale );
 
-    audio->setVolume(linear_value);
+        audio->setVolume(linear_value);
+    }
 }
 
 
@@ -334,10 +401,23 @@ AudioWorker::get_volume()
 ********************************************************************************/
 int     AudioWorker::get_volume()
 {
-    qreal   rv      =   audio->volume();
-    int     value   =   qRound( rv*100 );
-    return  value;
+    if( audio != nullptr )
+    {
+        qreal   rv      =   audio->volume();
+        int     value   =   qRound( rv * 100 );
+        return  value;
+    }
 }
 
 
 
+
+
+/*******************************************************************************
+AudioWorker::pause()
+********************************************************************************/
+void    AudioWorker::pause()
+{
+    if( audio != nullptr )
+        audio->suspend();
+}

@@ -131,9 +131,10 @@ void MainWindow::set_signal_slot()
     connect(    ui->subCBox,        SIGNAL(currentIndexChanged(int)),               worker,         SLOT(switch_subtitle_slot_int(int))         );   // 用另一個方式會跳錯誤
     connect(    ui->stopButton,     &QPushButton::clicked,                          worker,         &Worker::stop_slot                          );   
     connect(    ui->playButton,     &QPushButton::clicked,                          this,           &MainWindow::play_slot                      );
+    connect(    ui->pauseButton,    &QPushButton::clicked,                          this,           &MainWindow::pause_slot                     );
 
     connect(    video_worker,       &VideoWorker::recv_video_frame_signal,          this,           &MainWindow::recv_video_frame_slot          );
-    connect(    ui->audioSlider,    &QSlider::valueChanged,                         audio_worker,   &AudioWorker::volume_slot                   );
+    connect(    ui->volumeSlider,   &QSlider::valueChanged,                         audio_worker,   &AudioWorker::volume_slot                   );
 }
 
 
@@ -144,11 +145,7 @@ MainWindow::set_video_setting_slot()
 ********************************************************************************/
 void    MainWindow::set_video_setting_slot( VideoSetting vs )
 {
-    /*if( video_widget->videoSurface()->isActive() )
-        video_widget->videoSurface()->stop();*/
-
     QVideoWidget    *video_widget   =   ui->videoWidget;
-
 
     QSize   size { vs.width, vs.height };
 
@@ -168,7 +165,12 @@ MainWindow::play_slot()
 ********************************************************************************/
 void MainWindow::play_slot()
 {
+    ui->subCBox->clear();
+
     QString filename     =   QFileDialog::getOpenFileName( this, tr("select src file"), "D:\\" );
+    if( filename.isEmpty() == true )
+        return;
+
     MYLOG( LOG::INFO, "load file %s", filename.toStdString().c_str() );
     worker->set_src_file(filename.toStdString());
    
@@ -182,12 +184,29 @@ void MainWindow::play_slot()
 
 
 
+
+/*******************************************************************************
+MainWindow::pause_slot()
+********************************************************************************/
+void    MainWindow::pause_slot()
+{
+    video_worker->pause();
+    audio_worker->pause();
+}
+
+
+
+
+
+
 /*******************************************************************************
 MainWindow::finish_slot()
 ********************************************************************************/
 void    MainWindow::finish_slot()
 {
     ui->playButton->setEnabled(true);
+    ui->videoWidget->videoSurface()->stop();
+    ui->subCBox->clear();
 }
 
 
@@ -301,3 +320,11 @@ void    MainWindow::embedded_sublist_slot(  std::vector<std::string> list )
 
 
 
+
+/*******************************************************************************
+MainWindow::volume()
+********************************************************************************/
+int     MainWindow::volume()
+{
+    return  ui->volumeSlider->value();
+}

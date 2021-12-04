@@ -27,6 +27,7 @@ public:
 
     int     get_volume();
     void    stop();
+    void    pause();
 
 public slots:
     void    handleStateChanged( QAudio::State state );

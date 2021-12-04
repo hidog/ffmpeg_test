@@ -87,6 +87,9 @@
       </disabled>
      </palette>
     </property>
+    <property name="autoFillBackground">
+     <bool>true</bool>
+    </property>
    </widget>
    <widget class="QPushButton" name="playButton">
     <property name="geometry">
@@ -111,7 +114,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QSlider" name="audioSlider">
+   <widget class="QSlider" name="volumeSlider">
     <property name="geometry">
      <rect>
       <x>330</x>

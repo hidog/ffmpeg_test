@@ -748,9 +748,7 @@ flush 過程基本上同 decode, 送 nullptr 進去
 ********************************************************************************/
 int    Player::flush()
 {
-    int     ret     =   0;
-    int     i;
-
+    int         ret     =   0;
     VideoData   vdata;
     AudioData   adata;
 
