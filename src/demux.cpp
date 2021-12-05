@@ -279,94 +279,25 @@ std::pair<int,AVPacket*>     Demux::demux_multi_thread()
 
 
 
-
-#if 0
-void av_dump_format(AVFormatContext *ic, int index,
-    const char *url, int is_output)
+/*******************************************************************************
+Demux::get_duration_time()
+********************************************************************************/
+int64_t     Demux::get_duration_time()
 {
-    int i;
-    uint8_t *printed = ic->nb_streams ? av_mallocz(ic->nb_streams) : NULL;
-    if (ic->nb_streams && !printed)
-        return;
-
-    av_log(NULL, AV_LOG_INFO, "%s #%d, %s, %s '%s':\n",
-        is_output ? "Output" : "Input",
-        index,
-        is_output ? ic->oformat->name : ic->iformat->name,
-        is_output ? "to" : "from", url);
-    dump_metadata(NULL, ic->metadata, "  ");
-
-    if (!is_output) {
-        av_log(NULL, AV_LOG_INFO, "  Duration: ");
-        if (ic->duration != AV_NOPTS_VALUE) {
-            int64_t hours, mins, secs, us;
-            int64_t duration = ic->duration + (ic->duration <= INT64_MAX - 5000 ? 5000 : 0);
-            secs  = duration / AV_TIME_BASE;
-            us    = duration % AV_TIME_BASE;
-            mins  = secs / 60;
-            secs %= 60;
-            hours = mins / 60;
-            mins %= 60;
-            av_log(NULL, AV_LOG_INFO, "%02"PRId64":%02"PRId64":%02"PRId64".%02"PRId64"", hours, mins, secs,
-                (100 * us) / AV_TIME_BASE);
-        } else {
-            av_log(NULL, AV_LOG_INFO, "N/A");
-        }
-        if (ic->start_time != AV_NOPTS_VALUE) {
-            int secs, us;
-            av_log(NULL, AV_LOG_INFO, ", start: ");
-            secs = llabs(ic->start_time / AV_TIME_BASE);
-            us   = llabs(ic->start_time % AV_TIME_BASE);
-            av_log(NULL, AV_LOG_INFO, "%s%d.%06d",
-                ic->start_time >= 0 ? "" : "-",
-                secs,
-                (int) av_rescale(us, 1000000, AV_TIME_BASE));
-        }
-        av_log(NULL, AV_LOG_INFO, ", bitrate: ");
-        if (ic->bit_rate)
-            av_log(NULL, AV_LOG_INFO, "%"PRId64" kb/s", ic->bit_rate / 1000);
-        else
-            av_log(NULL, AV_LOG_INFO, "N/A");
-        av_log(NULL, AV_LOG_INFO, "\n");
+    if( fmt_ctx->duration == AV_NOPTS_VALUE )
+    {
+        MYLOG( LOG::WARN, "not defined duration");
+        return  INT64_MAX;
     }
 
-    if (ic->nb_chapters)
-        av_log(NULL, AV_LOG_INFO, "  Chapters:\n");
-    for (i = 0; i < ic->nb_chapters; i++) {
-        const AVChapter *ch = ic->chapters[i];
-        av_log(NULL, AV_LOG_INFO, "    Chapter #%d:%d: ", index, i);
-        av_log(NULL, AV_LOG_INFO,
-            "start %f, ", ch->start * av_q2d(ch->time_base));
-        av_log(NULL, AV_LOG_INFO,
-            "end %f\n", ch->end * av_q2d(ch->time_base));
+    int64_t     duration    =   fmt_ctx->duration + (fmt_ctx->duration <= INT64_MAX - 5000 ? 5000 : 0);
+    int64_t     secs        =   duration / AV_TIME_BASE;
+    int64_t     us          =   duration % AV_TIME_BASE;
 
-        dump_metadata(NULL, ch->metadata, "      ");
-    }
+    if( us > 0 )
+        secs++;
 
-    if (ic->nb_programs) {
-        int j, k, total = 0;
-        for (j = 0; j < ic->nb_programs; j++) {
-            const AVProgram *program = ic->programs[j];
-            const AVDictionaryEntry *name = av_dict_get(program->metadata,
-                "name", NULL, 0);
-            av_log(NULL, AV_LOG_INFO, "  Program %d %s\n", program->id,
-                name ? name->value : "");
-            dump_metadata(NULL, program->metadata, "    ");
-            for (k = 0; k < program->nb_stream_indexes; k++) {
-                dump_stream_format(ic, program->stream_index[k],
-                    index, is_output);
-                printed[program->stream_index[k]] = 1;
-            }
-            total += program->nb_stream_indexes;
-        }
-        if (total < ic->nb_streams)
-            av_log(NULL, AV_LOG_INFO, "  No Program\n");
-    }
-
-    for (i = 0; i < ic->nb_streams; i++)
-        if (!printed[i])
-            dump_stream_format(ic, i, index, is_output);
-
-    av_free(printed);
+    return  secs;
 }
-#endif
+
+

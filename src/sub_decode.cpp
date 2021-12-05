@@ -72,8 +72,7 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
 
     // 理論上這邊的字串可以精簡...
     sub_index   =   sd.sub_index;
-    ss << "subtitles=filename='" << filename_param << "':original_size=" 
-       << sd.width << "x" << sd.height << ":stream_index=" << sub_index;
+    ss << "subtitles='" << filename_param << "':stream_index=" << sub_index;
 
     out_param    =   ss.str();
 

@@ -58,10 +58,12 @@ public:
     bool    is_embedded_subtitle();
     bool    is_file_subtitle();
 
-    std::vector<std::string>    get_embedded_subtitle_list();
+    int64_t     get_duration_time();
 
     VideoSetting    get_video_setting();
     AudioSetting    get_audio_setting();
+
+    std::vector<std::string>    get_embedded_subtitle_list();
 
 
 #ifdef USE_MT

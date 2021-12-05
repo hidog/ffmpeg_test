@@ -126,6 +126,7 @@ void MainWindow::set_signal_slot()
     connect(    worker,             &Worker::subtitle_list_signal,                  this,           &MainWindow::set_subtitle_list_slot         );
     connect(    worker,             &Worker::embedded_sublist_signal,               this,           &MainWindow::embedded_sublist_slot          );
     connect(    worker,             &Worker::finished,                              this,           &MainWindow::finish_slot                    );
+    connect(    worker,             &Worker::duration_signal,                       this,           &MainWindow::duration_slot                  );
 
     connect(    ui->subCBox,        &QComboBox::currentTextChanged,                 worker,         &Worker::switch_subtitle_slot_str           );
     connect(    ui->subCBox,        SIGNAL(currentIndexChanged(int)),               worker,         SLOT(switch_subtitle_slot_int(int))         );   // 用另一個方式會跳錯誤
@@ -134,6 +135,8 @@ void MainWindow::set_signal_slot()
     connect(    ui->pauseButton,    &QPushButton::clicked,                          this,           &MainWindow::pause_slot                     );
 
     connect(    video_worker,       &VideoWorker::recv_video_frame_signal,          this,           &MainWindow::recv_video_frame_slot          );
+    connect(    video_worker,       &VideoWorker::update_seekbar_signal,            this,           &MainWindow::update_seekbar_slot            );
+
     connect(    ui->volumeSlider,   &QSlider::valueChanged,                         audio_worker,   &AudioWorker::volume_slot                   );
 }
 
@@ -156,6 +159,36 @@ void    MainWindow::set_video_setting_slot( VideoSetting vs )
     worker->finish_set_video();
 }
 
+
+
+
+
+
+/*******************************************************************************
+MainWindow::duration_slot()
+********************************************************************************/
+void    MainWindow::duration_slot( int du )
+{
+     ui->seekSlider->setMaximum(du);
+}
+
+
+
+
+
+/*******************************************************************************
+MainWindow::update_seekbar()
+********************************************************************************/
+void    MainWindow::update_seekbar_slot( int sec )
+{
+    int     max     =   ui->seekSlider->maximum();
+    int     min     =   ui->seekSlider->minimum();
+
+    sec     =   sec > max ? max : sec;
+    sec     =   sec < min ? min : sec;
+
+    ui->seekSlider->setSliderPosition(sec);
+}
 
 
 

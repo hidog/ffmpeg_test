@@ -77,8 +77,12 @@ void    Worker::run()
     AudioSetting    as;
     AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
     VideoWorker     *vw     =   dynamic_cast<MainWindow*>(parent())->get_video_worker();
-    
+   
+    //
     player.init();
+    int     duration    =   static_cast<int>(player.get_duration_time());
+    emit    duration_signal( duration );
+
     if( player.is_embedded_subtitle() == true )
     {
         auto    list    =   player.get_embedded_subtitle_list();
