@@ -361,12 +361,12 @@ MainWindow::closeEvent()
 ********************************************************************************/
 void    MainWindow::closeEvent( QCloseEvent *event )
 {
-    worker->stop_slot();
+    worker->stop_slot();    
 
-    while( worker->isFinished() == false )
+    while( worker->isRunning() == true )
         SLEEP_10MS;
-    while( video_worker->isFinished() == false )
+    while( video_worker->isRunning() == true )
         SLEEP_10MS;
-    while( audio_worker->isFinished() == false )
+    while( audio_worker->isRunning() == true )
         SLEEP_10MS;
 }

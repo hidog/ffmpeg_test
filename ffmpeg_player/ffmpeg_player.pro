@@ -19,7 +19,8 @@ SOURCES += \
 	src/worker.cpp \
 	src/audio_worker.cpp \
 	src/video_worker.cpp \
-	src/videowidget.cpp
+	src/videowidget.cpp \
+	src/myslider.cpp
 
 
 HEADERS += \
@@ -27,7 +28,8 @@ HEADERS += \
 	src/worker.h \
 	src/audio_worker.h \
 	src/video_worker.h \
-	src/videowidget.h
+	src/videowidget.h \
+	src/myslider.h
 
 
 
