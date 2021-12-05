@@ -13,6 +13,10 @@ public:
     ~MySlider();
 
     void    mousePressEvent( QMouseEvent *ev ) override;
+    void    mouseMoveEvent( QMouseEvent *ev ) override;
+    void    mouseReleaseEvent( QMouseEvent *ev ) override;
+    
+    void    mouse_move( QMouseEvent *ev );
 
 private:
 

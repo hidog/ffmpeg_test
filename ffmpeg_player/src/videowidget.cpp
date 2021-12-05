@@ -44,6 +44,8 @@ void    VideoWidget::keyPressEvent( QKeyEvent *event )
         case Qt::Key_Space :
         {
             MainWindow  *mw     =   dynamic_cast<MainWindow*>(parent()->parent());
+            if( mw == nullptr )
+                MYLOG( LOG::ERROR, "mw = nullptr.");
             mw->pause();
             break;
         }

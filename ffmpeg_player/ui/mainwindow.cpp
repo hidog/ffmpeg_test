@@ -91,7 +91,7 @@ void MainWindow::recv_video_frame_slot()
     /*if( video_widget->isVisible() == false )
         return;*/
 
-    QVideoWidget    *video_widget   =   ui->videoWidget;
+    VideoWidget    *video_widget   =   ui->videoWidget;
 
     static int  last_index  =   0;
 
@@ -145,7 +145,7 @@ MainWindow::set_video_setting_slot()
 ********************************************************************************/
 void    MainWindow::set_video_setting_slot( VideoSetting vs )
 {
-    QVideoWidget    *video_widget   =   ui->videoWidget;
+    VideoWidget    *video_widget   =   ui->videoWidget;
 
     QSize   size { vs.width, vs.height };
 

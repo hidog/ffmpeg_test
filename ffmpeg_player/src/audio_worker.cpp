@@ -37,7 +37,6 @@ void    AudioWorker::open_audio_output( AudioSetting as )
     format.setByteOrder(QAudioFormat::LittleEndian);
     //format.setSampleType(QAudioFormat::UnSignedInt);
     format.setSampleType(QAudioFormat::SignedInt);   // 用unsigned int 在調整音量的時候會爆音
-
     
     //
     QAudioDeviceInfo info { QAudioDeviceInfo::defaultOutputDevice() };
@@ -61,8 +60,11 @@ void    AudioWorker::open_audio_output( AudioSetting as )
     audio->stop();
     //audio->setBufferSize( 1000000 );  // 遇到影片檔必須開大buffer不然會出問題. 這是一個解法,目前用分批寫入的方式解決
 
+    MainWindow  *mw     =   dynamic_cast<MainWindow*>(parent());
+    if( mw == nullptr )
+        MYLOG( LOG::ERROR, "mw is nullptr");
 
-    int     volume  =   dynamic_cast<MainWindow*>(parent())->volume();
+    int     volume      =   mw->volume();
     volume_slot(volume);
 
     if( io != nullptr )

@@ -120,10 +120,10 @@
    <widget class="MySlider" name="volumeSlider">
     <property name="geometry">
      <rect>
-      <x>330</x>
-      <y>30</y>
-      <width>101</width>
-      <height>16</height>
+      <x>310</x>
+      <y>20</y>
+      <width>121</width>
+      <height>21</height>
      </rect>
     </property>
     <property name="mouseTracking">
@@ -148,7 +148,7 @@
      <number>100</number>
     </property>
     <property name="tracking">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
@@ -158,9 +158,6 @@
     </property>
     <property name="invertedControls">
      <bool>false</bool>
-    </property>
-    <property name="tickPosition">
-     <enum>QSlider::NoTicks</enum>
     </property>
     <property name="tickInterval">
      <number>0</number>
@@ -198,6 +195,25 @@
      <string>Pause</string>
     </property>
    </widget>
+   <widget class="MySlider" name="seekSlider">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>940</y>
+      <width>1401</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="mouseTracking">
+     <bool>false</bool>
+    </property>
+    <property name="tracking">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -215,7 +231,12 @@
   <customwidget>
    <class>VideoWidget</class>
    <extends>QWidget</extends>
-   <header>videowidget.h</header>
+   <header location="global">videowidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>MySlider</class>
+   <extends>QSlider</extends>
+   <header location="global">myslider.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

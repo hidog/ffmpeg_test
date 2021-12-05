@@ -41,13 +41,59 @@ MySlider::mousePressEvent()
 ********************************************************************************/
 void    MySlider::mousePressEvent( QMouseEvent *ev )
 {
-    auto pos = ev->pos();
-    MYLOG( LOG::DEBUG, "pos = %d %d ", pos.rx(), pos.ry() );
+    mouse_move(ev);
+}
+
+
+
+/*******************************************************************************
+MySlider::mouseMoveEvent()
+********************************************************************************/
+void    MySlider::mouseMoveEvent( QMouseEvent *ev )
+{
+    mouse_move(ev);
+}
+
+
+
+/*******************************************************************************
+MySlider::mouseReleaseEvent()
+********************************************************************************/
+void    MySlider::mouseReleaseEvent( QMouseEvent *ev )
+{
+    mouse_move(ev);
+}
+
+
+
+
+/*******************************************************************************
+MySlider::mouse_move()
+********************************************************************************/
+void    MySlider::mouse_move( QMouseEvent *ev )
+{
+    QPoint    pos   =   ev->pos();
+    //MYLOG( LOG::DEBUG, "pos = %d %d %d %d", pos.rx(), pos.ry(), pos.x(), pos.y() );
+
+    int max     =   this->maximum();
+    int min     =   this->minimum();
+    //int sp      =   this->sliderPosition();
+    int width   =   this->width();
+    int height  =   this->height();
+
+    double  rate;
+    int     value;
 
     if( orientation() == Qt::Horizontal )
-        setSliderPosition( pos.rx() );
+        rate = 1.0 * pos.rx() / width;
     else if( orientation() == Qt::Vertical )
-        setSliderPosition( pos.rx() );
+        rate = 1.0 * pos.ry() / height;
     else
-        MYLOG( LOG::ERROR, "un defined");
+        MYLOG( LOG::ERROR, "un handle");
+
+    value   =   rate * (max - min);
+    value   =   value > max ? max : value;
+    value   =   value < min ? min : value;
+
+    setSliderPosition( value );
 }
