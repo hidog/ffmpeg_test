@@ -61,7 +61,9 @@ MySlider::mouseReleaseEvent()
 ********************************************************************************/
 void    MySlider::mouseReleaseEvent( QMouseEvent *ev )
 {
-    mouse_move(ev);
+    int value   =   mouse_move(ev);
+    if( hasTracking() == false )
+        setValue(value);
 }
 
 
@@ -70,16 +72,16 @@ void    MySlider::mouseReleaseEvent( QMouseEvent *ev )
 /*******************************************************************************
 MySlider::mouse_move()
 ********************************************************************************/
-void    MySlider::mouse_move( QMouseEvent *ev )
+int    MySlider::mouse_move( QMouseEvent *ev )
 {
     QPoint    pos   =   ev->pos();
     //MYLOG( LOG::DEBUG, "pos = %d %d %d %d", pos.rx(), pos.ry(), pos.x(), pos.y() );
 
-    int max     =   this->maximum();
-    int min     =   this->minimum();
-    //int sp      =   this->sliderPosition();
-    int width   =   this->width();
-    int height  =   this->height();
+    int     max     =   this->maximum();
+    int     min     =   this->minimum();
+    //int   sp      =   this->sliderPosition();
+    int     width   =   this->width();
+    int     height  =   this->height();
 
     double  rate;
     int     value;
@@ -96,4 +98,6 @@ void    MySlider::mouse_move( QMouseEvent *ev )
     value   =   value < min ? min : value;
 
     setSliderPosition( value );
+
+    return  value;
 }

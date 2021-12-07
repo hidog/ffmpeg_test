@@ -16,7 +16,7 @@ public:
     void    mouseMoveEvent( QMouseEvent *ev ) override;
     void    mouseReleaseEvent( QMouseEvent *ev ) override;
     
-    void    mouse_move( QMouseEvent *ev );
+    int     mouse_move( QMouseEvent *ev );
 
 private:
 
