@@ -2735,6 +2735,13 @@ static int is_realtime(AVFormatContext *s)
     return 0;
 }
 
+
+
+
+
+
+
+
 /* this thread gets the stream from the disk or the network */
 static int read_thread(void *arg)
 {
@@ -2750,41 +2757,32 @@ static int read_thread(void *arg)
     int scan_all_pmts_set = 0;
     int64_t pkt_ts;
 
-    if (!wait_mutex) {
-        av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
-        ret = AVERROR(ENOMEM);
-        goto fail;
-    }
+
+
 
     memset(st_index, -1, sizeof(st_index));
     is->eof = 0;
 
+
+
     pkt = av_packet_alloc();
-    if (!pkt) {
-        av_log(NULL, AV_LOG_FATAL, "Could not allocate packet.\n");
-        ret = AVERROR(ENOMEM);
-        goto fail;
-    }
+
+
+
     ic = avformat_alloc_context();
-    if (!ic) {
-        av_log(NULL, AV_LOG_FATAL, "Could not allocate context.\n");
-        ret = AVERROR(ENOMEM);
-        goto fail;
-    }
+
+
+
     ic->interrupt_callback.callback = decode_interrupt_cb;
     ic->interrupt_callback.opaque = is;
-    if (!av_dict_get(format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE)) {
-        av_dict_set(&format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
-        scan_all_pmts_set = 1;
-    }
+
+
+
+
+
     err = avformat_open_input(&ic, is->filename, is->iformat, &format_opts);
-    if (err < 0) {
-        print_error(is->filename, err);
-        ret = -1;
-        goto fail;
-    }
-    if (scan_all_pmts_set)
-        av_dict_set(&format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE);
+
+
 
     if ((t = av_dict_get(format_opts, "", NULL, AV_DICT_IGNORE_SUFFIX))) {
         av_log(NULL, AV_LOG_ERROR, "Option %s not found.\n", t->key);
@@ -3059,8 +3057,7 @@ fail:
     return 0;
 }
 
-static VideoState *stream_open(const char *filename,
-    const AVInputFormat *iformat)
+static VideoState *stream_open(const char *filename, const AVInputFormat *iformat)
 {
     VideoState *is;
 
@@ -3099,17 +3096,21 @@ static VideoState *stream_open(const char *filename,
     init_clock(&is->audclk, &is->audioq.serial);
     init_clock(&is->extclk, &is->extclk.serial);
     is->audio_clock_serial = -1;
+
     if (startup_volume < 0)
         av_log(NULL, AV_LOG_WARNING, "-volume=%d < 0, setting to 0\n", startup_volume);
     if (startup_volume > 100)
         av_log(NULL, AV_LOG_WARNING, "-volume=%d > 100, setting to 100\n", startup_volume);
+
     startup_volume = av_clip(startup_volume, 0, 100);
     startup_volume = av_clip(SDL_MIX_MAXVOLUME * startup_volume / 100, 0, SDL_MIX_MAXVOLUME);
     is->audio_volume = startup_volume;
     is->muted = 0;
     is->av_sync_type = av_sync_type;
     is->read_tid     = SDL_CreateThread(read_thread, "read_thread", is);
-    if (!is->read_tid) {
+
+    if (!is->read_tid) 
+    {
         av_log(NULL, AV_LOG_FATAL, "SDL_CreateThread(): %s\n", SDL_GetError());
     fail:
         stream_close(is);
@@ -3675,10 +3676,6 @@ int ffplay_main(int argc, char **argv)
     av_log_set_flags(AV_LOG_SKIP_REPEATED);
     parse_loglevel(argc, argv, options);
 
-    /* register all codecs, demux and protocols */
-#if CONFIG_AVDEVICE
-    avdevice_register_all();
-#endif
     avformat_network_init();
 
     signal(SIGINT , sigterm_handler); /* Interrupt (ANSI).    */
@@ -3721,20 +3718,18 @@ int ffplay_main(int argc, char **argv)
 
     if (!display_disable) {
         int flags = SDL_WINDOW_HIDDEN;
+
         if (alwaysontop)
-#if SDL_VERSION_ATLEAST(2,0,5)
             flags |= SDL_WINDOW_ALWAYS_ON_TOP;
-#else
-            av_log(NULL, AV_LOG_WARNING, "Your SDL version doesn't support SDL_WINDOW_ALWAYS_ON_TOP. Feature will be inactive.\n");
-#endif
+
         if (borderless)
             flags |= SDL_WINDOW_BORDERLESS;
         else
             flags |= SDL_WINDOW_RESIZABLE;
 
-#ifdef SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR
+
         SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
-#endif
+
         window = SDL_CreateWindow(program_name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, default_width, default_height, flags);
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
         if (window) {
