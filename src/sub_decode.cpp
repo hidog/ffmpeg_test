@@ -161,9 +161,9 @@ SubDecode::init()
 ********************************************************************************/
 int     SubDecode::init()
 {
-    got_sub         =   0;
     sub_dpts        =   -1; 
     sub_duration    =   -1;
+    has_sub_image   =   false;
 
     //graph    =   avfilter_graph_alloc();
     Decode::init();
@@ -315,9 +315,9 @@ int     SubDecode::end()
     sub_src_type    =   SubSourceType::NONE;
     is_graphic      =   false;
 
-    got_sub         =   0;
     sub_dpts        =   -1; 
     sub_duration    =   -1;
+    has_sub_image   =   false;
 
     Decode::end();
     return  SUCCESS;
@@ -484,30 +484,34 @@ SubDecode::generate_subtitle_image()
 ********************************************************************************/
 void    SubDecode::generate_subtitle_image( AVSubtitle &subtitle )
 {
-    MYLOG( LOG::DEBUG, "first run generate_subtitle_image subtitle" );
-
-    int     i;
-
-    for( i = 0; i < subtitle.num_rects; i++ )
+    if( subtitle.num_rects == 0 )    
+        has_sub_image   =   false;
+    else
     {
-        AVSubtitleRect  *sub_rect   =   subtitle.rects[i];
+        has_sub_image   =   true;
+        int     i;
 
-        int     dst_linesize[4];
-        uint8_t *dst_data[4];
+        for( i = 0; i < subtitle.num_rects; i++ )
+        {
+            AVSubtitleRect  *sub_rect   =   subtitle.rects[i];
 
-        //
-        av_image_alloc( dst_data, dst_linesize, sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA, 1 );
+            int     dst_linesize[4];
+            uint8_t *dst_data[4];
 
-        SwsContext *swsContext  =   sws_getContext( sub_rect->w, sub_rect->h, AV_PIX_FMT_PAL8,
-                                                    sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA,
-                                                    SWS_BILINEAR, nullptr, nullptr, nullptr );
+            //
+            av_image_alloc( dst_data, dst_linesize, sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA, 1 );
 
-        sws_scale( swsContext, sub_rect->data, sub_rect->linesize, 0, sub_rect->h, dst_data, dst_linesize );
-        sws_freeContext(swsContext);        
+            SwsContext *swsContext  =   sws_getContext( sub_rect->w, sub_rect->h, AV_PIX_FMT_PAL8,
+                                                        sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA,
+                                                        SWS_BILINEAR, nullptr, nullptr, nullptr );
 
-        sub_image  =   QImage( dst_data[0], sub_rect->w, sub_rect->h, QImage::Format_RGBA8888).copy();
-        sub_image.save("H:\\test.jpg");
-        av_freep(&dst_data[0]);
+            sws_scale( swsContext, sub_rect->data, sub_rect->linesize, 0, sub_rect->h, dst_data, dst_linesize );
+            sws_freeContext(swsContext);        
+
+            sub_image  =   QImage( dst_data[0], sub_rect->w, sub_rect->h, QImage::Format_RGBA8888).copy();       
+            av_freep(&dst_data[0]);
+        }
+        
     }
 }
 
@@ -521,7 +525,7 @@ SubDecode::is_video_in_duration()
 ********************************************************************************/
 bool    SubDecode::is_video_in_duration( int64_t timestamp )
 {
-    if( timestamp >= sub_dpts && timestamp <= sub_dpts + sub_duration )
+    if( has_sub_image == true && timestamp >= sub_dpts && timestamp <= sub_dpts + sub_duration )
         return  true;
     else
         return  false;
@@ -540,26 +544,23 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
 
     AVSubtitle  subtitle {0};
 
-    got_sub     =   0;
+    int     got_sub     =   0;
     int     ret         =   avcodec_decode_subtitle2( dec, &subtitle, &got_sub, pkt );
     
     if( ret >= 0 && got_sub > 0 )
     {
         if( got_sub > 0 )
         {
-            subtitle.pts    =   pkt->pts;       // 時間控制項怪怪的,需要研究
-
             // 代表字幕是圖片格式, 需要產生對應的字幕圖檔.
-            if( subtitle.format == 0 )
+            if( subtitle.format == 0 )     
             {
-                generate_subtitle_image( subtitle );
+                generate_subtitle_image( subtitle );            
 
                 if( subtitle.pts != AV_NOPTS_VALUE)
-                    sub_dpts    =   1.0 * subtitle.pts / AV_TIME_BASE;
+                    sub_dpts    =   1000.0 * subtitle.pts / AV_TIME_BASE; // 單位 ms
                 else
-                    sub_dpts    =   0;                
-
-                sub_duration    =   1.0 * (subtitle.end_display_time - subtitle.start_display_time) / 1000;
+                    sub_dpts    =   0;
+                sub_duration    =   1.0 * (subtitle.end_display_time - subtitle.start_display_time) / 1000;  // 單位不明 未來看能不能找到影片測試 end_display_time
 
                 if( subtitle.start_display_time != 0 )
                     MYLOG( LOG::ERROR, "start time not zero, need handle." );

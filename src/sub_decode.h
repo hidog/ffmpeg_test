@@ -85,9 +85,9 @@ private:
     bool    is_graphic  =   false;
 
     // use for generate subtitle image.
-    int         got_sub         =   0;
     double      sub_dpts        =   -1; 
     double      sub_duration    =   -1;
+    bool        has_sub_image   =   false;
 
     // v-frame 加上 subtitle, 或是產生 subtitle image.
     QImage  sub_image;   

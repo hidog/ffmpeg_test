@@ -729,10 +729,16 @@ static Frame *frame_queue_peek(FrameQueue *f)
     return &f->queue[(f->rindex + f->rindex_shown) % f->max_size];
 }
 
+
+
+
 static Frame *frame_queue_peek_next(FrameQueue *f)
 {
     return &f->queue[(f->rindex + f->rindex_shown + 1) % f->max_size];
 }
+
+
+
 
 static Frame *frame_queue_peek_last(FrameQueue *f)
 {
@@ -856,6 +862,11 @@ static int realloc_texture(SDL_Texture **texture, Uint32 new_format, int new_wid
     return 0;
 }
 
+
+
+
+
+
 static void calculate_display_rect(SDL_Rect *rect,
     int scr_xleft, int scr_ytop, int scr_width, int scr_height,
     int pic_width, int pic_height, AVRational pic_sar)
@@ -883,6 +894,11 @@ static void calculate_display_rect(SDL_Rect *rect,
     rect->h = FFMAX((int)height, 1);
 }
 
+
+
+
+
+
 static void get_sdl_pix_fmt_and_blendmode(int format, Uint32 *sdl_pix_fmt, SDL_BlendMode *sdl_blendmode)
 {
     int i;
@@ -901,20 +917,36 @@ static void get_sdl_pix_fmt_and_blendmode(int format, Uint32 *sdl_pix_fmt, SDL_B
     }
 }
 
-static int upload_texture(SDL_Texture **tex, AVFrame *frame, struct SwsContext **img_convert_ctx) {
+
+
+
+
+
+static int upload_texture(SDL_Texture **tex, AVFrame *frame, struct SwsContext **img_convert_ctx) 
+{
     int ret = 0;
     Uint32 sdl_pix_fmt;
     SDL_BlendMode sdl_blendmode;
     get_sdl_pix_fmt_and_blendmode(frame->format, &sdl_pix_fmt, &sdl_blendmode);
     if (realloc_texture(tex, sdl_pix_fmt == SDL_PIXELFORMAT_UNKNOWN ? SDL_PIXELFORMAT_ARGB8888 : sdl_pix_fmt, frame->width, frame->height, sdl_blendmode, 0) < 0)
         return -1;
-    switch (sdl_pix_fmt) {
+
+
+
+
+    switch (sdl_pix_fmt) 
+    {
     case SDL_PIXELFORMAT_UNKNOWN:
         /* This should only happen if we are not using avfilter... */
         *img_convert_ctx = sws_getCachedContext(*img_convert_ctx,
             frame->width, frame->height, frame->format, frame->width, frame->height,
             AV_PIX_FMT_BGRA, sws_flags, NULL, NULL, NULL);
-        if (*img_convert_ctx != NULL) {
+
+
+
+
+        if (*img_convert_ctx != NULL) 
+        {
             uint8_t *pixels[4];
             int pitch[4];
             if (!SDL_LockTexture(*tex, NULL, (void **)pixels, pitch)) {
@@ -922,35 +954,67 @@ static int upload_texture(SDL_Texture **tex, AVFrame *frame, struct SwsContext *
                     0, frame->height, pixels, pitch);
                 SDL_UnlockTexture(*tex);
             }
-        } else {
+        } 
+        else 
+        {
             av_log(NULL, AV_LOG_FATAL, "Cannot initialize the conversion context\n");
             ret = -1;
         }
         break;
+
+
+
+
     case SDL_PIXELFORMAT_IYUV:
-        if (frame->linesize[0] > 0 && frame->linesize[1] > 0 && frame->linesize[2] > 0) {
+        if (frame->linesize[0] > 0 && frame->linesize[1] > 0 && frame->linesize[2] > 0) 
+        {
             ret = SDL_UpdateYUVTexture(*tex, NULL, frame->data[0], frame->linesize[0],
                 frame->data[1], frame->linesize[1],
                 frame->data[2], frame->linesize[2]);
-        } else if (frame->linesize[0] < 0 && frame->linesize[1] < 0 && frame->linesize[2] < 0) {
+        } 
+        else if (frame->linesize[0] < 0 && frame->linesize[1] < 0 && frame->linesize[2] < 0) 
+        {
             ret = SDL_UpdateYUVTexture(*tex, NULL, frame->data[0] + frame->linesize[0] * (frame->height                    - 1), -frame->linesize[0],
                 frame->data[1] + frame->linesize[1] * (AV_CEIL_RSHIFT(frame->height, 1) - 1), -frame->linesize[1],
                 frame->data[2] + frame->linesize[2] * (AV_CEIL_RSHIFT(frame->height, 1) - 1), -frame->linesize[2]);
-        } else {
+        } 
+        else 
+        {
             av_log(NULL, AV_LOG_ERROR, "Mixed negative and positive linesizes are not supported.\n");
             return -1;
         }
         break;
+
+
+
     default:
-        if (frame->linesize[0] < 0) {
+        if (frame->linesize[0] < 0) 
+        {
             ret = SDL_UpdateTexture(*tex, NULL, frame->data[0] + frame->linesize[0] * (frame->height - 1), -frame->linesize[0]);
-        } else {
+        } 
+        else 
+        {
             ret = SDL_UpdateTexture(*tex, NULL, frame->data[0], frame->linesize[0]);
         }
         break;
     }
     return ret;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 static void set_sdl_yuv_conversion_mode(AVFrame *frame)
 {
@@ -968,6 +1032,15 @@ static void set_sdl_yuv_conversion_mode(AVFrame *frame)
 #endif
 }
 
+
+
+
+
+
+
+
+
+
 static void video_image_display(VideoState *is)
 {
     Frame *vp;
@@ -975,23 +1048,33 @@ static void video_image_display(VideoState *is)
     SDL_Rect rect;
 
     vp = frame_queue_peek_last(&is->pictq);
-    if (is->subtitle_st) {
-        if (frame_queue_nb_remaining(&is->subpq) > 0) {
+    
+    
+
+
+    if (is->subtitle_st) 
+    {
+        if (frame_queue_nb_remaining(&is->subpq) > 0) 
+        {
             sp = frame_queue_peek(&is->subpq);
 
-            if (vp->pts >= sp->pts + ((float) sp->sub.start_display_time / 1000)) {
-                if (!sp->uploaded) {
+            if (vp->pts >= sp->pts + ((float) sp->sub.start_display_time / 1000)) 
+            {
+                if (!sp->uploaded) 
+                {
                     uint8_t* pixels[4];
                     int pitch[4];
                     int i;
-                    if (!sp->width || !sp->height) {
+                    if (!sp->width || !sp->height) 
+                    {
                         sp->width = vp->width;
                         sp->height = vp->height;
                     }
                     if (realloc_texture(&is->sub_texture, SDL_PIXELFORMAT_ARGB8888, sp->width, sp->height, SDL_BLENDMODE_BLEND, 1) < 0)
                         return;
 
-                    for (i = 0; i < sp->sub.num_rects; i++) {
+                    for (i = 0; i < sp->sub.num_rects; i++) 
+                    {
                         AVSubtitleRect *sub_rect = sp->sub.rects[i];
 
                         sub_rect->x = av_clip(sub_rect->x, 0, sp->width );
@@ -1003,11 +1086,13 @@ static void video_image_display(VideoState *is)
                             sub_rect->w, sub_rect->h, AV_PIX_FMT_PAL8,
                             sub_rect->w, sub_rect->h, AV_PIX_FMT_BGRA,
                             0, NULL, NULL, NULL);
-                        if (!is->sub_convert_ctx) {
+                        if (!is->sub_convert_ctx) 
+                        {
                             av_log(NULL, AV_LOG_FATAL, "Cannot initialize the conversion context\n");
                             return;
                         }
-                        if (!SDL_LockTexture(is->sub_texture, (SDL_Rect *)sub_rect, (void **)pixels, pitch)) {
+                        if (!SDL_LockTexture(is->sub_texture, (SDL_Rect *)sub_rect, (void **)pixels, pitch)) 
+                        {
                             sws_scale(is->sub_convert_ctx, (const uint8_t * const *)sub_rect->data, sub_rect->linesize,
                                 0, sub_rect->h, pixels, pitch);
                             SDL_UnlockTexture(is->sub_texture);
@@ -1020,19 +1105,36 @@ static void video_image_display(VideoState *is)
         }
     }
 
+
+
+
+
     calculate_display_rect(&rect, is->xleft, is->ytop, is->width, is->height, vp->width, vp->height, vp->sar);
 
-    if (!vp->uploaded) {
+
+
+
+
+    if (!vp->uploaded) 
+    {
         if (upload_texture(&is->vid_texture, vp->frame, &is->img_convert_ctx) < 0)
             return;
         vp->uploaded = 1;
         vp->flip_v = vp->frame->linesize[0] < 0;
     }
 
+
+
+
+
     set_sdl_yuv_conversion_mode(vp->frame);
     SDL_RenderCopyEx(renderer, is->vid_texture, NULL, &rect, 0, NULL, vp->flip_v ? SDL_FLIP_VERTICAL : 0);
     set_sdl_yuv_conversion_mode(NULL);
-    if (sp) {
+
+
+
+    if (sp) 
+    {
 #if USE_ONEPASS_SUBTITLE_RENDER
         SDL_RenderCopy(renderer, is->sub_texture, NULL, &rect);
 #else
@@ -1050,6 +1152,20 @@ static void video_image_display(VideoState *is)
 #endif
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 static inline int compute_mod(int a, int b)
 {
@@ -1353,6 +1469,10 @@ static int video_open(VideoState *is)
     return 0;
 }
 
+
+
+
+
 /* display the current picture, if any */
 static void video_display(VideoState *is)
 {
@@ -1367,6 +1487,11 @@ static void video_display(VideoState *is)
         video_image_display(is);
     SDL_RenderPresent(renderer);
 }
+
+
+
+
+
 
 static double get_clock(Clock *c)
 {
@@ -1567,6 +1692,12 @@ static void update_video_pts(VideoState *is, double pts, int64_t pos, int serial
     sync_clock_to_slave(&is->extclk, &is->vidclk);
 }
 
+
+
+
+
+
+
 /* called to display each frame */
 static void video_refresh(void *opaque, double *remaining_time)
 {
@@ -1575,23 +1706,38 @@ static void video_refresh(void *opaque, double *remaining_time)
 
     Frame *sp, *sp2;
 
+
+
+
     if (!is->paused && get_master_sync_type(is) == AV_SYNC_EXTERNAL_CLOCK && is->realtime)
         check_external_clock_speed(is);
 
-    if (!display_disable && is->show_mode != SHOW_MODE_VIDEO && is->audio_st) {
+
+
+
+    if (!display_disable && is->show_mode != SHOW_MODE_VIDEO && is->audio_st) 
+    {
         time = av_gettime_relative() / 1000000.0;
-        if (is->force_refresh || is->last_vis_time + rdftspeed < time) {
+        if (is->force_refresh || is->last_vis_time + rdftspeed < time) 
+        {
             video_display(is);
             is->last_vis_time = time;
         }
         *remaining_time = FFMIN(*remaining_time, is->last_vis_time + rdftspeed - time);
     }
 
-    if (is->video_st) {
+
+
+
+    if (is->video_st) 
+    {
     retry:
-        if (frame_queue_nb_remaining(&is->pictq) == 0) {
+        if (frame_queue_nb_remaining(&is->pictq) == 0) 
+        {
             // nothing to do, no picture to display in the queue
-        } else {
+        } 
+        else 
+        {
             double last_duration, duration, delay;
             Frame *vp, *lastvp;
 
@@ -1629,18 +1775,31 @@ static void video_refresh(void *opaque, double *remaining_time)
                 update_video_pts(is, vp->pts, vp->pos, vp->serial);
             SDL_UnlockMutex(is->pictq.mutex);
 
-            if (frame_queue_nb_remaining(&is->pictq) > 1) {
+
+
+
+
+
+            if (frame_queue_nb_remaining(&is->pictq) > 1) 
+            {
                 Frame *nextvp = frame_queue_peek_next(&is->pictq);
                 duration = vp_duration(is, vp, nextvp);
-                if(!is->step && (framedrop>0 || (framedrop && get_master_sync_type(is) != AV_SYNC_VIDEO_MASTER)) && time > is->frame_timer + duration){
+                if(!is->step && (framedrop>0 || (framedrop && get_master_sync_type(is) != AV_SYNC_VIDEO_MASTER)) && time > is->frame_timer + duration)
+                {
                     is->frame_drops_late++;
                     frame_queue_next(&is->pictq);
                     goto retry;
                 }
             }
 
-            if (is->subtitle_st) {
-                while (frame_queue_nb_remaining(&is->subpq) > 0) {
+
+
+
+
+            if (is->subtitle_st) 
+            {
+                while (frame_queue_nb_remaining(&is->subpq) > 0) 
+                {
                     sp = frame_queue_peek(&is->subpq);
 
                     if (frame_queue_nb_remaining(&is->subpq) > 1)
@@ -1649,29 +1808,44 @@ static void video_refresh(void *opaque, double *remaining_time)
                         sp2 = NULL;
 
                     if (sp->serial != is->subtitleq.serial
-                        || (is->vidclk.pts > (sp->pts + ((float) sp->sub.end_display_time / 1000)))
+                        //|| (is->vidclk.pts > (sp->pts + ((float) sp->sub.end_display_time / 1000)))
                         || (sp2 && is->vidclk.pts > (sp2->pts + ((float) sp2->sub.start_display_time / 1000))))
                     {
-                        if (sp->uploaded) {
+#if 1
+                        if (sp->uploaded) 
+                        {
                             int i;
-                            for (i = 0; i < sp->sub.num_rects; i++) {
+                            for (i = 0; i < sp->sub.num_rects; i++) 
+                            {
                                 AVSubtitleRect *sub_rect = sp->sub.rects[i];
                                 uint8_t *pixels;
                                 int pitch, j;
 
-                                if (!SDL_LockTexture(is->sub_texture, (SDL_Rect *)sub_rect, (void **)&pixels, &pitch)) {
+                                if (!SDL_LockTexture(is->sub_texture, (SDL_Rect *)sub_rect, (void **)&pixels, &pitch)) 
+                                {
                                     for (j = 0; j < sub_rect->h; j++, pixels += pitch)
                                         memset(pixels, 0, sub_rect->w << 2);
                                     SDL_UnlockTexture(is->sub_texture);
                                 }
                             }
                         }
+#endif
+
                         frame_queue_next(&is->subpq);
-                    } else {
+                    } 
+                    else 
+                    {
                         break;
                     }
                 }
             }
+
+
+
+
+
+
+
 
             frame_queue_next(&is->pictq);
             is->force_refresh = 1;
@@ -1684,6 +1858,15 @@ static void video_refresh(void *opaque, double *remaining_time)
         if (!display_disable && is->force_refresh && is->show_mode == SHOW_MODE_VIDEO && is->pictq.rindex_shown)
             video_display(is);
     }
+
+
+
+
+
+
+
+
+
     is->force_refresh = 0;
     if (show_status) {
         AVBPrint buf;
@@ -1736,6 +1919,17 @@ static void video_refresh(void *opaque, double *remaining_time)
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
 
 static int queue_picture(VideoState *is, AVFrame *src_frame, double pts, double duration, int64_t pos, int serial)
 {
@@ -2619,8 +2813,8 @@ static int stream_component_open(VideoState *is, int stream_index)
         goto fail;
 
 
-    if( stream_index != 2 )
-        avctx->pkt_timebase = ic->streams[stream_index]->time_base;
+    //if( stream_index != 2 )
+    avctx->pkt_timebase = ic->streams[stream_index]->time_base;
 
 
 
@@ -3286,11 +3480,18 @@ static void toggle_audio_display(VideoState *is)
     }
 }
 
-static void refresh_loop_wait_event(VideoState *is, SDL_Event *event) {
+
+
+
+
+static void refresh_loop_wait_event(VideoState *is, SDL_Event *event) 
+{
     double remaining_time = 0.0;
     SDL_PumpEvents();
-    while (!SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT)) {
-        if (!cursor_hidden && av_gettime_relative() - cursor_last_shown > CURSOR_HIDE_DELAY) {
+    while (!SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT)) 
+    {
+        if (!cursor_hidden && av_gettime_relative() - cursor_last_shown > CURSOR_HIDE_DELAY) 
+        {
             SDL_ShowCursor(0);
             cursor_hidden = 1;
         }
@@ -3302,6 +3503,12 @@ static void refresh_loop_wait_event(VideoState *is, SDL_Event *event) {
         SDL_PumpEvents();
     }
 }
+
+
+
+
+
+
 
 static void seek_chapter(VideoState *is, int incr)
 {
@@ -3330,13 +3537,19 @@ static void seek_chapter(VideoState *is, int incr)
         AV_TIME_BASE_Q), 0, 0);
 }
 
+
+
+
+
+
 /* handle an event sent by the GUI */
 static void event_loop(VideoState *cur_stream)
 {
     SDL_Event event;
     double incr, pos, frac;
 
-    for (;;) {
+    for (;;) 
+    {
         double x;
         refresh_loop_wait_event(cur_stream, &event);
         switch (event.type) {

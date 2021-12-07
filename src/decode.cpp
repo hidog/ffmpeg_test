@@ -91,7 +91,8 @@ int     Decode::open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type )
                 cs_index   =   index; // choose first ad current.
 
             // note: dec_ctx, stream is class member. after open codec, they use for current ctx, stream.
-            open_codec_context( index, fmt_ctx, type );            
+            open_codec_context( index, fmt_ctx, type );
+
             dec_map.emplace(    std::make_pair(index,dec_ctx) ); 
             stream_map.emplace( std::make_pair(index,stream)  );
         }
@@ -189,6 +190,10 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
         MYLOG( LOG::ERROR, "Failed to open %s codec. ret = %d", str, ret );
         return  ERROR;
     }   
+
+    // for psg subtitle use.
+    // 沒設置的話, decode psg subtitle 的時候無法取得timestamp.
+    dec_ctx->pkt_timebase = fmt_ctx->streams[stream_index]->time_base;
 
     // output info
     output_decode_info( dec, dec_ctx );
