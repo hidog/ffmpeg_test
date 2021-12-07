@@ -58,6 +58,9 @@ public:
     bool    is_video_in_duration( int64_t timestamp );
     QPoint  get_subtitle_image_pos();
 
+    void    init_graphic_subtitle( SubData sd );
+    void    cal_graphic_sub_image_rect();
+
     std::string     get_subfile();
     int64_t         get_timestamp();
 
@@ -90,6 +93,8 @@ private:
     double      sub_duration    =   -1;
     bool        has_sub_image   =   false;
     int         sub_x, sub_y, sub_w, sub_h;
+    int         v_w, v_h;
+    int         r_x, r_y, r_w, r_h;
 
     // v-frame 加上 subtitle, 或是產生 subtitle image.
     QImage  sub_image;   

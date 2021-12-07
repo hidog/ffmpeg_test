@@ -125,7 +125,7 @@ int     Player::init()
     if( exist_subtitle == true )
     {
         ret     =   s_decoder.init();
-
+       
         SubData     sd;
         sd.width        =   v_decoder.get_video_width();
         sd.height       =   v_decoder.get_video_height();
@@ -133,16 +133,23 @@ int     Player::init()
         sd.video_index  =   v_decoder.current_index();
         sd.sub_index    =   0;
 
-        std::string     sub_src     =   s_decoder.get_subfile();
+        if( s_decoder.is_graphic_subtitle() == false )
+        {
+            std::string     sub_src     =   s_decoder.get_subfile();
 
-        s_decoder.init_sws_ctx( sd );
-        s_decoder.init_sub_image( sd );
+            s_decoder.init_sws_ctx( sd );
+            s_decoder.init_sub_image( sd );
 
-        // if exist subtitle, open it.
-        // 這邊有執行順序問題, 不能隨便更改執行順序      
-        std::pair<std::string,std::string>  sub_param   =   s_decoder.get_subtitle_param( fmt_ctx, sub_src, sd );
-        s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
-        s_decoder.set_filter_args( sub_param.first );
+            // if exist subtitle, open it.
+            // 這邊有執行順序問題, 不能隨便更改執行順序      
+            std::pair<std::string,std::string>  sub_param   =   s_decoder.get_subtitle_param( fmt_ctx, sub_src, sd );
+            s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
+            s_decoder.set_filter_args( sub_param.first );
+        }
+        else
+        {
+            s_decoder.init_graphic_subtitle(sd);
+        }
     }
 
     return SUCCESS;

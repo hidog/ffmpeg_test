@@ -165,11 +165,22 @@ int     SubDecode::init()
     sub_duration    =   -1;
     has_sub_image   =   false;
 
-    //graph    =   avfilter_graph_alloc();
     Decode::init();
     return  SUCCESS;
 }
 
+
+
+
+
+/*******************************************************************************
+SubDecode::init_graphic_subtitle()
+********************************************************************************/
+void    SubDecode::init_graphic_subtitle( SubData sd )
+{
+    v_w     =   sd.width;
+    v_h     =   sd.height;
+}
 
 
 
@@ -470,39 +481,45 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
 
 
 
-// porting 這段程式碼
-#if 0
-static void calculate_display_rect(SDL_Rect *rect,
-    int scr_xleft, int scr_ytop, int scr_width, int scr_height,
-    int pic_width, int pic_height, AVRational pic_sar)
-{
 
-    AVRational aspect_ratio = pic_sar;
+/*******************************************************************************
+SubDecode::cal_graphic_sub_image_rect()
+porting from ffplay calculate_display_rect
+********************************************************************************/
+void    SubDecode::cal_graphic_sub_image_rect()
+{
+    AVRational aspect_ratio { 1, 1 };
     int64_t width, height, x, y;
 
     if (av_cmp_q(aspect_ratio, av_make_q(0, 1)) <= 0)
         aspect_ratio = av_make_q(1, 1);
 
-    aspect_ratio = av_mul_q(aspect_ratio, av_make_q(pic_width, pic_height));
+    aspect_ratio = av_mul_q(aspect_ratio, av_make_q( v_w, v_h));
 
     /* XXX: we suppose the screen has a 1.0 pixel ratio */
-    height = scr_height;
+    height = v_h;
     width = av_rescale(height, aspect_ratio.num, aspect_ratio.den) & ~1;
 
-    if (width > scr_width) 
+    if (width > v_w) 
     {
-        width = scr_width;
+        width = v_w;
         height = av_rescale(width, aspect_ratio.den, aspect_ratio.num) & ~1;
     }
 
-    x = (scr_width - width) / 2;
-    y = (scr_height - height) / 2;
-    rect->x = scr_xleft + x;
-    rect->y = scr_ytop  + y;
-    rect->w = FFMAX((int)width,  1);
-    rect->h = FFMAX((int)height, 1);
+    x = (sub_w - width) / 2;
+    y = (sub_h - height) / 2;
+    r_x = sub_x + x;
+    r_y = sub_y  + y;
+    r_w = FFMAX((int)width,  1);
+    r_h = FFMAX((int)height, 1);
+
+    //sub_x = r_x;
+   
+
 }
-#endif
+
+
+
 
 
 /*******************************************************************************
@@ -529,24 +546,26 @@ void    SubDecode::generate_subtitle_image( AVSubtitle &subtitle )
             sub_w   =   sub_rect->w;
             sub_h   =   sub_rect->h;
 
+            cal_graphic_sub_image_rect();
+
             int     dst_linesize[4];
             uint8_t *dst_data[4];
 
-            sub_x = sub_x * 2 / 3;
-            sub_y = sub_y * 2 / 3;
+            //sub_x = sub_x * 2 / 3;
+            //sub_y = sub_y * 2 / 3;
 
             //
-            av_image_alloc( dst_data, dst_linesize, sub_rect->w*2/3, sub_rect->h*2/3, AV_PIX_FMT_RGBA, 1 );
+            av_image_alloc( dst_data, dst_linesize, r_w, r_h, AV_PIX_FMT_RGBA, 1 );
 
             SwsContext *swsContext  =   sws_getContext( sub_rect->w, sub_rect->h, AV_PIX_FMT_PAL8,
                                                         //sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA,
-                                                        sub_rect->w*2/3, sub_rect->h*2/3, AV_PIX_FMT_RGBA,
+                                                        r_w, r_h, AV_PIX_FMT_RGBA,
                                                         SWS_BILINEAR, nullptr, nullptr, nullptr );
 
             sws_scale( swsContext, sub_rect->data, sub_rect->linesize, 0, sub_rect->h, dst_data, dst_linesize );
             sws_freeContext(swsContext);        
 
-            sub_image  =   QImage( dst_data[0], sub_rect->w*2/3, sub_rect->h*2/3, QImage::Format_RGBA8888).copy();       
+            sub_image  =   QImage( dst_data[0], r_w, r_h, QImage::Format_RGBA8888).copy();       
             av_freep(&dst_data[0]);
         }
         
@@ -796,9 +815,9 @@ void    SubDecode::switch_subtltle( int index )
 {
     std::string     desc;
 
-    if( is_graphic_subtitle() == true )    
-        open_subtitle_filter( subtitle_args, desc );   // 這邊的例外處理沒有寫得很好,有空再想怎麼修
-    else
+    //if( is_graphic_subtitle() == true )    
+      //  open_subtitle_filter( subtitle_args, desc );   // 這邊的例外處理沒有寫得很好,有空再想怎麼修
+    if( is_graphic_subtitle() == false )
     {
         sub_index   =   index;
 
@@ -823,7 +842,7 @@ SubDecode::get_subtitle_image_pos()
 ********************************************************************************/
 QPoint  SubDecode::get_subtitle_image_pos()
 {
-    QPoint  pos( sub_x, sub_y );
+    QPoint  pos( r_x, r_y );
     return  pos;
 }
 
