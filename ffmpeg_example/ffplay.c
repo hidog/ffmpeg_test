@@ -2552,6 +2552,16 @@ static int audio_open(void *opaque, int64_t wanted_channel_layout, int wanted_nb
     return spec.size;
 }
 
+
+
+
+
+
+
+
+
+
+
 /* open a given stream. Return 0 if OK */
 static int stream_component_open(VideoState *is, int stream_index)
 {
@@ -2569,9 +2579,16 @@ static int stream_component_open(VideoState *is, int stream_index)
     if (stream_index < 0 || stream_index >= ic->nb_streams)
         return -1;
 
+
+
+
     avctx = avcodec_alloc_context3(NULL);
     if (!avctx)
         return AVERROR(ENOMEM);
+
+
+
+
 
     ret = avcodec_parameters_to_context(avctx, ic->streams[stream_index]->codecpar);
     if (ret < 0)
@@ -2580,11 +2597,20 @@ static int stream_component_open(VideoState *is, int stream_index)
 
     codec = avcodec_find_decoder(avctx->codec_id);
 
-    switch(avctx->codec_type){
+
+
+
+    switch(avctx->codec_type)
+    {
     case AVMEDIA_TYPE_AUDIO   : is->last_audio_stream    = stream_index; forced_codec_name =    audio_codec_name; break;
     case AVMEDIA_TYPE_SUBTITLE: is->last_subtitle_stream = stream_index; forced_codec_name = subtitle_codec_name; break;
     case AVMEDIA_TYPE_VIDEO   : is->last_video_stream    = stream_index; forced_codec_name =    video_codec_name; break;
     }
+
+
+
+
+
     if (forced_codec_name)
         codec = avcodec_find_decoder_by_name(forced_codec_name);
     if (!codec) {
@@ -2706,6 +2732,18 @@ out:
     return ret;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
 static int decode_interrupt_cb(void *ctx)
 {
     VideoState *is = ctx;
@@ -2822,18 +2860,6 @@ static int read_thread(void *arg)
 
 
 
-    /*for (i = 0; i < ic->nb_streams; i++) 
-    {
-        AVStream *st = ic->streams[i];
-        enum AVMediaType type = st->codecpar->codec_type;
-        st->discard = AVDISCARD_ALL;
-        if (type >= 0 && wanted_stream_spec[type] && st_index[type] == -1)
-            if (avformat_match_stream_specifier(ic, st, wanted_stream_spec[type]) > 0)
-                st_index[type] = i;
-    }*/
-
-
-
     for (i = 0; i < AVMEDIA_TYPE_NB; i++) 
     {
         if (wanted_stream_spec[i] && st_index[i] == -1) 
@@ -2847,16 +2873,27 @@ static int read_thread(void *arg)
 
 
     if (!video_disable)
+    {
         st_index[AVMEDIA_TYPE_VIDEO] =
         av_find_best_stream(ic, AVMEDIA_TYPE_VIDEO,
             st_index[AVMEDIA_TYPE_VIDEO], -1, NULL, 0);
+    }
+
+
+
     if (!audio_disable)
+    {
         st_index[AVMEDIA_TYPE_AUDIO] =
         av_find_best_stream(ic, AVMEDIA_TYPE_AUDIO,
             st_index[AVMEDIA_TYPE_AUDIO],
             st_index[AVMEDIA_TYPE_VIDEO],
             NULL, 0);
+    }
+
+
+
     if (!video_disable && !subtitle_disable)
+    {
         st_index[AVMEDIA_TYPE_SUBTITLE] =
         av_find_best_stream(ic, AVMEDIA_TYPE_SUBTITLE,
             st_index[AVMEDIA_TYPE_SUBTITLE],
@@ -2864,9 +2901,15 @@ static int read_thread(void *arg)
                 st_index[AVMEDIA_TYPE_AUDIO] :
                 st_index[AVMEDIA_TYPE_VIDEO]),
             NULL, 0);
+    }
+
+
+
+
 
     is->show_mode = show_mode;
-    if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
+    if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) 
+    {
         AVStream *st = ic->streams[st_index[AVMEDIA_TYPE_VIDEO]];
         AVCodecParameters *codecpar = st->codecpar;
         AVRational sar = av_guess_sample_aspect_ratio(ic, st, NULL);
@@ -2874,21 +2917,33 @@ static int read_thread(void *arg)
             set_default_window_size(codecpar->width, codecpar->height, sar);
     }
 
+
+
+
     /* open the streams */
-    if (st_index[AVMEDIA_TYPE_AUDIO] >= 0) {
+    if (st_index[AVMEDIA_TYPE_AUDIO] >= 0) 
         stream_component_open(is, st_index[AVMEDIA_TYPE_AUDIO]);
-    }
+    
+
+
 
     ret = -1;
-    if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
+    if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) 
         ret = stream_component_open(is, st_index[AVMEDIA_TYPE_VIDEO]);
-    }
+    
+
+
     if (is->show_mode == SHOW_MODE_NONE)
         is->show_mode = ret >= 0 ? SHOW_MODE_VIDEO : SHOW_MODE_RDFT;
 
-    if (st_index[AVMEDIA_TYPE_SUBTITLE] >= 0) {
+    
+    
+    
+    if (st_index[AVMEDIA_TYPE_SUBTITLE] >= 0) 
         stream_component_open(is, st_index[AVMEDIA_TYPE_SUBTITLE]);
-    }
+    
+
+
 
     if (is->video_stream < 0 && is->audio_stream < 0) {
         av_log(NULL, AV_LOG_FATAL, "Failed to open file '%s' or configure filtergraph\n",
