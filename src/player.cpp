@@ -718,7 +718,7 @@ int    Player::decode_video_with_subtitle( AVPacket* pkt )
 
                 vdata.frame         =   s_decoder.get_subtitle_image();
                 vdata.index         =   v_decoder.get_frame_count();
-                vdata.timestamp     =   v_decoder.get_timestamp();
+                vdata.timestamp     =   s_decoder.get_timestamp();
 
                 v_mtx.lock();
                 video_queue.push(vdata);

@@ -629,19 +629,27 @@ static int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
             av_packet_unref(d->pkt);
         } while (1);
 
-        if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+        if (d->avctx->codec_type == AVMEDIA_TYPE_SUBTITLE) 
+        {
             int got_frame = 0;
             ret = avcodec_decode_subtitle2(d->avctx, sub, &got_frame, d->pkt);
-            if (ret < 0) {
+            
+            if (ret < 0) 
+            {
                 ret = AVERROR(EAGAIN);
-            } else {
-                if (got_frame && !d->pkt->data) {
+            } 
+            else 
+            {
+                if (got_frame && !d->pkt->data) 
+                {
                     d->packet_pending = 1;
                 }
                 ret = got_frame ? 0 : (d->pkt->data ? AVERROR(EAGAIN) : AVERROR_EOF);
             }
             av_packet_unref(d->pkt);
-        } else {
+        } 
+        else 
+        {
             if (avcodec_send_packet(d->avctx, d->pkt) == AVERROR(EAGAIN)) {
                 av_log(d->avctx, AV_LOG_ERROR, "Receive_frame and send_packet both returned EAGAIN, which is an API violation.\n");
                 d->packet_pending = 1;

@@ -45,6 +45,7 @@ public:
 
     bool    open_subtitle_filter( std::string args, std::string desc );
     QImage  get_subtitle_image();
+    bool    is_graphic_subtitle();
 
     int     send_video_frame( AVFrame *video_frame );
     int     render_subtitle();
@@ -53,11 +54,13 @@ public:
     void    switch_subtltle( int index );
 
     void    set_filter_args( std::string args );
-
-    SubSourceType   get_sub_src_type();
-    void            set_sub_src_type( SubSourceType type );
+    void    set_sub_src_type( SubSourceType type );
 
     std::string     get_subfile();
+    int64_t         get_timestamp();
+
+    SubSourceType   get_sub_src_type();
+
     std::pair<std::string,std::string>  get_subtitle_param( AVFormatContext *fmt_ctx, std::string src_file, SubData sd );
     std::vector<std::string>            get_embedded_subtitle_list();
 
@@ -78,6 +81,7 @@ private:
     SubSourceType       sub_src_type    =   SubSourceType::NONE;
 
     int     sub_index   =   0;
+    bool    is_graphic  =   false;
 
     QImage  sub_image;     // 將video frame打上字幕後存在這邊
 

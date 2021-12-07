@@ -65,19 +65,21 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     ss.str("");
     ss.clear();   
 
-    // make filename param. 留意絕對路徑的格式, 不能亂改, 會造成錯誤.
-    std::string     filename_param  =   "\\";
-    filename_param  +=  src_file;
-    filename_param.insert( 2, 1, '\\' );
+    if( is_graphic_subtitle() == true )  // 無法下參數. 圖片subtitle.
+    {
+        // make filename param. 留意絕對路徑的格式, 不能亂改, 會造成錯誤.
+        std::string     filename_param  =   "\\";
+        filename_param  +=  src_file;
+        filename_param.insert( 2, 1, '\\' );
 
-    // 理論上這邊的字串可以精簡...
-    sub_index   =   sd.sub_index;
-    ss << "subtitles='" << filename_param << "':stream_index=" << sub_index;
+        // 理論上這邊的字串可以精簡...
+        sub_index   =   sd.sub_index;
+        ss << "subtitles='" << filename_param << "':stream_index=" << sub_index;
 
-    out_param    =   ss.str();
+        out_param    =   ss.str();
 
-    MYLOG( LOG::INFO, "out = %s", out_param.c_str() );
-
+        MYLOG( LOG::INFO, "out = %s", out_param.c_str() );
+    }
 
     return  std::make_pair( in_param, out_param );
 }
@@ -131,10 +133,26 @@ SubDecode::open_codec_context()
 int     SubDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
     Decode::open_all_codec( fmt_ctx, type );
+
+    if( dec_ctx->pix_fmt != AV_PIX_FMT_NONE )
+        is_graphic  =   true;
+    else
+        is_graphic  =   false;
+
     return  SUCCESS;
 }
 
 
+
+
+
+/*******************************************************************************
+SubDecode::is_graphic_subtitle()
+********************************************************************************/
+bool    SubDecode::is_graphic_subtitle()
+{
+    return  is_graphic;
+}
 
 
 
@@ -158,7 +176,12 @@ SubDecode::send_video_frame()
 ********************************************************************************/
 int SubDecode::send_video_frame( AVFrame *video_frame )
 {
-    int ret =   av_buffersrc_add_frame_flags( bf_src_ctx, video_frame, AV_BUFFERSRC_FLAG_KEEP_REF );    
+    frame->best_effort_timestamp    =   video_frame->best_effort_timestamp;
+    frame->pts                      =   video_frame->best_effort_timestamp;
+
+    //int ret =   av_buffersrc_add_frame_flags( bf_src_ctx, video_frame, AV_BUFFERSRC_FLAG_KEEP_REF );    
+    int ret =   av_buffersrc_add_frame( bf_src_ctx, video_frame );    
+
     if( ret < 0 )    
         MYLOG( LOG::ERROR, "add frame flag fail." );
     return  ret;
@@ -207,7 +230,8 @@ SubDecode::render_subtitle()
 ********************************************************************************/
 int SubDecode::render_subtitle()
 {
-    int ret     =   av_buffersink_get_frame( bf_sink_ctx, frame );    
+    //int ret     =   av_buffersink_get_frame( bf_sink_ctx, frame );    
+    int ret     =   av_buffersink_get_frame_flags( bf_sink_ctx, frame, 0 );    
 
     if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF ) 
         return  0;  // 沒資料,但沒錯誤.
@@ -217,7 +241,10 @@ int SubDecode::render_subtitle()
         return  -1;
     }
 
-    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, sub_dst_data, sub_dst_linesize );
+    ret     =   sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, sub_dst_data, sub_dst_linesize );
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "ret = %d", ret );
+
     memcpy( sub_image.bits(), sub_dst_data[0], sub_dst_bufsize );
 
     return 1;
@@ -281,7 +308,8 @@ int     SubDecode::end()
 
     sub_file.clear();
     subtitle_args.clear();
-    sub_src_type  =   SubSourceType::NONE;
+    sub_src_type    =   SubSourceType::NONE;
+    is_graphic      =   false;
 
     Decode::end();
     return  SUCCESS;
@@ -386,25 +414,39 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
         return false;
     }
 
-    //
-    output->name        =   av_strdup("in");
-    output->next        =   nullptr;
-    output->pad_idx     =   0;
-    output->filter_ctx  =   bf_src_ctx;
+    if( desc.empty() == false )
+    {        
+        output->name        =   av_strdup("in");
+        output->next        =   nullptr;
+        output->pad_idx     =   0;
+        output->filter_ctx  =   bf_src_ctx;
 
-    input->name         =   av_strdup("out");
-    input->next         =   nullptr;
-    input->pad_idx      =   0;
-    input->filter_ctx   =   bf_sink_ctx;
+        input->name         =   av_strdup("out");
+        input->next         =   nullptr;
+        input->pad_idx      =   0;
+        input->filter_ctx   =   bf_sink_ctx;
 
-    //
-    ret     =   avfilter_graph_parse_ptr( graph, desc.c_str(), &input, &output, nullptr );
-    if( ret < 0 )
-    {
-        MYLOG( LOG::ERROR, "avfilter_graph_parse_ptr error" );
-        release();
-        return false;
+        //
+        ret     =   avfilter_graph_parse_ptr( graph, desc.c_str(), &input, &output, nullptr );
+        if( ret < 0 )
+        {
+            MYLOG( LOG::ERROR, "avfilter_graph_parse_ptr error" );
+            release();
+            return false;
+        }
     }
+    else
+    {
+        // 這段code其實用不到 input, output, 但就先不特別做處理了
+        ret     =   avfilter_link( bf_src_ctx, 0, bf_sink_ctx, 0 );
+        if( ret < 0 )
+        {
+            MYLOG( LOG::ERROR, "avfilter_link error" );
+            release();
+            return false;
+        }
+    }
+
 
     ret     =   avfilter_graph_config( graph, nullptr );
     if( ret < 0 )
@@ -432,7 +474,7 @@ SubDecode::generate_subtitle_image()
 
 這個程式碼沒執行過, 是從網路複製過來的, 想辦法測試.
 ********************************************************************************/
-void    SubDecode::generate_subtitle_image(  AVSubtitle &subtitle )
+void    SubDecode::generate_subtitle_image( AVSubtitle &subtitle )
 {
     MYLOG( LOG::DEBUG, "first run generate_subtitle_image subtitle" );
 
@@ -456,6 +498,7 @@ void    SubDecode::generate_subtitle_image(  AVSubtitle &subtitle )
         sws_freeContext(swsContext);        
 
         sub_image  =   QImage( dst_data[0], sub_rect->w, sub_rect->h, QImage::Format_RGBA8888).copy();
+        sub_image.save("H:\\test.jpg");
         av_freep(&dst_data[0]);
     }
 }
@@ -474,13 +517,14 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
 
     int     got_sub     =   0;
     int     ret         =   avcodec_decode_subtitle2( dec, &subtitle, &got_sub, pkt );
+
     
     if( ret >= 0 && got_sub > 0 )
     {
         if( got_sub > 0 )
         {
             // 代表字幕是圖片格式, 需要產生對應的字幕圖檔.
-            if (subtitle.format == 0)
+            if( subtitle.format == 0 )
                 generate_subtitle_image( subtitle );
 
             avsubtitle_free( &subtitle );
@@ -673,23 +717,44 @@ SubDecode::switch_subtltle()
 ********************************************************************************/
 void    SubDecode::switch_subtltle( int index )
 {
-    sub_index   =   index;
+    std::string     desc;
 
-    std::string     filename    =   "\\";    
-    filename    +=  sub_file;
-    filename.insert( 2, 1, '\\' );
+    if( is_graphic_subtitle() == true )    
+        open_subtitle_filter( subtitle_args, desc );   // 這邊的例外處理沒有寫得很好,有空再想怎麼修
+    else
+    {
+        sub_index   =   index;
 
-    std::stringstream   ss;
-    ss << "subtitles='" << filename << "':stream_index=" << sub_index;
+        std::string     filename    =   "\\";    
+        filename    +=  sub_file;
+        filename.insert( 2, 1, '\\' );
 
-    std::string     desc    =   ss.str();
+        std::stringstream   ss;
+        ss << "subtitles='" << filename << "':stream_index=" << sub_index;
 
-    open_subtitle_filter( subtitle_args, desc );
+        desc    =   ss.str();
+
+        open_subtitle_filter( subtitle_args, desc );
+    }
 }
 
 
 
 
 
+
+
+/*******************************************************************************
+SubDecode::get_timestamp()
+********************************************************************************/
+int64_t     SubDecode::get_timestamp()
+{
+    if( frame->best_effort_timestamp == AV_NOPTS_VALUE )
+        return  0;
+
+    double  dpts    =   av_q2d(stream->time_base) * frame->best_effort_timestamp;
+    int64_t ts      =   dpts * 1000;  // ms
+    return  ts;
+}
 
 
