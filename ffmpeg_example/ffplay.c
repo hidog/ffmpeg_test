@@ -563,10 +563,16 @@ static int decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, S
     return 0;
 }
 
-static int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
+
+
+
+
+static int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) 
+{
     int ret = AVERROR(EAGAIN);
 
-    for (;;) {
+    for (;;) 
+    {
         if (d->queue->serial == d->pkt_serial) {
             do {
                 if (d->queue->abort_request)
@@ -659,6 +665,13 @@ static int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
         }
     }
 }
+
+
+
+
+
+
+
 
 static void decoder_destroy(Decoder *d) {
     av_packet_free(&d->pkt);
@@ -2220,6 +2233,11 @@ the_end:
     return 0;
 }
 
+
+
+
+
+
 static int subtitle_thread(void *arg)
 {
     VideoState *is = arg;
@@ -2253,6 +2271,12 @@ static int subtitle_thread(void *arg)
     }
     return 0;
 }
+
+
+
+
+
+
 
 /* copy samples for viewing in editor window */
 static void update_sample_display(VideoState *is, short *samples, int samples_size)
@@ -2593,7 +2617,12 @@ static int stream_component_open(VideoState *is, int stream_index)
     ret = avcodec_parameters_to_context(avctx, ic->streams[stream_index]->codecpar);
     if (ret < 0)
         goto fail;
-    avctx->pkt_timebase = ic->streams[stream_index]->time_base;
+
+
+    if( stream_index != 2 )
+        avctx->pkt_timebase = ic->streams[stream_index]->time_base;
+
+
 
     codec = avcodec_find_decoder(avctx->codec_id);
 
