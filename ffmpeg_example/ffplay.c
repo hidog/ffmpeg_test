@@ -2822,7 +2822,7 @@ static int read_thread(void *arg)
 
 
 
-    for (i = 0; i < ic->nb_streams; i++) 
+    /*for (i = 0; i < ic->nb_streams; i++) 
     {
         AVStream *st = ic->streams[i];
         enum AVMediaType type = st->codecpar->codec_type;
@@ -2830,16 +2830,21 @@ static int read_thread(void *arg)
         if (type >= 0 && wanted_stream_spec[type] && st_index[type] == -1)
             if (avformat_match_stream_specifier(ic, st, wanted_stream_spec[type]) > 0)
                 st_index[type] = i;
-    }
+    }*/
 
 
 
-    for (i = 0; i < AVMEDIA_TYPE_NB; i++) {
-        if (wanted_stream_spec[i] && st_index[i] == -1) {
+    for (i = 0; i < AVMEDIA_TYPE_NB; i++) 
+    {
+        if (wanted_stream_spec[i] && st_index[i] == -1) 
+        {
             av_log(NULL, AV_LOG_ERROR, "Stream specifier %s does not match any %s stream\n", wanted_stream_spec[i], av_get_media_type_string(i));
             st_index[i] = INT_MAX;
         }
     }
+
+
+
 
     if (!video_disable)
         st_index[AVMEDIA_TYPE_VIDEO] =
