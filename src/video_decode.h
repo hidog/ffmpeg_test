@@ -28,7 +28,6 @@ public:
     int     open_codec_context( AVFormatContext *fmt_ctx ) override;
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
     int     recv_frame( int index ) override;
-
     
     int     init() override;
     int     end() override;
@@ -39,6 +38,7 @@ public:
     void        output_video_frame_info();
     int64_t     get_timestamp();
     VideoData   output_video_data();
+    QImage      get_video_image();        
 
     AVPixelFormat   get_pix_fmt();
 

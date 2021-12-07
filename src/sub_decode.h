@@ -55,6 +55,7 @@ public:
 
     void    set_filter_args( std::string args );
     void    set_sub_src_type( SubSourceType type );
+    bool    is_video_in_duration( int64_t timestamp );
 
     std::string     get_subfile();
     int64_t         get_timestamp();
@@ -83,7 +84,13 @@ private:
     int     sub_index   =   0;
     bool    is_graphic  =   false;
 
-    QImage  sub_image;     // 將video frame打上字幕後存在這邊
+    // use for generate subtitle image.
+    int         got_sub         =   0;
+    double      sub_dpts        =   -1; 
+    double      sub_duration    =   -1;
+
+    // v-frame 加上 subtitle, 或是產生 subtitle image.
+    QImage  sub_image;   
 
     uint8_t  *sub_dst_data[4]     =   { nullptr };
     int      sub_dst_linesize[4]  =   { 0 };

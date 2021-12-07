@@ -65,7 +65,7 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     ss.str("");
     ss.clear();   
 
-    if( is_graphic_subtitle() == true )  // 無法下參數. 圖片subtitle.
+    if( is_graphic_subtitle() == false )  // 無法下參數. 圖片subtitle.
     {
         // make filename param. 留意絕對路徑的格式, 不能亂改, 會造成錯誤.
         std::string     filename_param  =   "\\";
@@ -161,6 +161,10 @@ SubDecode::init()
 ********************************************************************************/
 int     SubDecode::init()
 {
+    got_sub         =   0;
+    sub_dpts        =   -1; 
+    sub_duration    =   -1;
+
     //graph    =   avfilter_graph_alloc();
     Decode::init();
     return  SUCCESS;
@@ -176,8 +180,8 @@ SubDecode::send_video_frame()
 ********************************************************************************/
 int SubDecode::send_video_frame( AVFrame *video_frame )
 {
-    frame->best_effort_timestamp    =   video_frame->best_effort_timestamp;
-    frame->pts                      =   video_frame->best_effort_timestamp;
+    //frame->best_effort_timestamp    =   video_frame->best_effort_timestamp;
+    //frame->pts                      =   video_frame->best_effort_timestamp;
 
     //int ret =   av_buffersrc_add_frame_flags( bf_src_ctx, video_frame, AV_BUFFERSRC_FLAG_KEEP_REF );    
     int ret =   av_buffersrc_add_frame( bf_src_ctx, video_frame );    
@@ -310,6 +314,10 @@ int     SubDecode::end()
     subtitle_args.clear();
     sub_src_type    =   SubSourceType::NONE;
     is_graphic      =   false;
+
+    got_sub         =   0;
+    sub_dpts        =   -1; 
+    sub_duration    =   -1;
 
     Decode::end();
     return  SUCCESS;
@@ -506,6 +514,23 @@ void    SubDecode::generate_subtitle_image( AVSubtitle &subtitle )
 
 
 
+
+
+/*******************************************************************************
+SubDecode::is_video_in_duration()
+********************************************************************************/
+bool    SubDecode::is_video_in_duration( int64_t timestamp )
+{
+    if( timestamp >= sub_dpts && timestamp <= sub_dpts + sub_duration )
+        return  true;
+    else
+        return  false;
+}
+
+
+
+
+
 /*******************************************************************************
 SubDecode::decode_subtitle()
 ********************************************************************************/
@@ -515,17 +540,30 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
 
     AVSubtitle  subtitle {0};
 
-    int     got_sub     =   0;
+    got_sub     =   0;
     int     ret         =   avcodec_decode_subtitle2( dec, &subtitle, &got_sub, pkt );
-
     
     if( ret >= 0 && got_sub > 0 )
     {
         if( got_sub > 0 )
         {
+            subtitle.pts    =   pkt->pts;       // 時間控制項怪怪的,需要研究
+
             // 代表字幕是圖片格式, 需要產生對應的字幕圖檔.
             if( subtitle.format == 0 )
+            {
                 generate_subtitle_image( subtitle );
+
+                if( subtitle.pts != AV_NOPTS_VALUE)
+                    sub_dpts    =   1.0 * subtitle.pts / AV_TIME_BASE;
+                else
+                    sub_dpts    =   0;                
+
+                sub_duration    =   1.0 * (subtitle.end_display_time - subtitle.start_display_time) / 1000;
+
+                if( subtitle.start_display_time != 0 )
+                    MYLOG( LOG::ERROR, "start time not zero, need handle." );
+            }
 
             avsubtitle_free( &subtitle );
             return  SUCCESS;

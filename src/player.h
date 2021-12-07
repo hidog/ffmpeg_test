@@ -52,7 +52,7 @@ public:
     int     decode( Decode *dc, AVPacket* pkt );
     void    set_sub_file( std::string str );
 
-    int     decode_video_with_subtitle( AVPacket* pkt );
+    int     decode_video_with_nongraphic_subtitle( AVPacket* pkt );
     void    switch_subtitle( std::string path );
     void    switch_subtitle( int index );
     bool    is_embedded_subtitle();
@@ -60,6 +60,7 @@ public:
 
     int64_t     get_duration_time();
 
+    VideoData       overlap_subtitle_image();
     VideoSetting    get_video_setting();
     AudioSetting    get_audio_setting();
 

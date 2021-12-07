@@ -196,6 +196,23 @@ int     VideoDecode::end()
 
 
 
+/*******************************************************************************
+VideoDecode::get_video_image()
+********************************************************************************/
+QImage      VideoDecode::get_video_image()
+{
+    QImage  image { width, height, QImage::Format_RGB888 };
+
+    //av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
+    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, video_dst_data, video_dst_linesize );
+    memcpy( image.bits(), video_dst_data[0], video_dst_bufsize );
+
+    return  image;
+}
+
+
+
+
 
 
 /*******************************************************************************
@@ -207,15 +224,9 @@ VideoData   VideoDecode::output_video_data()
 {
     VideoData   vd;
 
-    QImage  image { width, height, QImage::Format_RGB888 };
-
-    //av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
-    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, video_dst_data, video_dst_linesize );
-    memcpy( image.bits(), video_dst_data[0], video_dst_bufsize );
-
     //
     vd.index        =   frame_count;
-    vd.frame        =   image;
+    vd.frame        =   get_video_image();
     vd.timestamp    =   get_timestamp();
 
     return  vd;

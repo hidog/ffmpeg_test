@@ -618,6 +618,8 @@ Player::decode
 ********************************************************************************/
 int     Player::decode( Decode *dc, AVPacket* pkt )
 {
+    // switch subtitle track
+    // 寫在這邊是為了方便未來跟multi-thread decode結合.
     if( switch_subtitle_flag == true )
     {
         switch_subtitle_flag    =   false;
@@ -639,9 +641,10 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
     }
 
     // handle video stream with subtitle
-    if( s_decoder.exist_stream() == true && v_decoder.find_index( pkt->stream_index ) == true )
+    if( s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == false &&
+        v_decoder.find_index( pkt->stream_index ) == true )
     {
-        decode_video_with_subtitle(pkt);
+        decode_video_with_nongraphic_subtitle(pkt);
         return  SUCCESS;
     }
 
@@ -660,7 +663,10 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
 
             if( pkt->stream_index == v_decoder.current_index() )
             {
-                vdata   =   v_decoder.output_video_data();
+                if( s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == true )
+                    vdata   =   overlap_subtitle_image();
+                else
+                    vdata   =   v_decoder.output_video_data();
                 v_mtx.lock();
                 video_queue.push(vdata);
                 v_mtx.unlock();
@@ -685,10 +691,12 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
 
 
 
+
+
 /*******************************************************************************
 Player::decode_video_with_subtitle()
 ********************************************************************************/
-int    Player::decode_video_with_subtitle( AVPacket* pkt )
+int    Player::decode_video_with_nongraphic_subtitle( AVPacket* pkt )
 {
     int         ret         =   v_decoder.send_packet(pkt);
     AVFrame     *v_frame    =   nullptr;
@@ -847,4 +855,52 @@ void    Player::switch_subtitle( int index )
     new_subtitle_index      =   index;
 }
 
+
+
+
+#include <QPainter>
+
+
+
+/*******************************************************************************
+Player::overlap_subtitle_image()
+********************************************************************************/
+VideoData       Player::overlap_subtitle_image()
+{
+    int64_t     timestamp   =   v_decoder.get_timestamp();
+    VideoData   vdata;
+
+
+    if( s_decoder.is_video_in_duration( timestamp ) )
+    {
+        QImage  v_img   =   v_decoder.get_video_image();
+        QImage  s_img   =   s_decoder.get_subtitle_image();
+
+        
+        // 這邊程式碼有問題需要除錯跟修改
+        QImage result = v_img;
+        QPainter painter(&result);
+        QPoint startPos((v_img.width() - s_img.width()) / 2, v_img.height() - s_img.height() - 20);
+        painter.drawImage(startPos, s_img);
+
+        vdata.frame = result;
+        vdata.index = v_decoder.get_frame_count();
+        vdata.timestamp = timestamp;
+
+    }
+    else
+    {
+        vdata     =   v_decoder.output_video_data();
+    }
+
+#if 0
+    AVFrame     *sub_frame  =   s_decoder.get_frame();
+    double      dpts        =   0;
+
+    if( sub_frame->pts != AV_NOPTS_VALUE)
+        dpts = 1.0 * sub_frame->pts / AV_TIME_BASE;
+#endif
+
+    return vdata;
+}
 
