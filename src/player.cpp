@@ -2,6 +2,8 @@
 #include "tool.h"
 
 #include <thread>
+#include <QPainter>
+
 
 
 
@@ -858,7 +860,6 @@ void    Player::switch_subtitle( int index )
 
 
 
-#include <QPainter>
 
 
 
@@ -875,15 +876,13 @@ VideoData       Player::overlap_subtitle_image()
     {
         QImage  v_img   =   v_decoder.get_video_image();
         QImage  s_img   =   s_decoder.get_subtitle_image();
-
         
-        // 這邊程式碼有問題需要除錯跟修改
-        QImage result = v_img;
-        QPainter painter(&result);
-        QPoint startPos((v_img.width() - s_img.width()) / 2, v_img.height() - s_img.height() - 20);
+        QImage      render_img  =   v_img;
+        QPainter    painter(&render_img);
+        QPoint  startPos((v_img.width() - s_img.width()) / 2, v_img.height() - s_img.height() - 20);
         painter.drawImage(startPos, s_img);
 
-        vdata.frame = result;
+        vdata.frame = render_img;
         vdata.index = v_decoder.get_frame_count();
         vdata.timestamp = timestamp;
 

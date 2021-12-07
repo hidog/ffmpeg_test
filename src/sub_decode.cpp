@@ -180,9 +180,6 @@ SubDecode::send_video_frame()
 ********************************************************************************/
 int SubDecode::send_video_frame( AVFrame *video_frame )
 {
-    //frame->best_effort_timestamp    =   video_frame->best_effort_timestamp;
-    //frame->pts                      =   video_frame->best_effort_timestamp;
-
     //int ret =   av_buffersrc_add_frame_flags( bf_src_ctx, video_frame, AV_BUFFERSRC_FLAG_KEEP_REF );    
     int ret =   av_buffersrc_add_frame( bf_src_ctx, video_frame );    
 
@@ -473,8 +470,39 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
 
 
 
+// porting 這段程式碼
+#if 0
+static void calculate_display_rect(SDL_Rect *rect,
+    int scr_xleft, int scr_ytop, int scr_width, int scr_height,
+    int pic_width, int pic_height, AVRational pic_sar)
+{
 
+    AVRational aspect_ratio = pic_sar;
+    int64_t width, height, x, y;
 
+    if (av_cmp_q(aspect_ratio, av_make_q(0, 1)) <= 0)
+        aspect_ratio = av_make_q(1, 1);
+
+    aspect_ratio = av_mul_q(aspect_ratio, av_make_q(pic_width, pic_height));
+
+    /* XXX: we suppose the screen has a 1.0 pixel ratio */
+    height = scr_height;
+    width = av_rescale(height, aspect_ratio.num, aspect_ratio.den) & ~1;
+
+    if (width > scr_width) 
+    {
+        width = scr_width;
+        height = av_rescale(width, aspect_ratio.den, aspect_ratio.num) & ~1;
+    }
+
+    x = (scr_width - width) / 2;
+    y = (scr_height - height) / 2;
+    rect->x = scr_xleft + x;
+    rect->y = scr_ytop  + y;
+    rect->w = FFMAX((int)width,  1);
+    rect->h = FFMAX((int)height, 1);
+}
+#endif
 
 
 /*******************************************************************************
@@ -495,20 +523,30 @@ void    SubDecode::generate_subtitle_image( AVSubtitle &subtitle )
         {
             AVSubtitleRect  *sub_rect   =   subtitle.rects[i];
 
+            // 這邊理論上需要加上寬高檢查, 有遇到問題在加吧~
+            sub_x   =   sub_rect->x;
+            sub_y   =   sub_rect->y;
+            sub_w   =   sub_rect->w;
+            sub_h   =   sub_rect->h;
+
             int     dst_linesize[4];
             uint8_t *dst_data[4];
 
+            sub_x = sub_x * 2 / 3;
+            sub_y = sub_y * 2 / 3;
+
             //
-            av_image_alloc( dst_data, dst_linesize, sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA, 1 );
+            av_image_alloc( dst_data, dst_linesize, sub_rect->w*2/3, sub_rect->h*2/3, AV_PIX_FMT_RGBA, 1 );
 
             SwsContext *swsContext  =   sws_getContext( sub_rect->w, sub_rect->h, AV_PIX_FMT_PAL8,
-                                                        sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA,
+                                                        //sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA,
+                                                        sub_rect->w*2/3, sub_rect->h*2/3, AV_PIX_FMT_RGBA,
                                                         SWS_BILINEAR, nullptr, nullptr, nullptr );
 
             sws_scale( swsContext, sub_rect->data, sub_rect->linesize, 0, sub_rect->h, dst_data, dst_linesize );
             sws_freeContext(swsContext);        
 
-            sub_image  =   QImage( dst_data[0], sub_rect->w, sub_rect->h, QImage::Format_RGBA8888).copy();       
+            sub_image  =   QImage( dst_data[0], sub_rect->w*2/3, sub_rect->h*2/3, QImage::Format_RGBA8888).copy();       
             av_freep(&dst_data[0]);
         }
         
@@ -777,6 +815,17 @@ void    SubDecode::switch_subtltle( int index )
     }
 }
 
+
+
+
+/*******************************************************************************
+SubDecode::get_subtitle_image_pos()
+********************************************************************************/
+QPoint  SubDecode::get_subtitle_image_pos()
+{
+    QPoint  pos( sub_x, sub_y );
+    return  pos;
+}
 
 
 
