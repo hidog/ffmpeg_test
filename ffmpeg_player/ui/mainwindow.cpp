@@ -39,9 +39,6 @@ MainWindow::MainWindow(QWidget *parent)
     qRegisterMetaType<VideoSetting>("VideoSetting");
     qRegisterMetaType<std::vector<std::string>>("std::vector<std::string>");
 
-
-    //video_widget    =   new QVideoWidget();
-
     //
     video_mtx       =   new QMutex( QMutex::NonRecursive );
     view_data       =   new VideoData;
@@ -254,6 +251,8 @@ void    MainWindow::finish_slot()
     QVideoWidget    *video_widget   =   ui->videoWidget;
     video_widget->setFullScreen( false );
     video_widget->setGeometry( QRect(70,70,1401,851) );  // 先寫死 之後改成能動態調整
+
+    ui->seekSlider->setSliderPosition(0);
 }
 
 
