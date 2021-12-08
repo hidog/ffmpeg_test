@@ -171,7 +171,9 @@ void VideoWorker::video_play()
         video_mtx->unlock();
 
         emit    recv_video_frame_signal();
-        emit    update_seekbar_signal( view_data->timestamp / 1000 );
+
+        if( seek_flag == false )
+            emit    update_seekbar_signal( view_data->timestamp / 1000 );
 
         last    =   now;
     };
