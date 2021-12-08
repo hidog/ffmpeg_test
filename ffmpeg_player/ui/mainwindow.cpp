@@ -135,6 +135,9 @@ void MainWindow::set_signal_slot()
     connect(    video_worker,       &VideoWorker::update_seekbar_signal,            this,           &MainWindow::update_seekbar_slot            );
 
     connect(    ui->volumeSlider,   &QSlider::valueChanged,                         audio_worker,   &AudioWorker::volume_slot                   );
+    connect(    ui->seekSlider,     &QSlider::valueChanged,                         worker,         &Worker::seek_slot                          );
+    connect(    ui->seekSlider,     &QSlider::valueChanged,                         audio_worker,   &AudioWorker::seek_slot                     );
+    connect(    ui->seekSlider,     &QSlider::valueChanged,                         video_worker,   &VideoWorker::seek_slot                     );
 }
 
 
@@ -178,6 +181,9 @@ MainWindow::update_seekbar()
 ********************************************************************************/
 void    MainWindow::update_seekbar_slot( int sec )
 {
+    if( ui->seekSlider->is_mouse_press() == true )
+        return;
+
     int     max     =   ui->seekSlider->maximum();
     int     min     =   ui->seekSlider->minimum();
 

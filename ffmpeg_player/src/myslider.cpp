@@ -41,6 +41,7 @@ MySlider::mousePressEvent()
 ********************************************************************************/
 void    MySlider::mousePressEvent( QMouseEvent *ev )
 {
+    mouse_pressed   =   true;
     mouse_move(ev);
 }
 
@@ -57,10 +58,25 @@ void    MySlider::mouseMoveEvent( QMouseEvent *ev )
 
 
 /*******************************************************************************
+MySlider::mouseMoveEvent()
+********************************************************************************/
+bool    MySlider::is_mouse_press()
+{
+    return  mouse_pressed;
+}
+
+
+
+
+
+
+/*******************************************************************************
 MySlider::mouseReleaseEvent()
 ********************************************************************************/
 void    MySlider::mouseReleaseEvent( QMouseEvent *ev )
 {
+    mouse_pressed   =   false;
+
     int value   =   mouse_move(ev);
     if( hasTracking() == false )
         setValue(value);

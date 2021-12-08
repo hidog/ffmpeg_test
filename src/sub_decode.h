@@ -36,6 +36,8 @@ public:
     int     open_codec_context( AVFormatContext *fmt_ctx ) override;
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
     bool    exist_stream() override;
+    void    flush_for_seek() override;
+
 
     int     decode_subtitle( AVPacket* pkt );
     void    generate_subtitle_image( AVSubtitle &subtitle );
@@ -59,10 +61,7 @@ public:
 
     void    init_graphic_subtitle( SubData sd );
 
-
     std::string     get_subfile();
-    //int64_t         get_timestamp();
-
     SubSourceType   get_sub_src_type();
 
     std::pair<std::string,std::string>  get_subtitle_param( AVFormatContext *fmt_ctx, std::string src_file, SubData sd );
@@ -97,7 +96,6 @@ private:
     double      sub_duration    =   -1;
     bool        has_sub_image   =   false;
     int         sub_x, sub_y;
-
 
     // v-frame 加上 subtitle, 或是產生 subtitle image.
     QImage      sub_image;   

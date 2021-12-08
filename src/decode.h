@@ -39,6 +39,7 @@ public:
     virtual int     open_codec_context( AVFormatContext *fmt_ctx ) = 0;
     virtual bool    exist_stream();
     virtual int     recv_frame( int index );
+    virtual void    flush_for_seek();
 
     int     send_packet( const AVPacket *pkt );
     void    unref_frame();
@@ -46,7 +47,7 @@ public:
     bool    find_index( int index );
     int     current_index();
     int     get_dec_map_size();
-    void    flush_all_stresam();
+    void    flush_all_stream();
     
     AVFrame*        get_frame();
     AVMediaType     get_decode_context_type();

@@ -223,3 +223,16 @@ void    Worker::switch_subtitle_slot_int( int index )
     if( player.is_embedded_subtitle() == true )
         player.switch_subtitle(index);
 }
+
+
+
+
+
+
+/*******************************************************************************
+Worker::seek_slot()
+********************************************************************************/
+void    Worker::seek_slot( int value )
+{
+    player.seek( value );
+}

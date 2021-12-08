@@ -37,6 +37,7 @@ public:
 
     void        output_video_frame_info();
     int64_t     get_timestamp();
+    int64_t     get_pts( int sec );
     VideoData   output_video_data();
     QImage      get_video_image();        
 

@@ -265,9 +265,39 @@ AVMediaType     Decode::get_decode_context_type()
 
 
 /*******************************************************************************
+Decode::flush_for_seek()
+********************************************************************************/
+void    Decode::flush_for_seek()
+{
+    int     ret;
+
+    AVCodecContext  *ctx    =   nullptr;
+    AVFrame         *fa     =   nullptr;
+
+    for( auto itr : dec_map )
+    {
+        ctx     =   itr.second;
+        avcodec_send_packet( ctx, nullptr );
+
+        while(true)
+        {
+            ret     =   avcodec_receive_frame( ctx, fa );
+            if( ret < 0 )
+                break;
+            av_frame_unref(fa);
+        }
+    }
+}
+
+
+
+
+
+
+/*******************************************************************************
 Decode::flush_all_stresam()
 ********************************************************************************/
-void    Decode::flush_all_stresam()
+void    Decode::flush_all_stream()
 {
     int     ret;
 

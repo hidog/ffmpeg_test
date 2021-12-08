@@ -10,6 +10,7 @@
 extern "C" {
 
 #include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
 
 } // end extern "C"
 
@@ -581,6 +582,45 @@ void    Player::stop()
 
 
 
+
+/*******************************************************************************
+Player::handle_seek()
+
+看討論, avformat_seek_file 比 av_seek_frame 好
+但細節需要研究.
+********************************************************************************/
+void    Player::handle_seek()
+{
+    int         ret;
+
+    v_decoder.flush_for_seek();
+    a_decoder.flush_for_seek();
+    s_decoder.flush_for_seek();
+
+    // wait for video and audio queue flush.
+    while( video_queue.empty() == false )
+        SLEEP_10MS;
+    while( audio_queue.empty() == false )
+        SLEEP_10MS;
+
+    // run seek.
+    AVFormatContext*    fmt_ctx     =   demuxer.get_format_context();
+    int64_t     min     =   v_decoder.get_pts( seek_value - 10 ),
+                max     =   v_decoder.get_pts( seek_value + 10 ),
+                sec     =   v_decoder.get_pts( seek_value );
+
+    avformat_flush( fmt_ctx );  // 看起來是走網路才需要做這個動作...
+    ret     =   avformat_seek_file( fmt_ctx, -1, min, sec, max, 0 );
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "seek fail." );
+}
+
+
+
+
+
+
+
 /*******************************************************************************
 Player::play_QT()
 ********************************************************************************/
@@ -593,11 +633,19 @@ void    Player::play_QT()
     //
     while( stop_flag == false ) 
     {
+        //
         while( demux_need_wait() == true )
         {
             if( stop_flag == true )
                 break;
             SLEEP_1MS;
+        }
+
+        //
+        if( seek_flag == true )     
+        {
+            seek_flag   =   false;
+            handle_seek();        
         }
 
         //
@@ -820,7 +868,7 @@ int    Player::flush()
             v_decoder.unref_frame();  
         }
     }
-    v_decoder.flush_all_stresam();
+    v_decoder.flush_all_stream();
 
     // flush audio
     ret     =   a_decoder.send_packet(nullptr);
@@ -841,7 +889,7 @@ int    Player::flush()
             a_decoder.unref_frame();
         }
     }
-    a_decoder.flush_all_stresam();
+    a_decoder.flush_all_stream();
 
     return 0;
 }
@@ -924,4 +972,18 @@ VideoData       Player::overlap_subtitle_image()
 
     return vdata;
 }
+
+
+
+
+
+/*******************************************************************************
+Player::seek()
+********************************************************************************/
+void    Player::seek( int value )
+{
+    seek_flag   =   true;
+    seek_value  =   value;
+}
+
 

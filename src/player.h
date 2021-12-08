@@ -44,6 +44,7 @@ public:
     int     end();
     int     flush();
     void    stop();
+    void    seek( int value );
 
     //
     bool    demux_need_wait();
@@ -59,6 +60,7 @@ public:
     bool    is_file_subtitle();
 
     void    init_subtitle( AVFormatContext *fmt_ctx );
+    void    handle_seek();    
 
     int64_t     get_duration_time();
 
@@ -97,6 +99,9 @@ private:
     bool    switch_subtitle_flag    =   false;
     int     new_subtitle_index      =   0;
     bool    stop_flag               =   false;
+
+    bool    seek_flag   =   false;
+    int     seek_value  =   0;
 
 #ifdef USE_MT
     bool    v_thr_start     =   false,
