@@ -58,6 +58,8 @@ public:
     bool    is_embedded_subtitle();
     bool    is_file_subtitle();
 
+    void    init_subtitle( AVFormatContext *fmt_ctx );
+
     int64_t     get_duration_time();
 
     VideoData       overlap_subtitle_image();

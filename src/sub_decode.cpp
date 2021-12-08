@@ -41,6 +41,9 @@ SubDecode::get_subtitle_param()
 ********************************************************************************/
 std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatContext* fmt_ctx, std::string src_file, SubData sd )
 {
+    if( is_graphic_subtitle() == true )
+        MYLOG( LOG::ERROR, "cant handle graphic subtitle." );
+
     std::stringstream   ss;
     std::string     in_param, out_param;;
     
@@ -65,21 +68,18 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     ss.str("");
     ss.clear();   
 
-    if( is_graphic_subtitle() == false )  // 無法下參數. 圖片subtitle.
-    {
-        // make filename param. 留意絕對路徑的格式, 不能亂改, 會造成錯誤.
-        std::string     filename_param  =   "\\";
-        filename_param  +=  src_file;
-        filename_param.insert( 2, 1, '\\' );
-
-        // 理論上這邊的字串可以精簡...
-        sub_index   =   sd.sub_index;
-        ss << "subtitles='" << filename_param << "':stream_index=" << sub_index;
-
-        out_param    =   ss.str();
-
-        MYLOG( LOG::INFO, "out = %s", out_param.c_str() );
-    }
+    // make filename param. 留意絕對路徑的格式, 不能亂改, 會造成錯誤.
+    std::string     filename_param  =   "\\";
+    filename_param  +=  src_file;
+    filename_param.insert( 2, 1, '\\' );
+    
+    // 理論上這邊的字串可以精簡...
+    sub_index   =   sd.sub_index;
+    ss << "subtitles='" << filename_param << "':stream_index=" << sub_index;
+    
+    out_param    =   ss.str();
+    
+    MYLOG( LOG::INFO, "out = %s", out_param.c_str() );
 
     return  std::make_pair( in_param, out_param );
 }
@@ -178,8 +178,8 @@ SubDecode::init_graphic_subtitle()
 ********************************************************************************/
 void    SubDecode::init_graphic_subtitle( SubData sd )
 {
-    v_w     =   sd.width;
-    v_h     =   sd.height;
+    video_width     =   sd.width;
+    video_height    =   sd.height;
 }
 
 
@@ -203,14 +203,6 @@ int SubDecode::send_video_frame( AVFrame *video_frame )
 
 
 
-/*******************************************************************************
-SubDecode::init_sub_image()
-********************************************************************************/
-void    SubDecode::init_sub_image( SubData sd )
-{
-    sub_image  =   QImage{ sd.width, sd.height, QImage::Format_RGB888 };  // 未來考慮移走這邊的code, 避免重複初始化.
-}
-
 
 
 
@@ -220,7 +212,9 @@ SubDecode::init_sws_ctx()
 ********************************************************************************/
 int SubDecode::init_sws_ctx( SubData sd )
 {
-    sub_dst_bufsize   =   av_image_alloc( sub_dst_data, sub_dst_linesize, sd.width, sd.height, AV_PIX_FMT_RGB24, 1 );
+    video_width         =   sd.width;
+    video_height        =   sd.height;
+    sub_dst_bufsize     =   av_image_alloc( sub_dst_data, sub_dst_linesize, video_width, video_height, AV_PIX_FMT_RGB24, 1 );
     if( sub_dst_bufsize < 0 )
     {
         MYLOG( LOG::ERROR, "Could not allocate subtitle image buffer" );
@@ -228,7 +222,7 @@ int SubDecode::init_sws_ctx( SubData sd )
     }
 
     AVPixelFormat   pix_fmt     =   static_cast<AVPixelFormat>(sd.pix_fmt);
-    sws_ctx     =   sws_getContext( sd.width, sd.height, pix_fmt, sd.width, sd.height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL );   
+    sws_ctx     =   sws_getContext( video_width, video_height, pix_fmt, video_width, video_height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL );   
     return  SUCCESS;
 }
 
@@ -242,6 +236,8 @@ SubDecode::render_subtitle()
 ********************************************************************************/
 int SubDecode::render_subtitle()
 {
+    sub_image   =   QImage( video_width, video_height, QImage::Format_RGB888 );
+
     //int ret     =   av_buffersink_get_frame( bf_sink_ctx, frame );    
     int ret     =   av_buffersink_get_frame_flags( bf_sink_ctx, frame, 0 );    
 
@@ -429,41 +425,28 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
         release();
         return false;
     }
-
-    if( desc.empty() == false )
-    {        
-        output->name        =   av_strdup("in");
-        output->next        =   nullptr;
-        output->pad_idx     =   0;
-        output->filter_ctx  =   bf_src_ctx;
-
-        input->name         =   av_strdup("out");
-        input->next         =   nullptr;
-        input->pad_idx      =   0;
-        input->filter_ctx   =   bf_sink_ctx;
-
-        //
-        ret     =   avfilter_graph_parse_ptr( graph, desc.c_str(), &input, &output, nullptr );
-        if( ret < 0 )
-        {
-            MYLOG( LOG::ERROR, "avfilter_graph_parse_ptr error" );
-            release();
-            return false;
-        }
-    }
-    else
+    
+    //
+    output->name        =   av_strdup("in");
+    output->next        =   nullptr;
+    output->pad_idx     =   0;
+    output->filter_ctx  =   bf_src_ctx;
+    
+    input->name         =   av_strdup("out");
+    input->next         =   nullptr;
+    input->pad_idx      =   0;
+    input->filter_ctx   =   bf_sink_ctx;
+    
+    //
+    ret     =   avfilter_graph_parse_ptr( graph, desc.c_str(), &input, &output, nullptr );
+    if( ret < 0 )
     {
-        // 這段code其實用不到 input, output, 但就先不特別做處理了
-        ret     =   avfilter_link( bf_src_ctx, 0, bf_sink_ctx, 0 );
-        if( ret < 0 )
-        {
-            MYLOG( LOG::ERROR, "avfilter_link error" );
-            release();
-            return false;
-        }
+        MYLOG( LOG::ERROR, "avfilter_graph_parse_ptr error" );
+        release();
+        return false;
     }
 
-
+    //
     ret     =   avfilter_graph_config( graph, nullptr );
     if( ret < 0 )
     {
@@ -482,43 +465,6 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
 
 
 
-/*******************************************************************************
-SubDecode::cal_graphic_sub_image_rect()
-porting from ffplay calculate_display_rect
-********************************************************************************/
-void    SubDecode::cal_graphic_sub_image_rect()
-{
-    AVRational aspect_ratio { 1, 1 };
-    int64_t width, height, x, y;
-
-    if (av_cmp_q(aspect_ratio, av_make_q(0, 1)) <= 0)
-        aspect_ratio = av_make_q(1, 1);
-
-    aspect_ratio = av_mul_q(aspect_ratio, av_make_q( v_w, v_h));
-
-    /* XXX: we suppose the screen has a 1.0 pixel ratio */
-    height = v_h;
-    width = av_rescale(height, aspect_ratio.num, aspect_ratio.den) & ~1;
-
-    if (width > v_w) 
-    {
-        width = v_w;
-        height = av_rescale(width, aspect_ratio.den, aspect_ratio.num) & ~1;
-    }
-
-    x = (sub_w - width) / 2;
-    y = (sub_h - height) / 2;
-    r_x = sub_x + x;
-    r_y = sub_y  + y;
-    r_w = FFMAX((int)width,  1);
-    r_h = FFMAX((int)height, 1);
-
-    //sub_x = r_x;
-   
-
-}
-
-
 
 
 
@@ -529,44 +475,59 @@ SubDecode::generate_subtitle_image()
 ********************************************************************************/
 void    SubDecode::generate_subtitle_image( AVSubtitle &subtitle )
 {
+    // set time stamp.
+    if( subtitle.pts != AV_NOPTS_VALUE)
+        sub_dpts    =   1000.0 * subtitle.pts / AV_TIME_BASE; // 單位 ms
+    else
+        sub_dpts    =   0;
+    sub_duration    =   1.0 * (subtitle.end_display_time - subtitle.start_display_time) / 1000;  // 單位不明 未來看能不能找到影片測試 end_display_time
+
+    if( subtitle.start_display_time != 0 )
+        MYLOG( LOG::ERROR, "start time not zero, need handle." );
+
+    //
     if( subtitle.num_rects == 0 )    
         has_sub_image   =   false;
     else
     {
         has_sub_image   =   true;
+
         int     i;
+        int     w, h, x, y;
+
+        if( subtitle.num_rects > 1 )
+            MYLOG( LOG::ERROR, "subtitle.num_rects = %d", subtitle.num_rects ); // 遇到再來解決,目前測試影片一次只有一張圖
 
         for( i = 0; i < subtitle.num_rects; i++ )
         {
-            AVSubtitleRect  *sub_rect   =   subtitle.rects[i];
+            // 理論上需要做一些越界檢查等等,這邊省略了. 以後有空在說
+            AVSubtitleRect  *rect   =   subtitle.rects[i];
+            AVRational      ra { video_width, dec_ctx->width };
 
-            // 這邊理論上需要加上寬高檢查, 有遇到問題在加吧~
-            sub_x   =   sub_rect->x;
-            sub_y   =   sub_rect->y;
-            sub_w   =   sub_rect->w;
-            sub_h   =   sub_rect->h;
+            w   =   av_rescale(  rect->w, ra.num, ra.den );
+            h   =   av_rescale(  rect->h, ra.num, ra.den );
+            x   =   av_rescale(  rect->x, ra.num, ra.den );
+            y   =   av_rescale(  rect->y, ra.num, ra.den );
 
-            cal_graphic_sub_image_rect();
+            sub_x   =   x;//av_rescale( x, ra.num, ra.den );
+            sub_y   =   y;//av_rescale( y, ra.num, ra.den );
 
-            int     dst_linesize[4];
-            uint8_t *dst_data[4];
-
-            //sub_x = sub_x * 2 / 3;
-            //sub_y = sub_y * 2 / 3;
+            int         dst_linesize[4] =   {0};
+            uint8_t     *dst_data[4]    =   {nullptr};
 
             //
-            av_image_alloc( dst_data, dst_linesize, r_w, r_h, AV_PIX_FMT_RGBA, 1 );
+            av_image_alloc( dst_data, dst_linesize, w, h, AV_PIX_FMT_RGBA, 1 );
 
-            SwsContext *swsContext  =   sws_getContext( sub_rect->w, sub_rect->h, AV_PIX_FMT_PAL8,
-                                                        //sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA,
-                                                        r_w, r_h, AV_PIX_FMT_RGBA,
-                                                        SWS_BILINEAR, nullptr, nullptr, nullptr );
+            SwsContext  *ctx    =   sws_getContext( rect->w, rect->h, AV_PIX_FMT_PAL8,
+                                                    w,       h,       AV_PIX_FMT_RGBA,
+                                                    SWS_BILINEAR, nullptr, nullptr, nullptr );
 
-            sws_scale( swsContext, sub_rect->data, sub_rect->linesize, 0, sub_rect->h, dst_data, dst_linesize );
-            sws_freeContext(swsContext);        
+            sws_scale( ctx, rect->data, rect->linesize, 0, rect->h, dst_data, dst_linesize );
 
-            sub_image  =   QImage( dst_data[0], r_w, r_h, QImage::Format_RGBA8888).copy();       
-            av_freep(&dst_data[0]);
+            sub_image  =    QImage( dst_data[0], w, h, QImage::Format_RGBA8888 ).copy();  // 這邊不加copy會出現破圖問題
+         
+            av_freep( &dst_data[0] );
+            sws_freeContext(ctx);        
         }
         
     }
@@ -610,18 +571,7 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
         {
             // 代表字幕是圖片格式, 需要產生對應的字幕圖檔.
             if( subtitle.format == 0 )     
-            {
-                generate_subtitle_image( subtitle );            
-
-                if( subtitle.pts != AV_NOPTS_VALUE)
-                    sub_dpts    =   1000.0 * subtitle.pts / AV_TIME_BASE; // 單位 ms
-                else
-                    sub_dpts    =   0;
-                sub_duration    =   1.0 * (subtitle.end_display_time - subtitle.start_display_time) / 1000;  // 單位不明 未來看能不能找到影片測試 end_display_time
-
-                if( subtitle.start_display_time != 0 )
-                    MYLOG( LOG::ERROR, "start time not zero, need handle." );
-            }
+                generate_subtitle_image( subtitle );                        
 
             avsubtitle_free( &subtitle );
             return  SUCCESS;
@@ -815,8 +765,6 @@ void    SubDecode::switch_subtltle( int index )
 {
     std::string     desc;
 
-    //if( is_graphic_subtitle() == true )    
-      //  open_subtitle_filter( subtitle_args, desc );   // 這邊的例外處理沒有寫得很好,有空再想怎麼修
     if( is_graphic_subtitle() == false )
     {
         sub_index   =   index;
@@ -842,7 +790,7 @@ SubDecode::get_subtitle_image_pos()
 ********************************************************************************/
 QPoint  SubDecode::get_subtitle_image_pos()
 {
-    QPoint  pos( r_x, r_y );
+    QPoint  pos( sub_x, sub_y );
     return  pos;
 }
 

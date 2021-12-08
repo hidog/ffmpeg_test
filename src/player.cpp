@@ -99,12 +99,30 @@ int     Player::init()
 
     //
     ret     =   v_decoder.init();
-    ret     =   a_decoder.init();
-
-    //
-    bool    exist_subtitle  =   false;
+    ret     =   a_decoder.init();    
 
     // handle subtitle
+    init_subtitle(fmt_ctx);
+
+    return SUCCESS;
+}
+
+
+
+
+
+/*******************************************************************************
+Player::init_subtitle()
+********************************************************************************/
+void    Player::init_subtitle( AVFormatContext *fmt_ctx )
+{
+    int             ret;
+    bool            exist_subtitle  =   false;
+    SubData         sd;
+    std::string     sub_src;
+
+    std::pair<std::string,std::string>  sub_param;
+
     if( s_decoder.exist_stream() == true )
     {
         exist_subtitle  =   true;
@@ -118,44 +136,41 @@ int     Player::init()
             exist_subtitle  =   true;
             s_decoder.set_subfile( sub_name );
             s_decoder.set_sub_src_type( SubSourceType::FROM_FILE );
-        }     
+        }
+        else
+        {
+            exist_subtitle  =   false;
+            s_decoder.set_sub_src_type( SubSourceType::NONE );
+        }
     }
 
     //
     if( exist_subtitle == true )
     {
         ret     =   s_decoder.init();
-       
-        SubData     sd;
+
         sd.width        =   v_decoder.get_video_width();
         sd.height       =   v_decoder.get_video_height();
         sd.pix_fmt      =   v_decoder.get_pix_fmt();
         sd.video_index  =   v_decoder.current_index();
         sd.sub_index    =   0;
 
-        if( s_decoder.is_graphic_subtitle() == false )
+        if( s_decoder.is_graphic_subtitle() == true )
+            s_decoder.init_graphic_subtitle(sd);        
+        else
         {
-            std::string     sub_src     =   s_decoder.get_subfile();
+            sub_src     =   s_decoder.get_subfile();
 
             s_decoder.init_sws_ctx( sd );
-            s_decoder.init_sub_image( sd );
 
             // if exist subtitle, open it.
             // 這邊有執行順序問題, 不能隨便更改執行順序      
-            std::pair<std::string,std::string>  sub_param   =   s_decoder.get_subtitle_param( fmt_ctx, sub_src, sd );
+            sub_param   =   s_decoder.get_subtitle_param( fmt_ctx, sub_src, sd );
             s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
             s_decoder.set_filter_args( sub_param.first );
-        }
-        else
-        {
-            s_decoder.init_graphic_subtitle(sd);
-        }
+        }       
     }
-
-    return SUCCESS;
 }
-
-
 
 
 
@@ -878,34 +893,28 @@ VideoData       Player::overlap_subtitle_image()
     int64_t     timestamp   =   v_decoder.get_timestamp();
     VideoData   vdata;
 
-
-    if( s_decoder.is_video_in_duration( timestamp ) )
+    if( s_decoder.is_video_in_duration( timestamp ) == false )
+        vdata     =   v_decoder.output_video_data();
+    else
     {
         QImage  v_img   =   v_decoder.get_video_image();
         QImage  s_img   =   s_decoder.get_subtitle_image();
         
-        QImage      render_img  =   v_img;
-        QPainter    painter(&render_img);
-        QPoint  startPos((v_img.width() - s_img.width()) / 2, v_img.height() - s_img.height() - 20);
-        painter.drawImage(startPos, s_img);
+        //QImage      render_img  =   v_img;
+        QPainter    painter( &v_img );
+        QPoint      pos =   s_decoder.get_subtitle_image_pos();
+        painter.drawImage( pos, s_img );
 
-        vdata.frame = render_img;
-        vdata.index = v_decoder.get_frame_count();
-        vdata.timestamp = timestamp;
+        vdata.frame     =   v_img;
+        vdata.index     =   v_decoder.get_frame_count();
+        vdata.timestamp =   timestamp;
+
+        /*static int fff = 0;
+        char str[1000];
+        sprintf( str, "H:\\%d.jpg", fff++ );
+        s_img.save(str);*/
 
     }
-    else
-    {
-        vdata     =   v_decoder.output_video_data();
-    }
-
-#if 0
-    AVFrame     *sub_frame  =   s_decoder.get_frame();
-    double      dpts        =   0;
-
-    if( sub_frame->pts != AV_NOPTS_VALUE)
-        dpts = 1.0 * sub_frame->pts / AV_TIME_BASE;
-#endif
 
     return vdata;
 }

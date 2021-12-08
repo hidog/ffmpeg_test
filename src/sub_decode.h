@@ -39,7 +39,6 @@ public:
 
     int     decode_subtitle( AVPacket* pkt );
     void    generate_subtitle_image( AVSubtitle &subtitle );
-    void    init_sub_image( SubData sd );
     void    output_sub_frame_info();
     void    set_subfile( std::string path );
 
@@ -59,7 +58,7 @@ public:
     QPoint  get_subtitle_image_pos();
 
     void    init_graphic_subtitle( SubData sd );
-    void    cal_graphic_sub_image_rect();
+
 
     std::string     get_subfile();
     int64_t         get_timestamp();
@@ -85,6 +84,11 @@ private:
     std::string         subtitle_args;
     SubSourceType       sub_src_type    =   SubSourceType::NONE;
 
+    // general use
+    int     video_width, 
+            video_height;
+
+    // non-graphic use
     int     sub_index   =   0;
     bool    is_graphic  =   false;
 
@@ -92,12 +96,11 @@ private:
     double      sub_dpts        =   -1; 
     double      sub_duration    =   -1;
     bool        has_sub_image   =   false;
-    int         sub_x, sub_y, sub_w, sub_h;
-    int         v_w, v_h;
-    int         r_x, r_y, r_w, r_h;
+    int         sub_x, sub_y;
+
 
     // v-frame 加上 subtitle, 或是產生 subtitle image.
-    QImage  sub_image;   
+    QImage      sub_image;   
 
     uint8_t  *sub_dst_data[4]     =   { nullptr };
     int      sub_dst_linesize[4]  =   { 0 };
