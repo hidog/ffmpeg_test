@@ -99,8 +99,8 @@ int     Decode::open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type )
     }
 
     // set
-    dec_ctx     =   dec_map[cs_index];
-    stream      =   stream_map[cs_index];
+    dec_ctx     =   cs_index == -1 ? nullptr : dec_map[cs_index];
+    stream      =   cs_index == -1 ? nullptr : stream_map[cs_index];
 
     return  SUCCESS;
 }

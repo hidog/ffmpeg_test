@@ -725,7 +725,7 @@ int    Player::decode_video_with_nongraphic_subtitle( AVPacket* pkt )
     int         ret         =   v_decoder.send_packet(pkt);
     AVFrame     *v_frame    =   nullptr;
     VideoData   vdata;
-
+    int64_t     ts;
 
     int         count       =   0;      // for test.
 
@@ -738,7 +738,16 @@ int    Player::decode_video_with_nongraphic_subtitle( AVPacket* pkt )
             if( ret <= 0 )
                 break;
 
+            /*
+                這邊 filter 的 function 改成不會 keep 的版本
+                所以必須先取得 ts, 不然有機會跑完 filter 後失去 timestamp 資訊.
+                如果做在 subtitle 的話,會需要視情況複製 video stream 的 time_base 過去.
+                覺得太麻煩了,選擇用先取出 timestamp 的作法
+                缺點是這邊程式碼有執行順序的問題.
+                要留意 while loop 執行兩次的狀況
+            */
             v_frame     =   v_decoder.get_frame();
+            ts          =   v_decoder.get_timestamp();
             ret         =   s_decoder.send_video_frame( v_frame );
 
             count       =   0;
@@ -750,7 +759,7 @@ int    Player::decode_video_with_nongraphic_subtitle( AVPacket* pkt )
 
                 vdata.frame         =   s_decoder.get_subtitle_image();
                 vdata.index         =   v_decoder.get_frame_count();
-                vdata.timestamp     =   s_decoder.get_timestamp();
+                vdata.timestamp     =   ts;
 
                 v_mtx.lock();
                 video_queue.push(vdata);

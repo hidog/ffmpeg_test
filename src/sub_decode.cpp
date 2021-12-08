@@ -134,10 +134,13 @@ int     SubDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
     Decode::open_all_codec( fmt_ctx, type );
 
-    if( dec_ctx->pix_fmt != AV_PIX_FMT_NONE )
-        is_graphic  =   true;
-    else
-        is_graphic  =   false;
+    if( dec_ctx != nullptr )
+    {
+        if( dec_ctx->pix_fmt != AV_PIX_FMT_NONE )
+            is_graphic  =   true;
+        else
+            is_graphic  =   false;
+    }
 
     return  SUCCESS;
 }
@@ -795,6 +798,7 @@ QPoint  SubDecode::get_subtitle_image_pos()
 
 
 
+#if 0
 /*******************************************************************************
 SubDecode::get_timestamp()
 ********************************************************************************/
@@ -807,5 +811,6 @@ int64_t     SubDecode::get_timestamp()
     int64_t ts      =   dpts * 1000;  // ms
     return  ts;
 }
+#endif
 
 

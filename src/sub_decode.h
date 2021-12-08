@@ -61,7 +61,7 @@ public:
 
 
     std::string     get_subfile();
-    int64_t         get_timestamp();
+    //int64_t         get_timestamp();
 
     SubSourceType   get_sub_src_type();
 
