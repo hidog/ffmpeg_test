@@ -504,13 +504,10 @@ void    SubDecode::generate_subtitle_image( AVSubtitle &subtitle )
             AVSubtitleRect  *rect   =   subtitle.rects[i];
             AVRational      ra { video_width, dec_ctx->width };
 
-            w   =   av_rescale(  rect->w, ra.num, ra.den );
-            h   =   av_rescale(  rect->h, ra.num, ra.den );
-            x   =   av_rescale(  rect->x, ra.num, ra.den );
-            y   =   av_rescale(  rect->y, ra.num, ra.den );
-
-            sub_x   =   x;//av_rescale( x, ra.num, ra.den );
-            sub_y   =   y;//av_rescale( y, ra.num, ra.den );
+            w       =   av_rescale( rect->w, ra.num, ra.den );
+            h       =   av_rescale( rect->h, ra.num, ra.den );
+            sub_x   =   av_rescale( rect->x, ra.num, ra.den );
+            sub_y   =   av_rescale( rect->y, ra.num, ra.den );
 
             int         dst_linesize[4] =   {0};
             uint8_t     *dst_data[4]    =   {nullptr};
@@ -528,8 +525,7 @@ void    SubDecode::generate_subtitle_image( AVSubtitle &subtitle )
          
             av_freep( &dst_data[0] );
             sws_freeContext(ctx);        
-        }
-        
+        }        
     }
 }
 

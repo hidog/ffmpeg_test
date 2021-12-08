@@ -801,8 +801,12 @@ int    Player::flush()
             if( ret <= 0 )
                 break;
 
-            // flush 階段本來想處理 subtitle, 但會跳錯誤, 還沒找到解決的做法
-            vdata   =   v_decoder.output_video_data();
+            if( s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == true )
+                vdata   =   overlap_subtitle_image();
+            else
+                vdata   =   v_decoder.output_video_data();
+
+            // flush 階段本來想處理 subtitle, 但會跳錯誤, 還沒找到解決的做法. 目前只處理graphic subtitle的部分
             video_queue.push(vdata);
             v_decoder.unref_frame();  
         }
@@ -900,7 +904,6 @@ VideoData       Player::overlap_subtitle_image()
         QImage  v_img   =   v_decoder.get_video_image();
         QImage  s_img   =   s_decoder.get_subtitle_image();
         
-        //QImage      render_img  =   v_img;
         QPainter    painter( &v_img );
         QPoint      pos =   s_decoder.get_subtitle_image_pos();
         painter.drawImage( pos, s_img );
@@ -908,12 +911,6 @@ VideoData       Player::overlap_subtitle_image()
         vdata.frame     =   v_img;
         vdata.index     =   v_decoder.get_frame_count();
         vdata.timestamp =   timestamp;
-
-        /*static int fff = 0;
-        char str[1000];
-        sprintf( str, "H:\\%d.jpg", fff++ );
-        s_img.save(str);*/
-
     }
 
     return vdata;
