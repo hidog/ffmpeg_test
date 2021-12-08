@@ -131,6 +131,7 @@
     <ClCompile Include="src\audio_worker.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ui\mainwindow.cpp" />
+    <ClCompile Include="src\myslider.cpp" />
     <ClCompile Include="src\video_worker.cpp" />
     <ClCompile Include="src\videowidget.cpp" />
     <ClCompile Include="src\worker.cpp" />
@@ -156,6 +157,7 @@
       
       
     </QtMoc>
+    <ClInclude Include="src\myslider.h" />
     <QtMoc Include="src\video_worker.h">
       
       

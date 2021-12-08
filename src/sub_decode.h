@@ -39,12 +39,12 @@ public:
 
     int     decode_subtitle( AVPacket* pkt );
     void    generate_subtitle_image( AVSubtitle &subtitle );
-    void    init_sub_image( SubData sd );
     void    output_sub_frame_info();
     void    set_subfile( std::string path );
 
     bool    open_subtitle_filter( std::string args, std::string desc );
     QImage  get_subtitle_image();
+    bool    is_graphic_subtitle();
 
     int     send_video_frame( AVFrame *video_frame );
     int     render_subtitle();
@@ -53,11 +53,18 @@ public:
     void    switch_subtltle( int index );
 
     void    set_filter_args( std::string args );
+    void    set_sub_src_type( SubSourceType type );
+    bool    is_video_in_duration( int64_t timestamp );
+    QPoint  get_subtitle_image_pos();
 
-    SubSourceType   get_sub_src_type();
-    void            set_sub_src_type( SubSourceType type );
+    void    init_graphic_subtitle( SubData sd );
+
 
     std::string     get_subfile();
+    //int64_t         get_timestamp();
+
+    SubSourceType   get_sub_src_type();
+
     std::pair<std::string,std::string>  get_subtitle_param( AVFormatContext *fmt_ctx, std::string src_file, SubData sd );
     std::vector<std::string>            get_embedded_subtitle_list();
 
@@ -77,9 +84,23 @@ private:
     std::string         subtitle_args;
     SubSourceType       sub_src_type    =   SubSourceType::NONE;
 
-    int     sub_index   =   0;
+    // general use
+    int     video_width, 
+            video_height;
 
-    QImage  sub_image;     // 將video frame打上字幕後存在這邊
+    // non-graphic use
+    int     sub_index   =   0;
+    bool    is_graphic  =   false;
+
+    // use for generate subtitle image.
+    double      sub_dpts        =   -1; 
+    double      sub_duration    =   -1;
+    bool        has_sub_image   =   false;
+    int         sub_x, sub_y;
+
+
+    // v-frame 加上 subtitle, 或是產生 subtitle image.
+    QImage      sub_image;   
 
     uint8_t  *sub_dst_data[4]     =   { nullptr };
     int      sub_dst_linesize[4]  =   { 0 };

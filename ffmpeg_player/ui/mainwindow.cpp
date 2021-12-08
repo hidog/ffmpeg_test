@@ -39,9 +39,6 @@ MainWindow::MainWindow(QWidget *parent)
     qRegisterMetaType<VideoSetting>("VideoSetting");
     qRegisterMetaType<std::vector<std::string>>("std::vector<std::string>");
 
-
-    //video_widget    =   new QVideoWidget();
-
     //
     video_mtx       =   new QMutex( QMutex::NonRecursive );
     view_data       =   new VideoData;
@@ -91,7 +88,7 @@ void MainWindow::recv_video_frame_slot()
     /*if( video_widget->isVisible() == false )
         return;*/
 
-    QVideoWidget    *video_widget   =   ui->videoWidget;
+    VideoWidget    *video_widget   =   ui->videoWidget;
 
     static int  last_index  =   0;
 
@@ -126,6 +123,7 @@ void MainWindow::set_signal_slot()
     connect(    worker,             &Worker::subtitle_list_signal,                  this,           &MainWindow::set_subtitle_list_slot         );
     connect(    worker,             &Worker::embedded_sublist_signal,               this,           &MainWindow::embedded_sublist_slot          );
     connect(    worker,             &Worker::finished,                              this,           &MainWindow::finish_slot                    );
+    connect(    worker,             &Worker::duration_signal,                       this,           &MainWindow::duration_slot                  );
 
     connect(    ui->subCBox,        &QComboBox::currentTextChanged,                 worker,         &Worker::switch_subtitle_slot_str           );
     connect(    ui->subCBox,        SIGNAL(currentIndexChanged(int)),               worker,         SLOT(switch_subtitle_slot_int(int))         );   // 用另一個方式會跳錯誤
@@ -134,6 +132,8 @@ void MainWindow::set_signal_slot()
     connect(    ui->pauseButton,    &QPushButton::clicked,                          this,           &MainWindow::pause_slot                     );
 
     connect(    video_worker,       &VideoWorker::recv_video_frame_signal,          this,           &MainWindow::recv_video_frame_slot          );
+    connect(    video_worker,       &VideoWorker::update_seekbar_signal,            this,           &MainWindow::update_seekbar_slot            );
+
     connect(    ui->volumeSlider,   &QSlider::valueChanged,                         audio_worker,   &AudioWorker::volume_slot                   );
 }
 
@@ -145,7 +145,7 @@ MainWindow::set_video_setting_slot()
 ********************************************************************************/
 void    MainWindow::set_video_setting_slot( VideoSetting vs )
 {
-    QVideoWidget    *video_widget   =   ui->videoWidget;
+    VideoWidget    *video_widget   =   ui->videoWidget;
 
     QSize   size { vs.width, vs.height };
 
@@ -156,6 +156,36 @@ void    MainWindow::set_video_setting_slot( VideoSetting vs )
     worker->finish_set_video();
 }
 
+
+
+
+
+
+/*******************************************************************************
+MainWindow::duration_slot()
+********************************************************************************/
+void    MainWindow::duration_slot( int du )
+{
+     ui->seekSlider->setMaximum(du);
+}
+
+
+
+
+
+/*******************************************************************************
+MainWindow::update_seekbar()
+********************************************************************************/
+void    MainWindow::update_seekbar_slot( int sec )
+{
+    int     max     =   ui->seekSlider->maximum();
+    int     min     =   ui->seekSlider->minimum();
+
+    sec     =   sec > max ? max : sec;
+    sec     =   sec < min ? min : sec;
+
+    ui->seekSlider->setSliderPosition(sec);
+}
 
 
 
@@ -221,6 +251,8 @@ void    MainWindow::finish_slot()
     QVideoWidget    *video_widget   =   ui->videoWidget;
     video_widget->setFullScreen( false );
     video_widget->setGeometry( QRect(70,70,1401,851) );  // 先寫死 之後改成能動態調整
+
+    ui->seekSlider->setSliderPosition(0);
 }
 
 
@@ -361,12 +393,12 @@ MainWindow::closeEvent()
 ********************************************************************************/
 void    MainWindow::closeEvent( QCloseEvent *event )
 {
-    worker->stop_slot();
+    worker->stop_slot();    
 
-    while( worker->isFinished() == false )
+    while( worker->isRunning() == true )
         SLEEP_10MS;
-    while( video_worker->isFinished() == false )
+    while( video_worker->isRunning() == true )
         SLEEP_10MS;
-    while( audio_worker->isFinished() == false )
+    while( audio_worker->isRunning() == true )
         SLEEP_10MS;
 }

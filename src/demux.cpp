@@ -277,3 +277,27 @@ std::pair<int,AVPacket*>     Demux::demux_multi_thread()
 }
 #endif
 
+
+
+/*******************************************************************************
+Demux::get_duration_time()
+********************************************************************************/
+int64_t     Demux::get_duration_time()
+{
+    if( fmt_ctx->duration == AV_NOPTS_VALUE )
+    {
+        MYLOG( LOG::WARN, "not defined duration");
+        return  INT64_MAX;
+    }
+
+    int64_t     duration    =   fmt_ctx->duration + (fmt_ctx->duration <= INT64_MAX - 5000 ? 5000 : 0);
+    int64_t     secs        =   duration / AV_TIME_BASE;
+    int64_t     us          =   duration % AV_TIME_BASE;
+
+    if( us > 0 )
+        secs++;
+
+    return  secs;
+}
+
+

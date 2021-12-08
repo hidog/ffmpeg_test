@@ -46,6 +46,9 @@
     <ClCompile Include="ui\mainwindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\myslider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\video_worker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -63,6 +66,9 @@
     <QtMoc Include="ui\mainwindow.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <ClInclude Include="src\myslider.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <QtMoc Include="src\video_worker.h">
       <Filter>Header Files</Filter>
     </QtMoc>

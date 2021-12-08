@@ -2,6 +2,8 @@
 #include "tool.h"
 
 #include <thread>
+#include <QPainter>
+
 
 
 
@@ -69,9 +71,6 @@ std::queue<VideoData>* get_video_queue()
 
 
 
-
-
-
 /*******************************************************************************
 Player::init()
 ********************************************************************************/
@@ -100,12 +99,30 @@ int     Player::init()
 
     //
     ret     =   v_decoder.init();
-    ret     =   a_decoder.init();
-
-    //
-    bool    exist_subtitle  =   false;
+    ret     =   a_decoder.init();    
 
     // handle subtitle
+    init_subtitle(fmt_ctx);
+
+    return SUCCESS;
+}
+
+
+
+
+
+/*******************************************************************************
+Player::init_subtitle()
+********************************************************************************/
+void    Player::init_subtitle( AVFormatContext *fmt_ctx )
+{
+    int             ret;
+    bool            exist_subtitle  =   false;
+    SubData         sd;
+    std::string     sub_src;
+
+    std::pair<std::string,std::string>  sub_param;
+
     if( s_decoder.exist_stream() == true )
     {
         exist_subtitle  =   true;
@@ -119,7 +136,12 @@ int     Player::init()
             exist_subtitle  =   true;
             s_decoder.set_subfile( sub_name );
             s_decoder.set_sub_src_type( SubSourceType::FROM_FILE );
-        }     
+        }
+        else
+        {
+            exist_subtitle  =   false;
+            s_decoder.set_sub_src_type( SubSourceType::NONE );
+        }
     }
 
     //
@@ -127,29 +149,28 @@ int     Player::init()
     {
         ret     =   s_decoder.init();
 
-        SubData     sd;
         sd.width        =   v_decoder.get_video_width();
         sd.height       =   v_decoder.get_video_height();
         sd.pix_fmt      =   v_decoder.get_pix_fmt();
         sd.video_index  =   v_decoder.current_index();
         sd.sub_index    =   0;
 
-        std::string     sub_src     =   s_decoder.get_subfile();
+        if( s_decoder.is_graphic_subtitle() == true )
+            s_decoder.init_graphic_subtitle(sd);        
+        else
+        {
+            sub_src     =   s_decoder.get_subfile();
 
-        s_decoder.init_sws_ctx( sd );
-        s_decoder.init_sub_image( sd );
+            s_decoder.init_sws_ctx( sd );
 
-        // if exist subtitle, open it.
-        // 這邊有執行順序問題, 不能隨便更改執行順序      
-        std::pair<std::string,std::string>  sub_param   =   s_decoder.get_subtitle_param( fmt_ctx, sub_src, sd );
-        s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
-        s_decoder.set_filter_args( sub_param.first );
+            // if exist subtitle, open it.
+            // 這邊有執行順序問題, 不能隨便更改執行順序      
+            sub_param   =   s_decoder.get_subtitle_param( fmt_ctx, sub_src, sd );
+            s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
+            s_decoder.set_filter_args( sub_param.first );
+        }       
     }
-
-    return SUCCESS;
 }
-
-
 
 
 
@@ -237,6 +258,16 @@ AudioSetting    Player::get_audio_setting()
     return  as;
 }
 
+
+
+
+/*******************************************************************************
+Player::get_duration_time
+********************************************************************************/
+int64_t     Player::get_duration_time()
+{
+    return  demuxer.get_duration_time();
+}
 
 
 
@@ -611,6 +642,8 @@ Player::decode
 ********************************************************************************/
 int     Player::decode( Decode *dc, AVPacket* pkt )
 {
+    // switch subtitle track
+    // 寫在這邊是為了方便未來跟multi-thread decode結合.
     if( switch_subtitle_flag == true )
     {
         switch_subtitle_flag    =   false;
@@ -632,9 +665,10 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
     }
 
     // handle video stream with subtitle
-    if( s_decoder.exist_stream() == true && v_decoder.find_index( pkt->stream_index ) == true )
+    if( s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == false &&
+        v_decoder.find_index( pkt->stream_index ) == true )
     {
-        decode_video_with_subtitle(pkt);
+        decode_video_with_nongraphic_subtitle(pkt);
         return  SUCCESS;
     }
 
@@ -653,7 +687,10 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
 
             if( pkt->stream_index == v_decoder.current_index() )
             {
-                vdata   =   v_decoder.output_video_data();
+                if( s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == true )
+                    vdata   =   overlap_subtitle_image();
+                else
+                    vdata   =   v_decoder.output_video_data();
                 v_mtx.lock();
                 video_queue.push(vdata);
                 v_mtx.unlock();
@@ -678,15 +715,17 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
 
 
 
+
+
 /*******************************************************************************
 Player::decode_video_with_subtitle()
 ********************************************************************************/
-int    Player::decode_video_with_subtitle( AVPacket* pkt )
+int    Player::decode_video_with_nongraphic_subtitle( AVPacket* pkt )
 {
     int         ret         =   v_decoder.send_packet(pkt);
     AVFrame     *v_frame    =   nullptr;
     VideoData   vdata;
-
+    int64_t     ts;
 
     int         count       =   0;      // for test.
 
@@ -699,7 +738,16 @@ int    Player::decode_video_with_subtitle( AVPacket* pkt )
             if( ret <= 0 )
                 break;
 
+            /*
+                這邊 filter 的 function 改成不會 keep 的版本
+                所以必須先取得 ts, 不然有機會跑完 filter 後失去 timestamp 資訊.
+                如果做在 subtitle 的話,會需要視情況複製 video stream 的 time_base 過去.
+                覺得太麻煩了,選擇用先取出 timestamp 的作法
+                缺點是這邊程式碼有執行順序的問題.
+                要留意 while loop 執行兩次的狀況
+            */
             v_frame     =   v_decoder.get_frame();
+            ts          =   v_decoder.get_timestamp();
             ret         =   s_decoder.send_video_frame( v_frame );
 
             count       =   0;
@@ -711,7 +759,7 @@ int    Player::decode_video_with_subtitle( AVPacket* pkt )
 
                 vdata.frame         =   s_decoder.get_subtitle_image();
                 vdata.index         =   v_decoder.get_frame_count();
-                vdata.timestamp     =   v_decoder.get_timestamp();
+                vdata.timestamp     =   ts;
 
                 v_mtx.lock();
                 video_queue.push(vdata);
@@ -762,8 +810,12 @@ int    Player::flush()
             if( ret <= 0 )
                 break;
 
-            // flush 階段本來想處理 subtitle, 但會跳錯誤, 還沒找到解決的做法
-            vdata   =   v_decoder.output_video_data();
+            if( s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == true )
+                vdata   =   overlap_subtitle_image();
+            else
+                vdata   =   v_decoder.output_video_data();
+
+            // flush 階段本來想處理 subtitle, 但會跳錯誤, 還沒找到解決的做法. 目前只處理graphic subtitle的部分
             video_queue.push(vdata);
             v_decoder.unref_frame();  
         }
@@ -840,4 +892,36 @@ void    Player::switch_subtitle( int index )
     new_subtitle_index      =   index;
 }
 
+
+
+
+
+
+
+/*******************************************************************************
+Player::overlap_subtitle_image()
+********************************************************************************/
+VideoData       Player::overlap_subtitle_image()
+{
+    int64_t     timestamp   =   v_decoder.get_timestamp();
+    VideoData   vdata;
+
+    if( s_decoder.is_video_in_duration( timestamp ) == false )
+        vdata     =   v_decoder.output_video_data();
+    else
+    {
+        QImage  v_img   =   v_decoder.get_video_image();
+        QImage  s_img   =   s_decoder.get_subtitle_image();
+        
+        QPainter    painter( &v_img );
+        QPoint      pos =   s_decoder.get_subtitle_image_pos();
+        painter.drawImage( pos, s_img );
+
+        vdata.frame     =   v_img;
+        vdata.index     =   v_decoder.get_frame_count();
+        vdata.timestamp =   timestamp;
+    }
+
+    return vdata;
+}
 

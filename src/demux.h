@@ -34,13 +34,14 @@ public:
     //
     int     init();
     int     demux();
-    int     end();
+    int     end();    
     
     int     open_input( std::string src_file );
-    int     stream_info();
+    int     stream_info();    
     
     AVPacket*   get_packet();
     void        unref_packet();
+    int64_t     get_duration_time();
 
     AVFormatContext*    get_format_context();
 

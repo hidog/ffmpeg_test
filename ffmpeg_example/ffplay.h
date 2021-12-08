@@ -2,7 +2,7 @@
 #define FFPLAY_H
 
 
-#define CONFIG_AVFILTER 1
+#define CONFIG_AVFILTER 0
 
 int ffplay_main( int argc, char **argv );
 

@@ -27,7 +27,9 @@ public:
 public slots:
 
 signals:    
+    
     void	recv_video_frame_signal();
+    void    update_seekbar_signal( int sec );
 
 private:
     bool        v_start     =   false;

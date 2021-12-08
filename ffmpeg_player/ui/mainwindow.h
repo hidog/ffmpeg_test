@@ -55,6 +55,9 @@ public slots:
     void    embedded_sublist_slot( std::vector<std::string> );
     void    finish_slot();
 
+    void    duration_slot( int du );
+    void    update_seekbar_slot( int sec );
+
 private: 
     Ui::MainWindow *ui;
 

@@ -17,6 +17,8 @@ https://www.itread01.com/content/1546569392.html     // ffmpeg 參數
 
 https://www.programmersought.com/article/85494009767/   ffmpeg教學
 https://github.com/mengps/FFmpeg-Learn
+
+https://www.cnblogs.com/linuxAndMcu/p/14706012.html
 */
 
 
@@ -28,8 +30,8 @@ extern "C" {
 
 int main()
 {
-#if 0
-    char str[100] = "D:\\code\\fmp2.avi";
+#if 1
+    char str[100] = "D:\\code\\test.mkv";
 
     char **argv = new char* [10];
     argv[1] = str;

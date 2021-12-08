@@ -41,6 +41,9 @@ SubDecode::get_subtitle_param()
 ********************************************************************************/
 std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatContext* fmt_ctx, std::string src_file, SubData sd )
 {
+    if( is_graphic_subtitle() == true )
+        MYLOG( LOG::ERROR, "cant handle graphic subtitle." );
+
     std::stringstream   ss;
     std::string     in_param, out_param;;
     
@@ -69,16 +72,14 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     std::string     filename_param  =   "\\";
     filename_param  +=  src_file;
     filename_param.insert( 2, 1, '\\' );
-
+    
     // 理論上這邊的字串可以精簡...
     sub_index   =   sd.sub_index;
-    ss << "subtitles=filename='" << filename_param << "':original_size=" 
-       << sd.width << "x" << sd.height << ":stream_index=" << sub_index;
-
+    ss << "subtitles='" << filename_param << "':stream_index=" << sub_index;
+    
     out_param    =   ss.str();
-
+    
     MYLOG( LOG::INFO, "out = %s", out_param.c_str() );
-
 
     return  std::make_pair( in_param, out_param );
 }
@@ -132,6 +133,15 @@ SubDecode::open_codec_context()
 int     SubDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
     Decode::open_all_codec( fmt_ctx, type );
+
+    if( dec_ctx != nullptr )
+    {
+        if( dec_ctx->pix_fmt != AV_PIX_FMT_NONE )
+            is_graphic  =   true;
+        else
+            is_graphic  =   false;
+    }
+
     return  SUCCESS;
 }
 
@@ -140,15 +150,40 @@ int     SubDecode::open_codec_context( AVFormatContext *fmt_ctx )
 
 
 /*******************************************************************************
+SubDecode::is_graphic_subtitle()
+********************************************************************************/
+bool    SubDecode::is_graphic_subtitle()
+{
+    return  is_graphic;
+}
+
+
+
+/*******************************************************************************
 SubDecode::init()
 ********************************************************************************/
 int     SubDecode::init()
 {
-    //graph    =   avfilter_graph_alloc();
+    sub_dpts        =   -1; 
+    sub_duration    =   -1;
+    has_sub_image   =   false;
+
     Decode::init();
     return  SUCCESS;
 }
 
+
+
+
+
+/*******************************************************************************
+SubDecode::init_graphic_subtitle()
+********************************************************************************/
+void    SubDecode::init_graphic_subtitle( SubData sd )
+{
+    video_width     =   sd.width;
+    video_height    =   sd.height;
+}
 
 
 
@@ -159,7 +194,9 @@ SubDecode::send_video_frame()
 ********************************************************************************/
 int SubDecode::send_video_frame( AVFrame *video_frame )
 {
-    int ret =   av_buffersrc_add_frame_flags( bf_src_ctx, video_frame, AV_BUFFERSRC_FLAG_KEEP_REF );    
+    //int ret =   av_buffersrc_add_frame_flags( bf_src_ctx, video_frame, AV_BUFFERSRC_FLAG_KEEP_REF );    
+    int ret =   av_buffersrc_add_frame( bf_src_ctx, video_frame );    
+
     if( ret < 0 )    
         MYLOG( LOG::ERROR, "add frame flag fail." );
     return  ret;
@@ -168,14 +205,6 @@ int SubDecode::send_video_frame( AVFrame *video_frame )
 
 
 
-
-/*******************************************************************************
-SubDecode::init_sub_image()
-********************************************************************************/
-void    SubDecode::init_sub_image( SubData sd )
-{
-    sub_image  =   QImage{ sd.width, sd.height, QImage::Format_RGB888 };  // 未來考慮移走這邊的code, 避免重複初始化.
-}
 
 
 
@@ -186,7 +215,9 @@ SubDecode::init_sws_ctx()
 ********************************************************************************/
 int SubDecode::init_sws_ctx( SubData sd )
 {
-    sub_dst_bufsize   =   av_image_alloc( sub_dst_data, sub_dst_linesize, sd.width, sd.height, AV_PIX_FMT_RGB24, 1 );
+    video_width         =   sd.width;
+    video_height        =   sd.height;
+    sub_dst_bufsize     =   av_image_alloc( sub_dst_data, sub_dst_linesize, video_width, video_height, AV_PIX_FMT_RGB24, 1 );
     if( sub_dst_bufsize < 0 )
     {
         MYLOG( LOG::ERROR, "Could not allocate subtitle image buffer" );
@@ -194,7 +225,7 @@ int SubDecode::init_sws_ctx( SubData sd )
     }
 
     AVPixelFormat   pix_fmt     =   static_cast<AVPixelFormat>(sd.pix_fmt);
-    sws_ctx     =   sws_getContext( sd.width, sd.height, pix_fmt, sd.width, sd.height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL );   
+    sws_ctx     =   sws_getContext( video_width, video_height, pix_fmt, video_width, video_height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL );   
     return  SUCCESS;
 }
 
@@ -208,7 +239,10 @@ SubDecode::render_subtitle()
 ********************************************************************************/
 int SubDecode::render_subtitle()
 {
-    int ret     =   av_buffersink_get_frame( bf_sink_ctx, frame );    
+    sub_image   =   QImage( video_width, video_height, QImage::Format_RGB888 );
+
+    //int ret     =   av_buffersink_get_frame( bf_sink_ctx, frame );    
+    int ret     =   av_buffersink_get_frame_flags( bf_sink_ctx, frame, 0 );    
 
     if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF ) 
         return  0;  // 沒資料,但沒錯誤.
@@ -218,7 +252,10 @@ int SubDecode::render_subtitle()
         return  -1;
     }
 
-    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, sub_dst_data, sub_dst_linesize );
+    ret     =   sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, sub_dst_data, sub_dst_linesize );
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "ret = %d", ret );
+
     memcpy( sub_image.bits(), sub_dst_data[0], sub_dst_bufsize );
 
     return 1;
@@ -282,7 +319,12 @@ int     SubDecode::end()
 
     sub_file.clear();
     subtitle_args.clear();
-    sub_src_type  =   SubSourceType::NONE;
+    sub_src_type    =   SubSourceType::NONE;
+    is_graphic      =   false;
+
+    sub_dpts        =   -1; 
+    sub_duration    =   -1;
+    has_sub_image   =   false;
 
     Decode::end();
     return  SUCCESS;
@@ -386,18 +428,18 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
         release();
         return false;
     }
-
+    
     //
     output->name        =   av_strdup("in");
     output->next        =   nullptr;
     output->pad_idx     =   0;
     output->filter_ctx  =   bf_src_ctx;
-
+    
     input->name         =   av_strdup("out");
     input->next         =   nullptr;
     input->pad_idx      =   0;
     input->filter_ctx   =   bf_sink_ctx;
-
+    
     //
     ret     =   avfilter_graph_parse_ptr( graph, desc.c_str(), &input, &output, nullptr );
     if( ret < 0 )
@@ -407,6 +449,7 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
         return false;
     }
 
+    //
     ret     =   avfilter_graph_config( graph, nullptr );
     if( ret < 0 )
     {
@@ -433,33 +476,78 @@ SubDecode::generate_subtitle_image()
 
 這個程式碼沒執行過, 是從網路複製過來的, 想辦法測試.
 ********************************************************************************/
-void    SubDecode::generate_subtitle_image(  AVSubtitle &subtitle )
+void    SubDecode::generate_subtitle_image( AVSubtitle &subtitle )
 {
-    MYLOG( LOG::DEBUG, "first run generate_subtitle_image subtitle" );
+    // set time stamp.
+    if( subtitle.pts != AV_NOPTS_VALUE)
+        sub_dpts    =   1000.0 * subtitle.pts / AV_TIME_BASE; // 單位 ms
+    else
+        sub_dpts    =   0;
+    sub_duration    =   1.0 * (subtitle.end_display_time - subtitle.start_display_time) / 1000;  // 單位不明 未來看能不能找到影片測試 end_display_time
 
-    int     i;
+    if( subtitle.start_display_time != 0 )
+        MYLOG( LOG::ERROR, "start time not zero, need handle." );
 
-    for( i = 0; i < subtitle.num_rects; i++ )
+    //
+    if( subtitle.num_rects == 0 )    
+        has_sub_image   =   false;
+    else
     {
-        AVSubtitleRect  *sub_rect   =   subtitle.rects[i];
+        has_sub_image   =   true;
 
-        int     dst_linesize[4];
-        uint8_t *dst_data[4];
+        int     i;
+        int     w, h, x, y;
 
-        //
-        av_image_alloc( dst_data, dst_linesize, sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA, 1 );
+        if( subtitle.num_rects > 1 )
+            MYLOG( LOG::ERROR, "subtitle.num_rects = %d", subtitle.num_rects ); // 遇到再來解決,目前測試影片一次只有一張圖
 
-        SwsContext *swsContext  =   sws_getContext( sub_rect->w, sub_rect->h, AV_PIX_FMT_PAL8,
-                                                    sub_rect->w, sub_rect->h, AV_PIX_FMT_RGBA,
+        for( i = 0; i < subtitle.num_rects; i++ )
+        {
+            // 理論上需要做一些越界檢查等等,這邊省略了. 以後有空在說
+            AVSubtitleRect  *rect   =   subtitle.rects[i];
+            AVRational      ra { video_width, dec_ctx->width };
+
+            w       =   av_rescale( rect->w, ra.num, ra.den );
+            h       =   av_rescale( rect->h, ra.num, ra.den );
+            sub_x   =   av_rescale( rect->x, ra.num, ra.den );
+            sub_y   =   av_rescale( rect->y, ra.num, ra.den );
+
+            int         dst_linesize[4] =   {0};
+            uint8_t     *dst_data[4]    =   {nullptr};
+
+            //
+            av_image_alloc( dst_data, dst_linesize, w, h, AV_PIX_FMT_RGBA, 1 );
+
+            SwsContext  *ctx    =   sws_getContext( rect->w, rect->h, AV_PIX_FMT_PAL8,
+                                                    w,       h,       AV_PIX_FMT_RGBA,
                                                     SWS_BILINEAR, nullptr, nullptr, nullptr );
 
-        sws_scale( swsContext, sub_rect->data, sub_rect->linesize, 0, sub_rect->h, dst_data, dst_linesize );
-        sws_freeContext(swsContext);        
+            sws_scale( ctx, rect->data, rect->linesize, 0, rect->h, dst_data, dst_linesize );
 
-        sub_image  =   QImage( dst_data[0], sub_rect->w, sub_rect->h, QImage::Format_RGBA8888).copy();
-        av_freep(&dst_data[0]);
+            sub_image  =    QImage( dst_data[0], w, h, QImage::Format_RGBA8888 ).copy();  // 這邊不加copy會出現破圖問題
+         
+            av_freep( &dst_data[0] );
+            sws_freeContext(ctx);        
+        }        
     }
 }
+
+
+
+
+
+
+/*******************************************************************************
+SubDecode::is_video_in_duration()
+********************************************************************************/
+bool    SubDecode::is_video_in_duration( int64_t timestamp )
+{
+    if( has_sub_image == true && timestamp >= sub_dpts && timestamp <= sub_dpts + sub_duration )
+        return  true;
+    else
+        return  false;
+}
+
 
 
 
@@ -481,8 +569,8 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
         if( got_sub > 0 )
         {
             // 代表字幕是圖片格式, 需要產生對應的字幕圖檔.
-            if (subtitle.format == 0)
-                generate_subtitle_image( subtitle );
+            if( subtitle.format == 0 )     
+                generate_subtitle_image( subtitle );                        
 
             avsubtitle_free( &subtitle );
             return  SUCCESS;
@@ -674,23 +762,55 @@ SubDecode::switch_subtltle()
 ********************************************************************************/
 void    SubDecode::switch_subtltle( int index )
 {
-    sub_index   =   index;
+    std::string     desc;
 
-    std::string     filename    =   "\\";    
-    filename    +=  sub_file;
-    filename.insert( 2, 1, '\\' );
+    if( is_graphic_subtitle() == false )
+    {
+        sub_index   =   index;
 
-    std::stringstream   ss;
-    ss << "subtitles='" << filename << "':stream_index=" << sub_index;
+        std::string     filename    =   "\\";    
+        filename    +=  sub_file;
+        filename.insert( 2, 1, '\\' );
 
-    std::string     desc    =   ss.str();
+        std::stringstream   ss;
+        ss << "subtitles='" << filename << "':stream_index=" << sub_index;
 
-    open_subtitle_filter( subtitle_args, desc );
+        desc    =   ss.str();
+
+        open_subtitle_filter( subtitle_args, desc );
+    }
+}
+
+
+
+
+/*******************************************************************************
+SubDecode::get_subtitle_image_pos()
+********************************************************************************/
+QPoint  SubDecode::get_subtitle_image_pos()
+{
+    QPoint  pos( sub_x, sub_y );
+    return  pos;
 }
 
 
 
 
 
+
+#if 0
+/*******************************************************************************
+SubDecode::get_timestamp()
+********************************************************************************/
+int64_t     SubDecode::get_timestamp()
+{
+    if( frame->best_effort_timestamp == AV_NOPTS_VALUE )
+        return  0;
+
+    double  dpts    =   av_q2d(stream->time_base) * frame->best_effort_timestamp;
+    int64_t ts      =   dpts * 1000;  // ms
+    return  ts;
+}
+#endif
 
 

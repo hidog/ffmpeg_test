@@ -34,6 +34,7 @@ signals:
     void    video_setting_signal( VideoSetting );
     void    subtitle_list_signal( QStringList );
     void    embedded_sublist_signal( std::vector<std::string> );
+    void    duration_signal(int);
 
 private:
 

@@ -100,6 +100,9 @@
       <height>31</height>
      </rect>
     </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
     <property name="text">
      <string>Play</string>
     </property>
@@ -114,23 +117,50 @@
      </rect>
     </property>
    </widget>
-   <widget class="QSlider" name="volumeSlider">
+   <widget class="MySlider" name="volumeSlider">
     <property name="geometry">
      <rect>
-      <x>330</x>
-      <y>30</y>
-      <width>101</width>
-      <height>16</height>
+      <x>310</x>
+      <y>20</y>
+      <width>121</width>
+      <height>21</height>
      </rect>
+    </property>
+    <property name="mouseTracking">
+     <bool>false</bool>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
+    <property name="contextMenuPolicy">
+     <enum>Qt::DefaultContextMenu</enum>
+    </property>
+    <property name="acceptDrops">
+     <bool>false</bool>
     </property>
     <property name="maximum">
      <number>100</number>
     </property>
+    <property name="pageStep">
+     <number>10</number>
+    </property>
     <property name="value">
      <number>100</number>
     </property>
+    <property name="tracking">
+     <bool>true</bool>
+    </property>
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
+    </property>
+    <property name="invertedAppearance">
+     <bool>false</bool>
+    </property>
+    <property name="invertedControls">
+     <bool>false</bool>
+    </property>
+    <property name="tickInterval">
+     <number>0</number>
     </property>
    </widget>
    <widget class="QPushButton" name="stopButton">
@@ -141,6 +171,9 @@
       <width>81</width>
       <height>31</height>
      </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
     </property>
     <property name="text">
      <string>Stop</string>
@@ -155,8 +188,30 @@
       <height>31</height>
      </rect>
     </property>
+    <property name="focusPolicy">
+     <enum>Qt::NoFocus</enum>
+    </property>
     <property name="text">
      <string>Pause</string>
+    </property>
+   </widget>
+   <widget class="MySlider" name="seekSlider">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>940</y>
+      <width>1401</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="mouseTracking">
+     <bool>false</bool>
+    </property>
+    <property name="tracking">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
     </property>
    </widget>
   </widget>
@@ -176,7 +231,12 @@
   <customwidget>
    <class>VideoWidget</class>
    <extends>QWidget</extends>
-   <header>videowidget.h</header>
+   <header location="global">videowidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>MySlider</class>
+   <extends>QSlider</extends>
+   <header location="global">myslider.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
