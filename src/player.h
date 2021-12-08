@@ -21,6 +21,9 @@ DLL_API std::queue<VideoData>* get_video_queue();
 DLL_API std::mutex& get_a_mtx(); 
 DLL_API std::mutex& get_v_mtx(); 
 
+DLL_API bool& get_v_seek_lock(); // { return ui_v_seek_lock; }
+DLL_API bool& get_a_seek_lock(); // { return ui_a_seek_lock; }
+
 
 struct AVPacket;
 
@@ -100,8 +103,9 @@ private:
     int     new_subtitle_index      =   0;
     bool    stop_flag               =   false;
 
-    bool    seek_flag   =   false;
     int     seek_value  =   0;
+    bool    seek_flag   =   false;
+
 
 #ifdef USE_MT
     bool    v_thr_start     =   false,

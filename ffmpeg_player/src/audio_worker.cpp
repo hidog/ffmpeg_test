@@ -171,22 +171,9 @@ seek 的時候, 由 UI 端負責清空資料, 之後等到有資料才繼續播放.
 ********************************************************************************/
 void    AudioWorker::flush_for_seek()
 {
-    std::mutex              &a_mtx      =   get_a_mtx();
     std::queue<AudioData>   *a_queue    =   get_audio_queue();
 
-    AudioData   adata;
-
     bool    &v_start    =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
-
-    // clear video queue data.
-    a_mtx.lock();
-    while( a_queue->empty() == false )
-    {
-        adata   =   a_queue->front();
-        delete [] adata.pcm;
-        a_queue->pop();
-    }
-    a_mtx.unlock();
 
     // 重新等待有資料才播放
     while( a_queue->size() <= 3 )
@@ -197,7 +184,7 @@ void    AudioWorker::flush_for_seek()
 }
 
 
-
+//extern bool ui_a_seek_lock;
 
 
 
@@ -215,6 +202,8 @@ void AudioWorker::audio_play()
     std::queue<AudioData>*  a_queue     =   get_audio_queue();
     bool    &v_start        =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
     bool    &is_play_end    =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_play_end_state();
+
+    bool    &ui_a_seek_lock = get_a_seek_lock();
 
     while( a_queue->size() <= 3 )
         SLEEP_10MS;
@@ -291,6 +280,10 @@ void AudioWorker::audio_play()
         if( seek_flag == true )
         {
             seek_flag   =   false;
+            last        =   std::chrono::steady_clock::time_point();
+            ui_a_seek_lock  =   true;
+            while( ui_a_seek_lock == true )
+                SLEEP_10MS;
             flush_for_seek();
         }
 

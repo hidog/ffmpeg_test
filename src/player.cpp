@@ -18,11 +18,14 @@ extern "C" {
 static std::queue<AudioData>    audio_queue;
 static std::queue<VideoData>    video_queue;
 
-std::mutex  a_mtx;
-std::mutex  v_mtx;
+static std::mutex  a_mtx;
+static std::mutex  v_mtx;
 
+bool ui_v_seek_lock = false;
+bool ui_a_seek_lock = false;
 
-
+bool& get_v_seek_lock() { return ui_v_seek_lock; }
+bool& get_a_seek_lock() { return ui_a_seek_lock; }
 
 
 /*******************************************************************************
@@ -515,7 +518,9 @@ Player::demux_need_wait()
 ********************************************************************************/
 bool    Player::demux_need_wait()
 {
-    if( v_decoder.exist_stream() == true && a_decoder.exist_stream() == true )
+    if( seek_flag == true )
+        return  false;
+    else if( v_decoder.exist_stream() == true && a_decoder.exist_stream() == true )
     {
         if( video_queue.size() >= MAX_QUEUE_SIZE && audio_queue.size() >= MAX_QUEUE_SIZE )
             return  true;
@@ -592,27 +597,54 @@ Player::handle_seek()
 void    Player::handle_seek()
 {
     int         ret;
+    AudioData   adata;
+
+    // clear queue.
+    v_mtx.lock();
+    while( video_queue.empty() == false )
+        video_queue.pop();
+    v_mtx.unlock();
+
+    a_mtx.lock();
+    while( audio_queue.empty() == false )
+    {
+        adata   =   audio_queue.front();
+        delete [] adata.pcm;
+        audio_queue.pop();
+    }
+    a_mtx.unlock();
 
     v_decoder.flush_for_seek();
     a_decoder.flush_for_seek();
     s_decoder.flush_for_seek();
 
     // wait for video and audio queue flush.
-    while( video_queue.empty() == false )
-        SLEEP_10MS;
-    while( audio_queue.empty() == false )
-        SLEEP_10MS;
+    //while( video_queue.empty() == false )
+     //   SLEEP_10MS;
+    //while( audio_queue.empty() == false )
+     //   SLEEP_10MS;
 
     // run seek.
     AVFormatContext*    fmt_ctx     =   demuxer.get_format_context();
-    int64_t     min     =   v_decoder.get_pts( seek_value - 10 ),
-                max     =   v_decoder.get_pts( seek_value + 10 ),
-                sec     =   v_decoder.get_pts( seek_value );
+    int64_t     min     =   AV_TIME_BASE * (seek_value - 10), //v_decoder.get_pts( seek_value - 10 ),
+                max     =   AV_TIME_BASE * (seek_value + 10), //v_decoder.get_pts( seek_value + 10 ),
+                ts      =   AV_TIME_BASE * seek_value; //v_decoder.get_pts( seek_value );
+
+    //int ttt = 50;
+    //int64_t tt = av_rescale( ttt, fmt_ctx->streams[0]->time_base.den, fmt_ctx->streams[0]->time_base.num );
+    //tt /= 1000;
 
     avformat_flush( fmt_ctx );  // 看起來是走網路才需要做這個動作...
-    ret     =   avformat_seek_file( fmt_ctx, -1, min, sec, max, 0 );
+    ret     =   avformat_seek_file( fmt_ctx, -1, min, ts, max, 0 );  //AVSEEK_FLAG_ANY
     if( ret < 0 )
         MYLOG( LOG::ERROR, "seek fail." );
+
+    //avformat_flush( fmt_ctx );  // 看起來是走網路才需要做這個動作...
+
+
+    /*v_decoder.flush_for_seek();
+    a_decoder.flush_for_seek();
+    s_decoder.flush_for_seek();*/
 }
 
 
@@ -633,9 +665,10 @@ void    Player::play_QT()
     //
     while( stop_flag == false ) 
     {
-        //
+        // NOTE: seek事件觸發的時候, queue 資料會暴增.
         while( demux_need_wait() == true )
         {
+            //MYLOG( LOG::DEBUG, "v size = %d, a size = %d", video_queue.size(), audio_queue.size() );
             if( stop_flag == true )
                 break;
             SLEEP_1MS;
@@ -644,8 +677,12 @@ void    Player::play_QT()
         //
         if( seek_flag == true )     
         {
+            while( ui_v_seek_lock == false || ui_a_seek_lock == false )
+                SLEEP_10MS;
             seek_flag   =   false;
-            handle_seek();        
+            handle_seek();
+            ui_v_seek_lock = false;
+            ui_a_seek_lock = false;
         }
 
         //

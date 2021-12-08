@@ -23,7 +23,7 @@
  * simple media player based on the FFmpeg libraries
  */
 
-#include "config.h"
+//#include "config.h"
 #include <inttypes.h>
 #include <math.h>
 #include <limits.h>
@@ -3680,7 +3680,7 @@ void show_help_default(const char *opt, const char *arg)
 }
 
 /* Called from the main */
-int main(int argc, char **argv)
+int ffplay_main(int argc, char **argv)
 {
     int flags;
     VideoState *is;

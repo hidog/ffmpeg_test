@@ -31,7 +31,7 @@ extern "C" {
 int main()
 {
 #if 1
-    char str[100] = "D:\\code\\test.mkv";
+    char str[100] = "D:\\code\\test2.mkv";
 
     char **argv = new char* [10];
     argv[1] = str;

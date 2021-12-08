@@ -95,16 +95,9 @@ seek 的時候, 由 UI 端負責清空資料, 之後等到有資料才繼續播放.
 ********************************************************************************/
 void    VideoWorker::flush_for_seek()
 {
-    std::mutex              &v_mtx      =   get_v_mtx();
     std::queue<VideoData>   *v_queue    =   get_video_queue();
 
     bool    &a_start    =   dynamic_cast<MainWindow*>(parent())->get_audio_worker()->get_audio_start_state();
-
-    // clear video queue data.
-    v_mtx.lock();
-    while( v_queue->empty() == false )
-        v_queue->pop();
-    v_mtx.unlock();
 
     // 重新等待有資料才播放
     while( v_queue->size() <= 3 )
@@ -113,7 +106,6 @@ void    VideoWorker::flush_for_seek()
     while( a_start == false )
         SLEEP_10MS;
 }
-
 
 
 
@@ -130,6 +122,9 @@ void VideoWorker::video_play()
 
     std::chrono::steady_clock::time_point       last, now;
     std::chrono::duration<int64_t, std::milli>  duration;
+
+    bool    &ui_v_seek_lock = get_v_seek_lock();
+
 
     std::queue<VideoData>*  v_queue     =   get_video_queue();
     VideoData               *view_data  =   dynamic_cast<MainWindow*>(parent())->get_view_data();    
@@ -193,6 +188,10 @@ void VideoWorker::video_play()
         if( seek_flag == true )
         {
             seek_flag   =   false;
+            last        =   std::chrono::steady_clock::time_point();
+            ui_v_seek_lock  =   true;
+            while( ui_v_seek_lock == true )
+                SLEEP_10MS;
             flush_for_seek();
         }
 
