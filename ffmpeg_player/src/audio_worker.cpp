@@ -204,8 +204,6 @@ void AudioWorker::audio_play()
     bool    &v_start        =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
     bool    &is_play_end    =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_play_end_state();
 
-    bool    &ui_a_seek_lock = get_a_seek_lock();
-
     while( a_queue->size() <= 3 )
         SLEEP_10MS;
     a_start = true;
@@ -275,6 +273,8 @@ void AudioWorker::audio_play()
     };
 
     //
+    bool    &ui_a_seek_lock     =   get_a_seek_lock();
+
     last   =   std::chrono::steady_clock::now();
     while( is_play_end == false && force_stop == false )
     {        

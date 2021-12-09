@@ -167,13 +167,14 @@ MainWindow::duration_slot()
 ********************************************************************************/
 void    MainWindow::duration_slot( int du )
 {
-     ui->seekSlider->setMaximum(du);
+    total_time  =   du;
+    ui->seekSlider->setMaximum(du);
 
-     // 因為設置影片長度的時候會觸發 value 事件, 造成 lock. 
-     // 暫時用設置完才 connect 跟 disconnect 的作法.
-     seek_connect[0]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     worker,         &Worker::seek_slot            );
-     seek_connect[1]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     audio_worker,   &AudioWorker::seek_slot       );
-     seek_connect[2]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     video_worker,   &VideoWorker::seek_slot       );
+    // 因為設置影片長度的時候會觸發 value 事件, 造成 lock. 
+    // 暫時用設置完才 connect 跟 disconnect 的作法.
+    seek_connect[0]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     worker,         &Worker::seek_slot            );
+    seek_connect[1]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     audio_worker,   &AudioWorker::seek_slot       );
+    seek_connect[2]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     video_worker,   &VideoWorker::seek_slot       );
 }
 
 
@@ -197,11 +198,17 @@ void    MainWindow::update_seekbar_slot( int sec )
     ui->seekSlider->setSliderPosition(sec);
 
     // update time 
+    // 先放在這邊 未來有需求再把程式碼搬走
     int     s   =   sec % 60;
-    int     m   =   sec / 60;
-    int     h   =   min / 60;
-    QString     str =   QString("%1:%2:%3").arg(h).arg(m).arg(s);
+    int     m   =   sec / 60 % 60;
+    int     h   =   sec / 60 / 60;
 
+    int     ts  =   total_time % 60;
+    int     tm  =   total_time / 60 % 60;
+    int     th  =   total_time / 60 / 60;
+
+    // 有空再來修這邊的排版
+    QString     str =   QString("%1:%2:%3 / %4:%5:%6").arg(h).arg(m,2).arg(s,2).arg(th).arg(tm,2).arg(ts,2);
     ui->timeLabel->setText(str);
 }
 

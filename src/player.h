@@ -21,8 +21,8 @@ DLL_API std::queue<VideoData>* get_video_queue();
 DLL_API std::mutex& get_a_mtx(); 
 DLL_API std::mutex& get_v_mtx(); 
 
-DLL_API bool& get_v_seek_lock(); // { return ui_v_seek_lock; }
-DLL_API bool& get_a_seek_lock(); // { return ui_a_seek_lock; }
+DLL_API bool& get_v_seek_lock(); 
+DLL_API bool& get_a_seek_lock(); 
 
 
 struct AVPacket;

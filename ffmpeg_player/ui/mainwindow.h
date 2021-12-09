@@ -72,5 +72,7 @@ private:
 
     QMetaObject::Connection     seek_connect[3];
 
+    int     total_time  =   0;
+
 };
 #endif // MAINWINDOW_H

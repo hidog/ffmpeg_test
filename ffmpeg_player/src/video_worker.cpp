@@ -124,9 +124,6 @@ void VideoWorker::video_play()
     std::chrono::steady_clock::time_point       last, now;
     std::chrono::duration<int64_t, std::milli>  duration;
 
-    bool    &ui_v_seek_lock = get_v_seek_lock();
-
-
     std::queue<VideoData>*  v_queue     =   get_video_queue();
     VideoData               *view_data  =   dynamic_cast<MainWindow*>(parent())->get_view_data();    
 
@@ -180,6 +177,8 @@ void VideoWorker::video_play()
     };
 
     //
+    bool    &ui_v_seek_lock     =   get_v_seek_lock();
+
     last   =   std::chrono::steady_clock::now();
     while( is_play_end == false && force_stop == false )
     {   

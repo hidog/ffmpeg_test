@@ -21,11 +21,38 @@ static std::queue<VideoData>    video_queue;
 static std::mutex  a_mtx;
 static std::mutex  v_mtx;
 
-bool ui_v_seek_lock = false;
-bool ui_a_seek_lock = false;
+static bool ui_v_seek_lock  =   false;  // 在seek事件的時候,負責跟UI的video worker, audio worker做同步
+static bool ui_a_seek_lock  =   false;
 
-bool& get_v_seek_lock() { return ui_v_seek_lock; }
-bool& get_a_seek_lock() { return ui_a_seek_lock; }
+
+
+
+
+
+
+/*******************************************************************************
+get_v_seek_lock()
+********************************************************************************/
+bool&   get_v_seek_lock() 
+{ 
+    return ui_v_seek_lock; 
+}
+
+
+
+
+
+/*******************************************************************************
+get_a_seek_lock()
+********************************************************************************/
+bool&   get_a_seek_lock() 
+{
+    return ui_a_seek_lock; 
+}
+
+
+
+
 
 
 /*******************************************************************************
