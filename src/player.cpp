@@ -620,33 +620,17 @@ void    Player::handle_seek()
     a_decoder.flush_for_seek();
     s_decoder.flush_for_seek();
 
-    // wait for video and audio queue flush.
-    //while( video_queue.empty() == false )
-     //   SLEEP_10MS;
-    //while( audio_queue.empty() == false )
-     //   SLEEP_10MS;
-
     // run seek.
     AVFormatContext*    fmt_ctx     =   demuxer.get_format_context();
-    int64_t     min     =   AV_TIME_BASE * (seek_value - 10), //v_decoder.get_pts( seek_value - 10 ),
-                max     =   AV_TIME_BASE * (seek_value + 10), //v_decoder.get_pts( seek_value + 10 ),
-                ts      =   AV_TIME_BASE * seek_value; //v_decoder.get_pts( seek_value );
-
-    //int ttt = 50;
-    //int64_t tt = av_rescale( ttt, fmt_ctx->streams[0]->time_base.den, fmt_ctx->streams[0]->time_base.num );
-    //tt /= 1000;
+    int64_t     min     =   (seek_value - 60) * AV_TIME_BASE,
+                max     =   (seek_value + 60) * AV_TIME_BASE,
+                ts      =   seek_value * AV_TIME_BASE;       
 
     avformat_flush( fmt_ctx );  // 看起來是走網路才需要做這個動作...
     ret     =   avformat_seek_file( fmt_ctx, -1, min, ts, max, 0 );  //AVSEEK_FLAG_ANY
     if( ret < 0 )
         MYLOG( LOG::ERROR, "seek fail." );
 
-    //avformat_flush( fmt_ctx );  // 看起來是走網路才需要做這個動作...
-
-
-    /*v_decoder.flush_for_seek();
-    a_decoder.flush_for_seek();
-    s_decoder.flush_for_seek();*/
 }
 
 

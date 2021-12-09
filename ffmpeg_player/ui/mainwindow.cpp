@@ -263,6 +263,7 @@ void    MainWindow::finish_slot()
     video_widget->setGeometry( QRect(70,70,1401,851) );  // 先寫死 之後改成能動態調整
 
     ui->seekSlider->setSliderPosition(0);
+    ui->seekSlider->setValue(0);
 
     disconnect( seek_connect[0] );
     disconnect( seek_connect[1] );

@@ -128,6 +128,7 @@ void AudioWorker::run()
     }
 
     force_stop  =   false;
+    seek_flag   =   false;
 
     // start play
     audio_play();

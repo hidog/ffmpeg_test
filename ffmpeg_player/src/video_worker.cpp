@@ -52,6 +52,7 @@ VideoWorker::run()
 void VideoWorker::run()  
 {
     force_stop  =   false;
+    seek_flag   =   false;
     video_play();
     MYLOG( LOG::INFO, "finish video play." );
 }
