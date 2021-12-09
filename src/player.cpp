@@ -626,10 +626,10 @@ void    Player::handle_seek()
                 max     =   (seek_value + 60) * AV_TIME_BASE,
                 ts      =   seek_value * AV_TIME_BASE;       
 
-    avformat_flush( fmt_ctx );  // 看起來是走網路才需要做這個動作...
+    //avformat_flush( fmt_ctx );  // 看起來是走網路才需要做這個動作...
     ret     =   avformat_seek_file( fmt_ctx, -1, min, ts, max, 0 );  //AVSEEK_FLAG_ANY
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "seek fail." );
+        MYLOG( LOG::DEBUG, "seek fail." );
 
 }
 

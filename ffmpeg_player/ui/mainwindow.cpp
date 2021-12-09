@@ -195,6 +195,14 @@ void    MainWindow::update_seekbar_slot( int sec )
     sec     =   sec < min ? min : sec;
 
     ui->seekSlider->setSliderPosition(sec);
+
+    // update time 
+    int     s   =   sec % 60;
+    int     m   =   sec / 60;
+    int     h   =   min / 60;
+    QString     str =   QString("%1:%2:%3").arg(h).arg(m).arg(s);
+
+    ui->timeLabel->setText(str);
 }
 
 
