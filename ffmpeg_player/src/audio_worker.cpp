@@ -282,6 +282,7 @@ void AudioWorker::audio_play()
         {
             seek_flag   =   false;
             last        =   std::chrono::steady_clock::time_point();
+            last_ts     =   INT64_MAX;
             ui_a_seek_lock  =   true;
             while( ui_a_seek_lock == true )
                 SLEEP_10MS;

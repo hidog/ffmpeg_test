@@ -191,6 +191,7 @@ void VideoWorker::video_play()
         {
             seek_flag   =   false;
             last        =   std::chrono::steady_clock::time_point();
+            view_data->timestamp    =   INT64_MAX;
             ui_v_seek_lock  =   true;
             while( ui_v_seek_lock == true )
                 SLEEP_10MS;
