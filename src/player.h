@@ -47,7 +47,7 @@ public:
     int     end();
     int     flush();
     void    stop();
-    void    seek( int value );
+    void    seek( int value, int old_value );
 
     //
     bool    demux_need_wait();
@@ -103,6 +103,7 @@ private:
     int     new_subtitle_index      =   0;
     bool    stop_flag               =   false;
 
+    int     seek_old    =   0;
     int     seek_value  =   0;
     bool    seek_flag   =   false;
 

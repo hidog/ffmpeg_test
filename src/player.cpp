@@ -622,11 +622,16 @@ void    Player::handle_seek()
 
     // run seek.
     AVFormatContext*    fmt_ctx     =   demuxer.get_format_context();
-    int64_t     min     =   (seek_value - 60) * AV_TIME_BASE,
-                max     =   (seek_value + 60) * AV_TIME_BASE,
-                ts      =   seek_value * AV_TIME_BASE;       
+    avformat_flush( fmt_ctx );  // 看起來是走網路才需要做這個動作,但不確定
 
-    //avformat_flush( fmt_ctx );  // 看起來是走網路才需要做這個動作...
+    int64_t     so  =   seek_old,
+                sv  =   seek_value; // 避免overflow
+
+    // 不這樣設置的話, seek大範圍會出錯.  例如超過一小時的影片, 直接 seek 超過半小時後
+    int64_t     min     =   so < sv ? so * AV_TIME_BASE + 2 : INT64_MIN,
+                max     =   so > sv ? so * AV_TIME_BASE - 2 : INT64_MAX,
+                ts      =   sv * AV_TIME_BASE;       
+
     ret     =   avformat_seek_file( fmt_ctx, -1, min, ts, max, 0 );  //AVSEEK_FLAG_ANY
     if( ret < 0 )
         MYLOG( LOG::DEBUG, "seek fail." );
@@ -1004,10 +1009,11 @@ VideoData       Player::overlap_subtitle_image()
 /*******************************************************************************
 Player::seek()
 ********************************************************************************/
-void    Player::seek( int value )
+void    Player::seek( int value, int old_value )
 {
     seek_flag   =   true;
     seek_value  =   value;
+    seek_old    =   old_value;
 }
 
 
