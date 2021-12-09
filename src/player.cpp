@@ -2,12 +2,15 @@
 #include "tool.h"
 
 #include <thread>
+#include <QPainter>
+
 
 
 
 extern "C" {
 
 #include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
 
 } // end extern "C"
 
@@ -15,8 +18,38 @@ extern "C" {
 static std::queue<AudioData>    audio_queue;
 static std::queue<VideoData>    video_queue;
 
-std::mutex  a_mtx;
-std::mutex  v_mtx;
+static std::mutex  a_mtx;
+static std::mutex  v_mtx;
+
+static bool ui_v_seek_lock  =   false;  // 在seek事件的時候,負責跟UI的video worker, audio worker做同步
+static bool ui_a_seek_lock  =   false;
+
+
+
+
+
+
+
+/*******************************************************************************
+get_v_seek_lock()
+********************************************************************************/
+bool&   get_v_seek_lock() 
+{ 
+    return ui_v_seek_lock; 
+}
+
+
+
+
+
+/*******************************************************************************
+get_a_seek_lock()
+********************************************************************************/
+bool&   get_a_seek_lock() 
+{
+    return ui_a_seek_lock; 
+}
+
 
 
 
@@ -69,9 +102,6 @@ std::queue<VideoData>* get_video_queue()
 
 
 
-
-
-
 /*******************************************************************************
 Player::init()
 ********************************************************************************/
@@ -82,6 +112,9 @@ int     Player::init()
         MYLOG( LOG::ERROR, "src file not set." );
         return  ERROR;
     }
+
+    stop_flag   =   false;
+    seek_flag   =   false;
 
     int     ret     =   -1;
     AVFormatContext *fmt_ctx    =   nullptr;
@@ -98,16 +131,36 @@ int     Player::init()
 
     //
     ret     =   v_decoder.init();
-    ret     =   a_decoder.init();
-
-    //
-    bool    exist_subtitle  =   false;
+    ret     =   a_decoder.init();    
 
     // handle subtitle
+    // 有遇到影片會在這邊卡很久, 或許可以考慮用multi-thread的方式做處理, 以後再說...
+    init_subtitle(fmt_ctx);
+
+    return SUCCESS;
+}
+
+
+
+
+
+/*******************************************************************************
+Player::init_subtitle()
+********************************************************************************/
+void    Player::init_subtitle( AVFormatContext *fmt_ctx )
+{
+    int             ret;
+    bool            exist_subtitle  =   false;
+    SubData         sd;
+    std::string     sub_src;
+
+    std::pair<std::string,std::string>  sub_param;
+
     if( s_decoder.exist_stream() == true )
     {
         exist_subtitle  =   true;
         s_decoder.set_subfile( src_file );
+        s_decoder.set_sub_src_type( SubSourceType::EMBEDDED );
     }
     else
     {
@@ -115,7 +168,13 @@ int     Player::init()
         {
             exist_subtitle  =   true;
             s_decoder.set_subfile( sub_name );
-        }     
+            s_decoder.set_sub_src_type( SubSourceType::FROM_FILE );
+        }
+        else
+        {
+            exist_subtitle  =   false;
+            s_decoder.set_sub_src_type( SubSourceType::NONE );
+        }
     }
 
     //
@@ -123,28 +182,28 @@ int     Player::init()
     {
         ret     =   s_decoder.init();
 
-        SubData     sd;
         sd.width        =   v_decoder.get_video_width();
         sd.height       =   v_decoder.get_video_height();
         sd.pix_fmt      =   v_decoder.get_pix_fmt();
         sd.video_index  =   v_decoder.current_index();
         sd.sub_index    =   0;
 
-        std::string     sub_src     =   s_decoder.get_subfile();
+        if( s_decoder.is_graphic_subtitle() == true )
+            s_decoder.init_graphic_subtitle(sd);        
+        else
+        {
+            sub_src     =   s_decoder.get_subfile();
 
-        s_decoder.init_sws_ctx( sd );
-        s_decoder.init_sub_image( sd );
+            s_decoder.init_sws_ctx( sd );
 
-        // if exist subtitle, open it.
-        // 這邊有執行順序問題, 不能隨便更改執行順序      
-        std::pair<std::string,std::string>  sub_param   =   s_decoder.get_subtitle_param( fmt_ctx, sub_src, sd );
-        s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
+            // if exist subtitle, open it.
+            // 這邊有執行順序問題, 不能隨便更改執行順序      
+            sub_param   =   s_decoder.get_subtitle_param( fmt_ctx, sub_src, sd );
+            s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
+            s_decoder.set_filter_args( sub_param.first );
+        }       
     }
-
-    return SUCCESS;
 }
-
-
 
 
 
@@ -232,6 +291,16 @@ AudioSetting    Player::get_audio_setting()
     return  as;
 }
 
+
+
+
+/*******************************************************************************
+Player::get_duration_time
+********************************************************************************/
+int64_t     Player::get_duration_time()
+{
+    return  demuxer.get_duration_time();
+}
 
 
 
@@ -478,7 +547,9 @@ Player::demux_need_wait()
 ********************************************************************************/
 bool    Player::demux_need_wait()
 {
-    if( v_decoder.exist_stream() == true && a_decoder.exist_stream() == true )
+    if( seek_flag == true )
+        return  false;
+    else if( v_decoder.exist_stream() == true && a_decoder.exist_stream() == true )
     {
         if( video_queue.size() >= MAX_QUEUE_SIZE && audio_queue.size() >= MAX_QUEUE_SIZE )
             return  true;
@@ -496,6 +567,109 @@ bool    Player::demux_need_wait()
 
 
 
+/*******************************************************************************
+Player::is_embedded_subtitle()
+********************************************************************************/
+bool    Player::is_embedded_subtitle()
+{
+    return  s_decoder.get_sub_src_type() == SubSourceType::EMBEDDED;
+}
+
+
+
+
+
+
+/*******************************************************************************
+Player::is_file_subtitle()
+********************************************************************************/
+bool    Player::is_file_subtitle()
+{
+    return  s_decoder.get_sub_src_type() == SubSourceType::FROM_FILE;
+}
+
+
+
+
+
+/*******************************************************************************
+Player::is_embedded_subtitle()
+********************************************************************************/
+std::vector<std::string>    Player::get_embedded_subtitle_list()
+{
+    return  s_decoder.get_embedded_subtitle_list();
+}
+
+
+
+
+
+/*******************************************************************************
+Player::stop()
+********************************************************************************/
+void    Player::stop()
+{
+    stop_flag   =   true;
+}
+
+
+
+
+
+
+/*******************************************************************************
+Player::handle_seek()
+
+看討論, avformat_seek_file 比 av_seek_frame 好
+但細節需要研究.
+********************************************************************************/
+void    Player::handle_seek()
+{
+    int         ret;
+    AudioData   adata;
+
+    // clear queue.
+    v_mtx.lock();
+    while( video_queue.empty() == false )
+        video_queue.pop();
+    v_mtx.unlock();
+
+    a_mtx.lock();
+    while( audio_queue.empty() == false )
+    {
+        adata   =   audio_queue.front();
+        delete [] adata.pcm;
+        audio_queue.pop();
+    }
+    a_mtx.unlock();
+
+    v_decoder.flush_for_seek();
+    a_decoder.flush_for_seek();
+    s_decoder.flush_for_seek();
+
+    // run seek.
+    AVFormatContext*    fmt_ctx     =   demuxer.get_format_context();
+    avformat_flush( fmt_ctx );  // 看起來是走網路才需要做這個動作,但不確定
+
+    int64_t     so  =   seek_old,
+                sv  =   seek_value; // 避免overflow
+
+    // 不這樣設置的話, seek大範圍會出錯.  例如超過一小時的影片, 直接 seek 超過半小時後
+    int64_t     min     =   so < sv ? so * AV_TIME_BASE + 2 : INT64_MIN,
+                max     =   so > sv ? so * AV_TIME_BASE - 2 : INT64_MAX,
+                ts      =   sv * AV_TIME_BASE;       
+
+    ret     =   avformat_seek_file( fmt_ctx, -1, min, ts, max, 0 );  //AVSEEK_FLAG_ANY
+    if( ret < 0 )
+        MYLOG( LOG::DEBUG, "seek fail." );
+
+}
+
+
+
+
+
+
 
 /*******************************************************************************
 Player::play_QT()
@@ -507,10 +681,27 @@ void    Player::play_QT()
     Decode      *dc     =   nullptr;
 
     //
-    while( true ) 
+    while( stop_flag == false ) 
     {
-        while( demux_need_wait() == true ) 
+        // NOTE: seek事件觸發的時候, queue 資料會暴增.
+        while( demux_need_wait() == true )
+        {
+            //MYLOG( LOG::DEBUG, "v size = %d, a size = %d", video_queue.size(), audio_queue.size() );
+            if( stop_flag == true )
+                break;
             SLEEP_1MS;
+        }
+
+        //
+        if( seek_flag == true )     
+        {
+            while( ui_v_seek_lock == false || ui_a_seek_lock == false )
+                SLEEP_10MS;
+            seek_flag   =   false;
+            handle_seek();
+            ui_v_seek_lock = false;
+            ui_a_seek_lock = false;
+        }
 
         //
         ret     =   demuxer.demux();
@@ -554,6 +745,19 @@ Player::decode
 ********************************************************************************/
 int     Player::decode( Decode *dc, AVPacket* pkt )
 {
+    // switch subtitle track
+    // 寫在這邊是為了方便未來跟multi-thread decode結合.
+    if( switch_subtitle_flag == true )
+    {
+        switch_subtitle_flag    =   false;
+        if( s_decoder.get_sub_src_type() == SubSourceType::FROM_FILE )
+            s_decoder.switch_subtltle(new_subtitle_path);
+        else if( s_decoder.get_sub_src_type() == SubSourceType::EMBEDDED )
+            s_decoder.switch_subtltle(new_subtitle_index);
+        else
+            MYLOG( LOG::ERROR, "no subtitle.");
+    }
+
     int     ret     =   0;
 
     // 必須對 subtitle 進行decode, 不然 filter 會出錯
@@ -564,9 +768,10 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
     }
 
     // handle video stream with subtitle
-    if( s_decoder.exist_stream() == true && v_decoder.find_index( pkt->stream_index ) == true )
+    if( s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == false &&
+        v_decoder.find_index( pkt->stream_index ) == true )
     {
-        decode_video_with_subtitle(pkt);
+        decode_video_with_nongraphic_subtitle(pkt);
         return  SUCCESS;
     }
 
@@ -585,7 +790,10 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
 
             if( pkt->stream_index == v_decoder.current_index() )
             {
-                vdata   =   v_decoder.output_video_data();
+                if( s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == true )
+                    vdata   =   overlap_subtitle_image();
+                else
+                    vdata   =   v_decoder.output_video_data();
                 v_mtx.lock();
                 video_queue.push(vdata);
                 v_mtx.unlock();
@@ -610,15 +818,17 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
 
 
 
+
+
 /*******************************************************************************
 Player::decode_video_with_subtitle()
 ********************************************************************************/
-int    Player::decode_video_with_subtitle( AVPacket* pkt )
+int    Player::decode_video_with_nongraphic_subtitle( AVPacket* pkt )
 {
     int         ret         =   v_decoder.send_packet(pkt);
     AVFrame     *v_frame    =   nullptr;
     VideoData   vdata;
-
+    int64_t     ts;
 
     int         count       =   0;      // for test.
 
@@ -631,7 +841,16 @@ int    Player::decode_video_with_subtitle( AVPacket* pkt )
             if( ret <= 0 )
                 break;
 
+            /*
+                這邊 filter 的 function 改成不會 keep 的版本
+                所以必須先取得 ts, 不然有機會跑完 filter 後失去 timestamp 資訊.
+                如果做在 subtitle 的話,會需要視情況複製 video stream 的 time_base 過去.
+                覺得太麻煩了,選擇用先取出 timestamp 的作法
+                缺點是這邊程式碼有執行順序的問題.
+                要留意 while loop 執行兩次的狀況
+            */
             v_frame     =   v_decoder.get_frame();
+            ts          =   v_decoder.get_timestamp();
             ret         =   s_decoder.send_video_frame( v_frame );
 
             count       =   0;
@@ -643,7 +862,7 @@ int    Player::decode_video_with_subtitle( AVPacket* pkt )
 
                 vdata.frame         =   s_decoder.get_subtitle_image();
                 vdata.index         =   v_decoder.get_frame_count();
-                vdata.timestamp     =   v_decoder.get_timestamp();
+                vdata.timestamp     =   ts;
 
                 v_mtx.lock();
                 video_queue.push(vdata);
@@ -680,9 +899,7 @@ flush 過程基本上同 decode, 送 nullptr 進去
 ********************************************************************************/
 int    Player::flush()
 {
-    int     ret     =   0;
-    int     i;
-
+    int         ret     =   0;
     VideoData   vdata;
     AudioData   adata;
 
@@ -696,13 +913,17 @@ int    Player::flush()
             if( ret <= 0 )
                 break;
 
-            // flush 階段本來想處理 subtitle, 但會跳錯誤, 還沒找到解決的做法
-            vdata   =   v_decoder.output_video_data();
+            if( s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == true )
+                vdata   =   overlap_subtitle_image();
+            else
+                vdata   =   v_decoder.output_video_data();
+
+            // flush 階段本來想處理 subtitle, 但會跳錯誤, 還沒找到解決的做法. 目前只處理graphic subtitle的部分
             video_queue.push(vdata);
             v_decoder.unref_frame();  
         }
     }
-    v_decoder.flush_all_stresam();
+    v_decoder.flush_all_stream();
 
     // flush audio
     ret     =   a_decoder.send_packet(nullptr);
@@ -723,7 +944,7 @@ int    Player::flush()
             a_decoder.unref_frame();
         }
     }
-    a_decoder.flush_all_stresam();
+    a_decoder.flush_all_stream();
 
     return 0;
 }
@@ -744,12 +965,82 @@ int     Player::end()
 
     sub_name.clear();
 
+    stop_flag   =   false;
+    seek_flag   =   false;
+
     return  SUCCESS;
 }
 
 
 
 
+/*******************************************************************************
+Player::switch_subtitle()
+********************************************************************************/
+void    Player::switch_subtitle( std::string path )
+{
+    switch_subtitle_flag    =   true;
+    new_subtitle_path       =   path;
+}
 
+
+
+
+
+/*******************************************************************************
+Player::switch_subtitle()
+********************************************************************************/
+void    Player::switch_subtitle( int index )
+{
+    switch_subtitle_flag    =   true;
+    new_subtitle_index      =   index;
+}
+
+
+
+
+
+
+
+/*******************************************************************************
+Player::overlap_subtitle_image()
+********************************************************************************/
+VideoData       Player::overlap_subtitle_image()
+{
+    int64_t     timestamp   =   v_decoder.get_timestamp();
+    VideoData   vdata;
+
+    if( s_decoder.is_video_in_duration( timestamp ) == false )
+        vdata     =   v_decoder.output_video_data();
+    else
+    {
+        QImage  v_img   =   v_decoder.get_video_image();
+        QImage  s_img   =   s_decoder.get_subtitle_image();
+        
+        QPainter    painter( &v_img );
+        QPoint      pos =   s_decoder.get_subtitle_image_pos();
+        painter.drawImage( pos, s_img );
+
+        vdata.frame     =   v_img;
+        vdata.index     =   v_decoder.get_frame_count();
+        vdata.timestamp =   timestamp;
+    }
+
+    return vdata;
+}
+
+
+
+
+
+/*******************************************************************************
+Player::seek()
+********************************************************************************/
+void    Player::seek( int value, int old_value )
+{
+    seek_flag   =   true;
+    seek_value  =   value;
+    seek_old    =   old_value;
+}
 
 

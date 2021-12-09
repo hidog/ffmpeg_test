@@ -77,13 +77,22 @@ void    Worker::run()
     AudioSetting    as;
     AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
     VideoWorker     *vw     =   dynamic_cast<MainWindow*>(parent())->get_video_worker();
-    
+   
+    //
     player.init();
+    int     duration    =   static_cast<int>(player.get_duration_time());
+    emit    duration_signal( duration );
+
+    if( player.is_embedded_subtitle() == true )
+    {
+        auto    list    =   player.get_embedded_subtitle_list();
+        emit embedded_sublist_signal(list);
+    }
     
     // send video setting to UI
     is_set_video    =   false;
     vs              =   player.get_video_setting();
-    emit video_setting_singal(vs);
+    emit video_setting_signal(vs);
     
     // send audio setting to UI
     as  =   player.get_audio_setting();
@@ -111,8 +120,25 @@ void    Worker::run()
         SLEEP_10MS;
 
     MYLOG( LOG::INFO, "finish decode." );
-
 }
+
+
+
+
+/*******************************************************************************
+Worker::stop_slot()
+********************************************************************************/
+void    Worker::stop_slot()
+{
+    player.stop();
+
+    AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
+    VideoWorker     *vw     =   dynamic_cast<MainWindow*>(parent())->get_video_worker();
+
+    vw->stop();
+    aw->stop();
+}
+
 
 
 
@@ -157,6 +183,8 @@ void    Worker::set_src_file( std::string file )
     {
         str     =   list.at(0);
         player.set_sub_file( str.toStdString() ); // 未來做成可以多重輸入
+
+        emit subtitle_list_signal(list);
     }
 }
 
@@ -169,4 +197,46 @@ Worker::is_set_src_file()
 bool    Worker::is_set_src_file()
 {
     return  player.is_set_input_file();
+}
+
+
+
+
+
+/*******************************************************************************
+Worker::switch_subtitle()
+********************************************************************************/
+void    Worker::switch_subtitle_slot_str( QString path )
+{
+    if( player.is_file_subtitle() == true )
+        player.switch_subtitle( path.toStdString() );
+}
+
+
+
+
+/*******************************************************************************
+Worker::switch_subtitle()
+********************************************************************************/
+void    Worker::switch_subtitle_slot_int( int index )
+{
+    if( player.is_embedded_subtitle() == true )
+        player.switch_subtitle(index);
+}
+
+
+
+
+
+
+/*******************************************************************************
+Worker::seek_slot()
+********************************************************************************/
+void    Worker::seek_slot( int value )
+{
+    MainWindow  *mw     =   dynamic_cast<MainWindow*>(parent());
+    VideoData   *vd     =   mw->get_view_data();
+    int     old_value   =   vd->timestamp / 1000;
+
+    player.seek( value, old_value );
 }

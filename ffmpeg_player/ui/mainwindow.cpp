@@ -5,11 +5,13 @@
 #include <QMessageBox>
 
 #include <QVideoWidget>
+
 #include <QAbstractVideoSurface>
 #include <QVideoSurfaceFormat>
 
 #include <QFileDialog>
 #include <QDebug>
+#include <QKeyEvent>
 
 #include <mutex>
 
@@ -35,8 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 必須註冊自定義的物件.
     qRegisterMetaType<VideoSetting>("VideoSetting");
-
-    //video_widget    =   new QVideoWidget();
+    qRegisterMetaType<std::vector<std::string>>("std::vector<std::string>");
 
     //
     video_mtx       =   new QMutex( QMutex::NonRecursive );
@@ -49,7 +50,6 @@ MainWindow::MainWindow(QWidget *parent)
     audio_worker    =   new AudioWorker(this);
 
     set_signal_slot();
-
 }
 
 
@@ -88,7 +88,7 @@ void MainWindow::recv_video_frame_slot()
     /*if( video_widget->isVisible() == false )
         return;*/
 
-    QVideoWidget    *video_widget   =   ui->widget;
+    VideoWidget    *video_widget   =   ui->videoWidget;
 
     static int  last_index  =   0;
 
@@ -118,12 +118,24 @@ MainWindow::set_signal_slot()
 void MainWindow::set_signal_slot()
 {
     // 舊式寫法
-    connect(    worker,     SIGNAL(video_setting_singal(VideoSetting)),     this,   SLOT(set_video_setting_slot(VideoSetting)) );
-    //connect(    worker,     &Worker::video_setting_singal,     this,   &MainWindow::set_video_setting_slot );
+    connect(    worker,             SIGNAL(video_setting_signal(VideoSetting)),     this,           SLOT(set_video_setting_slot(VideoSetting))  );
+    //connect(    worker,           &Worker::video_setting_singal,                  this,           &MainWindow::set_video_setting_slot         );
+    connect(    worker,             &Worker::subtitle_list_signal,                  this,           &MainWindow::set_subtitle_list_slot         );
+    connect(    worker,             &Worker::embedded_sublist_signal,               this,           &MainWindow::embedded_sublist_slot          );
+    connect(    worker,             &Worker::finished,                              this,           &MainWindow::finish_slot                    );
+    connect(    worker,             &Worker::duration_signal,                       this,           &MainWindow::duration_slot                  );
 
-    connect(    ui->startButton,    &QPushButton::clicked,                  this,   &MainWindow::start_slot );
-    connect(    ui->loadFileButton, &QPushButton::clicked,                  this,   &MainWindow::load_file_slot );
-    connect(    video_worker,       &VideoWorker::recv_video_frame_signal,  this,   &MainWindow::recv_video_frame_slot );
+    connect(    ui->subCBox,        &QComboBox::currentTextChanged,                 worker,         &Worker::switch_subtitle_slot_str           );
+    connect(    ui->subCBox,        SIGNAL(currentIndexChanged(int)),               worker,         SLOT(switch_subtitle_slot_int(int))         );   // 用另一個方式會跳錯誤
+    connect(    ui->stopButton,     &QPushButton::clicked,                          worker,         &Worker::stop_slot                          );   
+    connect(    ui->playButton,     &QPushButton::clicked,                          this,           &MainWindow::play_slot                      );
+    connect(    ui->pauseButton,    &QPushButton::clicked,                          this,           &MainWindow::pause_slot                     );
+
+    connect(    video_worker,       &VideoWorker::recv_video_frame_signal,          this,           &MainWindow::recv_video_frame_slot          );
+    connect(    video_worker,       &VideoWorker::update_seekbar_signal,            this,           &MainWindow::update_seekbar_slot            );
+
+    connect(    ui->volumeSlider,   &QSlider::valueChanged,                         audio_worker,   &AudioWorker::volume_slot                   );
+
 }
 
 
@@ -134,11 +146,7 @@ MainWindow::set_video_setting_slot()
 ********************************************************************************/
 void    MainWindow::set_video_setting_slot( VideoSetting vs )
 {
-    /*if( video_widget->videoSurface()->isActive() )
-        video_widget->videoSurface()->stop();*/
-
-    QVideoWidget    *video_widget   =   ui->widget;
-
+    VideoWidget    *video_widget   =   ui->videoWidget;
 
     QSize   size { vs.width, vs.height };
 
@@ -153,33 +161,131 @@ void    MainWindow::set_video_setting_slot( VideoSetting vs )
 
 
 
-/*******************************************************************************
-MainWindow::start_slot()
-********************************************************************************/
-void MainWindow::start_slot()
-{
-    if( worker->is_set_src_file() == false )
-    {
-        QMessageBox::warning( this, tr("ffmpeg player"),
-                                    tr("need choose file") );
-        return;
-    }
 
-    //
+/*******************************************************************************
+MainWindow::duration_slot()
+********************************************************************************/
+void    MainWindow::duration_slot( int du )
+{
+    total_time  =   du;
+    ui->seekSlider->setMaximum(du);
+
+    // 因為設置影片長度的時候會觸發 value 事件, 造成 lock. 
+    // 暫時用設置完才 connect 跟 disconnect 的作法.
+    seek_connect[0]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     worker,         &Worker::seek_slot            );
+    seek_connect[1]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     audio_worker,   &AudioWorker::seek_slot       );
+    seek_connect[2]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     video_worker,   &VideoWorker::seek_slot       );
+}
+
+
+
+
+
+/*******************************************************************************
+MainWindow::update_seekbar()
+********************************************************************************/
+void    MainWindow::update_seekbar_slot( int sec )
+{
+    if( ui->seekSlider->is_mouse_press() == true )
+        return;
+
+    int     max     =   ui->seekSlider->maximum();
+    int     min     =   ui->seekSlider->minimum();
+
+    sec     =   sec > max ? max : sec;
+    sec     =   sec < min ? min : sec;
+
+    ui->seekSlider->setSliderPosition(sec);
+
+    // update time 
+    // 先放在這邊 未來有需求再把程式碼搬走
+    int     s   =   sec % 60;
+    int     m   =   sec / 60 % 60;
+    int     h   =   sec / 60 / 60;
+
+    int     ts  =   total_time % 60;
+    int     tm  =   total_time / 60 % 60;
+    int     th  =   total_time / 60 / 60;
+
+    // 有空再來修這邊的排版
+    QString     str =   QString("%1:%2:%3 / %4:%5:%6").arg(h).arg(m,2).arg(s,2).arg(th).arg(tm,2).arg(ts,2);
+    ui->timeLabel->setText(str);
+}
+
+
+
+
+/*******************************************************************************
+MainWindow::play_slot()
+********************************************************************************/
+void MainWindow::play_slot()
+{
+    ui->subCBox->clear();
+
+    QString filename     =   QFileDialog::getOpenFileName( this, tr("select src file"), "D:\\" );
+    if( filename.isEmpty() == true )
+        return;
+
+    MYLOG( LOG::INFO, "load file %s", filename.toStdString().c_str() );
+    worker->set_src_file(filename.toStdString());
+   
+    ui->playButton->setDisabled(true);
+    ui->centralwidget->setFocus(); // 不加這行會造成 keyboard event 失去作用
+
     worker->start();
 }
 
 
 
+
+
+
 /*******************************************************************************
-MainWindow::load_slot()
+MainWindow::pause_slot()
 ********************************************************************************/
-void MainWindow::load_file_slot()
+void    MainWindow::pause_slot()
 {
-    QString filename     =   QFileDialog::getOpenFileName( this, tr("select src file"), "D:\\" );
-    MYLOG( LOG::INFO, "load file %s", filename.toStdString().c_str() );
-    worker->set_src_file(filename.toStdString());
+    pause();
 }
+
+
+
+
+
+/*******************************************************************************
+MainWindow::pause()
+********************************************************************************/
+void    MainWindow::pause()
+{
+    video_worker->pause();
+    audio_worker->pause();
+}
+
+
+
+
+/*******************************************************************************
+MainWindow::finish_slot()
+********************************************************************************/
+void    MainWindow::finish_slot()
+{
+    ui->playButton->setEnabled(true);
+    ui->videoWidget->videoSurface()->stop();
+    ui->subCBox->clear();
+
+    QVideoWidget    *video_widget   =   ui->videoWidget;
+    video_widget->setFullScreen( false );
+    video_widget->setGeometry( QRect(70,70,1401,851) );  // 先寫死 之後改成能動態調整
+
+    ui->seekSlider->setSliderPosition(0);
+    ui->seekSlider->setValue(0);
+
+    disconnect( seek_connect[0] );
+    disconnect( seek_connect[1] );
+    disconnect( seek_connect[2] );
+}
+
+
 
 
 
@@ -237,4 +343,92 @@ MainWindow::get_audio_worker()
 AudioWorker*    MainWindow::get_audio_worker()
 {
     return  audio_worker;
+}
+
+
+
+
+
+
+
+/*******************************************************************************
+MainWindow::keyPressEvent()
+********************************************************************************/
+void    MainWindow::keyPressEvent( QKeyEvent *event )
+{
+    switch( event->key() )
+    {
+        case Qt::Key_F :
+        {
+            QVideoWidget    *video_widget   =   ui->videoWidget;
+            bool    flag    =   video_widget->isFullScreen();
+            video_widget->setFullScreen( !flag );
+            break;
+        }
+        case Qt::Key_Space :
+        {
+            pause();
+            break;
+        }
+    }
+}
+
+
+
+
+/*******************************************************************************
+MainWindow::set_subtitle_list_slot()
+********************************************************************************/
+void    MainWindow::set_subtitle_list_slot( QStringList list )
+{
+    int     i;
+    auto    sub_combobox    =   ui->subCBox;
+
+    for( i = 0; i < list.size(); i++ )
+        sub_combobox->addItem( list.at(i) );
+}
+
+
+
+
+
+/*******************************************************************************
+MainWindow::embedded_sublist_slot()
+********************************************************************************/
+void    MainWindow::embedded_sublist_slot(  std::vector<std::string> list )
+{
+    int     i;
+    auto    sub_combobox    =   ui->subCBox;
+
+    for( i = 0; i < list.size(); i++ )
+        sub_combobox->addItem( list.at(i).c_str() );
+}
+
+
+
+
+/*******************************************************************************
+MainWindow::volume()
+********************************************************************************/
+int     MainWindow::volume()
+{
+    return  ui->volumeSlider->value();
+}
+
+
+
+
+/*******************************************************************************
+MainWindow::closeEvent()
+********************************************************************************/
+void    MainWindow::closeEvent( QCloseEvent *event )
+{
+    worker->stop_slot();    
+
+    while( worker->isRunning() == true )
+        SLEEP_10MS;
+    while( video_worker->isRunning() == true )
+        SLEEP_10MS;
+    while( audio_worker->isRunning() == true )
+        SLEEP_10MS;
 }

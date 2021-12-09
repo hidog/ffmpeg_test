@@ -11,15 +11,12 @@ class Worker : public QThread
     Q_OBJECT
 
 public:
-
-    //
+    
     Worker( QObject *parent );
     ~Worker();
-
-    //
+    
     void    run() override;
-
-    //
+    
     void    set_src_file( std::string file );
     bool    is_set_src_file();
     void    finish_set_video();
@@ -29,10 +26,16 @@ public:
 
 public slots:
 
-    
-signals:
-    void    video_setting_singal( VideoSetting );
+    void    switch_subtitle_slot_str( QString path );
+    void    switch_subtitle_slot_int( int index );
+    void    stop_slot();
+    void    seek_slot( int value );
 
+signals:
+    void    video_setting_signal( VideoSetting );
+    void    subtitle_list_signal( QStringList );
+    void    embedded_sublist_signal( std::vector<std::string> );
+    void    duration_signal(int);
 
 private:
 

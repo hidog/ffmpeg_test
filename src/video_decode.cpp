@@ -68,7 +68,7 @@ VideoDecode::open_codec_context()
 int     VideoDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
     Decode::open_all_codec( fmt_ctx, type );
-    //dec_ctx->thread_count = 10;
+    //dec_ctx->thread_count = 4;
     return  SUCCESS;
 }
 
@@ -196,6 +196,23 @@ int     VideoDecode::end()
 
 
 
+/*******************************************************************************
+VideoDecode::get_video_image()
+********************************************************************************/
+QImage      VideoDecode::get_video_image()
+{
+    QImage  image { width, height, QImage::Format_RGB888 };
+
+    //av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
+    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, video_dst_data, video_dst_linesize );
+    memcpy( image.bits(), video_dst_data[0], video_dst_bufsize );
+
+    return  image;
+}
+
+
+
+
 
 
 /*******************************************************************************
@@ -207,15 +224,9 @@ VideoData   VideoDecode::output_video_data()
 {
     VideoData   vd;
 
-    QImage  image { width, height, QImage::Format_RGB888 };
-
-    //av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
-    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, video_dst_data, video_dst_linesize );
-    memcpy( image.bits(), video_dst_data[0], video_dst_bufsize );
-
     //
     vd.index        =   frame_count;
-    vd.frame        =   image;
+    vd.frame        =   get_video_image();
     vd.timestamp    =   get_timestamp();
 
     return  vd;
@@ -268,7 +279,27 @@ int64_t     VideoDecode::get_timestamp()
 
 
 
- 
+
+
+/*******************************************************************************
+VideoDecode::get_pts()
+
+逆推回 pts.
+
+NOTE: 傳入值單位是 sec. 
+********************************************************************************/
+int64_t     VideoDecode::get_pts( int sec )
+{
+    int64_t     pts =   0;
+    pts     =   static_cast<int64_t>( 1.0 * sec / av_q2d(stream->time_base) );
+    return  pts;
+}
+
+
+
+
+
+
 
 
 /*******************************************************************************

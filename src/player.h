@@ -21,6 +21,9 @@ DLL_API std::queue<VideoData>* get_video_queue();
 DLL_API std::mutex& get_a_mtx(); 
 DLL_API std::mutex& get_v_mtx(); 
 
+DLL_API bool& get_v_seek_lock(); 
+DLL_API bool& get_a_seek_lock(); 
+
 
 struct AVPacket;
 
@@ -43,6 +46,8 @@ public:
     int     init();
     int     end();
     int     flush();
+    void    stop();
+    void    seek( int value, int old_value );
 
     //
     bool    demux_need_wait();
@@ -50,10 +55,23 @@ public:
     bool    is_set_input_file();
     int     decode( Decode *dc, AVPacket* pkt );
     void    set_sub_file( std::string str );
-    int     decode_video_with_subtitle( AVPacket* pkt );
 
+    int     decode_video_with_nongraphic_subtitle( AVPacket* pkt );
+    void    switch_subtitle( std::string path );
+    void    switch_subtitle( int index );
+    bool    is_embedded_subtitle();
+    bool    is_file_subtitle();
+
+    void    init_subtitle( AVFormatContext *fmt_ctx );
+    void    handle_seek();    
+
+    int64_t     get_duration_time();
+
+    VideoData       overlap_subtitle_image();
     VideoSetting    get_video_setting();
     AudioSetting    get_audio_setting();
+
+    std::vector<std::string>    get_embedded_subtitle_list();
 
 
 #ifdef USE_MT
@@ -78,8 +96,17 @@ private:
     SubDecode       s_decoder;
 
     std::string     src_file;
-    std::string     sub_name;   // 外掛字幕檔名
-    //std::string     sub_src;    // 因為可能是使用內嵌字幕,也可能用外掛字幕. 將最後的結果存在這個字串內.
+    std::string     sub_name;           // 外掛字幕檔名
+    std::string     new_subtitle_path;  // switch subtitle使用
+
+    bool    switch_subtitle_flag    =   false;
+    int     new_subtitle_index      =   0;
+    bool    stop_flag               =   false;
+
+    int     seek_old    =   0;
+    int     seek_value  =   0;
+    bool    seek_flag   =   false;
+
 
 #ifdef USE_MT
     bool    v_thr_start     =   false,

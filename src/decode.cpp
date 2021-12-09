@@ -91,15 +91,16 @@ int     Decode::open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type )
                 cs_index   =   index; // choose first ad current.
 
             // note: dec_ctx, stream is class member. after open codec, they use for current ctx, stream.
-            open_codec_context( index, fmt_ctx, type );            
+            open_codec_context( index, fmt_ctx, type );
+
             dec_map.emplace(    std::make_pair(index,dec_ctx) ); 
             stream_map.emplace( std::make_pair(index,stream)  );
         }
     }
 
     // set
-    dec_ctx     =   dec_map[cs_index];
-    stream      =   stream_map[cs_index];
+    dec_ctx     =   cs_index == -1 ? nullptr : dec_map[cs_index];
+    stream      =   cs_index == -1 ? nullptr : stream_map[cs_index];
 
     return  SUCCESS;
 }
@@ -190,6 +191,10 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
         return  ERROR;
     }   
 
+    // for psg subtitle use.
+    // 沒設置的話, decode psg subtitle 的時候無法取得timestamp.
+    dec_ctx->pkt_timebase = fmt_ctx->streams[stream_index]->time_base;
+
     // output info
     output_decode_info( dec, dec_ctx );
 
@@ -260,9 +265,42 @@ AVMediaType     Decode::get_decode_context_type()
 
 
 /*******************************************************************************
+Decode::flush_for_seek()
+********************************************************************************/
+void    Decode::flush_for_seek()
+{
+    int     ret;
+
+    AVCodecContext  *ctx    =   nullptr;
+
+    for( auto itr : dec_map )
+    {
+        ctx     =   itr.second;
+
+        avcodec_flush_buffers( ctx );
+
+
+        /*avcodec_send_packet( ctx, nullptr );
+
+        while(true)
+        {
+            ret     =   avcodec_receive_frame( ctx, frame );
+            if( ret < 0 )
+                break;
+            av_frame_unref(frame);
+        }*/
+    }
+}
+
+
+
+
+
+
+/*******************************************************************************
 Decode::flush_all_stresam()
 ********************************************************************************/
-void    Decode::flush_all_stresam()
+void    Decode::flush_all_stream()
 {
     int     ret;
 

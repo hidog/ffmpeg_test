@@ -10,8 +10,6 @@ struct AVPacket;
 struct AVFormatContext;
 
 /*
-https://cloud.tencent.com/developer/article/1333501
-
 直接demux出來的東西不能用ffplay播放
 要用 av_bsf_send_packet( v_bsf_ctx, pkt );
      av_bsf_receive_packet( v_bsf_ctx, pkt_bsf );
@@ -36,13 +34,14 @@ public:
     //
     int     init();
     int     demux();
-    int     end();
+    int     end();    
     
     int     open_input( std::string src_file );
-    int     stream_info();
+    int     stream_info();    
     
     AVPacket*   get_packet();
     void        unref_packet();
+    int64_t     get_duration_time();
 
     AVFormatContext*    get_format_context();
 
