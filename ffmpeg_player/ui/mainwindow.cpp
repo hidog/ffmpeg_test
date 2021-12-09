@@ -135,9 +135,7 @@ void MainWindow::set_signal_slot()
     connect(    video_worker,       &VideoWorker::update_seekbar_signal,            this,           &MainWindow::update_seekbar_slot            );
 
     connect(    ui->volumeSlider,   &QSlider::valueChanged,                         audio_worker,   &AudioWorker::volume_slot                   );
-    connect(    ui->seekSlider,     &QSlider::valueChanged,                         worker,         &Worker::seek_slot                          );
-    connect(    ui->seekSlider,     &QSlider::valueChanged,                         audio_worker,   &AudioWorker::seek_slot                     );
-    connect(    ui->seekSlider,     &QSlider::valueChanged,                         video_worker,   &VideoWorker::seek_slot                     );
+
 }
 
 
@@ -170,6 +168,12 @@ MainWindow::duration_slot()
 void    MainWindow::duration_slot( int du )
 {
      ui->seekSlider->setMaximum(du);
+
+     // 因為設置影片長度的時候會觸發 value 事件, 造成 lock. 
+     // 暫時用設置完才 connect 跟 disconnect 的作法.
+     seek_connect[0]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     worker,         &Worker::seek_slot            );
+     seek_connect[1]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     audio_worker,   &AudioWorker::seek_slot       );
+     seek_connect[2]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     video_worker,   &VideoWorker::seek_slot       );
 }
 
 
@@ -259,6 +263,10 @@ void    MainWindow::finish_slot()
     video_widget->setGeometry( QRect(70,70,1401,851) );  // 先寫死 之後改成能動態調整
 
     ui->seekSlider->setSliderPosition(0);
+
+    disconnect( seek_connect[0] );
+    disconnect( seek_connect[1] );
+    disconnect( seek_connect[2] );
 }
 
 

@@ -87,6 +87,7 @@ int     Player::init()
     }
 
     stop_flag   =   false;
+    seek_flag   =   false;
 
     int     ret     =   -1;
     AVFormatContext *fmt_ctx    =   nullptr;
@@ -106,6 +107,7 @@ int     Player::init()
     ret     =   a_decoder.init();    
 
     // handle subtitle
+    // 有遇到影片會在這邊卡很久, 或許可以考慮用multi-thread的方式做處理, 以後再說...
     init_subtitle(fmt_ctx);
 
     return SUCCESS;
@@ -948,6 +950,7 @@ int     Player::end()
     sub_name.clear();
 
     stop_flag   =   false;
+    seek_flag   =   false;
 
     return  SUCCESS;
 }

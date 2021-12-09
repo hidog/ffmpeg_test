@@ -31,19 +31,19 @@ extern "C" {
 int main()
 {
 #if 1
-    char str[100] = "D:\\code\\test2.mkv";
+    char str[100] = "D:\\code\\SAO.mkv";
 
     char **argv = new char* [10];
-    argv[1] = str;
+    argv[3] = str;
 
-#if 0
+#if 1
     char str2[100] = "-vf";
     argv[1] = str2;
-    char str3[100] = "subtitles='../../test.ssa':stream_index=0";
+    char str3[100] = "subtitles='../../SAO.mkv':stream_index=0";
     argv[2] = str3;
 #endif
 
-    ffplay_main( 2, argv );
+    ffplay_main( 4, argv );
     //play_demuxing_decodeing();
 #else
 

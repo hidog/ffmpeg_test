@@ -24,6 +24,9 @@
  */
 
 //#include "config.h"
+
+#include "ffplay.h"
+
 #include <inttypes.h>
 #include <math.h>
 #include <limits.h>
