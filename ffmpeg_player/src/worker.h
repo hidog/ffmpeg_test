@@ -29,6 +29,7 @@ public slots:
     void    switch_subtitle_slot_str( QString path );
     void    switch_subtitle_slot_int( int index );
     void    stop_slot();
+    void    seek_slot( int value );
 
 signals:
     void    video_setting_signal( VideoSetting );

@@ -29,9 +29,15 @@ public:
     void    stop();
     void    pause();
 
+    void    flush_for_seek();    
+
 public slots:
+
     void    handleStateChanged( QAudio::State state );
     void    volume_slot( int value );
+
+    void    seek_slot( int sec );
+
 
 signals:
 
@@ -43,6 +49,7 @@ private:
 
     bool    a_start     =   false;
     bool    force_stop  =   false;
+    bool    seek_flag   =   false;
 
 };
 

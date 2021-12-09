@@ -135,6 +135,7 @@ void MainWindow::set_signal_slot()
     connect(    video_worker,       &VideoWorker::update_seekbar_signal,            this,           &MainWindow::update_seekbar_slot            );
 
     connect(    ui->volumeSlider,   &QSlider::valueChanged,                         audio_worker,   &AudioWorker::volume_slot                   );
+
 }
 
 
@@ -166,7 +167,14 @@ MainWindow::duration_slot()
 ********************************************************************************/
 void    MainWindow::duration_slot( int du )
 {
-     ui->seekSlider->setMaximum(du);
+    total_time  =   du;
+    ui->seekSlider->setMaximum(du);
+
+    // 因為設置影片長度的時候會觸發 value 事件, 造成 lock. 
+    // 暫時用設置完才 connect 跟 disconnect 的作法.
+    seek_connect[0]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     worker,         &Worker::seek_slot            );
+    seek_connect[1]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     audio_worker,   &AudioWorker::seek_slot       );
+    seek_connect[2]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     video_worker,   &VideoWorker::seek_slot       );
 }
 
 
@@ -178,6 +186,9 @@ MainWindow::update_seekbar()
 ********************************************************************************/
 void    MainWindow::update_seekbar_slot( int sec )
 {
+    if( ui->seekSlider->is_mouse_press() == true )
+        return;
+
     int     max     =   ui->seekSlider->maximum();
     int     min     =   ui->seekSlider->minimum();
 
@@ -185,6 +196,20 @@ void    MainWindow::update_seekbar_slot( int sec )
     sec     =   sec < min ? min : sec;
 
     ui->seekSlider->setSliderPosition(sec);
+
+    // update time 
+    // 先放在這邊 未來有需求再把程式碼搬走
+    int     s   =   sec % 60;
+    int     m   =   sec / 60 % 60;
+    int     h   =   sec / 60 / 60;
+
+    int     ts  =   total_time % 60;
+    int     tm  =   total_time / 60 % 60;
+    int     th  =   total_time / 60 / 60;
+
+    // 有空再來修這邊的排版
+    QString     str =   QString("%1:%2:%3 / %4:%5:%6").arg(h).arg(m,2).arg(s,2).arg(th).arg(tm,2).arg(ts,2);
+    ui->timeLabel->setText(str);
 }
 
 
@@ -253,6 +278,11 @@ void    MainWindow::finish_slot()
     video_widget->setGeometry( QRect(70,70,1401,851) );  // 先寫死 之後改成能動態調整
 
     ui->seekSlider->setSliderPosition(0);
+    ui->seekSlider->setValue(0);
+
+    disconnect( seek_connect[0] );
+    disconnect( seek_connect[1] );
+    disconnect( seek_connect[2] );
 }
 
 

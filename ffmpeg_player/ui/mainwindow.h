@@ -63,13 +63,16 @@ private:
 
     //QVideoWidget    *video_widget; 可以用這個方式產生 video 視窗, 但是會遇到直接關掉此視窗,造成關閉軟體的時候會crash. 在研究怎麼修
 
-
     Worker          *worker         =   nullptr;  // 未來改成 unique pointer
     VideoWorker     *video_worker   =   nullptr;
     AudioWorker     *audio_worker   =   nullptr;
 
     QMutex          *video_mtx      =   nullptr;
     VideoData       *view_data      =   nullptr;
+
+    QMetaObject::Connection     seek_connect[3];
+
+    int     total_time  =   0;
 
 };
 #endif // MAINWINDOW_H

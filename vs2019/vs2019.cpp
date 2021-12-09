@@ -39,7 +39,7 @@ int main()
 #if 0
     char str2[100] = "-vf";
     argv[1] = str2;
-    char str3[100] = "subtitles='../../test.ssa':stream_index=0";
+    char str3[100] = "subtitles='../../test.mkv':stream_index=0";
     argv[2] = str3;
 #endif
 

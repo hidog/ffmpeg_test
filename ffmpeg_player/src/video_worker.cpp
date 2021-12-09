@@ -52,6 +52,7 @@ VideoWorker::run()
 void VideoWorker::run()  
 {
     force_stop  =   false;
+    seek_flag   =   false;
     video_play();
     MYLOG( LOG::INFO, "finish video play." );
 }
@@ -71,6 +72,41 @@ void    VideoWorker::stop()
 
 
 
+
+
+/*******************************************************************************
+VideoWorker::seek_slot()
+********************************************************************************/
+void    VideoWorker::seek_slot( int sec )
+{
+    seek_flag   =   true;
+    v_start     =   false;
+}
+
+
+
+
+
+/*******************************************************************************
+VideoWorker::flush_for_seek()
+
+seek 的時候, 由 UI 端負責清空資料, 之後等到有資料才繼續播放.
+由 player 清空的話, 會遇到 queue 是否為空的判斷不好寫, 
+沒寫好會造成 handle_func crash.
+********************************************************************************/
+void    VideoWorker::flush_for_seek()
+{
+    std::queue<VideoData>   *v_queue    =   get_video_queue();
+
+    bool    &a_start    =   dynamic_cast<MainWindow*>(parent())->get_audio_worker()->get_audio_start_state();
+
+    // 重新等待有資料才播放
+    while( v_queue->size() <= 3 )
+        SLEEP_10MS;
+    v_start     =   true;
+    while( a_start == false )
+        SLEEP_10MS;
+}
 
 
 
@@ -133,18 +169,35 @@ void VideoWorker::video_play()
         video_mtx->unlock();
 
         emit    recv_video_frame_signal();
-        emit    update_seekbar_signal( view_data->timestamp / 1000 );
+
+        if( seek_flag == false )
+            emit    update_seekbar_signal( view_data->timestamp / 1000 );
 
         last    =   now;
     };
 
     //
+    bool    &ui_v_seek_lock     =   get_v_seek_lock();
+
     last   =   std::chrono::steady_clock::now();
     while( is_play_end == false && force_stop == false )
     {   
+        //
         while( pause_flag == true )
             SLEEP_10MS;
 
+        //
+        if( seek_flag == true )
+        {
+            seek_flag   =   false;
+            last        =   std::chrono::steady_clock::time_point();
+            ui_v_seek_lock  =   true;
+            while( ui_v_seek_lock == true )
+                SLEEP_10MS;
+            flush_for_seek();
+        }
+
+        //
         if( v_queue->size() <= 0 )
         {
             MYLOG( LOG::WARN, "video queue empty." );

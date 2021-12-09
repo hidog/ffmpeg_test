@@ -21,6 +21,9 @@ DLL_API std::queue<VideoData>* get_video_queue();
 DLL_API std::mutex& get_a_mtx(); 
 DLL_API std::mutex& get_v_mtx(); 
 
+DLL_API bool& get_v_seek_lock(); 
+DLL_API bool& get_a_seek_lock(); 
+
 
 struct AVPacket;
 
@@ -44,6 +47,7 @@ public:
     int     end();
     int     flush();
     void    stop();
+    void    seek( int value, int old_value );
 
     //
     bool    demux_need_wait();
@@ -59,6 +63,7 @@ public:
     bool    is_file_subtitle();
 
     void    init_subtitle( AVFormatContext *fmt_ctx );
+    void    handle_seek();    
 
     int64_t     get_duration_time();
 
@@ -97,6 +102,11 @@ private:
     bool    switch_subtitle_flag    =   false;
     int     new_subtitle_index      =   0;
     bool    stop_flag               =   false;
+
+    int     seek_old    =   0;
+    int     seek_value  =   0;
+    bool    seek_flag   =   false;
+
 
 #ifdef USE_MT
     bool    v_thr_start     =   false,

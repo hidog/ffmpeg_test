@@ -128,6 +128,7 @@ void AudioWorker::run()
     }
 
     force_stop  =   false;
+    seek_flag   =   false;
 
     // start play
     audio_play();
@@ -142,6 +143,49 @@ void AudioWorker::run()
     MYLOG( LOG::INFO, "finish audio play." );
 }
 
+
+
+
+
+
+
+
+/*******************************************************************************
+AudioWorker::seek_slot()
+********************************************************************************/
+void    AudioWorker::seek_slot( int sec )
+{
+    seek_flag   =   true;
+    a_start     =   false;
+}
+
+
+
+
+
+/*******************************************************************************
+AudioWorker::flush_for_seek()
+
+seek 的時候, 由 UI 端負責清空資料, 之後等到有資料才繼續播放.
+由 player 清空的話, 會遇到 queue 是否為空的判斷不好寫, 
+沒寫好會造成 handle_func crash.
+********************************************************************************/
+void    AudioWorker::flush_for_seek()
+{
+    std::queue<AudioData>   *a_queue    =   get_audio_queue();
+
+    bool    &v_start    =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
+
+    // 重新等待有資料才播放
+    while( a_queue->size() <= 3 )
+        SLEEP_10MS;
+    a_start     =   true;
+    while( v_start == false )
+        SLEEP_10MS;
+}
+
+
+//extern bool ui_a_seek_lock;
 
 
 
@@ -229,9 +273,21 @@ void AudioWorker::audio_play()
     };
 
     //
+    bool    &ui_a_seek_lock     =   get_a_seek_lock();
+
     last   =   std::chrono::steady_clock::now();
     while( is_play_end == false && force_stop == false )
     {        
+        if( seek_flag == true )
+        {
+            seek_flag   =   false;
+            last        =   std::chrono::steady_clock::time_point();
+            ui_a_seek_lock  =   true;
+            while( ui_a_seek_lock == true )
+                SLEEP_10MS;
+            flush_for_seek();
+        }
+
         if( a_queue->size() <= 0 )
         {
             MYLOG( LOG::WARN, "audio queue empty." );

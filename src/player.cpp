@@ -10,6 +10,7 @@
 extern "C" {
 
 #include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
 
 } // end extern "C"
 
@@ -17,8 +18,38 @@ extern "C" {
 static std::queue<AudioData>    audio_queue;
 static std::queue<VideoData>    video_queue;
 
-std::mutex  a_mtx;
-std::mutex  v_mtx;
+static std::mutex  a_mtx;
+static std::mutex  v_mtx;
+
+static bool ui_v_seek_lock  =   false;  // 在seek事件的時候,負責跟UI的video worker, audio worker做同步
+static bool ui_a_seek_lock  =   false;
+
+
+
+
+
+
+
+/*******************************************************************************
+get_v_seek_lock()
+********************************************************************************/
+bool&   get_v_seek_lock() 
+{ 
+    return ui_v_seek_lock; 
+}
+
+
+
+
+
+/*******************************************************************************
+get_a_seek_lock()
+********************************************************************************/
+bool&   get_a_seek_lock() 
+{
+    return ui_a_seek_lock; 
+}
+
 
 
 
@@ -83,6 +114,7 @@ int     Player::init()
     }
 
     stop_flag   =   false;
+    seek_flag   =   false;
 
     int     ret     =   -1;
     AVFormatContext *fmt_ctx    =   nullptr;
@@ -102,6 +134,7 @@ int     Player::init()
     ret     =   a_decoder.init();    
 
     // handle subtitle
+    // 有遇到影片會在這邊卡很久, 或許可以考慮用multi-thread的方式做處理, 以後再說...
     init_subtitle(fmt_ctx);
 
     return SUCCESS;
@@ -514,7 +547,9 @@ Player::demux_need_wait()
 ********************************************************************************/
 bool    Player::demux_need_wait()
 {
-    if( v_decoder.exist_stream() == true && a_decoder.exist_stream() == true )
+    if( seek_flag == true )
+        return  false;
+    else if( v_decoder.exist_stream() == true && a_decoder.exist_stream() == true )
     {
         if( video_queue.size() >= MAX_QUEUE_SIZE && audio_queue.size() >= MAX_QUEUE_SIZE )
             return  true;
@@ -581,6 +616,61 @@ void    Player::stop()
 
 
 
+
+/*******************************************************************************
+Player::handle_seek()
+
+看討論, avformat_seek_file 比 av_seek_frame 好
+但細節需要研究.
+********************************************************************************/
+void    Player::handle_seek()
+{
+    int         ret;
+    AudioData   adata;
+
+    // clear queue.
+    v_mtx.lock();
+    while( video_queue.empty() == false )
+        video_queue.pop();
+    v_mtx.unlock();
+
+    a_mtx.lock();
+    while( audio_queue.empty() == false )
+    {
+        adata   =   audio_queue.front();
+        delete [] adata.pcm;
+        audio_queue.pop();
+    }
+    a_mtx.unlock();
+
+    v_decoder.flush_for_seek();
+    a_decoder.flush_for_seek();
+    s_decoder.flush_for_seek();
+
+    // run seek.
+    AVFormatContext*    fmt_ctx     =   demuxer.get_format_context();
+    avformat_flush( fmt_ctx );  // 看起來是走網路才需要做這個動作,但不確定
+
+    int64_t     so  =   seek_old,
+                sv  =   seek_value; // 避免overflow
+
+    // 不這樣設置的話, seek大範圍會出錯.  例如超過一小時的影片, 直接 seek 超過半小時後
+    int64_t     min     =   so < sv ? so * AV_TIME_BASE + 2 : INT64_MIN,
+                max     =   so > sv ? so * AV_TIME_BASE - 2 : INT64_MAX,
+                ts      =   sv * AV_TIME_BASE;       
+
+    ret     =   avformat_seek_file( fmt_ctx, -1, min, ts, max, 0 );  //AVSEEK_FLAG_ANY
+    if( ret < 0 )
+        MYLOG( LOG::DEBUG, "seek fail." );
+
+}
+
+
+
+
+
+
+
 /*******************************************************************************
 Player::play_QT()
 ********************************************************************************/
@@ -593,11 +683,24 @@ void    Player::play_QT()
     //
     while( stop_flag == false ) 
     {
+        // NOTE: seek事件觸發的時候, queue 資料會暴增.
         while( demux_need_wait() == true )
         {
+            //MYLOG( LOG::DEBUG, "v size = %d, a size = %d", video_queue.size(), audio_queue.size() );
             if( stop_flag == true )
                 break;
             SLEEP_1MS;
+        }
+
+        //
+        if( seek_flag == true )     
+        {
+            while( ui_v_seek_lock == false || ui_a_seek_lock == false )
+                SLEEP_10MS;
+            seek_flag   =   false;
+            handle_seek();
+            ui_v_seek_lock = false;
+            ui_a_seek_lock = false;
         }
 
         //
@@ -820,7 +923,7 @@ int    Player::flush()
             v_decoder.unref_frame();  
         }
     }
-    v_decoder.flush_all_stresam();
+    v_decoder.flush_all_stream();
 
     // flush audio
     ret     =   a_decoder.send_packet(nullptr);
@@ -841,7 +944,7 @@ int    Player::flush()
             a_decoder.unref_frame();
         }
     }
-    a_decoder.flush_all_stresam();
+    a_decoder.flush_all_stream();
 
     return 0;
 }
@@ -863,6 +966,7 @@ int     Player::end()
     sub_name.clear();
 
     stop_flag   =   false;
+    seek_flag   =   false;
 
     return  SUCCESS;
 }
@@ -924,4 +1028,19 @@ VideoData       Player::overlap_subtitle_image()
 
     return vdata;
 }
+
+
+
+
+
+/*******************************************************************************
+Player::seek()
+********************************************************************************/
+void    Player::seek( int value, int old_value )
+{
+    seek_flag   =   true;
+    seek_value  =   value;
+    seek_old    =   old_value;
+}
+
 

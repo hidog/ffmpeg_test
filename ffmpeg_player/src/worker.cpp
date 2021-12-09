@@ -223,3 +223,20 @@ void    Worker::switch_subtitle_slot_int( int index )
     if( player.is_embedded_subtitle() == true )
         player.switch_subtitle(index);
 }
+
+
+
+
+
+
+/*******************************************************************************
+Worker::seek_slot()
+********************************************************************************/
+void    Worker::seek_slot( int value )
+{
+    MainWindow  *mw     =   dynamic_cast<MainWindow*>(parent());
+    VideoData   *vd     =   mw->get_view_data();
+    int     old_value   =   vd->timestamp / 1000;
+
+    player.seek( value, old_value );
+}

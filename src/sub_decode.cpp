@@ -75,7 +75,7 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     
     // 理論上這邊的字串可以精簡...
     sub_index   =   sd.sub_index;
-    ss << "subtitles='" << filename_param << "':stream_index=" << sub_index;
+    ss << "subtitles=filename='" << filename_param << "':stream_index=" << sub_index;
     
     out_param    =   ss.str();
     
@@ -797,20 +797,10 @@ QPoint  SubDecode::get_subtitle_image_pos()
 
 
 
-
-#if 0
 /*******************************************************************************
-SubDecode::get_timestamp()
+SubDecode::flush_for_seek()
 ********************************************************************************/
-int64_t     SubDecode::get_timestamp()
+void    SubDecode::flush_for_seek() 
 {
-    if( frame->best_effort_timestamp == AV_NOPTS_VALUE )
-        return  0;
-
-    double  dpts    =   av_q2d(stream->time_base) * frame->best_effort_timestamp;
-    int64_t ts      =   dpts * 1000;  // ms
-    return  ts;
+    has_sub_image   =   false;
 }
-#endif
-
-
