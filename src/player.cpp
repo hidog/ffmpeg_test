@@ -402,7 +402,7 @@ void    Player::video_decode()
         {
             while(true)
             {
-                ret     =   v_decoder.recv_frame();
+                ret     =   v_decoder.recv_frame(pkt->stream_index);
                 if( ret <= 0 )
                     break;
 
@@ -415,7 +415,7 @@ void    Player::video_decode()
         }
 
         demuxer.collect_packet(pkt);
-        SLEEP_1MS;
+        //SLEEP_1MS;
     }
 
     // 需要加入flush
@@ -453,7 +453,7 @@ void    Player::audio_decode()
         {
             while(true)
             {
-                ret     =   a_decoder.recv_frame();
+                ret     =   a_decoder.recv_frame(pkt->stream_index);
                 if( ret <= 0 )
                     break;
 
@@ -466,7 +466,7 @@ void    Player::audio_decode()
         }
 
         demuxer.collect_packet(pkt);
-        SLEEP_1MS;
+        //SLEEP_1MS;
     }
 
     // 需要加上flush
@@ -491,7 +491,7 @@ void    Player::play_QT_multi_thread()
     video_decode_thr    =   new std::thread( &Player::video_decode, this );
     audio_decode_thr    =   new std::thread( &Player::audio_decode, this );
 
-    if( v_thr_start == false || a_thr_start == false )
+    while( v_thr_start == false || a_thr_start == false )
         SLEEP_10MS;
 
     while( true ) 
@@ -506,15 +506,21 @@ void    Player::play_QT_multi_thread()
         ret     =   pkt_pair.first;
         pkt     =   pkt_pair.second;
         if( ret < 0 )
-            break;      
+            break;    
+        if( pkt == nullptr )
+        {
+            MYLOG( LOG::ERROR, "pkt is nullptr" );
+            break;
+        }
 
-        if( pkt->stream_index == demuxer.get_video_index() )
+        if( v_decoder.find_index( pkt->stream_index ) == true )
             video_pkt_queue.push(pkt);
-        else if( pkt->stream_index == demuxer.get_audio_index() )
+        else if( a_decoder.find_index( pkt->stream_index ) == true )
             audio_pkt_queue.push(pkt);       
         else
         {
-            MYLOG( LOG::ERROR, "stream type not handle.")
+            MYLOG( LOG::DEBUG, "stream type not handle.")
+            demuxer.collect_packet(pkt);
         }
 
         SLEEP_1MS;

@@ -4,6 +4,7 @@
 #include <cassert>
 #include <QImage>
 
+//#define USE_MT
 
 
 

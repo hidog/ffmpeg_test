@@ -108,8 +108,11 @@ void    Worker::run()
     vw->start();
     
     //
-    //player.play_QT_multi_thread();
+#ifdef USE_MT
+    player.play_QT_multi_thread();
+#else
     player.play_QT();
+#endif
     player.end();
     is_play_end     =   true;
     

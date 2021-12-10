@@ -68,7 +68,7 @@ VideoDecode::open_codec_context()
 int     VideoDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
     Decode::open_all_codec( fmt_ctx, type );
-    //dec_ctx->thread_count = 4;
+    dec_ctx->thread_count = 4;
     return  SUCCESS;
 }
 
@@ -89,7 +89,11 @@ int     VideoDecode::init()
 
     MYLOG( LOG::INFO, "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
     
+#ifndef FFMPEG_TEST
     video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
+#else
+    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_YUV420P, 1 );
+#endif
     if( video_dst_bufsize < 0 )
     {
         MYLOG( LOG::ERROR, "Could not allocate raw video buffer" );
@@ -99,12 +103,12 @@ int     VideoDecode::init()
     // NOTE : 可以改變寬高. 
     sws_ctx     =   sws_getContext( width, height, pix_fmt,                     // src
                                     width, height, AV_PIX_FMT_RGB24,            // dst
-                                    SWS_BICUBIC, NULL, NULL, NULL);                                    
+                                    SWS_BICUBIC, NULL, NULL, NULL);                        
 
     //
 #ifdef FFMPEG_TEST
-    output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
-    //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
+    //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
+    output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
 #endif
 
     //
