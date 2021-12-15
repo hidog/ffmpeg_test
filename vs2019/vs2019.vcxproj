@@ -293,13 +293,14 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\src\audio_decode.cpp" />
-    <ClCompile Include="..\src\decode.cpp" />
-    <ClCompile Include="..\src\demux.cpp" />
-    <ClCompile Include="..\src\player.cpp" />
-    <ClCompile Include="..\src\sub_decode.cpp" />
+    <ClCompile Include="..\src\maker\maker.cpp" />
+    <ClCompile Include="..\src\player\audio_decode.cpp" />
+    <ClCompile Include="..\src\player\decode.cpp" />
+    <ClCompile Include="..\src\player\demux.cpp" />
+    <ClCompile Include="..\src\player\player.cpp" />
+    <ClCompile Include="..\src\player\sub_decode.cpp" />
+    <ClCompile Include="..\src\player\video_decode.cpp" />
     <ClCompile Include="..\src\tool.cpp" />
-    <ClCompile Include="..\src\video_decode.cpp" />
     <ClCompile Include="vs2019.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
@@ -320,13 +321,14 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="..\src\audio_decode.h" />
-    <ClInclude Include="..\src\decode.h" />
-    <ClInclude Include="..\src\demux.h" />
-    <ClInclude Include="..\src\player.h" />
-    <ClInclude Include="..\src\sub_decode.h" />
+    <ClInclude Include="..\src\maker\maker.h" />
+    <ClInclude Include="..\src\player\audio_decode.h" />
+    <ClInclude Include="..\src\player\decode.h" />
+    <ClInclude Include="..\src\player\demux.h" />
+    <ClInclude Include="..\src\player\player.h" />
+    <ClInclude Include="..\src\player\sub_decode.h" />
+    <ClInclude Include="..\src\player\video_decode.h" />
     <ClInclude Include="..\src\tool.h" />
-    <ClInclude Include="..\src\video_decode.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
