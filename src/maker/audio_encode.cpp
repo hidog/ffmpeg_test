@@ -37,63 +37,6 @@ AudioEncode::~AudioEncode()
 
 
 
-/*******************************************************************************
-AudioEncode::init()
-********************************************************************************/
-void    AudioEncode::init( AVCodecID code_id )
-{
-    int     ret;
-
-    //
-    codec   =   avcodec_find_encoder(code_id);
-    if( codec == nullptr ) 
-        MYLOG( LOG::ERROR, "codec = nullptr." );
-
-    ctx     =   avcodec_alloc_context3(codec);
-    if( ctx == nullptr ) 
-        MYLOG( LOG::ERROR, "ctx = nullptr." );
-
-    // some codec need set bit rate.
-    //c->bit_rate = 64000;
-
-    //
-    ctx->sample_fmt     =   AV_SAMPLE_FMT_S16P;
-    if( false == check_sample_fmt( codec, ctx->sample_fmt ) ) 
-        MYLOG( LOG::ERROR, "fmt fail." );
-
-    // init setting
-    ctx->sample_rate    =   select_sample_rate(codec);
-    ctx->channel_layout =   select_channel_layout(codec);
-    ctx->channels       =   av_get_channel_layout_nb_channels(ctx->channel_layout);
-
-    // open
-    ret     =   avcodec_open2( ctx, codec, nullptr );
-    if( ret < 0 ) 
-        MYLOG( LOG::ERROR, "open fail." );
-
-    //
-    pkt     =   av_packet_alloc();
-    if( nullptr == pkt )
-        MYLOG( LOG::ERROR, "pkt alloc fail" );
-
-    //
-    frame   =   av_frame_alloc();
-    if( nullptr == frame )
-        MYLOG( LOG::ERROR, "frame alloc fail" );
-
-    // set param to frame.
-    frame->nb_samples       =   ctx->frame_size;
-    frame->format           =   ctx->sample_fmt;
-    frame->channel_layout   =   ctx->channel_layout;
-
-    // allocate the data buffers
-    ret     =   av_frame_get_buffer( frame, 0 );
-    if( ret < 0 )
-        MYLOG( LOG::ERROR, "alloc buffer fail" );
-}
-
-
-
 
 
 /*******************************************************************************
@@ -266,6 +209,9 @@ void    AudioEncode::encode( AVFrame *frame )
             MYLOG( LOG::ERROR, "recv fail." );
 
         printf("write data %d...\n", pkt->size );
+
+        fwrite( adts_gen(pkt->size), 7, 1, output );
+
         fwrite( pkt->data, 1, pkt->size, output );
         av_packet_unref(pkt);
     }
@@ -287,6 +233,101 @@ void    AudioEncode::end()
 
 
 
+
+
+
+/*******************************************************************************
+AudioEncode::init()
+********************************************************************************/
+void    AudioEncode::init( AVCodecID code_id )
+{
+    int     ret;
+
+    //
+    codec   =   avcodec_find_encoder(code_id);
+    if( codec == nullptr ) 
+        MYLOG( LOG::ERROR, "codec = nullptr." );
+
+    ctx     =   avcodec_alloc_context3(codec);
+    if( ctx == nullptr ) 
+        MYLOG( LOG::ERROR, "ctx = nullptr." );
+
+    // some codec need set bit rate.
+    if( code_id == AV_CODEC_ID_AAC )   
+        ctx->bit_rate   =   64000;
+    else if( code_id == AV_CODEC_ID_MP2 )
+        ctx->bit_rate   =   64000; // 沒設置也能播放 
+
+    //
+    if( code_id == AV_CODEC_ID_MP3 )
+        ctx->sample_fmt     =   AV_SAMPLE_FMT_S16P;
+    else if( code_id == AV_CODEC_ID_AAC )
+        ctx->sample_fmt     =   AV_SAMPLE_FMT_FLTP;
+    else if( code_id == AV_CODEC_ID_MP2 )
+        ctx->sample_fmt     =   AV_SAMPLE_FMT_S16;
+
+    if( false == check_sample_fmt( codec, ctx->sample_fmt ) ) 
+        MYLOG( LOG::ERROR, "fmt fail." );
+
+    // init setting
+    ctx->sample_rate    =   select_sample_rate(codec);
+    ctx->channel_layout =   select_channel_layout(codec);
+    ctx->channels       =   av_get_channel_layout_nb_channels(ctx->channel_layout);
+
+    // open
+    ret     =   avcodec_open2( ctx, codec, nullptr );
+    if( ret < 0 ) 
+        MYLOG( LOG::ERROR, "open fail." );
+
+    //
+    pkt     =   av_packet_alloc();
+    if( nullptr == pkt )
+        MYLOG( LOG::ERROR, "pkt alloc fail" );
+
+    //
+    frame   =   av_frame_alloc();
+    if( nullptr == frame )
+        MYLOG( LOG::ERROR, "frame alloc fail" );
+
+    // set param to frame.
+    frame->nb_samples       =   ctx->frame_size;
+    frame->format           =   ctx->sample_fmt;
+    frame->channel_layout   =   ctx->channel_layout;
+
+    // allocate the data buffers
+    ret     =   av_frame_get_buffer( frame, 0 );
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "alloc buffer fail" );
+}
+
+
+
+
+
+/*******************************************************************************
+AudioEncode::adts_gen()
+********************************************************************************/
+char* AudioEncode::adts_gen( const int packetlen )
+{
+    static char packet[7];
+    
+    int profile = 2;
+    int freqidx = 3;
+    int chancfg = 2; 
+
+    packet[0] = 0xFF;
+    packet[1] = 0xF1;
+    packet[2] = ((profile - 1) << 6) + (freqidx << 2) + (chancfg >> 2);
+    packet[3] = ((chancfg % 3) << 6) + (packetlen >> 11);
+    packet[4] = (packetlen & 0x7FF ) >> 3;
+    packet[5] = ((packetlen & 7 ) << 5) + 0x1F;
+    packet[6] = 0xFC;
+
+    return packet;
+}
+
+
+
 /*******************************************************************************
 AudioEncode::work()
 ********************************************************************************/
@@ -294,24 +335,55 @@ void     AudioEncode::work( AVCodecID code_id )
 {
     if( code_id == AV_CODEC_ID_MP3 )
         output  =   fopen( "H:\\test.mp3", "wb+" );
+    else if( code_id == AV_CODEC_ID_AAC )
+        output  =   fopen( "H:\\test.aac", "wb+" );
+    else if( code_id == AV_CODEC_ID_MP2 )
+        output  =   fopen( "H:\\test.mp2", "wb+" );
 
     FILE    *fp     =   fopen( "H:\\test.pcm", "rb" );
     int     i;
     int16_t     intens[2];
 
-
-    while( 0 == feof(fp) )
+    if( code_id == AV_CODEC_ID_AAC )
     {
-        for( i = 0; i < frame->nb_samples; i++ )
+        while( 0 == feof(fp) )
         {
-            fread( intens, sizeof(int16_t)*2, 1, fp );
+            for( i = 0; i < frame->nb_samples; i++ )
+            {
+                fread( intens, 2, sizeof(int16_t), fp );
 
-            // 多聲道這邊需要處理
-            *((int16_t*)(frame->data[0]) + i) = intens[0];
-            *((int16_t*)(frame->data[1]) + i) = intens[1];
+                // 多聲道這邊需要處理
+                *((float*)(frame->data[0]) + i)   =   1.0 * intens[0] / 32768.0;
+                *((float*)(frame->data[1]) + i)   =   1.0 * intens[1] / 32768.0;
+            }
+            encode( frame );
         }
-
-        encode( frame );
+    }
+    else if( code_id == AV_CODEC_ID_MP3 )
+    {
+        while( 0 == feof(fp) )
+        {
+            for( i = 0; i < frame->nb_samples; i++ )
+            {
+                fread( intens, 2, sizeof(int16_t), fp );
+                *((int16_t*)(frame->data[0]) + i)   =   intens[0];
+                *((int16_t*)(frame->data[1]) + i)   =   intens[1];
+            }
+            encode( frame );
+        }
+    }
+    else if( code_id == AV_CODEC_ID_MP2 )
+    {
+        while( 0 == feof(fp) )
+        {
+            for( i = 0; i < frame->nb_samples; i++ )
+            {
+                fread( intens, sizeof(int16_t)*2, 1, fp );
+                *((int16_t*)(frame->data[0]) + 2*i     )   =   intens[0];
+                *((int16_t*)(frame->data[0]) + 2*i + 1 )   =   intens[1];
+            }
+            encode( frame );
+        }
     }
 
     /* flush the encoder */

@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+// https://blog.csdn.net/wanggao_1990/article/details/115725163
+
 
 enum AVCodecID;
 enum AVSampleFormat;
@@ -41,6 +43,9 @@ private:
     bool    check_sample_fmt( AVCodec *codec, AVSampleFormat sample_fmt );
     int     select_sample_rate( AVCodec *codec );
     int     select_channel_layout( AVCodec *codec );
+
+    char* adts_gen( const int packetlen );
+
 
     AVCodec         *codec  =   nullptr;
     AVCodecContext  *ctx    =   nullptr;
