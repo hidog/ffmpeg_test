@@ -35,11 +35,14 @@ public:
 
     int     get_audio_channel();
     int     get_audio_sample_rate();
-    
+
     void        output_audio_frame_info();    
     AudioData   output_audio_data();
     int64_t     get_timestamp();
 
+#ifdef FFMPEG_TEST
+    int     output_pcm();
+#endif
 
 
     int     audio_info(); // 目前無作用 未來考慮移除

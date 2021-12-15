@@ -1,6 +1,6 @@
 ﻿#include <iostream>
 
-#include "player.h"
+#include "player/player.h"
 
 
 /*
@@ -25,31 +25,45 @@ https://www.cnblogs.com/linuxAndMcu/p/14706012.html
 extern "C" {
 #include "../ffmpeg_example/demuxing_decoding.h"
 #include "../ffmpeg_example/ffplay.h"
+#include <libavcodec/avcodec.h>
+
 }
+
+#include "maker/audio_encode.h"
+#include "maker/maker.h"
+
 
 
 int main()
 {
-#if 0
-    char str[100] = "D:\\test.mkv";
-
-    char **argv = new char* [10];
-    argv[3] = str;
-
 #if 1
-    char str2[100] = "-vf";
-    argv[1] = str2;
-    char str3[100] = "subtitles='../test.mkv':stream_index=0";
-    argv[2] = str3;
-#endif
+    /*char **argv = new char* [10];
 
-    ffplay_main( 4, argv );
-    //play_demuxing_decodeing();
+    char str1[100] = "H:\\test.mp3";
+    argv[1] = str1;
+
+    encode_audio( 2, argv );*/
+
+
+    AVCodecID code_id = AV_CODEC_ID_MP3;
+
+    AudioEncode a_encoder;
+    a_encoder.list_sample_format( code_id );
+    a_encoder.list_sample_rate( code_id );
+    a_encoder.list_channel_layout( code_id );
+
+    a_encoder.init( code_id );
+    a_encoder.work( code_id );
+    a_encoder.end();
+
+
 #else
 
     Player  player;  
 
-    player.set_input_file("D:\\test2.mkv");
+    player.set_input_file("D:\\code\\test2.mkv");
+    player.set_sub_file("D:\\code\\test2.mkv");
+
     player.init();
     player.play();
     player.end();

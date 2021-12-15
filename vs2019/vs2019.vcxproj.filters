@@ -63,6 +63,33 @@
     <ClCompile Include="..\src\maker\maker.cpp">
       <Filter>src\maker</Filter>
     </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\encode_video.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\muxing.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\remuxing.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\resampling_audio.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\scaling_video.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\transcode_aac.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\transcoding.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\encode_audio.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maker\audio_encode.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -96,6 +123,9 @@
       <Filter>src\player</Filter>
     </ClInclude>
     <ClInclude Include="..\src\maker\maker.h">
+      <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\audio_encode.h">
       <Filter>src\maker</Filter>
     </ClInclude>
   </ItemGroup>

@@ -92,7 +92,7 @@ int     VideoDecode::init()
 #ifndef FFMPEG_TEST
     video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
 #else
-    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_YUV420P, 1 );
+    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
 #endif
     if( video_dst_bufsize < 0 )
     {
@@ -107,8 +107,8 @@ int     VideoDecode::init()
 
     //
 #ifdef FFMPEG_TEST
-    //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
-    output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
+    output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
+    //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
 #endif
 
     //
@@ -450,7 +450,7 @@ int    VideoDecode::output_jpg_by_QT()
 
     static int  jpg_count   =   0;
     char str[1000];
-    sprintf( str, "H:\\%d.jpg", jpg_count++ );
+    sprintf( str, "H:\\jpg\\%d.jpg", jpg_count++ );
     img.save(str);
 
     return  0;
@@ -486,7 +486,7 @@ int     VideoDecode::output_jpg_by_openCV()
     memcpy( img.data + width*height, frame->data[1], width*height/4 );
     memcpy( img.data + width*height*5/4, frame->data[2], width*height/4 );
 #else
-    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, static_cast<AVPixelFormat>(pix_fmt), width, height );
+    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, pix_fmt, width, height );
     cv::Mat img( cv::Size( width, height*3/2 ), CV_8UC1, video_dst_data[0] );
 #endif
 

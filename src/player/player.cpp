@@ -135,7 +135,9 @@ int     Player::init()
 
     // handle subtitle
     // 有遇到影片會在這邊卡很久, 或許可以考慮用multi-thread的方式做處理, 以後再說...
+#ifndef FFMPEG_TEST
     init_subtitle(fmt_ctx);
+#endif
 
     return SUCCESS;
 }
@@ -344,7 +346,11 @@ void    Player::play()
         else if( a_decoder.find_index(pkt->stream_index) )
             dc  =   dynamic_cast<Decode*>(&a_decoder);
         else        
-            MYLOG( LOG::WARN, "stream type not handle.");        
+        {
+            MYLOG( LOG::WARN, "stream type not handle.");
+            demuxer.unref_packet();
+            continue;
+        }
 
         //
         ret     =   dc->send_packet(pkt);
