@@ -14,7 +14,7 @@ struct AVCodecContext;
 struct AVFrame;
 struct AVPacket;
 
-struct AVFormatContext;
+//struct AVFormatContext;
 
 
 class AudioEncode
@@ -36,7 +36,7 @@ public:
     void    list_sample_rate( AVCodecID code_id );
     void    list_channel_layout( AVCodecID code_id );
 
-    void    encode( AVFrame *frame );
+    void    encode( AVFrame *frame, AVCodecID code_id );
     void    work( AVCodecID code_id );
 
 private:
@@ -45,7 +45,7 @@ private:
     int     select_sample_rate( AVCodec *codec );
     int     select_channel_layout( AVCodec *codec );
 
-    char* adts_gen( int packetlen );
+    char*   adts_head( int packetlen );
 
 
     AVCodec         *codec  =   nullptr;
@@ -53,7 +53,7 @@ private:
     AVFrame         *frame  =   nullptr;
     AVPacket        *pkt    =   nullptr;
 
-    AVFormatContext *fmt_ctx    =   nullptr;
+    //AVFormatContext *fmt_ctx    =   nullptr;
 
     FILE    *output;
 };

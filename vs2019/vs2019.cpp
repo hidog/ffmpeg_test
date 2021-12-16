@@ -43,21 +43,22 @@ int main()
     argv[1] = str1;
 
     encode_audio( 2, argv );*/
+#elif 1
 
+    AVCodecID id_arr[5] = { AV_CODEC_ID_MP3, AV_CODEC_ID_MP2, AV_CODEC_ID_AAC, AV_CODEC_ID_AC3, AV_CODEC_ID_FLAC };
 
-    //AVCodecID code_id   =   AV_CODEC_ID_MP3;                                              
-    AVCodecID code_id   =   AV_CODEC_ID_AAC; 
+    //for( int i = 0; i < 5; i++ )
+    int i = 4;
+    {
+        AudioEncode a_encoder;
+        a_encoder.list_sample_format( id_arr[i] );
+        a_encoder.list_sample_rate( id_arr[i] );
+        a_encoder.list_channel_layout( id_arr[i] );
 
-
-    AudioEncode a_encoder;
-    a_encoder.list_sample_format( code_id );
-    a_encoder.list_sample_rate( code_id );
-    a_encoder.list_channel_layout( code_id );
-
-    a_encoder.init( code_id );
-    a_encoder.work( code_id );
-    a_encoder.end();
-
+        a_encoder.init( id_arr[i] );
+        a_encoder.work( id_arr[i] );
+        a_encoder.end();
+    }
     
 #else
 

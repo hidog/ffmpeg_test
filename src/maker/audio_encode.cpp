@@ -65,6 +65,12 @@ void    AudioEncode::list_sample_rate( AVCodecID code_id )
     AVCodec*     codec   =   avcodec_find_encoder(code_id);
     const int*   p_smp   =   codec->supported_samplerates;
 
+    if( p_smp == nullptr )
+    {
+        printf("not defined.\n");
+        return;
+    }
+
     while( *p_smp != 0 )
     {
         printf( "%s support sample rate %d\n", avcodec_get_name(code_id), *p_smp );
@@ -222,18 +228,17 @@ void    AudioEncode::init( AVCodecID code_id )
         MYLOG( LOG::ERROR, "ctx = nullptr." );
 
     // some codec need set bit rate.
-    if( code_id == AV_CODEC_ID_AAC )   
-        ctx->bit_rate   =   128000;
-    else if( code_id == AV_CODEC_ID_MP2 )
-        ctx->bit_rate   =   64000; // 沒設置也能播放 
-
-    //
+    if( code_id != AV_CODEC_ID_FLAC )
+        ctx->bit_rate   =   320000;
+    
     if( code_id == AV_CODEC_ID_MP3 )
         ctx->sample_fmt     =   AV_SAMPLE_FMT_S16P;
-    else if( code_id == AV_CODEC_ID_AAC )
+    else if( code_id == AV_CODEC_ID_AAC || code_id == AV_CODEC_ID_AC3 )
         ctx->sample_fmt     =   AV_SAMPLE_FMT_FLTP;
-    else if( code_id == AV_CODEC_ID_MP2 )
+    else if( code_id == AV_CODEC_ID_MP2 || code_id == AV_CODEC_ID_FLAC )
         ctx->sample_fmt     =   AV_SAMPLE_FMT_S16;
+    else
+        assert(0);
 
     if( false == check_sample_fmt( codec, ctx->sample_fmt ) ) 
         MYLOG( LOG::ERROR, "fmt fail." );
@@ -277,7 +282,7 @@ void    AudioEncode::init( AVCodecID code_id )
 /*******************************************************************************
 AudioEncode::encode()
 ********************************************************************************/
-void    AudioEncode::encode( AVFrame *frame )
+void    AudioEncode::encode( AVFrame *frame, AVCodecID code_id )
 {
     int     ret;
 
@@ -295,7 +300,8 @@ void    AudioEncode::encode( AVFrame *frame )
 
         printf("write data %d...\n", pkt->size );
 
-        fwrite( adts_gen(pkt->size), 7, 1, output );
+        if( code_id == AV_CODEC_ID_AAC )
+            fwrite( adts_head(pkt->size), 1, 7, output );
 
         fwrite( pkt->data, 1, pkt->size, output );
         av_packet_unref(pkt);
@@ -304,17 +310,20 @@ void    AudioEncode::encode( AVFrame *frame )
 
 
 
+
 /*******************************************************************************
 AudioEncode::adts_gen()
+
+aac 格式, 每個 frame 要加上head, 才能獨立撥放
 ********************************************************************************/
-char* AudioEncode::adts_gen( int packetlen )
+char* AudioEncode::adts_head( int packetlen )
 {
     packetlen   +=  7;
 
     static char packet[7];
     
     int profile = 2;
-    int freqidx = 3;
+    int freqidx = 3; // 48000 hz. 改sample rate要跟著動這個參數
     int chancfg = 2; 
 
     packet[0] = 0xFF;
@@ -330,6 +339,7 @@ char* AudioEncode::adts_gen( int packetlen )
 
 
 
+
 /*******************************************************************************
 AudioEncode::work()
 ********************************************************************************/
@@ -341,55 +351,49 @@ void     AudioEncode::work( AVCodecID code_id )
         output  =   fopen( "H:\\test.aac", "wb+" );
     else if( code_id == AV_CODEC_ID_MP2 )
         output  =   fopen( "H:\\test.mp2", "wb+" );
+    else if( code_id == AV_CODEC_ID_AC3 )
+        output  =   fopen( "H:\\test.ac3", "wb+" );
+    else if( code_id == AV_CODEC_ID_FLAC )
+        output  =   fopen( "H:\\test.flac", "wb+" );
+    else
+        assert(0);
 
     FILE    *fp     =   fopen( "H:\\test.pcm", "rb" );
-    int     i;
+    int     i,  count   =   0;
     int16_t     intens[2];
 
-    if( code_id == AV_CODEC_ID_AAC )
+    //
+    while( 0 == feof(fp) )
     {
-        while( 0 == feof(fp) )
+        for( i = 0; i < frame->nb_samples; i++ )
         {
-            for( i = 0; i < frame->nb_samples; i++ )
-            {
-                fread( intens, 2, sizeof(int16_t), fp );
+            fread( intens, 2, sizeof(int16_t), fp );
 
-                // 多聲道這邊需要處理
-                *((float*)(frame->data[0]) + i)   =   1.0 * intens[0] / 32768.0;
-                *((float*)(frame->data[1]) + i)   =   1.0 * intens[1] / 32768.0;
-            }
-            encode( frame );
-        }
-    }
-    else if( code_id == AV_CODEC_ID_MP3 )
-    {
-        while( 0 == feof(fp) )
-        {
-            for( i = 0; i < frame->nb_samples; i++ )
+            // 多聲道這邊需要另外處理
+            if( code_id == AV_CODEC_ID_AAC || code_id == AV_CODEC_ID_AC3 )
             {
-                fread( intens, 2, sizeof(int16_t), fp );
+                *((float*)(frame->data[0]) + i)   =   1.0 * intens[0] / INT16_MAX;
+                *((float*)(frame->data[1]) + i)   =   1.0 * intens[1] / INT16_MAX;
+            }
+            else if( code_id == AV_CODEC_ID_MP3 )
+            {
                 *((int16_t*)(frame->data[0]) + i)   =   intens[0];
                 *((int16_t*)(frame->data[1]) + i)   =   intens[1];
             }
-            encode( frame );
-        }
-    }
-    else if( code_id == AV_CODEC_ID_MP2 )
-    {
-        while( 0 == feof(fp) )
-        {
-            for( i = 0; i < frame->nb_samples; i++ )
+            else if( code_id == AV_CODEC_ID_MP2 || code_id == AV_CODEC_ID_FLAC )
             {
-                fread( intens, sizeof(int16_t)*2, 1, fp );
                 *((int16_t*)(frame->data[0]) + 2*i     )   =   intens[0];
                 *((int16_t*)(frame->data[0]) + 2*i + 1 )   =   intens[1];
             }
-            encode( frame );
         }
+        frame->pts = count * (frame->nb_samples * 1000 / ctx->sample_rate);	// 沒加上這個也能動
+        count++;
+        encode( frame, code_id );
     }
 
-    /* flush the encoder */
-    encode( NULL );
+
+    // flush
+    encode( NULL, code_id );
 
     fclose(output);
     fclose(fp);
