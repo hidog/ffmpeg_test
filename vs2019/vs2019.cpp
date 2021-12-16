@@ -30,6 +30,7 @@ extern "C" {
 }
 
 #include "maker/audio_encode.h"
+#include "maker/video_encode.h"
 #include "maker/maker.h"
 
 
@@ -45,7 +46,8 @@ int main()
     encode_audio( 2, argv );*/
 #elif 1
 
-    AVCodecID id_arr[5] = { AV_CODEC_ID_MP3, AV_CODEC_ID_MP2, AV_CODEC_ID_AAC, AV_CODEC_ID_AC3, AV_CODEC_ID_FLAC };
+
+    /*AVCodecID id_arr[5] = { AV_CODEC_ID_MP3, AV_CODEC_ID_MP2, AV_CODEC_ID_AAC, AV_CODEC_ID_AC3, AV_CODEC_ID_FLAC };
 
     for( int i = 0; i < 4; i++ )
     //int i = 4;
@@ -58,7 +60,15 @@ int main()
         a_encoder.init( id_arr[i] );
         a_encoder.work( id_arr[i] );
         a_encoder.end();
-    }
+    }*/
+
+
+    VideoEncode v_encoder;
+
+    v_encoder.init();
+    v_encoder.work();
+    v_encoder.end();
+
     
 #else
 

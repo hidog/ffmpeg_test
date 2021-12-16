@@ -87,6 +87,9 @@
     <ClCompile Include="..\src\maker\audio_encode.cpp">
       <Filter>src\maker</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\maker\video_encode.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -123,6 +126,9 @@
       <Filter>src\maker</Filter>
     </ClInclude>
     <ClInclude Include="..\src\maker\audio_encode.h">
+      <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\video_encode.h">
       <Filter>src\maker</Filter>
     </ClInclude>
   </ItemGroup>
