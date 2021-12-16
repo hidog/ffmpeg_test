@@ -84,9 +84,6 @@
     <ClCompile Include="..\ffmpeg_example\transcoding.c">
       <Filter>ffmpeg_example</Filter>
     </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\encode_audio.c">
-      <Filter>ffmpeg_example</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\maker\audio_encode.cpp">
       <Filter>src\maker</Filter>
     </ClCompile>

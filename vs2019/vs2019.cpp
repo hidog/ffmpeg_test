@@ -36,7 +36,7 @@ extern "C" {
 
 int main()
 {
-#if 1
+#if 0
     /*char **argv = new char* [10];
 
     char str1[100] = "H:\\test.mp3";
@@ -47,8 +47,8 @@ int main()
 
     AVCodecID id_arr[5] = { AV_CODEC_ID_MP3, AV_CODEC_ID_MP2, AV_CODEC_ID_AAC, AV_CODEC_ID_AC3, AV_CODEC_ID_FLAC };
 
-    //for( int i = 0; i < 5; i++ )
-    int i = 4;
+    for( int i = 0; i < 4; i++ )
+    //int i = 4;
     {
         AudioEncode a_encoder;
         a_encoder.list_sample_format( id_arr[i] );
