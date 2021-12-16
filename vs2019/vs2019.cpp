@@ -45,7 +45,9 @@ int main()
     encode_audio( 2, argv );*/
 
 
-    AVCodecID code_id   =   AV_CODEC_ID_AAC;  // not success.
+    //AVCodecID code_id   =   AV_CODEC_ID_MP3;                                              
+    AVCodecID code_id   =   AV_CODEC_ID_AAC; 
+
 
     AudioEncode a_encoder;
     a_encoder.list_sample_format( code_id );
@@ -56,7 +58,7 @@ int main()
     a_encoder.work( code_id );
     a_encoder.end();
 
-
+    
 #else
 
     Player  player;  

@@ -14,6 +14,7 @@ struct AVCodecContext;
 struct AVFrame;
 struct AVPacket;
 
+struct AVFormatContext;
 
 
 class AudioEncode
@@ -44,13 +45,15 @@ private:
     int     select_sample_rate( AVCodec *codec );
     int     select_channel_layout( AVCodec *codec );
 
-    char* adts_gen( const int packetlen );
+    char* adts_gen( int packetlen );
 
 
     AVCodec         *codec  =   nullptr;
     AVCodecContext  *ctx    =   nullptr;
     AVFrame         *frame  =   nullptr;
     AVPacket        *pkt    =   nullptr;
+
+    AVFormatContext *fmt_ctx    =   nullptr;
 
     FILE    *output;
 };

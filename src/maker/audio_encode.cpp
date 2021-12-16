@@ -189,37 +189,6 @@ int     AudioEncode::select_channel_layout( AVCodec *codec )
 
 
 
-/*******************************************************************************
-AudioEncode::encode()
-********************************************************************************/
-void    AudioEncode::encode( AVFrame *frame )
-{
-    int     ret;
-
-    ret     =   avcodec_send_frame( ctx, frame );
-    if( ret < 0 ) 
-        MYLOG( LOG::ERROR, "send fail." );
-
-    while( ret >= 0 ) 
-    {
-        ret     =   avcodec_receive_packet( ctx, pkt );
-        if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
-            return;
-        else if (ret < 0) 
-            MYLOG( LOG::ERROR, "recv fail." );
-
-        printf("write data %d...\n", pkt->size );
-
-        fwrite( adts_gen(pkt->size), 7, 1, output );
-
-        fwrite( pkt->data, 1, pkt->size, output );
-        av_packet_unref(pkt);
-    }
-}
-
-
-
-
 
 /*******************************************************************************
 AudioEncode::end()
@@ -254,7 +223,7 @@ void    AudioEncode::init( AVCodecID code_id )
 
     // some codec need set bit rate.
     if( code_id == AV_CODEC_ID_AAC )   
-        ctx->bit_rate   =   64000;
+        ctx->bit_rate   =   128000;
     else if( code_id == AV_CODEC_ID_MP2 )
         ctx->bit_rate   =   64000; // 沒設置也能播放 
 
@@ -270,7 +239,7 @@ void    AudioEncode::init( AVCodecID code_id )
         MYLOG( LOG::ERROR, "fmt fail." );
 
     // init setting
-    ctx->sample_rate    =   select_sample_rate(codec);
+    ctx->sample_rate    =   48000; //select_sample_rate(codec);
     ctx->channel_layout =   select_channel_layout(codec);
     ctx->channels       =   av_get_channel_layout_nb_channels(ctx->channel_layout);
 
@@ -304,11 +273,44 @@ void    AudioEncode::init( AVCodecID code_id )
 
 
 
+
+/*******************************************************************************
+AudioEncode::encode()
+********************************************************************************/
+void    AudioEncode::encode( AVFrame *frame )
+{
+    int     ret;
+
+    ret     =   avcodec_send_frame( ctx, frame );
+    if( ret < 0 ) 
+        MYLOG( LOG::ERROR, "send fail." );
+
+    while( ret >= 0 ) 
+    {
+        ret     =   avcodec_receive_packet( ctx, pkt );
+        if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
+            return;
+        else if (ret < 0) 
+            MYLOG( LOG::ERROR, "recv fail." );
+
+        printf("write data %d...\n", pkt->size );
+
+        fwrite( adts_gen(pkt->size), 7, 1, output );
+
+        fwrite( pkt->data, 1, pkt->size, output );
+        av_packet_unref(pkt);
+    }
+}
+
+
+
 /*******************************************************************************
 AudioEncode::adts_gen()
 ********************************************************************************/
-char* AudioEncode::adts_gen( const int packetlen )
+char* AudioEncode::adts_gen( int packetlen )
 {
+    packetlen   +=  7;
+
     static char packet[7];
     
     int profile = 2;
@@ -318,7 +320,7 @@ char* AudioEncode::adts_gen( const int packetlen )
     packet[0] = 0xFF;
     packet[1] = 0xF1;
     packet[2] = ((profile - 1) << 6) + (freqidx << 2) + (chancfg >> 2);
-    packet[3] = ((chancfg % 3) << 6) + (packetlen >> 11);
+    packet[3] = ((chancfg & 3) << 6) + ( packetlen >> 11);
     packet[4] = (packetlen & 0x7FF ) >> 3;
     packet[5] = ((packetlen & 7 ) << 5) + 0x1F;
     packet[6] = 0xFC;
