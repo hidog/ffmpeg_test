@@ -84,6 +84,9 @@
     <ClCompile Include="..\src\maker\video_encode.cpp">
       <Filter>src\maker</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\maker\mux.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -120,6 +123,9 @@
       <Filter>src\maker</Filter>
     </ClInclude>
     <ClInclude Include="..\src\maker\video_encode.h">
+      <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\mux.h">
       <Filter>src\maker</Filter>
     </ClInclude>
   </ItemGroup>

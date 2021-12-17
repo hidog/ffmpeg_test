@@ -116,7 +116,8 @@ VideoEncode::encode()
 ********************************************************************************/
 void VideoEncode::encode( AVFrame *frame )
 {
-    printf( "pict type = %c\n", av_get_picture_type_char(frame->pict_type) );
+    if( frame != nullptr )
+        printf( "pict type = %c\n", av_get_picture_type_char(frame->pict_type) );
 
     int ret;
 
