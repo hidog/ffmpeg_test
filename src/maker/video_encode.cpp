@@ -68,6 +68,8 @@ void    VideoEncode::init()
         MYLOG( LOG::ERROR, "pkt = nullptr." );
 
     //
+    // ctx->codec_id = AV_CODEC_ID_H264; // 檢查這邊是否會自動生成
+
     ctx->bit_rate = 3000000;
     ctx->width = 1920;
     ctx->height = 1080;
@@ -89,6 +91,25 @@ void    VideoEncode::init()
 
     if( codec->id == AV_CODEC_ID_H264 )
         av_opt_set( ctx->priv_data, "preset", "medium", 0);
+
+
+#if 0
+    // 未來研究這段code的作用
+    if( ctx->codec_id == AV_CODEC_ID_MPEG2VIDEO) 
+    {
+        /* just for testing, we also add B-frames */
+        ctx->max_b_frames = 2;
+    }
+    if( ctx->codec_id == AV_CODEC_ID_MPEG1VIDEO )
+    {
+        /* Needed to avoid using macroblocks in which some coeffs overflow.
+        * This does not happen with normal video, it just happens here as
+        * the motion of the chroma plane does not match the luma plane. */
+        ctx->mb_decision = 2;
+    }
+#endif
+
+
 
     /* open it */
     ret = avcodec_open2( ctx, codec, NULL );

@@ -52,6 +52,8 @@ Mux::~Mux()
 
 #define SCALE_FLAGS SWS_BICUBIC
 
+
+#if 1
 // a wrapper around a single output AVStream
 typedef struct OutputStream {
     AVStream *st;
@@ -71,7 +73,7 @@ typedef struct OutputStream {
     struct SwsContext *sws_ctx;
     struct SwrContext *swr_ctx;
 } OutputStream;
-
+#endif
 
 
 
@@ -143,112 +145,37 @@ int Mux::write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c, AVStream *st, 
 /*******************************************************************************
 Mux::add_stream()
 ********************************************************************************/
-void Mux::add_stream(OutputStream *ost, AVFormatContext *oc, const AVCodec **codec, enum AVCodecID codec_id)
+void Mux::add_stream()
 {
     AVCodecContext *c;
     int i;
 
-    /* find the encoder */
-    *codec = avcodec_find_encoder(codec_id);
-    if (!(*codec)) 
-    {
-        fprintf(stderr, "Could not find encoder for '%s'\n", avcodec_get_name(codec_id));
-        exit(1);
-    }
 
-    ost->tmp_pkt = av_packet_alloc();
-    if (!ost->tmp_pkt) 
-    {
-        fprintf(stderr, "Could not allocate AVPacket\n");
-        exit(1);
-    }
+    AVCodec *v_codec = avcodec_find_encoder(AV_CODEC_ID_H264);
+    AVCodec *a_codec = avcodec_find_encoder(AV_CODEC_ID_AAC);
 
-    ost->st = avformat_new_stream(oc, NULL);
-    if (!ost->st) 
-    {
-        fprintf(stderr, "Could not allocate stream\n");
-        exit(1);
-    }
-    ost->st->id = oc->nb_streams-1;
-    c = avcodec_alloc_context3(*codec);
-    if (!c) 
-    {
-        fprintf(stderr, "Could not alloc an encoding context\n");
-        exit(1);
-    }
-    ost->enc = c;
 
-    switch ((*codec)->type) 
-    {
-        case AVMEDIA_TYPE_AUDIO:
-            c->sample_fmt  = (*codec)->sample_fmts ? (*codec)->sample_fmts[0] : AV_SAMPLE_FMT_FLTP;
-            c->bit_rate    = 64000;
-            c->sample_rate = 44100;
-            if ((*codec)->supported_samplerates) 
-            {
-                c->sample_rate = (*codec)->supported_samplerates[0];
-                for (i = 0; (*codec)->supported_samplerates[i]; i++) 
-                {
-                    if ((*codec)->supported_samplerates[i] == 44100)
-                        c->sample_rate = 44100;
-                }
-            }
-            c->channels        = av_get_channel_layout_nb_channels(c->channel_layout);
-            c->channel_layout = AV_CH_LAYOUT_STEREO;
-            if ((*codec)->channel_layouts) 
-            {
-                c->channel_layout = (*codec)->channel_layouts[0];
-                for (i = 0; (*codec)->channel_layouts[i]; i++) 
-                {
-                    if ((*codec)->channel_layouts[i] == AV_CH_LAYOUT_STEREO)
-                        c->channel_layout = AV_CH_LAYOUT_STEREO;
-                }
-            }
-            c->channels        = av_get_channel_layout_nb_channels(c->channel_layout);
-            ost->st->time_base.num = 1;// = (AVRational){ 1, c->sample_rate };
-            ost->st->time_base.den = c->sample_rate;
 
-            break;
+    // video
+    v_stream = avformat_new_stream( output_ctx, v_codec ); // 未來改成從encode傳入
+    if( v_stream == nullptr )
+        MYLOG( LOG::ERROR, "v_stream is nullptr." );
+    v_stream->id = output_ctx->nb_streams - 1;
+    v_stream->time_base.num = 1001; 
+    v_stream->time_base.den = 24000;
 
-        case AVMEDIA_TYPE_VIDEO:
-            c->codec_id = codec_id;
-
-            c->bit_rate = 400000;
-            /* Resolution must be a multiple of two. */
-            c->width    = 352;
-            c->height   = 288;
-            /* timebase: This is the fundamental unit of time (in seconds) in terms
-            * of which frame timestamps are represented. For fixed-fps content,
-            * timebase should be 1/framerate and timestamp increments should be
-            * identical to 1. */
-            ost->st->time_base.num = 1; // = (AVRational){ 1, STREAM_FRAME_RATE };
-            ost->st->time_base.den = STREAM_FRAME_RATE;
-
-            c->time_base       = ost->st->time_base;
-
-            c->gop_size      = 12; /* emit one intra frame every twelve frames at most */
-            c->pix_fmt       = STREAM_PIX_FMT;
-            if (c->codec_id == AV_CODEC_ID_MPEG2VIDEO) 
-            {
-                /* just for testing, we also add B-frames */
-                c->max_b_frames = 2;
-            }
-            if (c->codec_id == AV_CODEC_ID_MPEG1VIDEO) 
-            {
-                /* Needed to avoid using macroblocks in which some coeffs overflow.
-                * This does not happen with normal video, it just happens here as
-                * the motion of the chroma plane does not match the luma plane. */
-                c->mb_decision = 2;
-            }
-            break;
-
-        default:
-            break;
-    }
+    // audio
+    a_stream = avformat_new_stream( output_ctx, a_codec );
+    if( a_stream == nullptr )
+        MYLOG( LOG::ERROR, "a_stream is nullptr." );
+    a_stream->id = output_ctx->nb_streams - 1;
+    a_stream->time_base.num = 1;
+    a_stream->time_base.den = 48000;
 
     /* Some formats want stream headers to be separate. */
-    if (oc->oformat->flags & AVFMT_GLOBALHEADER)
-        c->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+    // 未來看是否需要加入這段code
+    //if( output_ctx->oformat->flags & AVFMT_GLOBALHEADER )
+      //  c->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 }
 
 
@@ -289,78 +216,6 @@ AVFrame* Mux::alloc_audio_frame( AVSampleFormat sample_fmt, uint64_t channel_lay
 }
 
 
-
-
-
-/*******************************************************************************
-Mux::open_audio()
-
-Prepare a 16 bit dummy audio frame of 'frame_size' samples and
-'nb_channels' channels. 
-********************************************************************************/
-void Mux::open_audio(AVFormatContext *oc, const AVCodec *codec, OutputStream *ost, AVDictionary *opt_arg)
-{
-    AVCodecContext *c;
-    int nb_samples;
-    int ret;
-    AVDictionary *opt = NULL;
-
-    c = ost->enc;
-
-    /* open it */
-    av_dict_copy(&opt, opt_arg, 0);
-    ret = avcodec_open2(c, codec, &opt);
-    av_dict_free(&opt);
-    if (ret < 0) 
-    {
-        fprintf(stderr, "Could not open audio codec: %d\n", ret);
-        exit(1);
-    }
-
-    /* init signal generator */
-    ost->t     = 0;
-    ost->tincr = 2 * M_PI * 110.0 / c->sample_rate;
-    /* increment frequency by 110 Hz per second */
-    ost->tincr2 = 2 * M_PI * 110.0 / c->sample_rate / c->sample_rate;
-
-    if (c->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE)
-        nb_samples = 10000;
-    else
-        nb_samples = c->frame_size;
-
-    ost->frame     = alloc_audio_frame(c->sample_fmt, c->channel_layout, c->sample_rate, nb_samples);
-    ost->tmp_frame = alloc_audio_frame(AV_SAMPLE_FMT_S16, c->channel_layout, c->sample_rate, nb_samples);
-
-    /* copy the stream parameters to the muxer */
-    ret = avcodec_parameters_from_context(ost->st->codecpar, c);
-    if (ret < 0) 
-    {
-        fprintf(stderr, "Could not copy the stream parameters\n");
-        exit(1);
-    }
-
-    /* create resampler context */
-    ost->swr_ctx = swr_alloc();
-    if (!ost->swr_ctx) 
-    {
-        fprintf(stderr, "Could not allocate resampler context\n");
-        exit(1);
-    }
-
-    /* set options */
-    av_opt_set_int       (ost->swr_ctx, "in_channel_count",   c->channels,       0);
-    av_opt_set_int       (ost->swr_ctx, "in_sample_rate",     c->sample_rate,    0);
-    av_opt_set_sample_fmt(ost->swr_ctx, "in_sample_fmt",      AV_SAMPLE_FMT_S16, 0);
-    av_opt_set_int       (ost->swr_ctx, "out_channel_count",  c->channels,       0);
-    av_opt_set_int       (ost->swr_ctx, "out_sample_rate",    c->sample_rate,    0);
-    av_opt_set_sample_fmt(ost->swr_ctx, "out_sample_fmt",     c->sample_fmt,     0);
-
-    /* initialize the resampling context */
-    if ((ret = swr_init(ost->swr_ctx)) < 0) {
-        fprintf(stderr, "Failed to initialize the resampling context\n");
-        exit(1);
-    }
-}
 
 
 
@@ -483,47 +338,6 @@ AVFrame* Mux::alloc_picture(enum AVPixelFormat pix_fmt, int width, int height)
 
 
 
-/*******************************************************************************
-Mux::open_video()
-********************************************************************************/
-void Mux::open_video( AVFormatContext *oc, const AVCodec *codec, OutputStream *ost, AVDictionary *opt_arg )
-{
-    int ret;
-    AVCodecContext *c = ost->enc;
-    AVDictionary *opt = NULL;
-
-    av_dict_copy( &opt, opt_arg, 0 );
-
-    /* open the codec */
-    ret = avcodec_open2( c, codec, &opt );
-    av_dict_free(&opt);
-    if (ret < 0)
-        MYLOG( LOG::ERROR, "open codec fail." );
-
-    /* allocate and init a re-usable frame */
-    ost->frame = alloc_picture( c->pix_fmt, c->width, c->height );
-    if( !ost->frame )
-        MYLOG( LOG::ERROR, "get frame fail." );
-
-    /* If the output format is not YUV420P, then a temporary YUV420P
-    * picture is needed too. It is then converted to the required
-    * output format. */
-    ost->tmp_frame = NULL;
-    if (c->pix_fmt != AV_PIX_FMT_YUV420P) 
-    {
-        ost->tmp_frame = alloc_picture(AV_PIX_FMT_YUV420P, c->width, c->height);
-        if( !ost->tmp_frame )
-            MYLOG( LOG::ERROR, "get tmp_frame fail." );
-    }
-
-    /* copy the stream parameters to the muxer */
-    ret = avcodec_parameters_from_context(ost->st->codecpar, c);
-    if( ret < 0 ) 
-        MYLOG( LOG::ERROR, "avcodec_parameters_from_context fail." );
-
-}
-
-
 
 
 
@@ -640,26 +454,20 @@ void Mux::close_stream( AVFormatContext *oc, OutputStream *ost )
 
 
 
-
-
-
 /*******************************************************************************
-Mux::work()
+Mux::init()
 ********************************************************************************/
-void Mux::work()
+void Mux::init()
 {
-    OutputStream video_st = { 0 }, audio_st = { 0 };
+    //OutputStream video_st = { 0 }, audio_st = { 0 };
+    const AVCodec *audio_codec = nullptr, *video_codec = nullptr;
 
-    const AVCodec *audio_codec, *video_codec;
     int ret;
     AVDictionary *opt = NULL;
     int i;
 
-    bool have_video = false, have_audio = false;
-    bool encode_video = false, encode_audio = false;
-
-
-
+    //bool have_video = false, have_audio = false;
+    //bool encode_video = false, encode_audio = false;
 
     /* allocate the output media context */
     avformat_alloc_output_context2( &output_ctx, NULL, NULL, "H:\\test.mp4" );
@@ -669,28 +477,14 @@ void Mux::work()
 
     output_fmt = output_ctx->oformat;
 
-    /* Add the audio and video streams using the default format codecs
-    * and initialize the codecs. */
-    if( output_fmt->video_codec != AV_CODEC_ID_NONE ) 
-    {
-        add_stream( &video_st, output_ctx, &video_codec, output_fmt->video_codec );
-        have_video = true;
-        encode_video = true;
-    }
-    if( output_fmt->audio_codec != AV_CODEC_ID_NONE )
-    {
-        add_stream( &audio_st, output_ctx, &audio_codec, output_fmt->audio_codec );
-        have_audio = true;
-        encode_audio = true;
-    }
+    /*
+    看改h265或其他編碼是不是要跟著修這個參數
+    output_fmt->video_codec
+    output_fmt->audio_codec
+    */
 
-    /* Now that all the parameters are set, we can open the audio and
-    * video codecs and allocate the necessary encode buffers. */
-    if( have_video == true )
-        open_video( output_ctx, video_codec, &video_st, opt );
-
-    if( have_audio == true )
-        open_audio( output_ctx, audio_codec, &audio_st, opt );
+    /* Add the audio and video streams using the default format codecs and initialize the codecs. */
+    add_stream();
 
     av_dump_format( output_ctx, 0, "H:\\test.mp4", 1 );
 
@@ -701,6 +495,21 @@ void Mux::work()
         if( ret < 0 ) 
             MYLOG( LOG::ERROR, "open output file fail" );
     }
+}
+
+
+
+
+
+
+/*******************************************************************************
+Mux::work()
+********************************************************************************/
+void Mux::work()
+{
+    int ret;
+    AVDictionary *opt = nullptr;
+
 
     /* Write the stream header, if any. */
     ret = avformat_write_header( output_ctx, &opt );
@@ -710,14 +519,15 @@ void Mux::work()
   //  av_make_error_string((char[AV_ERROR_MAX_STRING_SIZE]){0}, AV_ERROR_MAX_STRING_SIZE, errnum)
 
 
-    while( encode_video == true || encode_audio == true ) 
+    //while( encode_video == true || encode_audio == true ) 
+    while(true)
     {
         /* select the stream to encode */
-        ret = av_compare_ts( video_st.next_pts, video_st.enc->time_base, audio_st.next_pts, audio_st.enc->time_base );
+        /*ret = av_compare_ts( video_st.next_pts, video_st.enc->time_base, audio_st.next_pts, audio_st.enc->time_base );
         if (encode_video && (!encode_audio || ret <= 0) )        
             encode_video = !write_video_frame( output_ctx, &video_st );        
         else         
-            encode_audio = !write_audio_frame( output_ctx, &audio_st );
+            encode_audio = !write_audio_frame( output_ctx, &audio_st );*/
     }
 
     /* Write the trailer, if any. The trailer must be written before you
@@ -727,10 +537,10 @@ void Mux::work()
     av_write_trailer(output_ctx);
 
     /* Close each codec. */
-    if (have_video)
+    /*if (have_video)
         close_stream( output_ctx, &video_st);
     if (have_audio)
-        close_stream( output_ctx, &audio_st);
+        close_stream( output_ctx, &audio_st);*/
 
     if ( !(output_fmt->flags & AVFMT_NOFILE) )
         /* Close the output file. */
