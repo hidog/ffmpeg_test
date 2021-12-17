@@ -115,7 +115,6 @@ AudioDecode::output_pcm()
 int     AudioDecode::output_pcm()
 {
     static FILE *fp     =   fopen("H:\\test.pcm", "wb+" );
-    static int ccc = 0;
 
     static constexpr int    out_channel =   2; // 目前預設輸出成兩聲道. 有空再改
 
@@ -136,7 +135,7 @@ int     AudioDecode::output_pcm()
                                  (const uint8_t**)frame->data, frame->nb_samples );    //輸入
 
     fwrite( pcm, 1, byte_count, fp );
-    MYLOG( LOG::DEBUG, "audio write %d. ccc = %d", byte_count, ccc++ );
+    MYLOG( LOG::DEBUG, "audio write %d. frame_count = %d", byte_count, frame_count );
 
     return  0;
 }

@@ -345,6 +345,8 @@ AudioEncode::work()
 ********************************************************************************/
 void     AudioEncode::work( AVCodecID code_id )
 {
+    int     ret;
+
     if( code_id == AV_CODEC_ID_MP3 )
         output  =   fopen( "H:\\test.mp3", "wb+" );
     else if( code_id == AV_CODEC_ID_AAC )
@@ -365,6 +367,10 @@ void     AudioEncode::work( AVCodecID code_id )
     //
     while( 0 == feof(fp) )
     {
+        ret = av_frame_make_writable(frame);
+        if( ret < 0 )
+            MYLOG( LOG::ERROR, "frame not writeable." );
+
         for( i = 0; i < frame->nb_samples; i++ )
         {
             fread( intens, 2, sizeof(int16_t), fp );

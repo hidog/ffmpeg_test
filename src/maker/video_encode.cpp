@@ -68,7 +68,7 @@ void    VideoEncode::init()
         MYLOG( LOG::ERROR, "pkt = nullptr." );
 
     //
-    ctx->bit_rate = 8000000;
+    ctx->bit_rate = 3000000;
     ctx->width = 1920;
     ctx->height = 1080;
 
@@ -88,7 +88,7 @@ void    VideoEncode::init()
     ctx->pix_fmt = AV_PIX_FMT_YUV420P;
 
     if( codec->id == AV_CODEC_ID_H264 )
-        av_opt_set( ctx->priv_data, "preset", "slow", 0);
+        av_opt_set( ctx->priv_data, "preset", "medium", 0);
 
     /* open it */
     ret = avcodec_open2( ctx, codec, NULL );
@@ -116,6 +116,8 @@ VideoEncode::encode()
 ********************************************************************************/
 void VideoEncode::encode( AVFrame *frame )
 {
+    printf( "pict type = %c\n", av_get_picture_type_char(frame->pict_type) );
+
     int ret;
 
     /* send the frame to the encoder */

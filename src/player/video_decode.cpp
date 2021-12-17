@@ -451,6 +451,7 @@ int    VideoDecode::output_jpg_by_QT()
     static int  jpg_count   =   0;
     char str[1000];
     sprintf( str, "H:\\jpg\\%d.jpg", jpg_count++ );
+    MYLOG( LOG::DEBUG, "save jpg %s", str );
     img.save(str);
 
     return  0;

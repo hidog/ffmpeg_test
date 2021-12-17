@@ -33,9 +33,6 @@
     <ClCompile Include="..\src\tool.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\demuxing_decoding.c">
-      <Filter>ffmpeg_example</Filter>
-    </ClCompile>
     <ClCompile Include="..\ffmpeg_example\ffplay.c">
       <Filter>ffmpeg_example</Filter>
     </ClCompile>
@@ -62,9 +59,6 @@
     </ClCompile>
     <ClCompile Include="..\src\maker\maker.cpp">
       <Filter>src\maker</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\encode_video.c">
-      <Filter>ffmpeg_example</Filter>
     </ClCompile>
     <ClCompile Include="..\ffmpeg_example\muxing.c">
       <Filter>ffmpeg_example</Filter>
@@ -94,9 +88,6 @@
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
       <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\demuxing_decoding.h">
-      <Filter>ffmpeg_example</Filter>
     </ClInclude>
     <ClInclude Include="..\ffmpeg_example\ffplay.h">
       <Filter>ffmpeg_example</Filter>

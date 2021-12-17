@@ -6,7 +6,7 @@
 #include <QAudioOutput>
 #include <QImage>
 
-#include "player.h"
+#include "player/player.h"
 #include "tool.h"
 
 

@@ -3,7 +3,7 @@
 
 
 #include <QThread>
-#include "player.h"
+#include "player/player.h"
 
 
 class Worker : public QThread
