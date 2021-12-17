@@ -311,6 +311,45 @@ void    AudioEncode::encode( AVFrame *frame, AVCodecID code_id )
 
 
 
+
+
+/*******************************************************************************
+AudioEncode::send_frame()
+********************************************************************************/
+int AudioEncode::send_frame( AVFrame* fr )
+{
+    return avcodec_send_frame( ctx, fr );
+}
+
+
+
+
+
+/*******************************************************************************
+AudioEncode::recv_frame()
+********************************************************************************/
+int AudioEncode::recv_frame()
+{
+    return avcodec_receive_packet( ctx, pkt );
+}
+
+
+
+
+
+/*******************************************************************************
+AudioEncode::get_pkt()
+********************************************************************************/
+AVPacket* AudioEncode::get_pkt()
+{
+    /* rescale output packet timestamp values from codec to stream timebase */
+    av_packet_rescale_ts( pkt, ctx->time_base, ctx->time_base );
+    pkt->stream_index = 1;
+    return pkt;
+}
+
+
+
 /*******************************************************************************
 AudioEncode::adts_gen()
 
@@ -404,3 +443,82 @@ void     AudioEncode::work( AVCodecID code_id )
     fclose(output);
     fclose(fp);
 }
+
+
+
+
+
+
+/*******************************************************************************
+AudioEncode::get_next_pts()
+********************************************************************************/
+int64_t AudioEncode::get_next_pts()
+{
+    if( frame == nullptr )
+        return  0;
+    else
+        return frame->pts + frame->nb_samples;
+}
+
+
+
+
+
+
+/*******************************************************************************
+AudioEncode::get_frame()
+********************************************************************************/
+AVFrame* AudioEncode::get_frame()
+{
+    AVCodecID code_id = AV_CODEC_ID_AAC; // 未來改成動態
+
+    int     ret;
+    static int frame_count = 0;
+
+    static FILE *fp = fopen( "H:\\test.pcm", "rb" );
+    int     i;
+    int16_t     intens[2];
+
+    if( feof(fp) != 0 )
+        return nullptr;
+
+
+    ret = av_frame_make_writable(frame);
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "frame not writeable." );
+    
+    for( i = 0; i < frame->nb_samples; i++ )
+    {
+        fread( intens, 2, sizeof(int16_t), fp );
+    
+        // 多聲道這邊需要另外處理
+        if( code_id == AV_CODEC_ID_AAC || code_id == AV_CODEC_ID_AC3 )
+        {
+            *((float*)(frame->data[0]) + i)   =   1.0 * intens[0] / INT16_MAX;
+            *((float*)(frame->data[1]) + i)   =   1.0 * intens[1] / INT16_MAX;
+        }
+        else if( code_id == AV_CODEC_ID_MP3 )
+        {
+            *((int16_t*)(frame->data[0]) + i)   =   intens[0];
+            *((int16_t*)(frame->data[1]) + i)   =   intens[1];
+        }
+        else if( code_id == AV_CODEC_ID_MP2 || code_id == AV_CODEC_ID_FLAC )
+        {
+            *((int16_t*)(frame->data[0]) + 2*i     )   =   intens[0];
+            *((int16_t*)(frame->data[0]) + 2*i + 1 )   =   intens[1];
+        }
+    }
+
+    if( frame_count == 0 )
+        frame->pts = 0;
+    else 
+        frame->pts += frame->nb_samples;
+
+    frame_count++;
+
+    return frame;
+}
+
+
+
+

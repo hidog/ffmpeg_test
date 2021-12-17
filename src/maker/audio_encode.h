@@ -2,6 +2,7 @@
 #define MAKAUDIO_ENCODE_HER_H
 
 #include <stdio.h>
+#include <stdint.h>
 
 // https://blog.csdn.net/wanggao_1990/article/details/115725163
 
@@ -39,7 +40,14 @@ public:
     void    encode( AVFrame *frame, AVCodecID code_id );
     void    work( AVCodecID code_id );
 
-private:
+    int64_t get_next_pts();
+    AVFrame* get_frame();
+
+    int send_frame( AVFrame* fr );
+    int recv_frame();
+    AVPacket* get_pkt();
+
+//private:
 
     bool    check_sample_fmt( AVCodec *codec, AVSampleFormat sample_fmt );
     int     select_sample_rate( AVCodec *codec );

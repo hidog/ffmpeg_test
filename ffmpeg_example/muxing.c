@@ -545,13 +545,13 @@ static void close_stream(AVFormatContext *oc, OutputStream *ost)
 /**************************************************************/
 /* media file output */
 
-int main(int argc, char **argv)
+int main2(int argc, char **argv)
 {
     OutputStream video_st = { 0 }, audio_st = { 0 };
     const AVOutputFormat *fmt;
     const char *filename;
     AVFormatContext *oc;
-    const AVCodec *audio_codec, *video_codec;
+    const AVCodec *audio_codec = NULL, *video_codec = NULL;
     int ret;
     int have_video = 0, have_audio = 0;
     int encode_video = 0, encode_audio = 0;

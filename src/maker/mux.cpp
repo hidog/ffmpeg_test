@@ -78,13 +78,6 @@ typedef struct OutputStream {
 
 
 
-/*******************************************************************************
-Mux::log_packet()
-********************************************************************************/
-void Mux::log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt)
-{}
-
-
 
 
 
@@ -119,8 +112,7 @@ int Mux::write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c, AVStream *st, 
         av_packet_rescale_ts(pkt, c->time_base, st->time_base);
         pkt->stream_index = st->index;
 
-        /* Write the compressed frame to the media file. */
-        log_packet(fmt_ctx, pkt);
+
         ret = av_interleaved_write_frame(fmt_ctx, pkt);
         /* pkt is now blank (av_interleaved_write_frame() takes ownership of
         * its contents and resets pkt), so that no unreferencing is necessary.
@@ -457,7 +449,7 @@ void Mux::close_stream( AVFormatContext *oc, OutputStream *ost )
 /*******************************************************************************
 Mux::init()
 ********************************************************************************/
-void Mux::init()
+void Mux::init( AVCodecContext* v_ctx, AVCodecContext* a_ctx )
 {
     //OutputStream video_st = { 0 }, audio_st = { 0 };
     const AVCodec *audio_codec = nullptr, *video_codec = nullptr;
@@ -486,6 +478,12 @@ void Mux::init()
     /* Add the audio and video streams using the default format codecs and initialize the codecs. */
     add_stream();
 
+
+    ret = avcodec_parameters_from_context( v_stream->codecpar, v_ctx );
+    ret = avcodec_parameters_from_context( a_stream->codecpar, a_ctx );
+
+
+    // 很多information沒有寫入,研究原因.
     av_dump_format( output_ctx, 0, "H:\\test.mp4", 1 );
 
     /* open the output file, if needed */
@@ -519,15 +517,73 @@ void Mux::work()
   //  av_make_error_string((char[AV_ERROR_MAX_STRING_SIZE]){0}, AV_ERROR_MAX_STRING_SIZE, errnum)
 
 
+    AVRational tb_a, tb_b;
+    tb_a.num = 1001;
+    tb_a.den = 24000;
+    tb_b.num = 1;
+    tb_b.den = 48000;
+
+    AVFrame *v_frame = nullptr, *a_frame = nullptr;
+
     //while( encode_video == true || encode_audio == true ) 
     while(true)
     {
         /* select the stream to encode */
-        /*ret = av_compare_ts( video_st.next_pts, video_st.enc->time_base, audio_st.next_pts, audio_st.enc->time_base );
-        if (encode_video && (!encode_audio || ret <= 0) )        
-            encode_video = !write_video_frame( output_ctx, &video_st );        
+        auto ts_a = v_get_next_pts();
+        auto ts_b = a_get_next_pts();
+
+        ret = av_compare_ts( ts_a, tb_a, ts_b, tb_b );
+
+
+        if( ret <= 0 )
+        {
+            v_frame = v_get_frame();
+
+            ret = v_send_frame( v_frame );
+            if( ret < 0 ) 
+                MYLOG( LOG::ERROR, "send fail." );
+
+            while( ret >= 0 ) 
+            {
+                ret = v_recv_frame();
+                if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
+                    break;
+                else if( ret < 0 )
+                    MYLOG( LOG::ERROR, "recv fail." );
+
+                auto pkt = v_get_pkt();
+                ret = av_interleaved_write_frame( output_ctx, pkt );
+                if (ret < 0) 
+                    MYLOG( LOG::ERROR, "write fail." );
+            }  
+        }
         else         
-            encode_audio = !write_audio_frame( output_ctx, &audio_st );*/
+        {
+            a_frame = a_get_frame();
+            if( a_frame == nullptr )
+                break;
+
+            ret = a_send_frame( a_frame );
+            if( ret < 0 ) 
+                MYLOG( LOG::ERROR, "send fail." );
+
+            while( ret >= 0 ) 
+            {
+                ret = a_recv_frame();
+                if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
+                    break;
+                else if( ret < 0 )
+                    MYLOG( LOG::ERROR, "recv fail." );
+
+                auto pkt = a_get_pkt();
+                ret = av_interleaved_write_frame( output_ctx, pkt );
+                if (ret < 0) 
+                    MYLOG( LOG::ERROR, "write fail." );
+            }  
+        }      
+
+        if( a_frame == nullptr && v_frame == nullptr )
+            break;
     }
 
     /* Write the trailer, if any. The trailer must be written before you

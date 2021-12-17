@@ -2,6 +2,9 @@
 #define MUX_H
 
 #include <stdint.h>
+#include <functional>
+
+
 
 struct AVFormatContext;
 struct AVOutputFormat;
@@ -31,8 +34,23 @@ public:
     Mux& operator = ( const Mux& ) = delete;
     Mux& operator = ( Mux&& ) = delete;
 
-    void init();
+    void init( AVCodecContext* v_ctx, AVCodecContext* a_ctx );
     void work();
+
+
+    std::function<int64_t()> v_get_next_pts;
+    std::function<int64_t()> a_get_next_pts;
+
+    std::function<AVFrame*()> v_get_frame;
+    std::function<AVFrame*()> a_get_frame;
+
+    std::function<int(AVFrame*)> v_send_frame;
+    std::function<int()> v_recv_frame;
+    std::function<AVPacket*()> v_get_pkt;
+
+    std::function<int(AVFrame*)> a_send_frame;
+    std::function<int()> a_recv_frame;
+    std::function<AVPacket*()> a_get_pkt;
 
 private:
 
@@ -53,7 +71,6 @@ private:
 
 
 
-    void log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt);
 
 
 

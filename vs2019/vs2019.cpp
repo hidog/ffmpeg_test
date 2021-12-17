@@ -52,16 +52,16 @@ int main()
 
     //for( int i = 0; i < 4; i++ )
     int i = 2;
-    {
-        AudioEncode a_encoder;
-        a_encoder.list_sample_format( id_arr[i] );
-        a_encoder.list_sample_rate( id_arr[i] );
-        a_encoder.list_channel_layout( id_arr[i] );
-
-        a_encoder.init( id_arr[i] );
-        //a_encoder.work( id_arr[i] );
-        //a_encoder.end();
-    }
+    
+    AudioEncode a_encoder;
+    a_encoder.list_sample_format( id_arr[i] );
+    a_encoder.list_sample_rate( id_arr[i] );
+    a_encoder.list_channel_layout( id_arr[i] );
+    
+    a_encoder.init( id_arr[i] );
+    //a_encoder.work( id_arr[i] );
+    //a_encoder.end();
+    
 
 
     VideoEncode v_encoder;
@@ -71,8 +71,27 @@ int main()
     //v_encoder.end();
 
 
+    auto *v = v_encoder.ctx;
+    auto *a = a_encoder.ctx;
+
+
     Mux muxer;
-    muxer.init();
+
+    muxer.v_get_next_pts = std::bind( &VideoEncode::get_next_pts, &v_encoder );
+    muxer.a_get_next_pts = std::bind( &AudioEncode::get_next_pts, &a_encoder );
+
+    muxer.v_get_frame = std::bind( &VideoEncode::get_frame, &v_encoder );
+    muxer.a_get_frame = std::bind( &AudioEncode::get_frame, &a_encoder );
+
+    muxer.v_send_frame = std::bind( &VideoEncode::send_frame, &v_encoder, std::placeholders::_1 );
+    muxer.v_recv_frame = std::bind( &VideoEncode::recv_frame, &v_encoder );
+    muxer.v_get_pkt = std::bind( &VideoEncode::get_pkt, &v_encoder );
+
+    muxer.a_send_frame = std::bind( &AudioEncode::send_frame, &a_encoder, std::placeholders::_1 );
+    muxer.a_recv_frame = std::bind( &AudioEncode::recv_frame, &a_encoder );
+    muxer.a_get_pkt = std::bind( &AudioEncode::get_pkt, &a_encoder );
+
+    muxer.init( v, a );
     muxer.work();
 
     
