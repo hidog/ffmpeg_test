@@ -22,11 +22,11 @@ extern "C" {
 
 }
 
-#define STREAM_DURATION   50.0
-#define STREAM_FRAME_RATE 25 /* 25 images/s */
-#define STREAM_PIX_FMT    AV_PIX_FMT_YUV420P /* default pix_fmt */
+//#define STREAM_DURATION   50.0
+//#define STREAM_FRAME_RATE 25 /* 25 images/s */
+//#define STREAM_PIX_FMT    AV_PIX_FMT_YUV420P /* default pix_fmt */
 
-#define SCALE_FLAGS SWS_BICUBIC
+//#define SCALE_FLAGS SWS_BICUBIC
 
 
 
@@ -143,28 +143,29 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
     }
     ost->enc = c;
 
-    switch ((*codec)->type) {
+    switch ((*codec)->type) 
+    {
     case AVMEDIA_TYPE_AUDIO:
         c->sample_fmt  = (*codec)->sample_fmts ?
             (*codec)->sample_fmts[0] : AV_SAMPLE_FMT_FLTP;
         c->bit_rate    = 320000;
         c->sample_rate = 48000;
-        if ((*codec)->supported_samplerates) {
+        /*if ((*codec)->supported_samplerates) {
             c->sample_rate = (*codec)->supported_samplerates[0];
             for (i = 0; (*codec)->supported_samplerates[i]; i++) {
                 if ((*codec)->supported_samplerates[i] == 44100)
                     c->sample_rate = 44100;
             }
-        }
-        c->channels        = av_get_channel_layout_nb_channels(c->channel_layout);
+        }*/
+        //c->channels        = av_get_channel_layout_nb_channels(c->channel_layout);
         c->channel_layout = AV_CH_LAYOUT_STEREO;
-        if ((*codec)->channel_layouts) {
+        /*if ((*codec)->channel_layouts) {
             c->channel_layout = (*codec)->channel_layouts[0];
             for (i = 0; (*codec)->channel_layouts[i]; i++) {
                 if ((*codec)->channel_layouts[i] == AV_CH_LAYOUT_STEREO)
                     c->channel_layout = AV_CH_LAYOUT_STEREO;
             }
-        }
+        }*/
         c->channels        = av_get_channel_layout_nb_channels(c->channel_layout);
         //ost->st->time_base = (AVRational){ 1, c->sample_rate };
         ost->st->time_base.num = 1;
@@ -184,13 +185,15 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
          * timebase should be 1/framerate and timestamp increments should be
          * identical to 1. */
         //ost->st->time_base = (AVRational){ 1, STREAM_FRAME_RATE };
-        ost->st->time_base.num = 1;
-        ost->st->time_base.den = STREAM_FRAME_RATE;
+        ost->st->time_base.num = 1001; //1;
+        ost->st->time_base.den = 24000; //STREAM_FRAME_RATE;
 
         c->time_base       = ost->st->time_base;
 
-        c->gop_size      = 12; /* emit one intra frame every twelve frames at most */
-        c->pix_fmt       = STREAM_PIX_FMT;
+        c->gop_size      = 200; /* emit one intra frame every twelve frames at most */
+        c->max_b_frames  = 100;
+
+        c->pix_fmt       = AV_PIX_FMT_YUV420P;
         if (c->codec_id == AV_CODEC_ID_MPEG2VIDEO) {
             /* just for testing, we also add B-frames */
             c->max_b_frames = 2;
@@ -275,8 +278,10 @@ static void open_audio(AVFormatContext *oc, const AVCodec *codec,
 
     ost->frame     = alloc_audio_frame(c->sample_fmt, c->channel_layout,
                                        c->sample_rate, nb_samples);
-    ost->tmp_frame = alloc_audio_frame(AV_SAMPLE_FMT_S16, c->channel_layout,
+    ost->frame     = alloc_audio_frame(c->sample_fmt, c->channel_layout,
                                        c->sample_rate, nb_samples);
+    //ost->tmp_frame = alloc_audio_frame(AV_SAMPLE_FMT_S16, c->channel_layout,
+      //                                 c->sample_rate, nb_samples);
 
     /* copy the stream parameters to the muxer */
     ret = avcodec_parameters_from_context(ost->st->codecpar, c);
@@ -295,7 +300,7 @@ static void open_audio(AVFormatContext *oc, const AVCodec *codec,
     /* set options */
     av_opt_set_int       (ost->swr_ctx, "in_channel_count",   c->channels,       0);
     av_opt_set_int       (ost->swr_ctx, "in_sample_rate",     c->sample_rate,    0);
-    av_opt_set_sample_fmt(ost->swr_ctx, "in_sample_fmt",      AV_SAMPLE_FMT_S16, 0);
+    av_opt_set_sample_fmt(ost->swr_ctx, "in_sample_fmt",      c->sample_fmt,     0);
     av_opt_set_int       (ost->swr_ctx, "out_channel_count",  c->channels,       0);
     av_opt_set_int       (ost->swr_ctx, "out_sample_rate",    c->sample_rate,    0);
     av_opt_set_sample_fmt(ost->swr_ctx, "out_sample_fmt",     c->sample_fmt,     0);
@@ -307,10 +312,14 @@ static void open_audio(AVFormatContext *oc, const AVCodec *codec,
     }
 }
 
+
+
+
 /* Prepare a 16 bit dummy audio frame of 'frame_size' samples and
  * 'nb_channels' channels. */
 static AVFrame *get_audio_frame(OutputStream *ost)
 {
+#if 0
     AVFrame *frame = ost->tmp_frame;
     int j, i, v;
     int16_t *q = (int16_t*)frame->data[0];
@@ -332,7 +341,61 @@ static AVFrame *get_audio_frame(OutputStream *ost)
     ost->next_pts  += frame->nb_samples;
 
     return frame;
+#else
+
+    static int a_frame_count = 0;
+
+    AVFrame *frame = ost->frame;
+    int j, i, v;
+    //int16_t *q = (int16_t*)frame->data[0];
+
+    /* check if we want to generate more frames */
+    //AVRational avr{1,1};
+    //if (av_compare_ts(ost->next_pts, ost->enc->time_base, STREAM_DURATION, avr ) > 0)
+    //if( a_frame_count > 800 )
+      //  return NULL;
+
+
+    static FILE    *fp     =   fopen( "H:\\test.pcm", "rb" );
+    int     ret;
+    int16_t     intens[2];
+
+    if( feof(fp) != 0 )
+        return NULL;
+
+    ret = av_frame_make_writable(frame);
+    if( ret < 0 )
+        printf( "frame not writeable.\n" );
+    
+    for( i = 0; i < frame->nb_samples; i++ )
+    {
+        ret = fread( intens, 2, sizeof(int16_t), fp );
+        if( ret == 0 )
+        {
+            intens[0] = 0;
+            intens[1] = 0;
+        }
+    
+        // 多聲道這邊需要另外處理
+        *((float*)(frame->data[0]) + i)   =   1.0 * intens[0] / INT16_MAX;
+        *((float*)(frame->data[1]) + i)   =   1.0 * intens[1] / INT16_MAX;
+        
+    }
+
+
+    frame->pts = ost->next_pts;
+    ost->next_pts  += frame->nb_samples;
+
+    a_frame_count++;
+
+    return frame;
+
+#endif
 }
+
+
+
+
 
 /*
  * encode one audio frame and send it to the muxer
@@ -349,34 +412,35 @@ static int write_audio_frame(AVFormatContext *oc, OutputStream *ost)
 
     frame = get_audio_frame(ost);
 
-    if (frame) {
+    if (frame) 
+    {
         /* convert samples from native format to destination codec format, using the resampler */
         /* compute destination number of samples */
-        dst_nb_samples = av_rescale_rnd(swr_get_delay(ost->swr_ctx, c->sample_rate) + frame->nb_samples,
-                                        c->sample_rate, c->sample_rate, AV_ROUND_UP);
-        av_assert0(dst_nb_samples == frame->nb_samples);
+        /*dst_nb_samples = av_rescale_rnd(swr_get_delay(ost->swr_ctx, c->sample_rate) + frame->nb_samples,
+                                        c->sample_rate, c->sample_rate, AV_ROUND_UP);*/
+        //av_assert0(dst_nb_samples == frame->nb_samples);
 
         /* when we pass a frame to the encoder, it may keep a reference to it
          * internally;
          * make sure we do not overwrite it here
          */
-        ret = av_frame_make_writable(ost->frame);
-        if (ret < 0)
-            exit(1);
+        //ret = av_frame_make_writable(ost->frame);
+        //if (ret < 0)
+          //  exit(1);
 
         /* convert to destination format */
-        ret = swr_convert(ost->swr_ctx,
+        /*ret = swr_convert(ost->swr_ctx,
                           ost->frame->data, dst_nb_samples,
                           (const uint8_t **)frame->data, frame->nb_samples);
         if (ret < 0) {
             fprintf(stderr, "Error while converting\n");
             exit(1);
-        }
-        frame = ost->frame;
+        }*/
+        //frame = ost->frame;
 
         AVRational avr { 1, c->sample_rate };
         frame->pts = av_rescale_q(ost->samples_count, avr, c->time_base);
-        ost->samples_count += dst_nb_samples;
+        ost->samples_count += frame->nb_samples; //  dst_nb_samples;
     }
 
     return write_frame(oc, c, ost->st, frame, ost->tmp_pkt);
@@ -527,8 +591,8 @@ static AVFrame *get_video_frame(OutputStream *ost)
         return NULL;*/
 
     static int v_frame_count = 0;
-    //if( v_frame_count > 35719 )
-    if( v_frame_count > 1000 )
+    if( v_frame_count > 35719 )
+    //if( v_frame_count > 1000 )
         return NULL;
 
 
@@ -544,7 +608,7 @@ static AVFrame *get_video_frame(OutputStream *ost)
     {
         ost->sws_ctx = sws_getContext( 1920, 1080, AV_PIX_FMT_BGRA,
                                        1920, 1080, AV_PIX_FMT_YUV420P,
-                                       SCALE_FLAGS, NULL, NULL, NULL);
+                                       SWS_BICUBIC, NULL, NULL, NULL);
         if (!ost->sws_ctx) 
         {
             fprintf(stderr, "Could not initialize the conversion context\n");
