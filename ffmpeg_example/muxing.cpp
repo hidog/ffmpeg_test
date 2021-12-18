@@ -1,38 +1,11 @@
-/*
- * Copyright (c) 2003 Fabrice Bellard
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
-/**
- * @file
- * libavformat API example.
- *
- * Output a media file in any supported libavformat format. The default
- * codecs are used.
- * @example muxing.c
- */
+#include "muxing.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+
+extern "C" {
 
 #include <libavutil/avassert.h>
 #include <libavutil/channel_layout.h>
@@ -43,6 +16,8 @@
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
+
+}
 
 #define STREAM_DURATION   10.0
 #define STREAM_FRAME_RATE 25 /* 25 images/s */
@@ -74,11 +49,7 @@ static void log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt)
 {
     AVRational *time_base = &fmt_ctx->streams[pkt->stream_index]->time_base;
 
-    printf("pts:%s pts_time:%s dts:%s dts_time:%s duration:%s duration_time:%s stream_index:%d\n",
-           av_ts2str(pkt->pts), av_ts2timestr(pkt->pts, time_base),
-           av_ts2str(pkt->dts), av_ts2timestr(pkt->dts, time_base),
-           av_ts2str(pkt->duration), av_ts2timestr(pkt->duration, time_base),
-           pkt->stream_index);
+    printf("pts : %d \n", pkt->stream_index );
 }
 
 static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
@@ -89,8 +60,7 @@ static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
     // send the frame to the encoder
     ret = avcodec_send_frame(c, frame);
     if (ret < 0) {
-        fprintf(stderr, "Error sending a frame to the encoder: %s\n",
-                av_err2str(ret));
+        fprintf(stderr, "Error sending a frame to the encoder: %d\n", ret );
         exit(1);
     }
 
@@ -99,7 +69,7 @@ static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
             break;
         else if (ret < 0) {
-            fprintf(stderr, "Error encoding a frame: %s\n", av_err2str(ret));
+            fprintf(stderr, "Error encoding a frame: %d\n", ret );
             exit(1);
         }
 
@@ -114,7 +84,7 @@ static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
          * its contents and resets pkt), so that no unreferencing is necessary.
          * This would be different if one used av_write_frame(). */
         if (ret < 0) {
-            fprintf(stderr, "Error while writing output packet: %s\n", av_err2str(ret));
+            fprintf(stderr, "Error while writing output packet: %d\n", ret );
             exit(1);
         }
     }
@@ -180,7 +150,10 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
             }
         }
         c->channels        = av_get_channel_layout_nb_channels(c->channel_layout);
-        ost->st->time_base = (AVRational){ 1, c->sample_rate };
+        //ost->st->time_base = (AVRational){ 1, c->sample_rate };
+        ost->st->time_base.num = 1;
+        ost->st->time_base.den = c->sample_rate;
+
         break;
 
     case AVMEDIA_TYPE_VIDEO:
@@ -194,7 +167,11 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
          * of which frame timestamps are represented. For fixed-fps content,
          * timebase should be 1/framerate and timestamp increments should be
          * identical to 1. */
-        ost->st->time_base = (AVRational){ 1, STREAM_FRAME_RATE };
+        //ost->st->time_base = (AVRational){ 1, STREAM_FRAME_RATE };
+        ost->st->time_base.num = 1;
+        ost->st->time_base.den = STREAM_FRAME_RATE;
+
+
         c->time_base       = ost->st->time_base;
 
         c->gop_size      = 12; /* emit one intra frame every twelve frames at most */
@@ -266,7 +243,7 @@ static void open_audio(AVFormatContext *oc, const AVCodec *codec,
     ret = avcodec_open2(c, codec, &opt);
     av_dict_free(&opt);
     if (ret < 0) {
-        fprintf(stderr, "Could not open audio codec: %s\n", av_err2str(ret));
+        fprintf(stderr, "Could not open audio codec: %d\n", ret );
         exit(1);
     }
 
@@ -324,8 +301,8 @@ static AVFrame *get_audio_frame(OutputStream *ost)
     int16_t *q = (int16_t*)frame->data[0];
 
     /* check if we want to generate more frames */
-    if (av_compare_ts(ost->next_pts, ost->enc->time_base,
-                      STREAM_DURATION, (AVRational){ 1, 1 }) > 0)
+    AVRational avr{1,1};
+    if (av_compare_ts(ost->next_pts, ost->enc->time_base, STREAM_DURATION, avr ) > 0)
         return NULL;
 
     for (j = 0; j <frame->nb_samples; j++) {
@@ -382,7 +359,8 @@ static int write_audio_frame(AVFormatContext *oc, OutputStream *ost)
         }
         frame = ost->frame;
 
-        frame->pts = av_rescale_q(ost->samples_count, (AVRational){1, c->sample_rate}, c->time_base);
+        AVRational avr { 1, c->sample_rate };
+        frame->pts = av_rescale_q(ost->samples_count, avr, c->time_base);
         ost->samples_count += dst_nb_samples;
     }
 
@@ -428,7 +406,7 @@ static void open_video(AVFormatContext *oc, const AVCodec *codec,
     ret = avcodec_open2(c, codec, &opt);
     av_dict_free(&opt);
     if (ret < 0) {
-        fprintf(stderr, "Could not open video codec: %s\n", av_err2str(ret));
+        fprintf(stderr, "Could not open video codec: %d\n", ret );
         exit(1);
     }
 
@@ -486,8 +464,8 @@ static AVFrame *get_video_frame(OutputStream *ost)
     AVCodecContext *c = ost->enc;
 
     /* check if we want to generate more frames */
-    if (av_compare_ts(ost->next_pts, c->time_base,
-                      STREAM_DURATION, (AVRational){ 1, 1 }) > 0)
+    AVRational avr { 1, 1 };
+    if (av_compare_ts(ost->next_pts, c->time_base, STREAM_DURATION, avr ) > 0)
         return NULL;
 
     /* when we pass a frame to the encoder, it may keep a reference to it
@@ -545,7 +523,7 @@ static void close_stream(AVFormatContext *oc, OutputStream *ost)
 /**************************************************************/
 /* media file output */
 
-int main2(int argc, char **argv)
+int muxing()
 {
     OutputStream video_st = { 0 }, audio_st = { 0 };
     const AVOutputFormat *fmt;
@@ -558,22 +536,10 @@ int main2(int argc, char **argv)
     AVDictionary *opt = NULL;
     int i;
 
-    if (argc < 2) {
-        printf("usage: %s output_file\n"
-               "API example program to output a media file with libavformat.\n"
-               "This program generates a synthetic audio and video stream, encodes and\n"
-               "muxes them into a file named output_file.\n"
-               "The output format is automatically guessed according to the file extension.\n"
-               "Raw images can also be output by using '%%d' in the filename.\n"
-               "\n", argv[0]);
-        return 1;
-    }
 
-    filename = argv[1];
-    for (i = 2; i+1 < argc; i+=2) {
-        if (!strcmp(argv[i], "-flags") || !strcmp(argv[i], "-fflags"))
-            av_dict_set(&opt, argv[i]+1, argv[i+1], 0);
-    }
+
+    filename = "H:\\test.mp4";
+
 
     /* allocate the output media context */
     avformat_alloc_output_context2(&oc, NULL, NULL, filename);
@@ -613,8 +579,7 @@ int main2(int argc, char **argv)
     if (!(fmt->flags & AVFMT_NOFILE)) {
         ret = avio_open(&oc->pb, filename, AVIO_FLAG_WRITE);
         if (ret < 0) {
-            fprintf(stderr, "Could not open '%s': %s\n", filename,
-                    av_err2str(ret));
+            fprintf(stderr, "Could not open '%s': %d\n", filename, ret);
             return 1;
         }
     }
@@ -622,8 +587,7 @@ int main2(int argc, char **argv)
     /* Write the stream header, if any. */
     ret = avformat_write_header(oc, &opt);
     if (ret < 0) {
-        fprintf(stderr, "Error occurred when opening output file: %s\n",
-                av_err2str(ret));
+        fprintf(stderr, "Error occurred when opening output file: %d\n", ret );
         return 1;
     }
 
