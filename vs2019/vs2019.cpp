@@ -29,6 +29,9 @@ extern "C" {
 
 }
 
+#include "../ffmpeg_example/muxing.h"
+
+
 #include "maker/audio_encode.h"
 #include "maker/video_encode.h"
 #include "maker/maker.h"
@@ -38,14 +41,18 @@ extern "C" {
 
 int main()
 {
-#if 0
+#if 1
     /*char **argv = new char* [10];
 
     char str1[100] = "H:\\test.mp3";
     argv[1] = str1;
 
     encode_audio( 2, argv );*/
-#elif 1
+
+    muxing();
+
+
+#elif 0
 
     
     AVCodecID id_arr[5] = { AV_CODEC_ID_MP3, AV_CODEC_ID_MP2, AV_CODEC_ID_AAC, AV_CODEC_ID_AC3, AV_CODEC_ID_FLAC };

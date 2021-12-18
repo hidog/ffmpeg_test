@@ -19,7 +19,7 @@ extern "C" {
 
 }
 
-#define STREAM_DURATION   10.0
+#define STREAM_DURATION   50.0
 #define STREAM_FRAME_RATE 25 /* 25 images/s */
 #define STREAM_PIX_FMT    AV_PIX_FMT_YUV420P /* default pix_fmt */
 
@@ -131,8 +131,8 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
     case AVMEDIA_TYPE_AUDIO:
         c->sample_fmt  = (*codec)->sample_fmts ?
             (*codec)->sample_fmts[0] : AV_SAMPLE_FMT_FLTP;
-        c->bit_rate    = 64000;
-        c->sample_rate = 44100;
+        c->bit_rate    = 320000;
+        c->sample_rate = 48000;
         if ((*codec)->supported_samplerates) {
             c->sample_rate = (*codec)->supported_samplerates[0];
             for (i = 0; (*codec)->supported_samplerates[i]; i++) {
@@ -159,10 +159,10 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
     case AVMEDIA_TYPE_VIDEO:
         c->codec_id = codec_id;
 
-        c->bit_rate = 400000;
+        c->bit_rate = 80000000;
         /* Resolution must be a multiple of two. */
-        c->width    = 352;
-        c->height   = 288;
+        c->width    = 1920;
+        c->height   = 1080;
         /* timebase: This is the fundamental unit of time (in seconds) in terms
          * of which frame timestamps are represented. For fixed-fps content,
          * timebase should be 1/framerate and timestamp increments should be
@@ -170,7 +170,6 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
         //ost->st->time_base = (AVRational){ 1, STREAM_FRAME_RATE };
         ost->st->time_base.num = 1;
         ost->st->time_base.den = STREAM_FRAME_RATE;
-
 
         c->time_base       = ost->st->time_base;
 
@@ -591,13 +590,17 @@ int muxing()
         return 1;
     }
 
-    while (encode_video || encode_audio) {
+    while (encode_video || encode_audio) 
+    {
         /* select the stream to encode */
         if (encode_video &&
             (!encode_audio || av_compare_ts(video_st.next_pts, video_st.enc->time_base,
-                                            audio_st.next_pts, audio_st.enc->time_base) <= 0)) {
+                                            audio_st.next_pts, audio_st.enc->time_base) <= 0)) 
+        {
             encode_video = !write_video_frame(oc, &video_st);
-        } else {
+        } 
+        else 
+        {
             encode_audio = !write_audio_frame(oc, &audio_st);
         }
     }
