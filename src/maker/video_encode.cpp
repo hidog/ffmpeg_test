@@ -234,7 +234,7 @@ void VideoEncode::work()
 
     SwsContext* sws_ctx     =   
         sws_getContext( 1920, 1080, AV_PIX_FMT_BGRA,                     // src
-                        1920, 1080, AV_PIX_FMT_YUV420P,            // dst
+                        1920, 1080, AV_PIX_FMT_YUV420P,                  // dst
                         SWS_BICUBIC, NULL, NULL, NULL );    
 
 

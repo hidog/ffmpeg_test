@@ -5,6 +5,8 @@
 #include <string.h>
 #include <math.h>
 
+#include <QImage>
+
 extern "C" {
 
 #include <libavutil/avassert.h>
@@ -16,6 +18,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
+#include <libavutil/imgutils.h>
 
 }
 
@@ -24,6 +27,19 @@ extern "C" {
 #define STREAM_PIX_FMT    AV_PIX_FMT_YUV420P /* default pix_fmt */
 
 #define SCALE_FLAGS SWS_BICUBIC
+
+
+
+uint8_t  *video_dst_data[4]     =   { nullptr };
+int      video_dst_linesize[4]  =   { 0 };
+int      video_dst_bufsize      =   0;
+
+
+
+
+
+
+
 
 // a wrapper around a single output AVStream
 typedef struct OutputStream {
@@ -458,8 +474,12 @@ static void fill_yuv_image(AVFrame *pict, int frame_index,
     }
 }
 
+
+
+
 static AVFrame *get_video_frame(OutputStream *ost)
 {
+#if 0
     AVCodecContext *c = ost->enc;
 
     /* check if we want to generate more frames */
@@ -498,7 +518,68 @@ static AVFrame *get_video_frame(OutputStream *ost)
     ost->frame->pts = ost->next_pts++;
 
     return ost->frame;
+#else
+    AVCodecContext *c = ost->enc;
+
+    /* check if we want to generate more frames */
+    /*AVRational avr { 1, 1 };
+    if (av_compare_ts(ost->next_pts, c->time_base, STREAM_DURATION, avr ) > 0)
+        return NULL;*/
+
+    static int v_frame_count = 0;
+    //if( v_frame_count > 35719 )
+    if( v_frame_count > 1000 )
+        return NULL;
+
+
+    /* when we pass a frame to the encoder, it may keep a reference to it
+    * internally; make sure we do not overwrite it here */
+    if (av_frame_make_writable(ost->frame) < 0)
+        exit(1);
+
+    char str[1000];
+
+
+    if( !ost->sws_ctx )
+    {
+        ost->sws_ctx = sws_getContext( 1920, 1080, AV_PIX_FMT_BGRA,
+                                       1920, 1080, AV_PIX_FMT_YUV420P,
+                                       SCALE_FLAGS, NULL, NULL, NULL);
+        if (!ost->sws_ctx) 
+        {
+            fprintf(stderr, "Could not initialize the conversion context\n");
+            exit(1);
+        }
+    }
+
+    sprintf( str, "H:\\jpg\\%d.jpg", v_frame_count );
+    printf("file = %s\n", str );
+    QImage img(str);
+
+    int linesize[8] = { img.bytesPerLine() };
+    uint8_t* ptr[4] = { img.bits() };
+
+    sws_scale( ost->sws_ctx, ptr, linesize, 0, 1080, video_dst_data, video_dst_linesize );
+
+    memcpy( ost->frame->data[0], video_dst_data[0], 1920*1080 );
+    memcpy( ost->frame->data[1], video_dst_data[1], 1920*1080/4 );
+    memcpy( ost->frame->data[2], video_dst_data[2], 1920*1080/4 );
+
+
+
+    ost->frame->pts = ost->next_pts++;
+
+    v_frame_count++;
+
+    return ost->frame;
+
+#endif
 }
+
+
+
+
+
 
 /*
  * encode one video frame and send it to the muxer
@@ -524,6 +605,12 @@ static void close_stream(AVFormatContext *oc, OutputStream *ost)
 
 int muxing()
 {
+    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, 1920, 1080, AV_PIX_FMT_YUV420P, 1 );
+
+
+
+
+
     OutputStream video_st = { 0 }, audio_st = { 0 };
     const AVOutputFormat *fmt;
     const char *filename;
