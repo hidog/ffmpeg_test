@@ -53,6 +53,7 @@ public:
 
     SwsContext* sws_ctx = nullptr;
 
+    int frame_count = 0;
 
 };
 

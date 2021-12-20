@@ -89,6 +89,12 @@ static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
             exit(1);
         }
 
+        
+
+        if( st->id == 0 )
+            printf("Test");
+
+
         /* rescale output packet timestamp values from codec to stream timebase */
         av_packet_rescale_ts(pkt, c->time_base, st->time_base);
         pkt->stream_index = st->index;
@@ -118,14 +124,15 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
 
     /* find the encoder */
     *codec = avcodec_find_encoder(codec_id);
-    if (!(*codec)) {
-        fprintf(stderr, "Could not find encoder for '%s'\n",
-                avcodec_get_name(codec_id));
+    if (!(*codec)) 
+    {
+        fprintf(stderr, "Could not find encoder for '%s'\n", avcodec_get_name(codec_id));
         exit(1);
     }
 
     ost->tmp_pkt = av_packet_alloc();
-    if (!ost->tmp_pkt) {
+    if (!ost->tmp_pkt) 
+    {
         fprintf(stderr, "Could not allocate AVPacket\n");
         exit(1);
     }
@@ -190,8 +197,8 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
 
         c->time_base       = ost->st->time_base;
 
-        c->gop_size      = 200; /* emit one intra frame every twelve frames at most */
-        c->max_b_frames  = 100;
+        c->gop_size      = 5; /* emit one intra frame every twelve frames at most */
+        c->max_b_frames  = 1;
 
         c->pix_fmt       = AV_PIX_FMT_YUV420P;
         if (c->codec_id == AV_CODEC_ID_MPEG2VIDEO) {
@@ -664,6 +671,17 @@ static void close_stream(AVFormatContext *oc, OutputStream *ost)
     swr_free(&ost->swr_ctx);
 }
 
+
+
+
+
+
+
+
+
+
+
+
 /**************************************************************/
 /* media file output */
 
@@ -692,8 +710,9 @@ int muxing()
 
 
     /* allocate the output media context */
-    avformat_alloc_output_context2(&oc, NULL, NULL, filename);
-    if (!oc) {
+    avformat_alloc_output_context2( &oc, NULL, NULL, filename );
+    if (!oc) 
+    {
         printf("Could not deduce output format from file extension: using MPEG.\n");
         avformat_alloc_output_context2(&oc, NULL, "mpeg", filename);
     }
@@ -704,12 +723,14 @@ int muxing()
 
     /* Add the audio and video streams using the default format codecs
      * and initialize the codecs. */
-    if (fmt->video_codec != AV_CODEC_ID_NONE) {
+    if (fmt->video_codec != AV_CODEC_ID_NONE) 
+    {
         add_stream(&video_st, oc, &video_codec, fmt->video_codec);
         have_video = 1;
         encode_video = 1;
     }
-    if (fmt->audio_codec != AV_CODEC_ID_NONE) {
+    if (fmt->audio_codec != AV_CODEC_ID_NONE) 
+    {
         add_stream(&audio_st, oc, &audio_codec, fmt->audio_codec);
         have_audio = 1;
         encode_audio = 1;
@@ -726,9 +747,11 @@ int muxing()
     av_dump_format(oc, 0, filename, 1);
 
     /* open the output file, if needed */
-    if (!(fmt->flags & AVFMT_NOFILE)) {
+    if (!(fmt->flags & AVFMT_NOFILE)) 
+    {
         ret = avio_open(&oc->pb, filename, AVIO_FLAG_WRITE);
-        if (ret < 0) {
+        if (ret < 0) 
+        {
             fprintf(stderr, "Could not open '%s': %d\n", filename, ret);
             return 1;
         }
@@ -736,7 +759,8 @@ int muxing()
 
     /* Write the stream header, if any. */
     ret = avformat_write_header(oc, &opt);
-    if (ret < 0) {
+    if (ret < 0) 
+    {
         fprintf(stderr, "Error occurred when opening output file: %d\n", ret );
         return 1;
     }

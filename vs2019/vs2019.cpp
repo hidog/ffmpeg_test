@@ -41,7 +41,7 @@ extern "C" {
 
 int main()
 {
-#if 1
+#if 0
     /*char **argv = new char* [10];
 
     char str1[100] = "H:\\test.mp3";
@@ -50,7 +50,11 @@ int main()
     encode_audio( 2, argv );*/
 
     muxing();
+#elif 1
 
+    Maker maker;
+    maker.init();
+    maker.work();
 
 #elif 0
 
@@ -101,7 +105,8 @@ int main()
     muxer.init( v, a );
     muxer.work();
 
-    
+
+
 #else
 
     Player  player;  

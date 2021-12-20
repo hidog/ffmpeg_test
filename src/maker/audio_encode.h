@@ -1,5 +1,5 @@
 #ifndef AUDIO_ENCODE_H
-#define MAKAUDIO_ENCODE_HER_H
+#define AUDIO_ENCODE_H
 
 #include <stdio.h>
 #include <stdint.h>
@@ -64,6 +64,9 @@ public:
     //AVFormatContext *fmt_ctx    =   nullptr;
 
     FILE    *output;
+
+    int frame_count = 0;
+
 };
 
 

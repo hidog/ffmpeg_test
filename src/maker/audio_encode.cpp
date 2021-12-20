@@ -245,7 +245,7 @@ void    AudioEncode::init( AVCodecID code_id )
 
     // init setting
     ctx->sample_rate    =   48000; //select_sample_rate(codec);
-    ctx->channel_layout =   select_channel_layout(codec);
+    ctx->channel_layout =   AV_CH_LAYOUT_STEREO; //select_channel_layout(codec);
     ctx->channels       =   av_get_channel_layout_nb_channels(ctx->channel_layout);
 
     // open
@@ -263,15 +263,22 @@ void    AudioEncode::init( AVCodecID code_id )
     if( nullptr == frame )
         MYLOG( LOG::ERROR, "frame alloc fail" );
 
+    if( ctx->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE )
+        printf("need set to 10000\n");
+
     // set param to frame.
     frame->nb_samples       =   ctx->frame_size;
     frame->format           =   ctx->sample_fmt;
     frame->channel_layout   =   ctx->channel_layout;
+    frame->sample_rate      =   ctx->sample_rate;
+
 
     // allocate the data buffers
     ret     =   av_frame_get_buffer( frame, 0 );
     if( ret < 0 )
         MYLOG( LOG::ERROR, "alloc buffer fail" );
+
+    ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 }
 
 
@@ -454,10 +461,17 @@ AudioEncode::get_next_pts()
 ********************************************************************************/
 int64_t AudioEncode::get_next_pts()
 {
-    if( frame == nullptr )
+    //if( frame_count > 800 )
+      //  return frame->pts;
+    if( frame_count == 0 )
+        return 0;
+    else
+        return frame->pts;
+
+    /*if( frame == nullptr )
         return  0;
     else
-        return frame->pts + frame->nb_samples;
+        return frame->pts + frame->nb_samples;*/
 }
 
 
@@ -473,13 +487,13 @@ AVFrame* AudioEncode::get_frame()
     AVCodecID code_id = AV_CODEC_ID_AAC; // 未來改成動態
 
     int     ret;
-    static int frame_count = 0;
 
     static FILE *fp = fopen( "H:\\test.pcm", "rb" );
     int     i;
     int16_t     intens[2];
 
     if( feof(fp) != 0 )
+    //if( frame_count > 800 )
         return nullptr;
 
 
@@ -489,8 +503,13 @@ AVFrame* AudioEncode::get_frame()
     
     for( i = 0; i < frame->nb_samples; i++ )
     {
-        fread( intens, 2, sizeof(int16_t), fp );
-    
+        ret = fread( intens, 2, sizeof(int16_t), fp );
+        if( ret == 0 )
+        {
+            intens[0] = 0;
+            intens[1] = 0;
+        }
+
         // 多聲道這邊需要另外處理
         if( code_id == AV_CODEC_ID_AAC || code_id == AV_CODEC_ID_AC3 )
         {

@@ -34,8 +34,11 @@ public:
     Mux& operator = ( const Mux& ) = delete;
     Mux& operator = ( Mux&& ) = delete;
 
-    void init( AVCodecContext* v_ctx, AVCodecContext* a_ctx );
+    void init( AVCodecContext* v_ctx, AVCodec *v_codec , AVCodecContext* a_ctx, AVCodec *a_codec );
     void work();
+    void write_header();
+    void write_frame( AVPacket* pkt );
+    void write_end();
 
 
     std::function<int64_t()> v_get_next_pts;
@@ -58,7 +61,7 @@ private:
     int write_video_frame( AVFormatContext *oc, OutputStream *ost );
     int write_audio_frame( AVFormatContext *oc, OutputStream *ost );
     int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c, AVStream *st, AVFrame *frame, AVPacket *pkt);
-    void add_stream();
+    void add_stream( AVCodec *v_codec, AVCodec *a_codec );
 
 
 

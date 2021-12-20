@@ -137,16 +137,9 @@ int Mux::write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c, AVStream *st, 
 /*******************************************************************************
 Mux::add_stream()
 ********************************************************************************/
-void Mux::add_stream()
+void Mux::add_stream( AVCodec *v_codec, AVCodec *a_codec )
 {
     AVCodecContext *c;
-    int i;
-
-
-    AVCodec *v_codec = avcodec_find_encoder(AV_CODEC_ID_H264);
-    AVCodec *a_codec = avcodec_find_encoder(AV_CODEC_ID_AAC);
-
-
 
     // video
     v_stream = avformat_new_stream( output_ctx, v_codec ); // 未來改成從encode傳入
@@ -449,10 +442,11 @@ void Mux::close_stream( AVFormatContext *oc, OutputStream *ost )
 /*******************************************************************************
 Mux::init()
 ********************************************************************************/
-void Mux::init( AVCodecContext* v_ctx, AVCodecContext* a_ctx )
+void Mux::init( AVCodecContext* v_ctx, AVCodec *v_codec, AVCodecContext* a_ctx, AVCodec *a_codec )
 {
     //OutputStream video_st = { 0 }, audio_st = { 0 };
-    const AVCodec *audio_codec = nullptr, *video_codec = nullptr;
+    const AVCodec *audio_codec = nullptr, 
+                  *video_codec = nullptr;
 
     int ret;
     AVDictionary *opt = NULL;
@@ -476,7 +470,7 @@ void Mux::init( AVCodecContext* v_ctx, AVCodecContext* a_ctx )
     */
 
     /* Add the audio and video streams using the default format codecs and initialize the codecs. */
-    add_stream();
+    add_stream( v_codec, a_codec );
 
 
     ret = avcodec_parameters_from_context( v_stream->codecpar, v_ctx );
@@ -597,6 +591,61 @@ void Mux::work()
         close_stream( output_ctx, &video_st);
     if (have_audio)
         close_stream( output_ctx, &audio_st);*/
+
+    if ( !(output_fmt->flags & AVFMT_NOFILE) )
+        /* Close the output file. */
+        avio_closep( &output_ctx->pb );
+
+    /* free the stream */
+    avformat_free_context(output_ctx);
+}
+
+
+
+
+/*******************************************************************************
+Mux::write_header()
+********************************************************************************/
+void Mux::write_header()
+{
+    AVDictionary *opt = nullptr; // 未來改成class member. 方便寫入參數 
+    int ret = avformat_write_header( output_ctx, &opt );
+    if (ret < 0) 
+        MYLOG( LOG::ERROR, "write header fail. err = %d", ret );
+}
+
+
+
+
+/*******************************************************************************
+Mux::write_frame()
+********************************************************************************/
+void Mux::write_frame( AVPacket* pkt )
+{
+    int ret = av_interleaved_write_frame( output_ctx, pkt );
+    if (ret < 0) 
+        MYLOG( LOG::ERROR, "write fail." );
+}
+
+
+
+
+/*******************************************************************************
+Mux::write_end()
+********************************************************************************/
+void Mux::write_end()
+{
+    /* Write the trailer, if any. The trailer must be written before you
+    * close the CodecContexts open when you wrote the header; otherwise
+    * av_write_trailer() may try to use memory that was freed on
+    * av_codec_close(). */
+    av_write_trailer(output_ctx);
+
+    /* Close each codec. */
+    /*if (have_video)
+    close_stream( output_ctx, &video_st);
+    if (have_audio)
+    close_stream( output_ctx, &audio_st);*/
 
     if ( !(output_fmt->flags & AVFMT_NOFILE) )
         /* Close the output file. */

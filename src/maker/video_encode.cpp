@@ -70,14 +70,14 @@ void    VideoEncode::init()
     //
     // ctx->codec_id = AV_CODEC_ID_H264; // 檢查這邊是否會自動生成
 
-    ctx->bit_rate = 3000000;
+    ctx->bit_rate = 80000000;
     ctx->width = 1920;
     ctx->height = 1080;
 
     ctx->time_base.num = 1001; // = (AVRational){1, 25};
     ctx->time_base.den = 24000;
-    ctx->framerate.num = 24000; // = (AVRational){25, 1};
-    ctx->framerate.den = 1001;
+    //ctx->framerate.num = 24000; // = (AVRational){25, 1};
+    //ctx->framerate.den = 1001;
 
     /* emit one intra frame every ten frames
     * check frame pict_type before passing frame
@@ -85,12 +85,13 @@ void    VideoEncode::init()
     * then gop_size is ignored and the output of encoder
     * will always be I frame irrespective to gop_size
     */
-    ctx->gop_size = 150;
-    ctx->max_b_frames = 100;
+    ctx->gop_size = 10;
+    ctx->max_b_frames = 1;
     ctx->pix_fmt = AV_PIX_FMT_YUV420P;
+    //ctx->me_subpel_quality = 10;
 
-    if( codec->id == AV_CODEC_ID_H264 )
-        av_opt_set( ctx->priv_data, "preset", "medium", 0);
+    //if( codec->id == AV_CODEC_ID_H264 )
+      //  av_opt_set( ctx->priv_data, "preset", "medium", 0);
 
 
 #if 0
@@ -138,6 +139,10 @@ void    VideoEncode::init()
     sws_ctx     =   sws_getContext( 1920, 1080, AV_PIX_FMT_BGRA,                     // src
                                     1920, 1080, AV_PIX_FMT_YUV420P,            // dst
                                     SWS_BICUBIC, NULL, NULL, NULL ); 
+
+
+    ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+
 
 }
 
@@ -206,7 +211,8 @@ VideoEncode::get_pkt()
 AVPacket* VideoEncode::get_pkt()
 {
     /* rescale output packet timestamp values from codec to stream timebase */
-    av_packet_rescale_ts( pkt, ctx->time_base, ctx->time_base );
+    AVRational avr { 1, 24000 };  // 研究這邊怎麼來的,為什麼值會跑掉
+    av_packet_rescale_ts( pkt, ctx->time_base, avr );
     pkt->stream_index = 0;
     return pkt;
 }
@@ -326,10 +332,20 @@ VideoEncode::get_next_pts()
 ********************************************************************************/
 int64_t VideoEncode::get_next_pts()
 {
+    //if( frame_count > 500 )
+      //  return frame_count;
+    /*if( frame_count == 0 )
+        return 0;
+    else
+        return frame_count + 1;*/
+
+    return frame_count;
+
+    /*
     if( frame == nullptr )
         return  0;
     else
-        return frame->pts + 1;
+        return frame->pts + 1;*/
 }
 
 
@@ -343,9 +359,8 @@ AVFrame* VideoEncode::get_frame()
     char str[1000];
     int ret;
 
-    static int frame_count = 0;
-
     if( frame_count > 35719 )
+    //if( frame_count > 500 )
         return nullptr;
 
     sprintf( str, "H:\\jpg\\%d.jpg", frame_count );
