@@ -55,7 +55,7 @@ public:
     std::function<int()> a_recv_frame;
     std::function<AVPacket*()> a_get_pkt;
 
-private:
+//private:
 
     void close_stream( AVFormatContext *oc, OutputStream *ost );
     int write_video_frame( AVFormatContext *oc, OutputStream *ost );

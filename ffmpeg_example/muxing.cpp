@@ -89,11 +89,7 @@ static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
             exit(1);
         }
 
-        
-
-        if( st->id == 0 )
-            printf("Test");
-
+       
 
         /* rescale output packet timestamp values from codec to stream timebase */
         av_packet_rescale_ts(pkt, c->time_base, st->time_base);
@@ -367,7 +363,8 @@ static AVFrame *get_audio_frame(OutputStream *ost)
     int     ret;
     int16_t     intens[2];
 
-    if( feof(fp) != 0 )
+    //if( feof(fp) != 0 )
+    if( a_frame_count > 1000 )
         return NULL;
 
     ret = av_frame_make_writable(frame);
@@ -479,6 +476,9 @@ static AVFrame *alloc_picture(enum AVPixelFormat pix_fmt, int width, int height)
     return picture;
 }
 
+
+
+
 static void open_video(AVFormatContext *oc, const AVCodec *codec,
                        OutputStream *ost, AVDictionary *opt_arg)
 {
@@ -522,6 +522,11 @@ static void open_video(AVFormatContext *oc, const AVCodec *codec,
         exit(1);
     }
 }
+
+
+
+
+
 
 /* Prepare a dummy image. */
 static void fill_yuv_image(AVFrame *pict, int frame_index,
@@ -598,8 +603,8 @@ static AVFrame *get_video_frame(OutputStream *ost)
         return NULL;*/
 
     static int v_frame_count = 0;
-    if( v_frame_count > 35719 )
-    //if( v_frame_count > 1000 )
+    //if( v_frame_count > 35719 )
+    if( v_frame_count > 1000 )
         return NULL;
 
 
@@ -694,7 +699,7 @@ int muxing()
 
 
     OutputStream video_st = { 0 }, audio_st = { 0 };
-    const AVOutputFormat *fmt;
+    AVOutputFormat *fmt;
     const char *filename;
     AVFormatContext *oc;
     const AVCodec *audio_codec = NULL, *video_codec = NULL;
@@ -725,6 +730,7 @@ int muxing()
      * and initialize the codecs. */
     if (fmt->video_codec != AV_CODEC_ID_NONE) 
     {
+        fmt->video_codec = AV_CODEC_ID_MPEG2VIDEO;
         add_stream(&video_st, oc, &video_codec, fmt->video_codec);
         have_video = 1;
         encode_video = 1;
@@ -736,6 +742,10 @@ int muxing()
         encode_audio = 1;
     }
 
+
+    printf( "v time base = %d %d\n", video_st.st->time_base.num, video_st.st->time_base.den );
+
+
     /* Now that all the parameters are set, we can open the audio and
      * video codecs and allocate the necessary encode buffers. */
     if (have_video)
@@ -745,6 +755,9 @@ int muxing()
         open_audio(oc, audio_codec, &audio_st, opt);
 
     av_dump_format(oc, 0, filename, 1);
+
+    printf( "v time base = %d %d\n", video_st.st->time_base.num, video_st.st->time_base.den );
+
 
     /* open the output file, if needed */
     if (!(fmt->flags & AVFMT_NOFILE)) 
@@ -757,6 +770,9 @@ int muxing()
         }
     }
 
+    printf( "v time base = %d %d\n", video_st.st->time_base.num, video_st.st->time_base.den );
+
+
     /* Write the stream header, if any. */
     ret = avformat_write_header(oc, &opt);
     if (ret < 0) 
@@ -765,8 +781,14 @@ int muxing()
         return 1;
     }
 
+    printf( "v time base = %d %d\n", video_st.st->time_base.num, video_st.st->time_base.den );
+
+
     while (encode_video || encode_audio) 
     {
+        printf( "v time base = %d %d\n", video_st.st->time_base.num, video_st.st->time_base.den );
+
+
         /* select the stream to encode */
         if (encode_video &&
             (!encode_audio || av_compare_ts(video_st.next_pts, video_st.enc->time_base,

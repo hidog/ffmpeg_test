@@ -5,6 +5,9 @@
 extern "C" {
 
 #include <libavcodec/codec_id.h>
+#include <libavcodec/packet.h>
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
 
 }
 
@@ -97,6 +100,10 @@ void Maker::work()
                     MYLOG( LOG::ERROR, "recv fail." );
 
                 auto pkt = v_encoder.get_pkt();
+
+                //AVRational avr { 1, 24000 };  // 研究這邊怎麼來的,為什麼值會跑掉
+                av_packet_rescale_ts( pkt, v_encoder.ctx->time_base, muxer.v_stream->time_base );
+
                 muxer.write_frame( pkt );
             }  
         }

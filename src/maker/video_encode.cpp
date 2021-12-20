@@ -211,8 +211,8 @@ VideoEncode::get_pkt()
 AVPacket* VideoEncode::get_pkt()
 {
     /* rescale output packet timestamp values from codec to stream timebase */
-    AVRational avr { 1, 24000 };  // ╯硂娩或ㄓ,ぐ或穦禲奔
-    av_packet_rescale_ts( pkt, ctx->time_base, avr );
+    //AVRational avr { 1, 24000 };  // ╯硂娩或ㄓ,ぐ或穦禲奔
+    //av_packet_rescale_ts( pkt, ctx->time_base, avr );
     pkt->stream_index = 0;
     return pkt;
 }

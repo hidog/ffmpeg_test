@@ -41,7 +41,7 @@ extern "C" {
 
 int main()
 {
-#if 0
+#if 1
     /*char **argv = new char* [10];
 
     char str1[100] = "H:\\test.mp3";
