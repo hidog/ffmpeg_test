@@ -81,7 +81,8 @@ public:
 #endif
 
 #ifdef FFMPEG_TEST
-    void    play();
+    void    play(); 
+    void    play_decode_video_subtitle( AVPacket* pkt );
     std::function<void(QImage)> output_video_frame_func;
     std::function<void(AudioData)> output_audio_pcm_func;
 #endif

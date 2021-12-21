@@ -71,6 +71,12 @@ public:
     int sub_info(); // 目前無作用
 
 
+#ifdef FFMPEG_TEST
+    std::function<int()>    output_frame_func;
+    int     output_jpg_by_QT();
+#endif
+
+
 private:
 
     AVMediaType     type;    

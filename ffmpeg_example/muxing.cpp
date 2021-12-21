@@ -699,7 +699,7 @@ int muxing()
 
 
     OutputStream video_st = { 0 }, audio_st = { 0 };
-    AVOutputFormat *fmt;
+    const AVOutputFormat *fmt;
     const char *filename;
     AVFormatContext *oc;
     const AVCodec *audio_codec = NULL, *video_codec = NULL;
@@ -730,7 +730,7 @@ int muxing()
      * and initialize the codecs. */
     if (fmt->video_codec != AV_CODEC_ID_NONE) 
     {
-        fmt->video_codec = AV_CODEC_ID_MPEG2VIDEO;
+        //fmt->video_codec = AV_CODEC_ID_MPEG2VIDEO;
         add_stream(&video_st, oc, &video_codec, fmt->video_codec);
         have_video = 1;
         encode_video = 1;

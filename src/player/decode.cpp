@@ -445,6 +445,7 @@ int    Decode::flush()
 
         // write the frame data to output file
         output_frame_func();
+        frame_count++;
         av_frame_unref(frame);
 
         if( ret < 0 )

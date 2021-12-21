@@ -75,7 +75,7 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     
     // 理論上這邊的字串可以精簡...
     sub_index   =   sd.sub_index;
-    ss << "subtitles=filename='" << filename_param << "':stream_index=" << sub_index;
+    ss << "subtitles='" << filename_param << "':stream_index=" << sub_index;
     
     out_param    =   ss.str();
     
@@ -167,6 +167,10 @@ int     SubDecode::init()
     sub_dpts        =   -1; 
     sub_duration    =   -1;
     has_sub_image   =   false;
+
+#ifdef FFMPEG_TEST
+    output_frame_func   =   std::bind( &SubDecode::output_jpg_by_QT, this );
+#endif
 
     Decode::init();
     return  SUCCESS;
@@ -804,3 +808,26 @@ void    SubDecode::flush_for_seek()
 {
     has_sub_image   =   false;
 }
+
+
+
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+SubDecode::output_jpg_by_QT()
+********************************************************************************/
+int    SubDecode::output_jpg_by_QT()
+{
+    char str[1000];
+    sprintf( str, "J:\\jpg\\%d.jpg", frame_count++ );
+    MYLOG( LOG::DEBUG, "save jpg %s", str );
+    sub_image.save(str);
+
+    return  0;
+}
+#endif
+
+
+
+
