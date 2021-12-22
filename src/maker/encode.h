@@ -28,14 +28,17 @@ public:
     Encode& operator = ( const Encode& ) = delete;
     Encode& operator = ( Encode&& ) = delete;
 
-    void    init( int st_idx, AVCodecID code_id );
-    void    end();
+    void        init( int st_idx, AVCodecID code_id );
+    void        end();
+    AVPacket*   get_pkt();
+
+    virtual int         send_frame();
+    virtual int         recv_frame();
 
     virtual int64_t     get_pts() = 0;
     virtual AVFrame*    get_frame() = 0;
 
-
-//protected:
+protected:
 
     AVCodec         *codec  =   nullptr;
     AVCodecContext  *ctx    =   nullptr;

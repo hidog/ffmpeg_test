@@ -47,6 +47,7 @@ void    Encode::init( int st_idx, AVCodecID code_id )
     frame   =   av_frame_alloc();
     if( frame == nullptr ) 
         MYLOG( LOG::ERROR, "frame alloc fail." );
+    frame->pts  =   0;
 
     // init pkt
     if( pkt != nullptr )    
@@ -105,4 +106,58 @@ void    Encode::end()
     }
 
     codec   =   nullptr;
+}
+
+
+
+
+
+
+/*******************************************************************************
+Encode::send_frame()
+********************************************************************************/
+int     Encode::send_frame()
+{
+    if( frame == nullptr || ctx == nullptr )
+    {
+        MYLOG( LOG::ERROR, "frame or ctx is null." );
+        return  ERROR;
+    }
+
+    int ret =   avcodec_send_frame( ctx, frame );
+    return  ret;
+}
+
+
+
+
+
+/*******************************************************************************
+Encode::recv_frame()
+********************************************************************************/
+int     Encode::recv_frame()
+{
+    if( ctx == nullptr || pkt == nullptr )
+        MYLOG( LOG::ERROR, "ctx or pkt == nullptr." );
+
+    int     ret;
+
+    ret                 =   avcodec_receive_packet( ctx, pkt );
+    pkt->stream_index   =   stream_index;
+
+    return  ret;
+}
+
+
+
+
+
+
+
+/*******************************************************************************
+Encode::get_pkt()
+********************************************************************************/
+AVPacket*   Encode::get_pkt()
+{
+    return  pkt;
 }

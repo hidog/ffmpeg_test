@@ -29,6 +29,8 @@ AudioEncode::AudioEncode()
 
 
 
+
+
 /*******************************************************************************
 AudioEncode::~AudioEncode()
 ********************************************************************************/
@@ -202,6 +204,8 @@ AudioEncode::end()
 ********************************************************************************/
 void    AudioEncode::end()
 {
+    Encode::end();
+
     av_frame_free( &frame );
     av_packet_free( &pkt );
     avcodec_free_context( &ctx );
@@ -215,64 +219,50 @@ void    AudioEncode::end()
 /*******************************************************************************
 AudioEncode::init()
 ********************************************************************************/
-void    AudioEncode::init( AVCodecID code_id )
+void    AudioEncode::init( int st_idx, AudioEncodeSetting a_setting )
 {
-    int     ret;
+    AVCodecID   code_id     =   a_setting.code_id;
+    int         ret;
 
-    //
-    codec   =   avcodec_find_encoder(code_id);
-    if( codec == nullptr ) 
-        MYLOG( LOG::ERROR, "codec = nullptr." );
-
-    ctx     =   avcodec_alloc_context3(codec);
-    if( ctx == nullptr ) 
-        MYLOG( LOG::ERROR, "ctx = nullptr." );
+    Encode::init( st_idx, code_id );
 
     // some codec need set bit rate.
-    if( code_id != AV_CODEC_ID_FLAC )
-        ctx->bit_rate   =   320000;
+    // 驗證一下這件事情. 部分 codec 會自動產生預設 bit rate.
+    if( a_setting.code_id != AV_CODEC_ID_FLAC )
+        ctx->bit_rate   =   a_setting.bit_rate;
     
+    // format可更改,但支援度跟codec有關.
     if( code_id == AV_CODEC_ID_MP3 )
         ctx->sample_fmt     =   AV_SAMPLE_FMT_S16P;
     else if( code_id == AV_CODEC_ID_AAC || code_id == AV_CODEC_ID_AC3 )
         ctx->sample_fmt     =   AV_SAMPLE_FMT_FLTP;
     else if( code_id == AV_CODEC_ID_MP2 || code_id == AV_CODEC_ID_FLAC )
         ctx->sample_fmt     =   AV_SAMPLE_FMT_S16;
-    else
-        assert(0);
+    else    
+        MYLOG( LOG::ERROR, "un handle codec" );    
 
     if( false == check_sample_fmt( codec, ctx->sample_fmt ) ) 
         MYLOG( LOG::ERROR, "fmt fail." );
 
     // init setting
-    ctx->sample_rate    =   48000; //select_sample_rate(codec);
-    ctx->channel_layout =   AV_CH_LAYOUT_STEREO; //select_channel_layout(codec);
+    ctx->sample_rate    =   a_setting.sample_rate; 
+    ctx->channel_layout =   AV_CH_LAYOUT_STEREO;
     ctx->channels       =   av_get_channel_layout_nb_channels(ctx->channel_layout);
 
-    // open
+    // open ctx.
     ret     =   avcodec_open2( ctx, codec, nullptr );
     if( ret < 0 ) 
         MYLOG( LOG::ERROR, "open fail." );
 
     //
-    pkt     =   av_packet_alloc();
-    if( nullptr == pkt )
-        MYLOG( LOG::ERROR, "pkt alloc fail" );
-
-    //
-    frame   =   av_frame_alloc();
-    if( nullptr == frame )
-        MYLOG( LOG::ERROR, "frame alloc fail" );
-
     if( ctx->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE )
-        printf("need set to 10000\n");
+        MYLOG( LOG::WARN, "need set to 10000" );
 
     // set param to frame.
     frame->nb_samples       =   ctx->frame_size;
     frame->format           =   ctx->sample_fmt;
     frame->channel_layout   =   ctx->channel_layout;
     frame->sample_rate      =   ctx->sample_rate;
-
 
     // allocate the data buffers
     ret     =   av_frame_get_buffer( frame, 0 );
@@ -289,8 +279,10 @@ void    AudioEncode::init( AVCodecID code_id )
 
 /*******************************************************************************
 AudioEncode::encode()
+
+目前不能動
 ********************************************************************************/
-void    AudioEncode::encode( AVFrame *frame, AVCodecID code_id )
+void    AudioEncode::encode_test()
 {
     int     ret;
 
@@ -308,10 +300,10 @@ void    AudioEncode::encode( AVFrame *frame, AVCodecID code_id )
 
         printf("write data %d...\n", pkt->size );
 
-        if( code_id == AV_CODEC_ID_AAC )
-            fwrite( adts_head(pkt->size), 1, 7, output );
+        //if( code_id == AV_CODEC_ID_AAC )
+            //fwrite( adts_head(pkt->size), 1, 7, output );
 
-        fwrite( pkt->data, 1, pkt->size, output );
+        //fwrite( pkt->data, 1, pkt->size, output );
         av_packet_unref(pkt);
     }
 }
@@ -320,41 +312,6 @@ void    AudioEncode::encode( AVFrame *frame, AVCodecID code_id )
 
 
 
-
-/*******************************************************************************
-AudioEncode::send_frame()
-********************************************************************************/
-int AudioEncode::send_frame( AVFrame* fr )
-{
-    return avcodec_send_frame( ctx, fr );
-}
-
-
-
-
-
-/*******************************************************************************
-AudioEncode::recv_frame()
-********************************************************************************/
-int AudioEncode::recv_frame()
-{
-    return avcodec_receive_packet( ctx, pkt );
-}
-
-
-
-
-
-/*******************************************************************************
-AudioEncode::get_pkt()
-********************************************************************************/
-AVPacket* AudioEncode::get_pkt()
-{
-    /* rescale output packet timestamp values from codec to stream timebase */
-    av_packet_rescale_ts( pkt, ctx->time_base, ctx->time_base );
-    pkt->stream_index = 1;
-    return pkt;
-}
 
 
 
@@ -388,10 +345,13 @@ char* AudioEncode::adts_head( int packetlen )
 
 
 /*******************************************************************************
-AudioEncode::work()
+AudioEncode::work_test()
+
+目前不能動.
 ********************************************************************************/
-void     AudioEncode::work( AVCodecID code_id )
+void     AudioEncode::work_test()
 {
+#if 0
     int     ret;
 
     if( code_id == AV_CODEC_ID_MP3 )
@@ -450,6 +410,7 @@ void     AudioEncode::work( AVCodecID code_id )
 
     fclose(output);
     fclose(fp);
+#endif
 }
 
 
@@ -458,21 +419,14 @@ void     AudioEncode::work( AVCodecID code_id )
 
 
 /*******************************************************************************
-AudioEncode::get_next_pts()
+AudioEncode::get_pts()
 ********************************************************************************/
-int64_t AudioEncode::get_next_pts()
+int64_t     AudioEncode::get_pts()
 {
-    //if( frame_count > 800 )
-      //  return frame->pts;
-    if( frame_count == 0 )
-        return 0;
-    else
-        return frame->pts;
+    if( frame == nullptr )
+        MYLOG( LOG::ERROR, "frame is null." );
 
-    /*if( frame == nullptr )
-        return  0;
-    else
-        return frame->pts + frame->nb_samples;*/
+    return  frame->pts;
 }
 
 
@@ -483,9 +437,9 @@ int64_t AudioEncode::get_next_pts()
 /*******************************************************************************
 AudioEncode::get_frame()
 ********************************************************************************/
-AVFrame* AudioEncode::get_frame()
+AVFrame*    AudioEncode::get_frame()
 {
-    AVCodecID code_id = AV_CODEC_ID_AAC; // 未來改成動態
+    AVCodecID code_id   =   AV_CODEC_ID_AAC; // 未來改成動態
 
     int     ret;
 

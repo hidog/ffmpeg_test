@@ -151,56 +151,18 @@ void    VideoEncode::encode_test()
 
 
 
-
-
 /*******************************************************************************
 VideoEncode::send_frame()
 ********************************************************************************/
 int     VideoEncode::send_frame()
 {
-    int     ret     =   0;
-
     //MYLOG( LOG::DEBUG, "pict type = %c\n", av_get_picture_type_char(frame->pict_type) );
-
-    if( frame == nullptr )
-    {
-        MYLOG( LOG::ERROR, "frame is null." );
-        ret =   ERROR;
-    }
-    else
-        ret     =    avcodec_send_frame( ctx, frame );
-
+    int ret =  Encode::send_frame();
     return  ret;
 }
 
 
 
-
-
-/*******************************************************************************
-VideoEncode::recv_frame()
-********************************************************************************/
-int     VideoEncode::recv_frame()
-{
-    if( ctx == nullptr || pkt == nullptr )
-        MYLOG( LOG::ERROR, "ctx or pkt == nullptr." );
-
-    int     ret =   avcodec_receive_packet( ctx, pkt );
-    return  ret;
-}
-
-
-
-
-
-/*******************************************************************************
-VideoEncode::get_pkt()
-********************************************************************************/
-AVPacket*   VideoEncode::get_pkt()
-{
-    pkt->stream_index = stream_index;
-    return pkt;
-}
 
 
 

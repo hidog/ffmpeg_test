@@ -20,6 +20,16 @@ struct AVPacket;
 //struct AVFormatContext;
 
 
+
+struct AudioEncodeSetting
+{
+    AVCodecID   code_id;
+    int64_t     bit_rate;
+    int         sample_rate;
+};
+
+
+
 class AudioEncode : public Encode
 {
 public:
@@ -32,42 +42,31 @@ public:
     AudioEncode& operator = ( const AudioEncode& ) = delete;
     AudioEncode& operator = ( const AudioEncode&& ) = delete;
 
-    void    init( AVCodecID code_id );
+    void    init( int st_idx, AudioEncodeSetting a_setting );
     void    end();
 
     void    list_sample_format( AVCodecID code_id );
     void    list_sample_rate( AVCodecID code_id );
     void    list_channel_layout( AVCodecID code_id );
 
-    void    encode( AVFrame *frame, AVCodecID code_id );
-    void    work( AVCodecID code_id );
+    int64_t     get_pts() override;
+    AVFrame*    get_frame() override;
 
-    int64_t get_next_pts();
-    AVFrame* get_frame();
+    // for test, run without mux.
+    // 目前不能動, 需要修改.
+    void    encode_test();
+    void    work_test();
 
-    int send_frame( AVFrame* fr );
-    int recv_frame();
-    AVPacket* get_pkt();
 
-//private:
+private:
+
+    // 需要加上 sws 用資料.
 
     bool    check_sample_fmt( AVCodec *codec, AVSampleFormat sample_fmt );
     int     select_sample_rate( AVCodec *codec );
     int     select_channel_layout( AVCodec *codec );
 
     char*   adts_head( int packetlen );
-
-
-    AVCodec         *codec  =   nullptr;
-    AVCodecContext  *ctx    =   nullptr;
-    AVFrame         *frame  =   nullptr;
-    AVPacket        *pkt    =   nullptr;
-
-    //AVFormatContext *fmt_ctx    =   nullptr;
-
-    FILE    *output;
-
-    int frame_count = 0;
 
 };
 
