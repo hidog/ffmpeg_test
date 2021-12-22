@@ -5,12 +5,19 @@
 
 #include <stdint.h>
 
+extern "C" {
+
+#include <libavutil/rational.h>
+
+} // end extern "C"
+
 
 struct AVCodec;
 struct AVCodecContext;
 struct AVPacket;
 struct AVFrame;
 struct SwsContext;
+
 enum AVCodecID;
 
 
@@ -30,11 +37,13 @@ public:
 
     void        init( int st_idx, AVCodecID code_id );
     void        end();
+    int         flush();
 
     AVPacket*   get_pkt();
     AVCodec*    get_codec();
 
     AVCodecContext*     get_ctx();
+    AVRational          get_timebase();
 
     virtual int         send_frame();
     virtual int         recv_frame();

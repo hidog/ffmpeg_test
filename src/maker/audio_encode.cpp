@@ -263,6 +263,7 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting a_setting )
     frame->format           =   ctx->sample_fmt;
     frame->channel_layout   =   ctx->channel_layout;
     frame->sample_rate      =   ctx->sample_rate;
+    frame->pts              =   0;
 
     // allocate the data buffers
     ret     =   av_frame_get_buffer( frame, 0 );
@@ -483,10 +484,12 @@ AVFrame*    AudioEncode::get_frame()
         }
     }
 
-    if( frame_count == 0 )
+    /*if( frame_count == 0 )
         frame->pts = 0;
     else 
-        frame->pts += frame->nb_samples;
+        frame->pts += frame->nb_samples;  */
+    // 考慮效能, 沒用 frame->pts = frame->nb_samples * frame_count; 的寫法
+    frame->pts += frame->nb_samples;  
 
     frame_count++;
 

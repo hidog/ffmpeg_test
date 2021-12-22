@@ -67,84 +67,113 @@ void Maker::work()
 
     muxer.write_header();
 
-    AVRational tb_a, tb_b;
+    /*AVRational tb_a, tb_b;
     tb_a.num = 1001;
     tb_a.den = 24000;
     tb_b.num = 1;
-    tb_b.den = 48000;
+    tb_b.den = 48000;*/
 
-    AVFrame *v_frame = nullptr, *a_frame = nullptr;
+    AVRational v_time_base  =   v_encoder.get_timebase();
+    AVRational a_time_base  =   a_encoder.get_timebase();
 
-    bool v_end = false, a_end = false;
+    //
+    AVFrame *v_frame    =   v_encoder.get_frame(); 
+    AVFrame *a_frame    =   a_encoder.get_frame();    
+    AVFrame *frame      =   nullptr;
+    Encode  *encoder    =   nullptr;
 
-    //while( encode_video == true || encode_audio == true ) 
-    while(true)
-    {
-        /* select the stream to encode */
-        auto ts_a = v_encoder.get_pts();
-        auto ts_b = a_encoder.get_pts();
+    AVRational st_tb;
 
-        ret = av_compare_ts( ts_a, tb_a, ts_b, tb_b );
-        if( a_end == true )
-            ret = 0;
-        
+    // 休息一下再來思考這邊怎麼改寫, 希望寫得好看一點
+    while( v_frame != nullptr || a_frame != nullptr )
+    {        
+        auto v_pts = v_frame == nullptr ? INT64_MAX : v_frame->pts;
+        auto a_pts = a_frame == nullptr ? INT64_MAX : a_frame->pts;
 
-        if( ret <= 0 && v_end == false )
+        ret = av_compare_ts( v_pts, v_time_base, a_pts, a_time_base );
+
+        if( ret <= 0 ) // video
         {
-            v_frame = v_encoder.get_frame();
-            if( v_frame == nullptr )
-                v_end = true;
-
-            ret = v_encoder.send_frame();
-            if( ret < 0 ) 
-                MYLOG( LOG::ERROR, "send fail." );
-
-            while( ret >= 0 ) 
-            {
-                ret = v_encoder.recv_frame();
-                if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
-                    break;
-                else if( ret < 0 )
-                    MYLOG( LOG::ERROR, "recv fail." );
-
-                auto pkt = v_encoder.get_pkt();
-
-                //AVRational avr { 1, 24000 };  // 研究這邊怎麼來的,為什麼值會跑掉
-                av_packet_rescale_ts( pkt, v_encoder.ctx->time_base, muxer.v_stream->time_base );
-
-                muxer.write_frame( pkt );
-            }  
+            encoder =   &v_encoder;
+            frame   =   v_frame;
+            st_tb   =   muxer.get_video_stream_timebase();
         }
-        else if( a_end == false )
+        else // audio
         {
-            a_frame = a_encoder.get_frame();
-            MYLOG( LOG::DEBUG, "a fc = %d", a_encoder.frame_count );
+            encoder =   &a_encoder;
+            frame   =   a_frame;
+            st_tb   =   muxer.get_audio_stream_timebase();
+        }
 
-            if( a_frame == nullptr )
-                a_end = true;            
+        assert( frame != nullptr );
 
-            ret = a_encoder.send_frame();
-            if( ret < 0 ) 
-                MYLOG( LOG::ERROR, "send fail." );
+        //
+        ret     =   encoder->send_frame();
+        if( ret < 0 ) 
+            MYLOG( LOG::ERROR, "send fail." );
 
-            while( ret >= 0 ) 
-            {
-                ret = a_encoder.recv_frame();
-                if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
-                    break;
-                else if( ret < 0 )
-                    MYLOG( LOG::ERROR, "recv fail." );
+        while( ret >= 0 ) 
+        {
+            ret     =   encoder->recv_frame();
+            if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
+                break;
+            else if( ret < 0 )
+                MYLOG( LOG::ERROR, "recv fail." );
 
-                auto pkt = a_encoder.get_pkt();
-                muxer.write_frame( pkt );
-            }  
-        }      
+            auto pkt    =   encoder->get_pkt();
 
-        if( v_end == true && a_end == true )
-            break;
+            auto ctx_tb = encoder->get_timebase();
+            av_packet_rescale_ts( pkt, ctx_tb, st_tb );
+
+            muxer.write_frame( pkt );
+        }  
+
+        // update frame
+        if( encoder == &v_encoder ) // 理想是用 enum 處理, 這邊先偷懶, 有空修
+            v_frame = encoder->get_frame();
+        else
+            a_frame = encoder->get_frame();
     }
 
+    // flush
+    // 未來思考這邊如何寫得更好.
+    auto flush_func = [&] ( Encode *enc ) 
+    {
+        ret =   enc->send_frame();  
+        while( ret >= 0 ) 
+        {
+            ret     =   enc->recv_frame();
+            if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
+                break;
+            else if( ret < 0 )
+                MYLOG( LOG::ERROR, "recv fail." );
+
+            auto pkt    =   enc->get_pkt();
+            auto ctx_tb =   enc->get_timebase();
+            av_packet_rescale_ts( pkt, ctx_tb, st_tb );
+            muxer.write_frame( pkt );
+        } 
+    };
+    
+    st_tb = muxer.get_video_stream_timebase();
+    flush_func( &v_encoder );
+
+    st_tb = muxer.get_audio_stream_timebase();
+    flush_func( &a_encoder );  
 
     //
     muxer.write_end();
+}
+
+
+
+
+/*******************************************************************************
+Maker::end()
+********************************************************************************/
+void Maker::end()
+{
+    v_encoder.end();
+    a_encoder.end();
+    muxer.end();
 }

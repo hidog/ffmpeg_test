@@ -299,13 +299,12 @@ AVFrame*    VideoEncode::get_frame()
     char str[1000];
     int ret;
 
-    if( frame_count > 35719 )
-        return nullptr;
-
     sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
     printf( "str = %s\n", str );
 
-    QImage img( str );    
+    QImage img;
+    if( img.load( str ) == false )
+        return  nullptr;    
 
     ret = av_frame_make_writable(frame);
     if( ret < 0 )
@@ -315,10 +314,10 @@ AVFrame*    VideoEncode::get_frame()
     uint8_t* ptr[4] = { img.bits() };
     
     sws_scale( sws_ctx, ptr, linesize, 0, 1080, video_dst_data, video_dst_linesize );
-    
-    memcpy( frame->data[0], video_dst_data[0], 1920*1080 );
-    memcpy( frame->data[1], video_dst_data[1], 1920*1080/4 );
-    memcpy( frame->data[2], video_dst_data[2], 1920*1080/4 );
+
+    memcpy( frame->data[0], video_dst_data[0], ctx->width * ctx->height );
+    memcpy( frame->data[1], video_dst_data[1], ctx->width * ctx->height / 4 );
+    memcpy( frame->data[2], video_dst_data[2], ctx->width * ctx->height / 4 );
 
     frame->pts = frame_count;
 

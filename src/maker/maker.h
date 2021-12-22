@@ -22,6 +22,7 @@ public:
 
     void init();
     void work();
+    void end();
 
 private:
 

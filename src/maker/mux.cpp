@@ -79,14 +79,10 @@ void    Mux::add_stream( AVCodecContext* v_ctx, AVCodec *v_codec, AVCodecContext
 /*******************************************************************************
 Mux::close_stream()
 ********************************************************************************/
-void Mux::close_stream()
+void Mux::end()
 {
-    /*avcodec_free_context(&ost->enc);
-    av_frame_free(&ost->frame);
-    av_frame_free(&ost->tmp_frame);
-    av_packet_free(&ost->tmp_pkt);
-    sws_freeContext(ost->sws_ctx);
-    swr_free(&ost->swr_ctx);*/
+    /* free the stream */
+    avformat_free_context(output_ctx);
 }
 
 
@@ -172,22 +168,38 @@ Mux::write_end()
 ********************************************************************************/
 void Mux::write_end()
 {
-    /* Write the trailer, if any. The trailer must be written before you
-    * close the CodecContexts open when you wrote the header; otherwise
-    * av_write_trailer() may try to use memory that was freed on
-    * av_codec_close(). */
+
     av_write_trailer(output_ctx);
 
-    /* Close each codec. */
-    /*if (have_video)
-    close_stream( output_ctx, &video_st);
-    if (have_audio)
-    close_stream( output_ctx, &audio_st);*/
-
     if ( !(output_fmt->flags & AVFMT_NOFILE) )
-        /* Close the output file. */
         avio_closep( &output_ctx->pb );
+}
 
-    /* free the stream */
-    avformat_free_context(output_ctx);
+
+
+
+
+/*******************************************************************************
+Mux::get_video_stream_timebase()
+********************************************************************************/
+AVRational  Mux::get_video_stream_timebase()
+{
+    if( v_stream == nullptr )
+        MYLOG( LOG::ERROR, "v stream is null." );
+    return  v_stream->time_base;
+}
+
+
+
+
+
+
+/*******************************************************************************
+Mux::get_audio_stream_timebase()
+********************************************************************************/
+AVRational  Mux::get_audio_stream_timebase()
+{
+    if( a_stream == nullptr )
+        MYLOG( LOG::ERROR, "a stream is null." );
+    return  a_stream->time_base;
 }

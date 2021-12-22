@@ -5,6 +5,12 @@
 #include <functional>
 
 
+extern "C" {
+
+#include <libavutil/rational.h>
+
+} // end extern "C"
+
 
 struct AVFormatContext;
 struct AVOutputFormat;
@@ -35,16 +41,19 @@ public:
     Mux& operator = ( Mux&& ) = delete;
 
     void    init( AVCodecContext* v_ctx, AVCodec *v_codec , AVCodecContext* a_ctx, AVCodec *a_codec );
+    void    end();
 
     void    write_header();
     void    write_frame( AVPacket* pkt );
     void    write_end();
 
+    AVRational  get_video_stream_timebase();
+    AVRational  get_audio_stream_timebase();
+
+
 private:
 
-    void close_stream();
     void add_stream( AVCodecContext* v_ctx, AVCodec *v_codec, AVCodecContext* a_ctx, AVCodec *a_codec );
-
 
     AVFormatContext *output_ctx = nullptr;
     AVOutputFormat *output_fmt = nullptr;

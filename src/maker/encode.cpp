@@ -184,3 +184,33 @@ AVCodecContext*     Encode::get_ctx()
 {
     return  ctx;
 }
+
+
+
+
+/*******************************************************************************
+Encode::get_ctx()
+********************************************************************************/
+AVRational  Encode::get_timebase()
+{
+    return  ctx->time_base;
+}
+
+
+
+
+
+/*******************************************************************************
+Encode::flush()
+********************************************************************************/
+int     Encode::flush()
+{
+    if( ctx == nullptr )
+    {
+        MYLOG( LOG::ERROR, "ctx is null." );
+        return  ERROR;
+    }
+
+    int ret =   avcodec_send_frame( ctx, nullptr );
+    return  ret;
+}
