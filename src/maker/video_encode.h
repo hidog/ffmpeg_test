@@ -11,12 +11,7 @@
 
 
 
-struct AVPacket;
 struct AVFrame;
-
-
-
-
 enum AVCodecID;
 
 

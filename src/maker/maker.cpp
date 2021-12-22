@@ -42,10 +42,15 @@ void Maker::init()
     v_setting.width     =   1280;
     v_setting.height    =   720;
 
-    v_encoder.init(v_setting);
-    a_encoder.init(AV_CODEC_ID_AAC);
+    AudioEncodeSetting a_setting;
+    a_setting.code_id = AV_CODEC_ID_AAC;
+    a_setting.bit_rate = 320000;
+    a_setting.sample_rate = 48000;
 
-    muxer.init( v_encoder.ctx, v_encoder.codec, a_encoder.ctx, a_encoder.codec );
+    v_encoder.init( 0, v_setting);
+    a_encoder.init( 1, a_setting);
+
+    muxer.init( v_encoder.get_ctx(), v_encoder.get_codec(), a_encoder.get_ctx(), a_encoder.get_codec() );
 
 }
 
@@ -60,9 +65,7 @@ void Maker::work()
 {
     int ret;
 
-
     muxer.write_header();
-
 
     AVRational tb_a, tb_b;
     tb_a.num = 1001;
@@ -78,8 +81,8 @@ void Maker::work()
     while(true)
     {
         /* select the stream to encode */
-        auto ts_a = v_encoder.get_next_pts();
-        auto ts_b = a_encoder.get_next_pts();
+        auto ts_a = v_encoder.get_pts();
+        auto ts_b = a_encoder.get_pts();
 
         ret = av_compare_ts( ts_a, tb_a, ts_b, tb_b );
         if( a_end == true )
@@ -92,7 +95,7 @@ void Maker::work()
             if( v_frame == nullptr )
                 v_end = true;
 
-            ret = v_encoder.send_frame( v_frame );
+            ret = v_encoder.send_frame();
             if( ret < 0 ) 
                 MYLOG( LOG::ERROR, "send fail." );
 
@@ -120,7 +123,7 @@ void Maker::work()
             if( a_frame == nullptr )
                 a_end = true;            
 
-            ret = a_encoder.send_frame( a_frame );
+            ret = a_encoder.send_frame();
             if( ret < 0 ) 
                 MYLOG( LOG::ERROR, "send fail." );
 

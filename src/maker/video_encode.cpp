@@ -109,6 +109,7 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting )
                                     ctx->width, ctx->height, ctx->pix_fmt,           // dst
                                     SWS_BICUBIC, NULL, NULL, NULL );
 
+    //if( output_ctx->oformat->flags & AVFMT_GLOBALHEADER )
     ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 }
 

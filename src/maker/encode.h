@@ -30,7 +30,11 @@ public:
 
     void        init( int st_idx, AVCodecID code_id );
     void        end();
+
     AVPacket*   get_pkt();
+    AVCodec*    get_codec();
+
+    AVCodecContext*     get_ctx();
 
     virtual int         send_frame();
     virtual int         recv_frame();

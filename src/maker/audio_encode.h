@@ -13,11 +13,7 @@ enum AVCodecID;
 enum AVSampleFormat;
 struct AVCodec;
 
-struct AVCodecContext;
 struct AVFrame;
-struct AVPacket;
-
-//struct AVFormatContext;
 
 
 
