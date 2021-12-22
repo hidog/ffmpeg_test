@@ -263,7 +263,7 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting a_setting )
     frame->format           =   ctx->sample_fmt;
     frame->channel_layout   =   ctx->channel_layout;
     frame->sample_rate      =   ctx->sample_rate;
-    frame->pts              =   0;
+    frame->pts              =   -frame->nb_samples;
 
     // allocate the data buffers
     ret     =   av_frame_get_buffer( frame, 0 );

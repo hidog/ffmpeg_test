@@ -49,6 +49,7 @@ int main()
     Maker maker;
     maker.init();
     maker.work();
+    maker.end();
 
 #else
 

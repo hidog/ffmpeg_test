@@ -38,7 +38,7 @@ Maker::init()
 void Maker::init()
 {
     VideoEncodeSetting v_setting;
-    v_setting.code_id   =   AV_CODEC_ID_MJPEG;
+    v_setting.code_id   =   AV_CODEC_ID_H264;
     v_setting.width     =   1280;
     v_setting.height    =   720;
 
@@ -84,21 +84,24 @@ void Maker::work()
 
     AVRational st_tb;
 
+    int64_t v_pts, a_pts;
+
     // 休息一下再來思考這邊怎麼改寫, 希望寫得好看一點
     while( v_frame != nullptr || a_frame != nullptr )
     {        
-        auto v_pts = v_frame == nullptr ? INT64_MAX : v_frame->pts;
-        auto a_pts = a_frame == nullptr ? INT64_MAX : a_frame->pts;
+        // 原本想用 INT64_MAX, 但會造成 overflow.
+        v_pts = v_frame == nullptr ? -1 : v_frame->pts;
+        a_pts = a_frame == nullptr ? -1 : a_frame->pts;
 
         ret = av_compare_ts( v_pts, v_time_base, a_pts, a_time_base );
 
-        if( ret <= 0 ) // video
+        if( ret <= 0 && v_frame != nullptr ) // video
         {
             encoder =   &v_encoder;
             frame   =   v_frame;
             st_tb   =   muxer.get_video_stream_timebase();
         }
-        else // audio
+        else if( a_frame != nullptr ) // audio
         {
             encoder =   &a_encoder;
             frame   =   a_frame;

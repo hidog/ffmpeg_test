@@ -114,9 +114,9 @@ void Mux::init( AVCodecContext* v_ctx, AVCodec *v_codec, AVCodecContext* a_ctx, 
     add_stream( v_ctx, v_codec, a_ctx, a_codec );
 
     ret =   avcodec_parameters_from_context( v_stream->codecpar, v_ctx );
-    assert(ret);
+    assert( ret == 0 );
     ret =   avcodec_parameters_from_context( a_stream->codecpar, a_ctx );
-    assert(ret);
+    assert( ret == 0 );
 
     // 研究一下這邊跟範例程式的差異
     av_dump_format( output_ctx, 0, "J:\\test.mp4", 1 );
