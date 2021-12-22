@@ -456,7 +456,7 @@ void Mux::init( AVCodecContext* v_ctx, AVCodec *v_codec, AVCodecContext* a_ctx, 
     //bool encode_video = false, encode_audio = false;
 
     /* allocate the output media context */
-    avformat_alloc_output_context2( &output_ctx, NULL, NULL, "H:\\test.mp4" );
+    avformat_alloc_output_context2( &output_ctx, NULL, NULL, "J:\\test.mp4" );
     //avformat_alloc_output_context2( &output_ctx, NULL, "mp4", "H:\\test.mp4" );
     if( output_ctx == nullptr ) 
         MYLOG( LOG::ERROR, "output_ctx = nullptr" );
@@ -478,12 +478,12 @@ void Mux::init( AVCodecContext* v_ctx, AVCodec *v_codec, AVCodecContext* a_ctx, 
 
 
     // 很多information沒有寫入,研究原因.
-    av_dump_format( output_ctx, 0, "H:\\test.mp4", 1 );
+    av_dump_format( output_ctx, 0, "J:\\test.mp4", 1 );
 
     /* open the output file, if needed */
     if( !(output_fmt->flags & AVFMT_NOFILE) )
     {
-        ret = avio_open( &output_ctx->pb, "H:\\test.mp4", AVIO_FLAG_WRITE );
+        ret = avio_open( &output_ctx->pb, "J:\\test.mp4", AVIO_FLAG_WRITE );
         if( ret < 0 ) 
             MYLOG( LOG::ERROR, "open output file fail" );
     }

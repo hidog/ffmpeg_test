@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "encode.h"
+
 // https://blog.csdn.net/wanggao_1990/article/details/115725163
 
 
@@ -18,7 +20,7 @@ struct AVPacket;
 //struct AVFormatContext;
 
 
-class AudioEncode
+class AudioEncode : public Encode
 {
 public:
     AudioEncode();

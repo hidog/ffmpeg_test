@@ -44,7 +44,7 @@ int main()
 #if 0
 
     muxing();
-#elif 0
+#elif 1
 
     Maker maker;
     maker.init();

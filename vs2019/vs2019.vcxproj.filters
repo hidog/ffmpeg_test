@@ -87,6 +87,9 @@
     <ClCompile Include="..\ffmpeg_example\muxing.cpp">
       <Filter>ffmpeg_example</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\maker\encode.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -130,6 +133,9 @@
     </ClInclude>
     <ClInclude Include="..\ffmpeg_example\muxing.h">
       <Filter>ffmpeg_example</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\encode.h">
+      <Filter>src\maker</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

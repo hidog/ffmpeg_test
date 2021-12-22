@@ -24,6 +24,7 @@ extern "C" {
 AudioEncode::AudioEncode()
 ********************************************************************************/
 AudioEncode::AudioEncode()
+    :   Encode()
 {}
 
 
@@ -488,7 +489,7 @@ AVFrame* AudioEncode::get_frame()
 
     int     ret;
 
-    static FILE *fp = fopen( "H:\\test.pcm", "rb" );
+    static FILE *fp = fopen( "J:\\test.pcm", "rb" );
     int     i;
     int16_t     intens[2];
 

@@ -37,7 +37,12 @@ Maker::init()
 ********************************************************************************/
 void Maker::init()
 {
-    v_encoder.init();
+    VideoEncodeSetting v_setting;
+    v_setting.code_id   =   AV_CODEC_ID_MJPEG;
+    v_setting.width     =   1280;
+    v_setting.height    =   720;
+
+    v_encoder.init(v_setting);
     a_encoder.init(AV_CODEC_ID_AAC);
 
     muxer.init( v_encoder.ctx, v_encoder.codec, a_encoder.ctx, a_encoder.codec );

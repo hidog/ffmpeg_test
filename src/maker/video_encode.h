@@ -1,18 +1,36 @@
 #ifndef VIDEO_ENCODE_H
 #define VIDEO_ENCODE_H
 
-#include <stdio.h>
-#include <stdint.h>
 
-struct AVCodec;
-struct AVCodecContext;
+#include "encode.h"
+#include <stdint.h>
+#include <stdio.h>
+
+
+// https://www.itread01.com/content/1550140412.html
+
+
+
 struct AVPacket;
 struct AVFrame;
 
-struct SwsContext;
 
 
-class VideoEncode
+
+enum AVCodecID;
+
+
+struct VideoEncodeSetting
+{
+    AVCodecID   code_id;
+    int         width;
+    int         height;
+};
+
+
+
+
+class VideoEncode : public Encode
 {
 public:
     VideoEncode();
@@ -24,36 +42,29 @@ public:
     VideoEncode& operator = ( const VideoEncode& ) = delete;
     VideoEncode& operator = ( VideoEncode&& ) = delete;
 
-    void    init();
-    void    work();
+    void    init( int st_idx, VideoEncodeSetting setting );
     void    end();
-    void    encode( AVFrame *fr );
 
-    int64_t get_next_pts();
-    AVFrame* get_frame();
+    int64_t     get_pts() override;
+    AVFrame*    get_frame() override;
 
-    int send_frame( AVFrame* fr );
+    int send_frame();
     int recv_frame();
     AVPacket* get_pkt();
 
+    // for test. run without mux.
+    // 目前不能動, 需要修復.
+    void    work_test();
+    void    encode_test();
+
+
 
 //private:
-
-    AVCodec *codec = nullptr;
-    AVCodecContext *ctx = nullptr;
-    AVPacket *pkt = nullptr;
-    AVFrame *frame = nullptr;
-
-    FILE *output;
-
 
     uint8_t  *video_dst_data[4]     =   { nullptr };
     int      video_dst_linesize[4]  =   { 0 };
     int      video_dst_bufsize      =   0;
 
-    SwsContext* sws_ctx = nullptr;
-
-    int frame_count = 0;
 
 };
 

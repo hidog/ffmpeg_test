@@ -27,6 +27,7 @@ extern "C" {
 VideoEncode::VideoEncode()
 ********************************************************************************/
 VideoEncode::VideoEncode()
+    :   Encode()
 {}
 
 
@@ -47,52 +48,29 @@ VideoEncode::~VideoEncode()
 /*******************************************************************************
 VideoEncode::init()
 ********************************************************************************/
-void    VideoEncode::init()
+void    VideoEncode::init( int st_idx, VideoEncodeSetting setting )
 {
     int ret;
 
+    Encode::init( st_idx, setting.code_id );
 
     //
-    codec = avcodec_find_encoder(AV_CODEC_ID_H264);
-    if( codec == nullptr )
-        MYLOG( LOG::ERROR, "codec = nullptr." );
+    ctx->bit_rate   =   3000000;
+    ctx->width      =   setting.width;
+    ctx->height     =   setting.height;
 
-    //
-    ctx = avcodec_alloc_context3(codec);
-    if( ctx == nullptr ) 
-        MYLOG( LOG::ERROR, "ctx = nullptr." );
+    ctx->time_base.num  =   1001; 
+    ctx->time_base.den  =   24000;
+    ctx->framerate.num  =   24000; 
+    ctx->framerate.den  =   1001;
 
-    //
-    pkt = av_packet_alloc();
-    if( pkt == nullptr )
-        MYLOG( LOG::ERROR, "pkt = nullptr." );
-
-    //
-    // ctx->codec_id = AV_CODEC_ID_H264; // 檢查這邊是否會自動生成
-
-    ctx->bit_rate = 80000000;
-    ctx->width = 1920;
-    ctx->height = 1080;
-
-    ctx->time_base.num = 1001; // = (AVRational){1, 25};
-    ctx->time_base.den = 24000;
-    //ctx->framerate.num = 24000; // = (AVRational){25, 1};
-    //ctx->framerate.den = 1001;
-
-    /* emit one intra frame every ten frames
-    * check frame pict_type before passing frame
-    * to encoder, if frame->pict_type is AV_PICTURE_TYPE_I
-    * then gop_size is ignored and the output of encoder
-    * will always be I frame irrespective to gop_size
-    */
-    ctx->gop_size = 10;
-    ctx->max_b_frames = 1;
-    ctx->pix_fmt = AV_PIX_FMT_YUV420P;
+    ctx->gop_size       =   200;
+    ctx->max_b_frames   =   150;
+    ctx->pix_fmt        =   AV_PIX_FMT_YUV420P;
     //ctx->me_subpel_quality = 10;
 
-    //if( codec->id == AV_CODEC_ID_H264 )
-      //  av_opt_set( ctx->priv_data, "preset", "medium", 0);
-
+    if( codec->id == AV_CODEC_ID_H264 )
+        av_opt_set( ctx->priv_data, "preset", "medium", 0);
 
 #if 0
     // 未來研究這段code的作用
@@ -110,57 +88,49 @@ void    VideoEncode::init()
     }
 #endif
 
-
-
-    /* open it */
-    ret = avcodec_open2( ctx, codec, NULL );
+    // open codec.
+    ret     =   avcodec_open2( ctx, codec, NULL );
     if( ret < 0 ) 
         MYLOG( LOG::ERROR, "open fail" );
-    //
-    frame = av_frame_alloc();
-    if( frame == nullptr ) 
-        MYLOG( LOG::ERROR, "frame = nullptr" );
 
-    frame->format = ctx->pix_fmt;
-    frame->width  = ctx->width;
-    frame->height = ctx->height;
+    // frame setting
+    frame->format   =   ctx->pix_fmt;
+    frame->width    =   ctx->width;
+    frame->height   =   ctx->height;
 
-    ret = av_frame_get_buffer( frame, 0 );
+    ret     =   av_frame_get_buffer( frame, 0 );
     if( ret < 0 ) 
         MYLOG( LOG::ERROR, "get buffer fail." );
 
-
-
-
-
     // data for sws.
-    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, 1920, 1080, AV_PIX_FMT_YUV420P, 1 );
+    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, ctx->width, ctx->height, ctx->pix_fmt , 1 );
 
     sws_ctx     =   sws_getContext( 1920, 1080, AV_PIX_FMT_BGRA,                     // src
-                                    1920, 1080, AV_PIX_FMT_YUV420P,            // dst
-                                    SWS_BICUBIC, NULL, NULL, NULL ); 
-
+                                    ctx->width, ctx->height, ctx->pix_fmt,           // dst
+                                    SWS_BICUBIC, NULL, NULL, NULL );
 
     ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-
-
 }
 
 
 
 
+
+
 /*******************************************************************************
-VideoEncode::encode()
+VideoEncode::encode_test()
+
+測試用 目前不能動
 ********************************************************************************/
-void VideoEncode::encode( AVFrame *fr )
+void    VideoEncode::encode_test()
 {
-    if( fr != nullptr )
-        printf( "pict type = %c\n", av_get_picture_type_char(fr->pict_type) );
+    if( frame != nullptr )
+        printf( "pict type = %c\n", av_get_picture_type_char(frame->pict_type) );
 
     int ret;
 
     /* send the frame to the encoder */
-    ret = avcodec_send_frame( ctx, fr );
+    ret = avcodec_send_frame( ctx, frame );
     if( ret < 0 )
         MYLOG( LOG::ERROR, "send fail." );
 
@@ -173,7 +143,7 @@ void VideoEncode::encode( AVFrame *fr )
             MYLOG( LOG::ERROR, "recv fail." );
 
         printf( "write packet %lld %d\n", pkt->pts, pkt->size );
-        fwrite( pkt->data, 1, pkt->size, output );
+        //fwrite( pkt->data, 1, pkt->size, output );
         av_packet_unref(pkt);
     }
 }
@@ -181,12 +151,26 @@ void VideoEncode::encode( AVFrame *fr )
 
 
 
+
+
 /*******************************************************************************
 VideoEncode::send_frame()
 ********************************************************************************/
-int VideoEncode::send_frame( AVFrame* fr )
+int     VideoEncode::send_frame()
 {
-    return avcodec_send_frame( ctx, fr );
+    int     ret     =   0;
+
+    //MYLOG( LOG::DEBUG, "pict type = %c\n", av_get_picture_type_char(frame->pict_type) );
+
+    if( frame == nullptr )
+    {
+        MYLOG( LOG::ERROR, "frame is null." );
+        ret =   ERROR;
+    }
+    else
+        ret     =    avcodec_send_frame( ctx, frame );
+
+    return  ret;
 }
 
 
@@ -196,9 +180,13 @@ int VideoEncode::send_frame( AVFrame* fr )
 /*******************************************************************************
 VideoEncode::recv_frame()
 ********************************************************************************/
-int VideoEncode::recv_frame()
+int     VideoEncode::recv_frame()
 {
-    return avcodec_receive_packet( ctx, pkt );
+    if( ctx == nullptr || pkt == nullptr )
+        MYLOG( LOG::ERROR, "ctx or pkt == nullptr." );
+
+    int     ret =   avcodec_receive_packet( ctx, pkt );
+    return  ret;
 }
 
 
@@ -208,29 +196,28 @@ int VideoEncode::recv_frame()
 /*******************************************************************************
 VideoEncode::get_pkt()
 ********************************************************************************/
-AVPacket* VideoEncode::get_pkt()
+AVPacket*   VideoEncode::get_pkt()
 {
-    /* rescale output packet timestamp values from codec to stream timebase */
-    //AVRational avr { 1, 24000 };  // 研究這邊怎麼來的,為什麼值會跑掉
-    //av_packet_rescale_ts( pkt, ctx->time_base, avr );
-    pkt->stream_index = 0;
+    pkt->stream_index = stream_index;
     return pkt;
 }
 
 
 
+
+
+
 /*******************************************************************************
-VideoEncode::work()
+VideoEncode::work_test()
+
+測試用,目前不能動.
 ********************************************************************************/
-void VideoEncode::work()
+void    VideoEncode::work_test()
 {
-    output = fopen( "H:\\test.mp4", "wb+" );
+    //output = fopen( "H:\\test.mp4", "wb+" );
 
-    char str[1000];
-    int i, ret;
-
-
-
+    char    str[1000];
+    int     i, ret;
 
     uint8_t  *video_dst_data[4]     =   { nullptr };
     int      video_dst_linesize[4]  =   { 0 };
@@ -238,25 +225,19 @@ void VideoEncode::work()
 
     video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, 1920, 1080, AV_PIX_FMT_YUV420P, 1 );
 
-    SwsContext* sws_ctx     =   
-        sws_getContext( 1920, 1080, AV_PIX_FMT_BGRA,                     // src
-                        1920, 1080, AV_PIX_FMT_YUV420P,                  // dst
-                        SWS_BICUBIC, NULL, NULL, NULL );    
+    SwsContext* sws_ctx     =   sws_getContext( 1920, 1080, AV_PIX_FMT_BGRA,                     // src
+                                                1920, 1080, AV_PIX_FMT_YUV420P,                  // dst
+                                                SWS_BICUBIC, NULL, NULL, NULL );    
 
+    //int   y, x;
 
-
-    
-
-    int y, x;
-
-    /* encode 1 second of video */
+    //
     for( i = 0; i <= 35719; i++ )
     {
         sprintf( str, "H:\\jpg\\%d.jpg", i );
         printf( "str = %s\n", str );
 
-        QImage img( str );        
-
+        QImage img( str );
 
         ret = av_frame_make_writable(frame);
         if( ret < 0 )
@@ -287,21 +268,16 @@ void VideoEncode::work()
         }
 #endif
 
-
-        frame->pts = i;
-
-        /* encode the image */
-        encode( frame );
+        frame->pts  =   i;
+        encode_test();
     }
 
-
-    /* flush the encoder */
-    encode( NULL );
-
+    // flush
+    //encode_test( NULL );
 
     uint8_t endcode[] = { 0, 0, 1, 0xb7 };
-    if (codec->id == AV_CODEC_ID_MPEG1VIDEO || codec->id == AV_CODEC_ID_MPEG2VIDEO)
-        fwrite( endcode, 1, sizeof(endcode), output );
+    //if (codec->id == AV_CODEC_ID_MPEG1VIDEO || codec->id == AV_CODEC_ID_MPEG2VIDEO)
+      //  fwrite( endcode, 1, sizeof(endcode), output );
 
 }
 
@@ -314,12 +290,22 @@ VideoEncode::end()
 ********************************************************************************/
 void    VideoEncode::end()
 {
-    fclose(output);
+    Encode::end();
 
-    avcodec_free_context(&ctx);
-    av_frame_free(&frame);
-    av_packet_free(&pkt);
+    if( video_dst_data[0] != nullptr )
+    {
+        av_free( video_dst_data[0] );
+        video_dst_data[0]   =   nullptr;
+        video_dst_data[1]   =   nullptr;
+        video_dst_data[2]   =   nullptr;
+        video_dst_data[3]   =   nullptr;
+    }
 
+    video_dst_linesize[0]   =   0;
+    video_dst_linesize[1]   =   0;
+    video_dst_linesize[2]   =   0;
+    video_dst_linesize[3]   =   0;
+    video_dst_bufsize       =   0;
 }
 
 
@@ -328,45 +314,35 @@ void    VideoEncode::end()
 
 
 /*******************************************************************************
-VideoEncode::get_next_pts()
+VideoEncode::get_pts()
 ********************************************************************************/
-int64_t VideoEncode::get_next_pts()
+int64_t     VideoEncode::get_pts()
 {
-    //if( frame_count > 500 )
-      //  return frame_count;
-    /*if( frame_count == 0 )
-        return 0;
-    else
-        return frame_count + 1;*/
-
-    return frame_count;
-
-    /*
-    if( frame == nullptr )
-        return  0;
-    else
-        return frame->pts + 1;*/
+    return  frame_count;
 }
+
+
 
 
 
 
 /*******************************************************************************
 VideoEncode::get_frame()
+
+這邊需要擴充, 以及考慮使用讀取檔案處理一些參數的 init
 ********************************************************************************/
-AVFrame* VideoEncode::get_frame()
+AVFrame*    VideoEncode::get_frame()
 {
     char str[1000];
     int ret;
 
     if( frame_count > 35719 )
-    //if( frame_count > 500 )
         return nullptr;
 
-    sprintf( str, "H:\\jpg\\%d.jpg", frame_count );
+    sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
     printf( "str = %s\n", str );
 
-    QImage img( str );
+    QImage img( str );    
 
     ret = av_frame_make_writable(frame);
     if( ret < 0 )
