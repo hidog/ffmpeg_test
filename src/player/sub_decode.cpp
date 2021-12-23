@@ -261,6 +261,7 @@ int SubDecode::render_subtitle()
         MYLOG( LOG::ERROR, "ret = %d", ret );
 
     memcpy( sub_image.bits(), sub_dst_data[0], sub_dst_bufsize );
+    frame_count++;
 
     return 1;
 }
