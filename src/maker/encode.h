@@ -35,9 +35,12 @@ public:
     Encode& operator = ( const Encode& ) = delete;
     Encode& operator = ( Encode&& ) = delete;
 
-    void        init( int st_idx, AVCodecID code_id );
-    void        end();
-    int         flush();
+    void    init( int st_idx, AVCodecID code_id );
+    void    end();
+    int     flush();
+    bool    is_flush();
+    void    set_flush( bool flag );
+
 
     AVPacket*   get_pkt();
     AVCodec*    get_codec();
@@ -62,6 +65,9 @@ protected:
 
     int     frame_count     =   0;
     int     stream_index    =   -1;
+
+    bool    flush_state    =   false;
+
 };
 
 

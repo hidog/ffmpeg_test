@@ -64,13 +64,18 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting )
     ctx->framerate.num  =   24000; 
     ctx->framerate.den  =   1001;
 
-    ctx->gop_size       =   200;
-    ctx->max_b_frames   =   150;
-    ctx->pix_fmt        =   AV_PIX_FMT_YUV420P;
+    //ctx->gop_size       =   200;
+    //ctx->max_b_frames   =   150;
+    // h265 不能設太大
+    ctx->gop_size       =   30;
+    ctx->max_b_frames   =   15;
+
+    //ctx->pix_fmt        =   AV_PIX_FMT_YUV420P;
+    ctx->pix_fmt        =   AV_PIX_FMT_YUV420P10LE;
     //ctx->me_subpel_quality = 10;
 
-    if( codec->id == AV_CODEC_ID_H264 )
-        av_opt_set( ctx->priv_data, "preset", "medium", 0);
+    //if( codec->id == AV_CODEC_ID_H264 )
+    av_opt_set( ctx->priv_data, "preset", "medium", 0);
 
 #if 0
     // 未來研究這段code的作用
@@ -302,6 +307,9 @@ AVFrame*    VideoEncode::get_frame()
     sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
     printf( "str = %s\n", str );
 
+    //if( frame_count > 300 )
+      //  return  nullptr;
+
     QImage img;
     if( img.load( str ) == false )
         return  nullptr;    
@@ -315,9 +323,14 @@ AVFrame*    VideoEncode::get_frame()
     
     sws_scale( sws_ctx, ptr, linesize, 0, 1080, video_dst_data, video_dst_linesize );
 
-    memcpy( frame->data[0], video_dst_data[0], ctx->width * ctx->height );
-    memcpy( frame->data[1], video_dst_data[1], ctx->width * ctx->height / 4 );
-    memcpy( frame->data[2], video_dst_data[2], ctx->width * ctx->height / 4 );
+    // yuv420p
+    //memcpy( frame->data[0], video_dst_data[0], ctx->width * ctx->height );
+    //memcpy( frame->data[1], video_dst_data[1], ctx->width * ctx->height / 4 );
+    //memcpy( frame->data[2], video_dst_data[2], ctx->width * ctx->height / 4 );
+    // yuv420p10le
+    memcpy( frame->data[0], video_dst_data[0], video_dst_linesize[0] * ctx->height );
+    memcpy( frame->data[1], video_dst_data[1], video_dst_linesize[1] * ctx->height / 2);
+    memcpy( frame->data[2], video_dst_data[2], video_dst_linesize[2] * ctx->height / 2);
 
     frame->pts = frame_count;
 

@@ -48,7 +48,7 @@ public:
     int     current_index();
     int     get_dec_map_size();
     void    flush_all_stream();
-    
+
     AVFrame*        get_frame();
     AVMediaType     get_decode_context_type();
     AVCodecContext* get_decode_context();
@@ -73,6 +73,7 @@ protected:
     AVFrame         *frame      =   nullptr;
 
     int     frame_count =   0;
+
 
 private:
 

@@ -47,6 +47,8 @@ public:
 
     int64_t     get_pts() override;
     AVFrame*    get_frame() override;
+    int         send_frame() override;
+
 
     // for test, run without mux.
     // 目前不能動, 需要修改.

@@ -38,12 +38,14 @@ Maker::init()
 void Maker::init()
 {
     VideoEncodeSetting v_setting;
-    v_setting.code_id   =   AV_CODEC_ID_H264;
-    v_setting.width     =   1280;
-    v_setting.height    =   720;
+    //v_setting.code_id   =   AV_CODEC_ID_H264;
+    v_setting.code_id   =   AV_CODEC_ID_H265;
+    v_setting.width     =   1920;
+    v_setting.height    =   1080;
 
     AudioEncodeSetting a_setting;
-    a_setting.code_id = AV_CODEC_ID_AAC;
+    //a_setting.code_id = AV_CODEC_ID_AAC;
+    a_setting.code_id = AV_CODEC_ID_MP3;
     a_setting.bit_rate = 320000;
     a_setting.sample_rate = 48000;
 
@@ -84,17 +86,74 @@ void Maker::work()
 
     AVRational st_tb;
 
-    int64_t v_pts, a_pts;
+    // flush function.
+    auto flush_func = [&] ( Encode *enc ) 
+    {
+        ret =   enc->flush();  
+        while( ret >= 0 ) 
+        {
+            ret     =   enc->recv_frame();
+            if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
+                break;
+            else if( ret < 0 )
+                MYLOG( LOG::ERROR, "recv fail." );
+
+            auto pkt    =   enc->get_pkt();
+            auto ctx_tb =   enc->get_timebase();
+            av_packet_rescale_ts( pkt, ctx_tb, st_tb );
+            muxer.write_frame( pkt );
+        } 
+        enc->set_flush(true);
+    };
+
+    // determine stream pts function
+    auto order_pts_func = [=, &st_tb] () -> int
+    {
+        int     result = 0;
+        int64_t v_pts, a_pts;
+
+        // 理論上不用考慮兩個都是 nullptr 的 case,在 loop 控制就排除這件事情了.
+        if( v_frame == nullptr ) 
+        {
+            // flush video.
+            // 必須在這邊處理,等loop完再處理有機會造成stream flush的部分寫入時間錯誤.  (例如聲音比影像短)
+            if( v_encoder.is_flush() == false )
+            {
+                st_tb = muxer.get_video_stream_timebase();
+                flush_func( &v_encoder );
+            }
+            result     =   1;
+        }
+        else if( a_frame == nullptr )
+        {
+            if( a_encoder.is_flush() == false )
+            {
+                st_tb = muxer.get_audio_stream_timebase();
+                flush_func( &a_encoder );  
+            }
+            result     =   -1;
+        }
+        else
+        {
+            // 原本想用 INT64_MAX, 但會造成 overflow.
+            v_pts = v_frame->pts;
+            a_pts = a_frame->pts;
+            result = av_compare_ts( v_pts, v_time_base, a_pts, a_time_base );
+        }
+
+        return  result;
+    };
+
 
     // 休息一下再來思考這邊怎麼改寫, 希望寫得好看一點
     while( v_frame != nullptr || a_frame != nullptr )
     {        
-        // 原本想用 INT64_MAX, 但會造成 overflow.
-        v_pts = v_frame == nullptr ? -1 : v_frame->pts;
-        a_pts = a_frame == nullptr ? -1 : a_frame->pts;
+        assert( v_frame != nullptr || a_frame != nullptr );
 
-        ret = av_compare_ts( v_pts, v_time_base, a_pts, a_time_base );
+        //
+        ret = order_pts_func();
 
+        //
         if( ret <= 0 && v_frame != nullptr ) // video
         {
             encoder =   &v_encoder;
@@ -106,6 +165,11 @@ void Maker::work()
             encoder =   &a_encoder;
             frame   =   a_frame;
             st_tb   =   muxer.get_audio_stream_timebase();
+        }
+        else
+        {
+            MYLOG( LOG::WARN, "both not");
+            break;
         }
 
         assert( frame != nullptr );
@@ -124,7 +188,6 @@ void Maker::work()
                 MYLOG( LOG::ERROR, "recv fail." );
 
             auto pkt    =   encoder->get_pkt();
-
             auto ctx_tb = encoder->get_timebase();
             av_packet_rescale_ts( pkt, ctx_tb, st_tb );
 
@@ -137,32 +200,6 @@ void Maker::work()
         else
             a_frame = encoder->get_frame();
     }
-
-    // flush
-    // 未來思考這邊如何寫得更好.
-    auto flush_func = [&] ( Encode *enc ) 
-    {
-        ret =   enc->send_frame();  
-        while( ret >= 0 ) 
-        {
-            ret     =   enc->recv_frame();
-            if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
-                break;
-            else if( ret < 0 )
-                MYLOG( LOG::ERROR, "recv fail." );
-
-            auto pkt    =   enc->get_pkt();
-            auto ctx_tb =   enc->get_timebase();
-            av_packet_rescale_ts( pkt, ctx_tb, st_tb );
-            muxer.write_frame( pkt );
-        } 
-    };
-    
-    st_tb = muxer.get_video_stream_timebase();
-    flush_func( &v_encoder );
-
-    st_tb = muxer.get_audio_stream_timebase();
-    flush_func( &a_encoder );  
 
     //
     muxer.write_end();

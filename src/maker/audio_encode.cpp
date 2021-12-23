@@ -440,7 +440,7 @@ AudioEncode::get_frame()
 ********************************************************************************/
 AVFrame*    AudioEncode::get_frame()
 {
-    AVCodecID code_id   =   AV_CODEC_ID_AAC; // 未來改成動態
+    AVCodecID code_id   =   ctx->codec_id; 
 
     int     ret;
 
@@ -449,9 +449,8 @@ AVFrame*    AudioEncode::get_frame()
     int16_t     intens[2];
 
     if( feof(fp) != 0 )
-    //if( frame_count > 800 )
+    //if( frame_count > 400 )
         return nullptr;
-
 
     ret = av_frame_make_writable(frame);
     if( ret < 0 )
@@ -499,3 +498,22 @@ AVFrame*    AudioEncode::get_frame()
 
 
 
+/*******************************************************************************
+AudioEncode::send_frame()
+********************************************************************************/
+int     AudioEncode::send_frame() 
+{
+    static int samples_count = 0;
+
+    if( frame != nullptr )
+    {
+        // 原本的 pts 拿來判斷應該丟 video 還是 audio frame.
+        // 這邊會更改pts.
+        AVRational avr { 1, ctx->sample_rate };
+        frame->pts = av_rescale_q( samples_count, avr, ctx->time_base);
+        samples_count += frame->nb_samples; //  dst_nb_samples;
+    }
+
+    int ret = Encode::send_frame();
+    return ret;
+}

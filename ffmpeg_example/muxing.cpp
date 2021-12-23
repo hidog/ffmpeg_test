@@ -22,7 +22,7 @@ extern "C" {
 
 }
 
-//#define STREAM_DURATION   50.0
+#define STREAM_DURATION   50.0
 //#define STREAM_FRAME_RATE 25 /* 25 images/s */
 //#define STREAM_PIX_FMT    AV_PIX_FMT_YUV420P /* default pix_fmt */
 
@@ -149,9 +149,8 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
     switch ((*codec)->type) 
     {
     case AVMEDIA_TYPE_AUDIO:
-        c->sample_fmt  = (*codec)->sample_fmts ?
-            (*codec)->sample_fmts[0] : AV_SAMPLE_FMT_FLTP;
-        c->bit_rate    = 320000;
+        c->sample_fmt  = AV_SAMPLE_FMT_S16P;
+        c->bit_rate    = 3200000;
         c->sample_rate = 48000;
         /*if ((*codec)->supported_samplerates) {
             c->sample_rate = (*codec)->supported_samplerates[0];
@@ -193,10 +192,10 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
 
         c->time_base       = ost->st->time_base;
 
-        c->gop_size      = 5; /* emit one intra frame every twelve frames at most */
-        c->max_b_frames  = 1;
+        c->gop_size      = 30; /* emit one intra frame every twelve frames at most */
+        c->max_b_frames  = 15;
 
-        c->pix_fmt       = AV_PIX_FMT_YUV420P;
+        c->pix_fmt       = AV_PIX_FMT_YUV420P10LE;
         if (c->codec_id == AV_CODEC_ID_MPEG2VIDEO) {
             /* just for testing, we also add B-frames */
             c->max_b_frames = 2;
@@ -281,7 +280,7 @@ static void open_audio(AVFormatContext *oc, const AVCodec *codec,
 
     ost->frame     = alloc_audio_frame(c->sample_fmt, c->channel_layout,
                                        c->sample_rate, nb_samples);
-    ost->frame     = alloc_audio_frame(c->sample_fmt, c->channel_layout,
+    ost->tmp_frame = alloc_audio_frame(c->sample_fmt, c->channel_layout,
                                        c->sample_rate, nb_samples);
     //ost->tmp_frame = alloc_audio_frame(AV_SAMPLE_FMT_S16, c->channel_layout,
       //                                 c->sample_rate, nb_samples);
@@ -359,12 +358,12 @@ static AVFrame *get_audio_frame(OutputStream *ost)
       //  return NULL;
 
 
-    static FILE    *fp     =   fopen( "H:\\test.pcm", "rb" );
+    static FILE    *fp     =   fopen( "J:\\test.pcm", "rb" );
     int     ret;
     int16_t     intens[2];
 
     //if( feof(fp) != 0 )
-    if( a_frame_count > 1000 )
+    if( a_frame_count > 400 )
         return NULL;
 
     ret = av_frame_make_writable(frame);
@@ -381,8 +380,16 @@ static AVFrame *get_audio_frame(OutputStream *ost)
         }
     
         // 多聲道這邊需要另外處理
-        *((float*)(frame->data[0]) + i)   =   1.0 * intens[0] / INT16_MAX;
-        *((float*)(frame->data[1]) + i)   =   1.0 * intens[1] / INT16_MAX;
+        if( ost->enc->codec_id == AV_CODEC_ID_MP3 )
+        {
+            *((int16_t*)(frame->data[0]) + i)   =   intens[0];
+            *((int16_t*)(frame->data[1]) + i)   =   intens[1];
+        }
+        else
+        {
+            *((float*)(frame->data[0]) + i)   =   1.0 * intens[0] / INT16_MAX;
+            *((float*)(frame->data[1]) + i)   =   1.0 * intens[1] / INT16_MAX;
+        }
         
     }
 
@@ -604,7 +611,7 @@ static AVFrame *get_video_frame(OutputStream *ost)
 
     static int v_frame_count = 0;
     //if( v_frame_count > 35719 )
-    if( v_frame_count > 1000 )
+    if( v_frame_count > 300 )
         return NULL;
 
 
@@ -619,7 +626,7 @@ static AVFrame *get_video_frame(OutputStream *ost)
     if( !ost->sws_ctx )
     {
         ost->sws_ctx = sws_getContext( 1920, 1080, AV_PIX_FMT_BGRA,
-                                       1920, 1080, AV_PIX_FMT_YUV420P,
+                                       1920, 1080, AV_PIX_FMT_YUV420P10LE,
                                        SWS_BICUBIC, NULL, NULL, NULL);
         if (!ost->sws_ctx) 
         {
@@ -628,7 +635,7 @@ static AVFrame *get_video_frame(OutputStream *ost)
         }
     }
 
-    sprintf( str, "H:\\jpg\\%d.jpg", v_frame_count );
+    sprintf( str, "J:\\jpg\\%d.jpg", v_frame_count );
     printf("file = %s\n", str );
     QImage img(str);
 
@@ -637,11 +644,9 @@ static AVFrame *get_video_frame(OutputStream *ost)
 
     sws_scale( ost->sws_ctx, ptr, linesize, 0, 1080, video_dst_data, video_dst_linesize );
 
-    memcpy( ost->frame->data[0], video_dst_data[0], 1920*1080 );
-    memcpy( ost->frame->data[1], video_dst_data[1], 1920*1080/4 );
-    memcpy( ost->frame->data[2], video_dst_data[2], 1920*1080/4 );
-
-
+    memcpy( ost->frame->data[0], video_dst_data[0], video_dst_linesize[0]*1080 );
+    memcpy( ost->frame->data[1], video_dst_data[1], video_dst_linesize[1]*1080/2 );
+    memcpy( ost->frame->data[2], video_dst_data[2], video_dst_linesize[2]*1080/2 );
 
     ost->frame->pts = ost->next_pts++;
 
@@ -692,14 +697,14 @@ static void close_stream(AVFormatContext *oc, OutputStream *ost)
 
 int muxing()
 {
-    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, 1920, 1080, AV_PIX_FMT_YUV420P, 1 );
+    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, 1920, 1080, AV_PIX_FMT_YUV420P10LE, 1 );
 
 
 
 
 
     OutputStream video_st = { 0 }, audio_st = { 0 };
-    const AVOutputFormat *fmt;
+    AVOutputFormat *fmt;
     const char *filename;
     AVFormatContext *oc;
     const AVCodec *audio_codec = NULL, *video_codec = NULL;
@@ -711,7 +716,7 @@ int muxing()
 
 
 
-    filename = "H:\\test.mp4";
+    filename = "J:\\test.mp4";
 
 
     /* allocate the output media context */
@@ -730,13 +735,14 @@ int muxing()
      * and initialize the codecs. */
     if (fmt->video_codec != AV_CODEC_ID_NONE) 
     {
-        //fmt->video_codec = AV_CODEC_ID_MPEG2VIDEO;
+        fmt->video_codec = AV_CODEC_ID_H265;
         add_stream(&video_st, oc, &video_codec, fmt->video_codec);
         have_video = 1;
         encode_video = 1;
     }
     if (fmt->audio_codec != AV_CODEC_ID_NONE) 
     {
+        fmt->audio_codec = AV_CODEC_ID_MP3;
         add_stream(&audio_st, oc, &audio_codec, fmt->audio_codec);
         have_audio = 1;
         encode_audio = 1;

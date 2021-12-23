@@ -39,6 +39,8 @@ Encode::init()
 void    Encode::init( int st_idx, AVCodecID code_id )
 {
     stream_index    =   st_idx;
+    flush_state    =   false;
+
 
     // init frame
     if( frame == nullptr )
@@ -105,12 +107,31 @@ void    Encode::end()
         sws_ctx     =   nullptr;
     }
 
+    flush_state    =   false;
     codec   =   nullptr;
 }
 
 
 
 
+
+/*******************************************************************************
+Encode::is_flush()
+********************************************************************************/
+bool    Encode::is_flush()
+{
+    return  flush_state;
+}
+
+
+
+/*******************************************************************************
+Encode::set_flush()
+********************************************************************************/
+void    Encode::set_flush( bool flag )
+{
+    flush_state =   flag;
+}
 
 
 /*******************************************************************************
