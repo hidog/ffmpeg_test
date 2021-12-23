@@ -821,7 +821,7 @@ SubDecode::output_jpg_by_QT()
 int    SubDecode::output_jpg_by_QT()
 {
     char str[1000];
-    sprintf( str, "J:\\jpg\\%d.jpg", frame_count++ );
+    sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
     MYLOG( LOG::DEBUG, "save jpg %s", str );
     sub_image.save(str);
 
