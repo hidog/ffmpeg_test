@@ -509,9 +509,10 @@ int     AudioEncode::send_frame()
     {
         // 原本的 pts 拿來判斷應該丟 video 還是 audio frame.
         // 這邊會更改pts.
-        AVRational avr { 1, ctx->sample_rate };
-        frame->pts = av_rescale_q( samples_count, avr, ctx->time_base);
-        samples_count += frame->nb_samples; //  dst_nb_samples;
+        //AVRational avr { 1, ctx->sample_rate };
+        //frame->pts = av_rescale_q( samples_count, avr, ctx->time_base);
+        //samples_count += frame->nb_samples; //  dst_nb_samples;
+        // 看起來上面的程式碼沒影響 確認後刪除
     }
 
     int ret = Encode::send_frame();
