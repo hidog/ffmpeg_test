@@ -33,12 +33,6 @@
     <ClCompile Include="..\src\tool.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\ffplay.c">
-      <Filter>ffmpeg_example</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\cmdutils.c">
-      <Filter>ffmpeg_example</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\player\audio_decode.cpp">
       <Filter>src\player</Filter>
     </ClCompile>
@@ -94,12 +88,6 @@
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
       <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\ffplay.h">
-      <Filter>ffmpeg_example</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\cmdutils.h">
-      <Filter>ffmpeg_example</Filter>
     </ClInclude>
     <ClInclude Include="..\src\player\audio_decode.h">
       <Filter>src\player</Filter>

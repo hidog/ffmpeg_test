@@ -15,7 +15,7 @@
 
 #include <mutex>
 
-#include "player.h"
+#include "player/player.h"
 
 #include "worker.h"
 #include "video_worker.h"

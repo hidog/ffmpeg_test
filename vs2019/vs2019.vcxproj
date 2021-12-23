@@ -234,8 +234,8 @@ copy D:\code\ffmpeg_test\vs2019\x64\Debug\*.lib D:\code\ffmpeg_test\</Command>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\code\SDL\lib\x64;D:\code\opencv\build\install\x64\vc16\lib;C:\Qt\lib;C:\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;opencv_imgproc454d.lib;opencv_videoio454d.lib;opencv_highgui454d.lib;opencv_core454d.lib;Qt5Cored.lib;Qt5Guid.lib;Qt5Multimediad.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\code\opencv\build\install\x64\vc16\lib;C:\Qt\lib;C:\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_imgproc454d.lib;opencv_videoio454d.lib;opencv_highgui454d.lib;opencv_core454d.lib;Qt5Cored.lib;Qt5Guid.lib;Qt5Multimediad.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_cmd|x64'">
@@ -251,8 +251,8 @@ copy D:\code\ffmpeg_test\vs2019\x64\Debug\*.lib D:\code\ffmpeg_test\</Command>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\code\SDL\lib\x64;D:\code\opencv\build\install\x64\vc16\lib;C:\Qt\lib;C:\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;opencv_imgproc454.lib;opencv_videoio454.lib;opencv_highgui454.lib;opencv_core454.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Multimedia.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\code\opencv\build\install\x64\vc16\lib;C:\Qt\lib;C:\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_imgproc454.lib;opencv_videoio454.lib;opencv_highgui454.lib;opencv_core454.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Multimedia.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
@@ -281,34 +281,31 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\ffmpeg_example\cmdutils.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\ffplay.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="..\ffmpeg_example\muxing.cpp" />
     <ClCompile Include="..\ffmpeg_example\remuxing.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_cmd|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\ffmpeg_example\resampling_audio.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_cmd|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\ffmpeg_example\scaling_video.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_cmd|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\ffmpeg_example\transcode_aac.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_cmd|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\ffmpeg_example\transcoding.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_cmd|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\src\maker\audio_encode.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
@@ -332,14 +329,6 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\ffmpeg_example\cmdutils.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\ffplay.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="..\ffmpeg_example\muxing.h" />
     <ClInclude Include="..\src\maker\audio_encode.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
