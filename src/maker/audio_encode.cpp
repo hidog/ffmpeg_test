@@ -443,6 +443,7 @@ AVFrame*    AudioEncode::get_frame()
     AVCodecID code_id   =   ctx->codec_id; 
 
     int     ret;
+    int     sp_count    =   0;
 
     static FILE *fp = fopen( "J:\\test.pcm", "rb" );
     int     i;
@@ -461,8 +462,9 @@ AVFrame*    AudioEncode::get_frame()
         ret = fread( intens, 2, sizeof(int16_t), fp );
         if( ret == 0 )
         {
-            intens[0] = 0;
-            intens[1] = 0;
+            //intens[0] = 0;
+            //intens[1] = 0;
+            break;
         }
 
         // 多聲道這邊需要另外處理
@@ -483,12 +485,38 @@ AVFrame*    AudioEncode::get_frame()
         }
     }
 
+    sp_count    =   i;
+
+    if( i < frame->nb_samples )
+    {
+        // 有機會再改成memcpy或是其他版本
+        for( ; i < frame->nb_samples; i++ )
+        {
+            // 多聲道這邊需要另外處理
+            if( code_id == AV_CODEC_ID_AAC || code_id == AV_CODEC_ID_AC3 )
+            {
+                *((float*)(frame->data[0]) + i)   =   0;
+                *((float*)(frame->data[1]) + i)   =   0;
+            }
+            else if( code_id == AV_CODEC_ID_MP3 )
+            {
+                *((int16_t*)(frame->data[0]) + i)   =   0;
+                *((int16_t*)(frame->data[1]) + i)   =   0;
+            }
+            else if( code_id == AV_CODEC_ID_MP2 || code_id == AV_CODEC_ID_FLAC )
+            {
+                *((int16_t*)(frame->data[0]) + 2*i     )   =   0;
+                *((int16_t*)(frame->data[0]) + 2*i + 1 )   =   0;
+            }
+        }
+    }
+
     /*if( frame_count == 0 )
         frame->pts = 0;
     else 
         frame->pts += frame->nb_samples;  */
     // 考慮效能, 沒用 frame->pts = frame->nb_samples * frame_count; 的寫法
-    frame->pts += frame->nb_samples;  
+    frame->pts += sp_count; //frame->nb_samples;  
 
     frame_count++;
 

@@ -200,6 +200,19 @@ void Maker::work()
         else
             a_frame = encoder->get_frame();
     }
+    
+    // flush
+    if( v_encoder.is_flush() == false )
+    {
+        st_tb = muxer.get_video_stream_timebase();
+        flush_func( &v_encoder );
+    }
+
+    if( a_encoder.is_flush() == false )
+    {
+        st_tb = muxer.get_audio_stream_timebase();
+        flush_func( &a_encoder );
+    }
 
     //
     muxer.write_end();
