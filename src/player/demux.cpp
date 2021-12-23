@@ -214,8 +214,8 @@ int    Demux::demux()
     int     ret;
     ret     =   av_read_frame( fmt_ctx, pkt );
 
-    if( ret < 0 )    
-        MYLOG( LOG::INFO, "load file end." );
+    //if( ret < 0 )    
+      //  MYLOG( LOG::INFO, "load file end." );
 
     return ret;
 }

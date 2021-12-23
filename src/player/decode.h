@@ -72,7 +72,7 @@ protected:
     AVStream        *stream     =   nullptr;
     AVFrame         *frame      =   nullptr;
 
-    int     frame_count =   0;
+    int     frame_count =   -1;
 
 
 private:

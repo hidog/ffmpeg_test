@@ -3,7 +3,7 @@
 #include <QDebug>
 #include <QMutex>
 
-#include "player.h"
+#include "player/player.h"
 
 #include "mainwindow.h"
 #include "audio_worker.h"
