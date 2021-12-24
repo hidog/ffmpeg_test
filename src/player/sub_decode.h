@@ -3,6 +3,7 @@
 
 #include "decode.h"
 
+
 /*
 https://www.twblogs.net/a/5ef2639e26bc8c4a8eb3c99e        // ¦r¹õ±Ð¾Ç 
 http://underpop.online.fr/f/ffmpeg/help/subtitles.htm.gz  // subtitle parameter.

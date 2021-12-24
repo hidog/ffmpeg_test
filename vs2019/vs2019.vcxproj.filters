@@ -125,5 +125,8 @@
     <ClInclude Include="..\src\maker\encode.h">
       <Filter>src\maker</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\player\play_def.h">
+      <Filter>src\player</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

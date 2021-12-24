@@ -21,7 +21,7 @@ public:
     
     void    run() override;
 
-    void    open_audio_output( AudioSetting as );
+    void    open_audio_output( AudioDecodeSetting as );
     void    audio_play();
     bool&   get_audio_start_state();
 

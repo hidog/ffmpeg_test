@@ -65,11 +65,11 @@ public:
     void    init_subtitle( AVFormatContext *fmt_ctx );
     void    handle_seek();    
 
-    int64_t     get_duration_time();
-
+    int64_t         get_duration_time();
     VideoData       overlap_subtitle_image();
-    VideoSetting    get_video_setting();
-    AudioSetting    get_audio_setting();
+
+    VideoDecodeSetting    get_video_setting();
+    AudioDecodeSetting    get_audio_setting();
 
     std::vector<std::string>    get_embedded_subtitle_list();
 

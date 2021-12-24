@@ -44,7 +44,7 @@ int main()
 #if 0
 
     muxing();
-#elif 0
+#elif 1
 
     Maker maker;
     maker.init();
@@ -55,8 +55,8 @@ int main()
 
     Player  player;  
 
-    player.set_input_file("D:/code/test.mp4");
-    //player.set_sub_file("D:/code/test2.mkv");
+    player.set_input_file("D:/code/test2.mkv");
+    player.set_sub_file("D:/code/test2.mkv");
 
     player.init();
     player.play();

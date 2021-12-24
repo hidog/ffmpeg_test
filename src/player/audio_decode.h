@@ -10,6 +10,7 @@ struct  AVCodecContext;
 enum    AVSampleFormat;
 
 
+
 // 試著要轉sample rate但沒成功,有機會再試試看.
 // 要轉 sample rate 可以參考 ffplay, 需要將buffer size做 sample rate的轉換.  (例如 48000/44100 )
 

@@ -268,9 +268,9 @@ Player::~Player()
 /*******************************************************************************
 Player::get_video_setting()
 ********************************************************************************/
-VideoSetting    Player::get_video_setting()
+VideoDecodeSetting    Player::get_video_setting()
 {
-    VideoSetting    vs;
+    VideoDecodeSetting    vs;
     vs.width    =   v_decoder.get_video_width();
     vs.height   =   v_decoder.get_video_height();
     return  vs;
@@ -283,9 +283,9 @@ VideoSetting    Player::get_video_setting()
 /*******************************************************************************
 Player::get_audio_setting()
 ********************************************************************************/
-AudioSetting    Player::get_audio_setting()
+AudioDecodeSetting    Player::get_audio_setting()
 {
-    AudioSetting    as;
+    AudioDecodeSetting    as;
     as.channel      =   a_decoder.get_audio_channel();
     as.sample_rate  =   a_decoder.get_audio_sample_rate();
     return  as;
