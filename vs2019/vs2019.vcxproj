@@ -344,6 +344,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </ClInclude>
     <ClInclude Include="..\src\maker\encode.h" />
     <ClInclude Include="..\src\maker\maker.h" />
+    <ClInclude Include="..\src\maker\maker_def.h" />
     <ClInclude Include="..\src\maker\mux.h" />
     <ClInclude Include="..\src\maker\video_encode.h" />
     <ClInclude Include="..\src\player\audio_decode.h" />

@@ -3,8 +3,10 @@
 
 
 #include "encode.h"
+#include "maker_def.h"
+
 #include <stdint.h>
-#include <stdio.h>
+
 
 
 // https://www.itread01.com/content/1550140412.html
@@ -13,15 +15,6 @@
 
 struct AVFrame;
 enum AVCodecID;
-
-
-struct VideoEncodeSetting
-{
-    AVCodecID   code_id;
-    int         width;
-    int         height;
-};
-
 
 
 

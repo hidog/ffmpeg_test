@@ -20,7 +20,7 @@ public:
     Maker& operator = ( const Maker& ) = delete;
     Maker& operator = ( Maker&& ) = delete;
 
-    void init();
+    void init( VideoEncodeSetting v_setting, AudioEncodeSetting a_setting );
     void work();
     void end();
 

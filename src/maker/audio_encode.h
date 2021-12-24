@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "encode.h"
+#include "maker_def.h"
 
 // https://blog.csdn.net/wanggao_1990/article/details/115725163
 
@@ -15,14 +16,6 @@ struct AVCodec;
 
 struct AVFrame;
 
-
-
-struct AudioEncodeSetting
-{
-    AVCodecID   code_id;
-    int64_t     bit_rate;
-    int         sample_rate;
-};
 
 
 

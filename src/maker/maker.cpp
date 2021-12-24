@@ -35,25 +35,17 @@ Maker::~Maker()
 /*******************************************************************************
 Maker::init()
 ********************************************************************************/
-void Maker::init()
+void Maker::init( VideoEncodeSetting v_setting, AudioEncodeSetting a_setting )
 {
-    VideoEncodeSetting v_setting;
-    //v_setting.code_id   =   AV_CODEC_ID_H264;
-    v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
-    v_setting.width     =   1920;
-    v_setting.height    =   1080;
-
-    AudioEncodeSetting a_setting;
-    //a_setting.code_id = AV_CODEC_ID_AAC;
-    a_setting.code_id = AV_CODEC_ID_AC3;
-    a_setting.bit_rate = 320000;
-    a_setting.sample_rate = 48000;
-
     v_encoder.init( 0, v_setting);
     a_encoder.init( 1, a_setting);
 
-    muxer.init( v_encoder.get_ctx(), v_encoder.get_codec(), a_encoder.get_ctx(), a_encoder.get_codec() );
+    auto v_ctx = v_encoder.get_ctx();
+    auto v_codec = v_encoder.get_codec();
+    auto a_ctx = a_encoder.get_ctx();
+    auto a_codec = a_encoder.get_codec();
 
+    muxer.init( v_ctx, v_codec, a_ctx, a_codec );
 }
 
 

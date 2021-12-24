@@ -128,5 +128,8 @@
     <ClInclude Include="..\src\player\play_def.h">
       <Filter>src\player</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\maker\maker_def.h">
+      <Filter>src\maker</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

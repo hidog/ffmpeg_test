@@ -22,20 +22,9 @@ https://www.cnblogs.com/linuxAndMcu/p/14706012.html
 */
 
 
-extern "C" {
-#include "../ffmpeg_example/demuxing_decoding.h"
-#include "../ffmpeg_example/ffplay.h"
-#include <libavcodec/avcodec.h>
 
-}
-
-#include "../ffmpeg_example/muxing.h"
-
-
-#include "maker/audio_encode.h"
-#include "maker/video_encode.h"
 #include "maker/maker.h"
-#include "maker/mux.h"
+
 
 
 
@@ -46,8 +35,23 @@ int main()
     muxing();
 #elif 1
 
+    VideoEncodeSetting v_setting;
+    //v_setting.code_id   =   AV_CODEC_ID_H264;
+    //v_setting.code_id   =   AV_CODEC_ID_H265;
+    v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
+    v_setting.width     =   1920;
+    v_setting.height    =   1080;
+
+    AudioEncodeSetting a_setting;
+    //a_setting.code_id = AV_CODEC_ID_MP3;
+    //a_setting.code_id = AV_CODEC_ID_AAC;
+    a_setting.code_id = AV_CODEC_ID_AC3;
+    a_setting.bit_rate = 320000;
+    a_setting.sample_rate = 48000;
+
     Maker maker;
-    maker.init();
+
+    maker.init( v_setting, a_setting );
     maker.work();
     maker.end();
 
