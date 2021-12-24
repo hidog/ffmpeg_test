@@ -31,7 +31,6 @@ https://www.cnblogs.com/linuxAndMcu/p/14706012.html
 int main()
 {
 #if 0
-
     muxing();
 #elif 1
 
@@ -45,9 +44,9 @@ int main()
     AudioEncodeSetting a_setting;
     //a_setting.code_id = AV_CODEC_ID_MP3;
     //a_setting.code_id = AV_CODEC_ID_AAC;
-    a_setting.code_id = AV_CODEC_ID_AC3;
-    a_setting.bit_rate = 320000;
-    a_setting.sample_rate = 48000;
+    a_setting.code_id       =   AV_CODEC_ID_AC3;
+    a_setting.bit_rate      =   320000;
+    a_setting.sample_rate   =   48000;
 
     Maker maker;
 

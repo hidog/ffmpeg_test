@@ -20,16 +20,15 @@ public:
     Maker& operator = ( const Maker& ) = delete;
     Maker& operator = ( Maker&& ) = delete;
 
-    void init( VideoEncodeSetting v_setting, AudioEncodeSetting a_setting );
-    void work();
-    void end();
+    void    init( VideoEncodeSetting v_setting, AudioEncodeSetting a_setting );
+    void    work();
+    void    end();
 
 private:
 
     AudioEncode a_encoder;
     VideoEncode v_encoder;
     Mux muxer;
-
 
 };
 
