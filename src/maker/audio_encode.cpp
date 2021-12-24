@@ -449,8 +449,8 @@ AVFrame*    AudioEncode::get_frame()
     int     i;
     int16_t     intens[2];
 
+    //
     if( feof(fp) != 0 )
-    //if( frame_count > 400 )
         return nullptr;
 
     ret = av_frame_make_writable(frame);
@@ -484,6 +484,11 @@ AVFrame*    AudioEncode::get_frame()
             *((int16_t*)(frame->data[0]) + 2*i + 1 )   =   intens[1];
         }
     }
+
+    // note: 在 fread 後再用 feof 跟 i 做判斷
+    // 不然有機會 feof 判斷還有資料, 但 fread 讀到的是檔案結尾.
+    if( i == 0 && feof(fp) != 0 )
+        return nullptr;
 
     sp_count    =   i;
 

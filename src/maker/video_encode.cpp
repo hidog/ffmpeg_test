@@ -70,8 +70,8 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting )
     ctx->gop_size       =   30;
     ctx->max_b_frames   =   15;
 
-    //ctx->pix_fmt        =   AV_PIX_FMT_YUV420P;
-    ctx->pix_fmt        =   AV_PIX_FMT_YUV420P10LE;
+    ctx->pix_fmt        =   AV_PIX_FMT_YUV420P;
+    //ctx->pix_fmt        =   AV_PIX_FMT_YUV420P10LE;
     //ctx->me_subpel_quality = 10;
 
     //if( codec->id == AV_CODEC_ID_H264 )
@@ -84,6 +84,8 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting )
         /* just for testing, we also add B-frames */
         ctx->max_b_frames = 2;
     }
+#endif
+
     if( ctx->codec_id == AV_CODEC_ID_MPEG1VIDEO )
     {
         /* Needed to avoid using macroblocks in which some coeffs overflow.
@@ -91,7 +93,6 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting )
         * the motion of the chroma plane does not match the luma plane. */
         ctx->mb_decision = 2;
     }
-#endif
 
     // open codec.
     ret     =   avcodec_open2( ctx, codec, NULL );

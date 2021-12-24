@@ -97,7 +97,7 @@ void Mux::init( AVCodecContext* v_ctx, AVCodec *v_codec, AVCodecContext* a_ctx, 
     AVDictionary    *opt    =   nullptr;
 
     // alloc output.
-    avformat_alloc_output_context2( &output_ctx, NULL, "mp4", "J:\\test.mp4" );
+    avformat_alloc_output_context2( &output_ctx, NULL, "avi", "J:\\test.avi" );
     //avformat_alloc_output_context2( &output_ctx, NULL, NULL, "H:\\test.mp4" );
     if( output_ctx == nullptr ) 
         MYLOG( LOG::ERROR, "output_ctx = nullptr" );

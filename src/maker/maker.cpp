@@ -39,13 +39,13 @@ void Maker::init()
 {
     VideoEncodeSetting v_setting;
     //v_setting.code_id   =   AV_CODEC_ID_H264;
-    v_setting.code_id   =   AV_CODEC_ID_H265;
+    v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
     v_setting.width     =   1920;
     v_setting.height    =   1080;
 
     AudioEncodeSetting a_setting;
     //a_setting.code_id = AV_CODEC_ID_AAC;
-    a_setting.code_id = AV_CODEC_ID_MP3;
+    a_setting.code_id = AV_CODEC_ID_AC3;
     a_setting.bit_rate = 320000;
     a_setting.sample_rate = 48000;
 
@@ -107,7 +107,7 @@ void Maker::work()
     };
 
     // determine stream pts function
-    auto order_pts_func = [=, &st_tb] () -> int
+    auto order_pts_func = [&] () -> int
     {
         int     result = 0;
         int64_t v_pts, a_pts;
@@ -144,11 +144,16 @@ void Maker::work()
         return  result;
     };
 
+    int count = 0;
 
     // 休息一下再來思考這邊怎麼改寫, 希望寫得好看一點
     while( v_frame != nullptr || a_frame != nullptr )
     {        
         assert( v_frame != nullptr || a_frame != nullptr );
+
+        if( count == 82274 )
+            printf("test\n");
+        printf("count = %d\n", count++);
 
         //
         ret = order_pts_func();
