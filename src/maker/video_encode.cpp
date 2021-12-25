@@ -10,12 +10,9 @@
 extern "C" {
 
 #include <libavcodec/avcodec.h>
-
 #include <libavutil/opt.h>
 #include <libavutil/imgutils.h>
-
 #include <libswscale/swscale.h>
-
 
 }
 
@@ -75,7 +72,7 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting )
     //ctx->me_subpel_quality = 10;
 
     //if( codec->id == AV_CODEC_ID_H264 )
-    av_opt_set( ctx->priv_data, "preset", "medium", 0);
+    //av_opt_set( ctx->priv_data, "preset", "medium", 0);
 
 #if 0
     // 未來研究這段code的作用

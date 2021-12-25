@@ -3,17 +3,24 @@
 
 
 #include <stdint.h>
+#include <string>
 
 
-#ifdef __cplusplus
+
 extern "C" {
-#endif
 
 #include <libavcodec/codec_id.h>
 
-#ifdef __cplusplus
 } // end extern "C"
-#endif
+
+
+
+
+struct EncodeSetting
+{
+    std::string     filename;
+    std::string     extension;
+};
 
 
 

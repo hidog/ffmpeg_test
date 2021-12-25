@@ -22,7 +22,7 @@ https://www.cnblogs.com/linuxAndMcu/p/14706012.html
 */
 
 
-
+#include "../ffmpeg_example/muxing.h"
 #include "maker/maker.h"
 
 
@@ -31,26 +31,35 @@ https://www.cnblogs.com/linuxAndMcu/p/14706012.html
 int main()
 {
 #if 0
+
     muxing();
+
 #elif 1
 
+    EncodeSetting   setting;
+    setting.filename    =   "J:\\test2.mkv";
+    setting.extension   =   "matroska";
+    //setting.filename    =   "J:\\test2.mp4";
+    //setting.extension   =   "mp4";
+
+
     VideoEncodeSetting v_setting;
-    //v_setting.code_id   =   AV_CODEC_ID_H264;
+    v_setting.code_id   =   AV_CODEC_ID_H264;
     //v_setting.code_id   =   AV_CODEC_ID_H265;
-    v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
+    //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
     v_setting.width     =   1920;
     v_setting.height    =   1080;
 
     AudioEncodeSetting a_setting;
     //a_setting.code_id = AV_CODEC_ID_MP3;
-    //a_setting.code_id = AV_CODEC_ID_AAC;
-    a_setting.code_id       =   AV_CODEC_ID_AC3;
+    a_setting.code_id = AV_CODEC_ID_AAC;
+    //a_setting.code_id       =   AV_CODEC_ID_AC3;
     a_setting.bit_rate      =   320000;
     a_setting.sample_rate   =   48000;
 
     Maker maker;
 
-    maker.init( v_setting, a_setting );
+    maker.init( setting, v_setting, a_setting );
     maker.work();
     maker.end();
 

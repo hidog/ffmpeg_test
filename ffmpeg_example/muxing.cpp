@@ -716,7 +716,7 @@ int muxing()
 
 
 
-    filename = "J:\\test.mp4";
+    filename = "J:\\test.mkv";
 
 
     /* allocate the output media context */

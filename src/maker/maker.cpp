@@ -38,7 +38,7 @@ Maker::~Maker()
 /*******************************************************************************
 Maker::init()
 ********************************************************************************/
-void Maker::init( VideoEncodeSetting v_setting, AudioEncodeSetting a_setting )
+void Maker::init( EncodeSetting setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting )
 {
     v_encoder.init( 0, v_setting );
     a_encoder.init( 1, a_setting );
@@ -48,7 +48,7 @@ void Maker::init( VideoEncodeSetting v_setting, AudioEncodeSetting a_setting )
     auto a_ctx      =   a_encoder.get_ctx();
     auto a_codec    =   a_encoder.get_codec();
 
-    muxer.init( v_ctx, v_codec, a_ctx, a_codec );
+    muxer.init( setting, v_ctx, v_codec, a_ctx, a_codec );
 }
 
 
