@@ -30,7 +30,7 @@ public:
     VideoEncode& operator = ( const VideoEncode& ) = delete;
     VideoEncode& operator = ( VideoEncode&& ) = delete;
 
-    void    init( int st_idx, VideoEncodeSetting setting );
+    void    init( int st_idx, VideoEncodeSetting setting, bool need_global_header );
     void    end();
 
     int64_t     get_pts() override;

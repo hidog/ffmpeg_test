@@ -36,11 +36,13 @@ public:
     Encode& operator = ( Encode&& ) = delete;
 
     void    init( int st_idx, AVCodecID code_id );
-    void    end();
+    void    open();   
+
     int     flush();
     bool    is_flush();
     void    set_flush( bool flag );
 
+    virtual void    end();
 
     AVPacket*   get_pkt();
     AVCodec*    get_codec();

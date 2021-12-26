@@ -219,18 +219,19 @@ void    AudioEncode::end()
 /*******************************************************************************
 AudioEncode::init()
 ********************************************************************************/
-void    AudioEncode::init( int st_idx, AudioEncodeSetting a_setting )
+void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_global_header )
 {
-    AVCodecID   code_id     =   a_setting.code_id;
-    int         ret;
+    AVCodecID   code_id     =   setting.code_id;
+    int         ret         =   0;
 
     Encode::init( st_idx, code_id );
+    Encode::open();
 
     // some codec need set bit rate.
     // 驗證一下這件事情. 部分 codec 會自動產生預設 bit rate.
-    if( a_setting.code_id != AV_CODEC_ID_FLAC )
-        ctx->bit_rate   =   a_setting.bit_rate;
-    
+    if( setting.code_id != AV_CODEC_ID_FLAC )
+        ctx->bit_rate   =   setting.bit_rate;
+
     // format可更改,但支援度跟codec有關.
     if( code_id == AV_CODEC_ID_MP3 )
         ctx->sample_fmt     =   AV_SAMPLE_FMT_S16P;
@@ -245,11 +246,21 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting a_setting )
         MYLOG( LOG::ERROR, "fmt fail." );
 
     // init setting
-    ctx->sample_rate    =   a_setting.sample_rate; 
+    ctx->sample_rate    =   setting.sample_rate; 
     ctx->channel_layout =   AV_CH_LAYOUT_STEREO;
     ctx->channels       =   av_get_channel_layout_nb_channels(ctx->channel_layout);
 
-    // open ctx.
+
+    if( need_global_header == true )
+        ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+
+
+    // open ctx.1
+    //AVDictionary *opt_arg = nullptr;
+    //AVDictionary *opt = NULL;
+    //av_dict_copy(&opt, opt_arg, 0);
+    //ret     =   avcodec_open2( ctx, codec, &opt );
+
     ret     =   avcodec_open2( ctx, codec, nullptr );
     if( ret < 0 ) 
         MYLOG( LOG::ERROR, "open fail." );
@@ -263,15 +274,16 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting a_setting )
     frame->format           =   ctx->sample_fmt;
     frame->channel_layout   =   ctx->channel_layout;
     frame->sample_rate      =   ctx->sample_rate;
-    frame->pts              =   -frame->nb_samples;
+    frame->pts              =   -frame->nb_samples;  // 一個取巧的做法, 參考取得 frame 的code, 確保第一個 frame 的 pts 是 0
 
-    // allocate the data buffers
+                                                     // allocate the data buffers
     ret     =   av_frame_get_buffer( frame, 0 );
     if( ret < 0 )
         MYLOG( LOG::ERROR, "alloc buffer fail" );
-
-    ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 }
+
+
+
 
 
 

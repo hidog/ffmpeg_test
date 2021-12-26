@@ -45,11 +45,12 @@ VideoEncode::~VideoEncode()
 /*******************************************************************************
 VideoEncode::init()
 ********************************************************************************/
-void    VideoEncode::init( int st_idx, VideoEncodeSetting setting )
+void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_global_header )
 {
-    int ret;
-
     Encode::init( st_idx, setting.code_id );
+    Encode::open();
+
+    int     ret     =   0;
 
     //
     ctx->bit_rate   =   3000000;
@@ -91,8 +92,22 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting )
         ctx->mb_decision = 2;
     }
 
+
+    // need before avcodec_open2
+    //if( output_ctx->oformat->flags & AVFMT_GLOBALHEADER )
+    if( need_global_header == true )
+        ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+
+
+
+
     // open codec.
-    ret     =   avcodec_open2( ctx, codec, NULL );
+    //AVDictionary *opt_arg = nullptr;
+    //AVDictionary *opt = NULL;
+    //av_dict_copy(&opt, opt_arg, 0);
+    //ret     =   avcodec_open2( ctx, codec, &opt );
+
+    ret     =   avcodec_open2( ctx, codec, nullptr );
     if( ret < 0 ) 
         MYLOG( LOG::ERROR, "open fail" );
 
@@ -109,12 +124,13 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting )
     video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, ctx->width, ctx->height, ctx->pix_fmt , 1 );
 
     sws_ctx     =   sws_getContext( 1920, 1080, AV_PIX_FMT_BGRA,                     // src
-                                    ctx->width, ctx->height, ctx->pix_fmt,           // dst
-                                    SWS_BICUBIC, NULL, NULL, NULL );
+        ctx->width, ctx->height, ctx->pix_fmt,           // dst
+        SWS_BICUBIC, NULL, NULL, NULL );
 
-    //if( output_ctx->oformat->flags & AVFMT_GLOBALHEADER )
-    ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+
 }
+
+
 
 
 

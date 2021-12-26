@@ -34,8 +34,11 @@ public:
     Mux& operator = ( const Mux& ) = delete;
     Mux& operator = ( Mux&& ) = delete;
 
-    void    init( EncodeSetting setting, AVCodecContext* v_ctx, AVCodec *v_codec , AVCodecContext* a_ctx, AVCodec *a_codec );
+    void    init( EncodeSetting setting );
     void    end();
+    void    open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx );
+
+    bool    is_need_global_header();
 
     void    write_header();
     void    write_frame( AVPacket* pkt );
@@ -45,8 +48,6 @@ public:
     AVRational  get_audio_stream_timebase();
 
 private:
-
-    void    add_stream( AVCodecContext* v_ctx, AVCodec *v_codec, AVCodecContext* a_ctx, AVCodec *a_codec );
 
     AVFormatContext     *output_ctx     =   nullptr;
 

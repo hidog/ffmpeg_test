@@ -31,8 +31,10 @@ public:
     AudioEncode& operator = ( const AudioEncode& ) = delete;
     AudioEncode& operator = ( const AudioEncode&& ) = delete;
 
-    void    init( int st_idx, AudioEncodeSetting a_setting );
-    void    end();
+    void    init( int st_idx, AudioEncodeSetting setting, bool need_global_header );    
+    void    open( AudioEncodeSetting setting );
+
+    void    end() override;
 
     void    list_sample_format( AVCodecID code_id );
     void    list_sample_rate( AVCodecID code_id );
