@@ -60,8 +60,8 @@ int main()
     //v_setting.gop_size      =   200;  // h265不能設太大
     //v_setting.max_b_frames  =   150;
 
-    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
-    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
+    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
+    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
 
     v_setting.src_width     =   1920;
     v_setting.src_height    =   1080;

@@ -49,10 +49,6 @@ https://www.itread01.com/content/1549629205.html
 ********************************************************************************/
 void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_global_header )
 {
-    pix_fmt     =   setting.pix_fmt;
-    width       =   setting.width;
-    height      =   setting.height;
-
     src_width   =   setting.src_width;
     src_height  =   setting.src_height;
 
@@ -74,7 +70,7 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
     ctx->gop_size       =   setting.gop_size;
     ctx->max_b_frames   =   setting.max_b_frames;
 
-    ctx->pix_fmt        =   AV_PIX_FMT_YUV420P;
+    ctx->pix_fmt        =   setting.pix_fmt;
     
     // 底下參數未開放外部設置,之後思考要不要開放
     ctx->me_subpel_quality  =   10;
@@ -121,7 +117,7 @@ VideoEncode::init_sws()
 void    VideoEncode::init_sws( VideoEncodeSetting setting )
 {
     // data for sws.
-    video_bufsize   =   av_image_alloc( video_data, video_linesize, ctx->width, ctx->height, ctx->pix_fmt , 1 );
+    video_bufsize   =   av_image_alloc( video_data, video_linesize, ctx->width, ctx->height, ctx->pix_fmt, 1 );
 
     sws_ctx     =   sws_getContext( setting.src_width, setting.src_height, setting.src_pix_fmt,    // src
                                     ctx->width,        ctx->height,        ctx->pix_fmt,           // dst
@@ -325,19 +321,19 @@ AVFrame*    VideoEncode::get_frame()
     if( img.load( str ) == false )
         return  nullptr;    
 
-    ret = av_frame_make_writable(frame);
+    ret = av_frame_make_writable( frame );
     if( ret < 0 )
         assert(0);
 
     int         linesize[8]     =   { img.bytesPerLine() };
     uint8_t     *data[4]         =   { img.bits() };
     
-    sws_scale( sws_ctx, data, linesize, 0, src_height, video_data, video_linesize );
+    sws_scale( sws_ctx, data, linesize, 0, img.height(), video_data, video_linesize );
 
 #if 1
     av_image_copy( frame->data, frame->linesize, 
                    (const uint8_t**)video_data, video_linesize, 
-                   pix_fmt, width, height );
+                   ctx->pix_fmt, ctx->width, ctx->height );
 #else
     // yuv420p
     //memcpy( frame->data[0], video_dst_data[0], ctx->width * ctx->height );

@@ -15,7 +15,6 @@
 
 struct AVFrame;
 enum AVCodecID;
-enum AVPixelFormat;
 
 
 
@@ -45,11 +44,6 @@ public:
     void    encode_test();
 
 private:
-
-    AVPixelFormat   pix_fmt;
-    int     width;
-    int     height;
-
     uint8_t*    video_data[4]       =   { nullptr };
     int         video_linesize[4]   =   { 0 };
     int         video_bufsize       =   0;
