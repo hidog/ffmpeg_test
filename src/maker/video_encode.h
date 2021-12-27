@@ -15,6 +15,7 @@
 
 struct AVFrame;
 enum AVCodecID;
+enum AVPixelFormat;
 
 
 
@@ -32,10 +33,10 @@ public:
 
     void    init( int st_idx, VideoEncodeSetting setting, bool need_global_header );
     void    end();
+    void    init_sws( VideoEncodeSetting setting );
 
     int64_t     get_pts() override;
     AVFrame*    get_frame() override;
-
     int         send_frame() override;
 
     // for test. run without mux.
@@ -45,9 +46,16 @@ public:
 
 private:
 
-    uint8_t  *video_dst_data[4]     =   { nullptr };
-    int      video_dst_linesize[4]  =   { 0 };
-    int      video_dst_bufsize      =   0;
+    AVPixelFormat   pix_fmt;
+    int     width;
+    int     height;
+
+    uint8_t*    video_data[4]       =   { nullptr };
+    int         video_linesize[4]   =   { 0 };
+    int         video_bufsize       =   0;
+
+    int     src_width   =   0;
+    int     src_height  =   0;
 
 };
 

@@ -461,6 +461,9 @@ AVFrame*    AudioEncode::get_frame()
     int     i;
     int16_t     intens[2];
 
+    if( frame_count > 400 )
+        return  nullptr;
+
     //
     if( feof(fp) != 0 )
         return nullptr;

@@ -16,6 +16,8 @@ extern "C" {
 
 
 
+
+
 struct EncodeSetting
 {
     std::string     filename;
@@ -26,9 +28,19 @@ struct EncodeSetting
 
 struct VideoEncodeSetting
 {
-    AVCodecID   code_id;
-    int         width;
-    int         height;
+    AVCodecID       code_id;
+    AVRational      time_base;
+    AVPixelFormat   pix_fmt;
+
+    int     width;
+    int     height;
+
+    int     gop_size;
+    int     max_b_frames;
+
+    int             src_width;
+    int             src_height;
+    AVPixelFormat   src_pix_fmt;
 };
 
 

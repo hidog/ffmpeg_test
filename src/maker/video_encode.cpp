@@ -44,9 +44,19 @@ VideoEncode::~VideoEncode()
 
 /*******************************************************************************
 VideoEncode::init()
+
+https://www.itread01.com/content/1549629205.html
 ********************************************************************************/
 void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_global_header )
 {
+    pix_fmt     =   setting.pix_fmt;
+    width       =   setting.width;
+    height      =   setting.height;
+
+    src_width   =   setting.src_width;
+    src_height  =   setting.src_height;
+
+    //
     Encode::init( st_idx, setting.code_id );
     Encode::open();
 
@@ -57,49 +67,26 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
     ctx->width      =   setting.width;
     ctx->height     =   setting.height;
 
-    ctx->time_base.num  =   1001; 
-    ctx->time_base.den  =   24000;
-    ctx->framerate.num  =   24000; 
-    ctx->framerate.den  =   1001;
+    ctx->time_base  =   setting.time_base; 
+    ctx->framerate.num  =   setting.time_base.den; 
+    ctx->framerate.den  =   setting.time_base.num;
 
-    //ctx->gop_size       =   200;
-    //ctx->max_b_frames   =   150;
-    // h265 不能設太大
-    ctx->gop_size       =   30;
-    ctx->max_b_frames   =   15;
+    ctx->gop_size       =   setting.gop_size;
+    ctx->max_b_frames   =   setting.max_b_frames;
 
     ctx->pix_fmt        =   AV_PIX_FMT_YUV420P;
-    //ctx->pix_fmt        =   AV_PIX_FMT_YUV420P10LE;
-    //ctx->me_subpel_quality = 10;
-
-    //if( codec->id == AV_CODEC_ID_H264 )
-    //av_opt_set( ctx->priv_data, "preset", "medium", 0);
-
-#if 0
-    // 未來研究這段code的作用
-    if( ctx->codec_id == AV_CODEC_ID_MPEG2VIDEO) 
-    {
-        /* just for testing, we also add B-frames */
-        ctx->max_b_frames = 2;
-    }
-#endif
+    
+    // 底下參數未開放外部設置,之後思考要不要開放
+    ctx->me_subpel_quality  =   10;
+    if( codec->id == AV_CODEC_ID_H264 || codec->id == AV_CODEC_ID_H265 )
+        av_opt_set( ctx->priv_data, "preset", "medium", 0);
 
     if( ctx->codec_id == AV_CODEC_ID_MPEG1VIDEO )
-    {
-        /* Needed to avoid using macroblocks in which some coeffs overflow.
-        * This does not happen with normal video, it just happens here as
-        * the motion of the chroma plane does not match the luma plane. */
-        ctx->mb_decision = 2;
-    }
-
+        ctx->mb_decision    =   FF_MB_DECISION_RD;
 
     // need before avcodec_open2
-    //if( output_ctx->oformat->flags & AVFMT_GLOBALHEADER )
     if( need_global_header == true )
         ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-
-
-
 
     // open codec.
     //AVDictionary *opt_arg = nullptr;
@@ -120,16 +107,26 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
     if( ret < 0 ) 
         MYLOG( LOG::ERROR, "get buffer fail." );
 
-    // data for sws.
-    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, ctx->width, ctx->height, ctx->pix_fmt , 1 );
-
-    sws_ctx     =   sws_getContext( 1920, 1080, AV_PIX_FMT_BGRA,                     // src
-        ctx->width, ctx->height, ctx->pix_fmt,           // dst
-        SWS_BICUBIC, NULL, NULL, NULL );
-
-
+    //
+    init_sws( setting );
 }
 
+
+
+
+
+/*******************************************************************************
+VideoEncode::init_sws()
+********************************************************************************/
+void    VideoEncode::init_sws( VideoEncodeSetting setting )
+{
+    // data for sws.
+    video_bufsize   =   av_image_alloc( video_data, video_linesize, ctx->width, ctx->height, ctx->pix_fmt , 1 );
+
+    sws_ctx     =   sws_getContext( setting.src_width, setting.src_height, setting.src_pix_fmt,    // src
+                                    ctx->width,        ctx->height,        ctx->pix_fmt,           // dst
+                                    SWS_BICUBIC, NULL, NULL, NULL );
+}
 
 
 
@@ -274,20 +271,20 @@ void    VideoEncode::end()
 {
     Encode::end();
 
-    if( video_dst_data[0] != nullptr )
+    if( video_data[0] != nullptr )
     {
-        av_free( video_dst_data[0] );
-        video_dst_data[0]   =   nullptr;
-        video_dst_data[1]   =   nullptr;
-        video_dst_data[2]   =   nullptr;
-        video_dst_data[3]   =   nullptr;
+        av_free( video_data[0] );
+        video_data[0]   =   nullptr;
+        video_data[1]   =   nullptr;
+        video_data[2]   =   nullptr;
+        video_data[3]   =   nullptr;
     }
 
-    video_dst_linesize[0]   =   0;
-    video_dst_linesize[1]   =   0;
-    video_dst_linesize[2]   =   0;
-    video_dst_linesize[3]   =   0;
-    video_dst_bufsize       =   0;
+    video_linesize[0]   =   0;
+    video_linesize[1]   =   0;
+    video_linesize[2]   =   0;
+    video_linesize[3]   =   0;
+    video_bufsize       =   0;
 }
 
 
@@ -321,8 +318,8 @@ AVFrame*    VideoEncode::get_frame()
     sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
     printf( "str = %s\n", str );
 
-    //if( frame_count > 300 )
-      //  return  nullptr;
+    if( frame_count > 300 )
+        return  nullptr;
 
     QImage img;
     if( img.load( str ) == false )
@@ -332,11 +329,16 @@ AVFrame*    VideoEncode::get_frame()
     if( ret < 0 )
         assert(0);
 
-    int linesize[8] = { img.bytesPerLine() };
-    uint8_t* ptr[4] = { img.bits() };
+    int         linesize[8]     =   { img.bytesPerLine() };
+    uint8_t     *data[4]         =   { img.bits() };
     
-    sws_scale( sws_ctx, ptr, linesize, 0, 1080, video_dst_data, video_dst_linesize );
+    sws_scale( sws_ctx, data, linesize, 0, src_height, video_data, video_linesize );
 
+#if 1
+    av_image_copy( frame->data, frame->linesize, 
+                   (const uint8_t**)video_data, video_linesize, 
+                   pix_fmt, width, height );
+#else
     // yuv420p
     //memcpy( frame->data[0], video_dst_data[0], ctx->width * ctx->height );
     //memcpy( frame->data[1], video_dst_data[1], ctx->width * ctx->height / 4 );
@@ -345,9 +347,9 @@ AVFrame*    VideoEncode::get_frame()
     memcpy( frame->data[0], video_dst_data[0], video_dst_linesize[0] * ctx->height );
     memcpy( frame->data[1], video_dst_data[1], video_dst_linesize[1] * ctx->height / 2);
     memcpy( frame->data[2], video_dst_data[2], video_dst_linesize[2] * ctx->height / 2);
+#endif
 
     frame->pts = frame_count;
-
     frame_count++;
 
     return frame;

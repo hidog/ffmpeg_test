@@ -47,8 +47,26 @@ int main()
     v_setting.code_id   =   AV_CODEC_ID_H264;
     //v_setting.code_id   =   AV_CODEC_ID_H265;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
-    v_setting.width     =   1920;
-    v_setting.height    =   1080;
+    //v_setting.code_id   =   AV_CODEC_ID_MPEG2VIDEO;
+
+    v_setting.width     =   720;
+    v_setting.height    =   480;
+
+    v_setting.time_base.num     =   1001;
+    v_setting.time_base.den     =   24000;
+
+    v_setting.gop_size      =   30;
+    v_setting.max_b_frames  =   15;
+    //v_setting.gop_size      =   200;  // h265不能設太大
+    //v_setting.max_b_frames  =   150;
+
+    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
+    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
+
+    v_setting.src_width     =   1920;
+    v_setting.src_height    =   1080;
+    v_setting.src_pix_fmt   =   AV_PIX_FMT_BGRA;    // for QImage
+
 
     AudioEncodeSetting a_setting;
     //a_setting.code_id = AV_CODEC_ID_MP3;
@@ -56,6 +74,9 @@ int main()
     //a_setting.code_id       =   AV_CODEC_ID_AC3;
     a_setting.bit_rate      =   320000;
     a_setting.sample_rate   =   48000;
+
+
+
 
     Maker maker;
 
