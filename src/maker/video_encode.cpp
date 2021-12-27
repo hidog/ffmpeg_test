@@ -314,8 +314,8 @@ AVFrame*    VideoEncode::get_frame()
     sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
     printf( "str = %s\n", str );
 
-    if( frame_count > 300 )
-        return  nullptr;
+    //if( frame_count > 300 )
+    //    return  nullptr;
 
     QImage img;
     if( img.load( str ) == false )

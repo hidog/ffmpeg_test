@@ -62,7 +62,7 @@ static int get_format_from_sample_fmt(const char **fmt,
 /**
  * Fill dst buffer with nb_samples, generated starting from t.
  */
-static void fill_samples(double *dst, int nb_samples, int nb_channels, int sample_rate, double *t)
+static void fill_samples( double *dst, double *dst2, int nb_samples, int nb_channels, int sample_rate, double *t)
 {
     int i, j;
     double tincr = 1.0 / sample_rate, *dstp = dst;
@@ -71,14 +71,64 @@ static void fill_samples(double *dst, int nb_samples, int nb_channels, int sampl
     /* generate sin tone with 440Hz frequency and duplicated channels */
     for (i = 0; i < nb_samples; i++) {
         *dstp = sin(c * *t);
+        //*dst2 = sin( c* *t);
         for (j = 1; j < nb_channels; j++)
+        {
             dstp[j] = dstp[0];
+            //dst2[j] = dstp[0];
+        }
         dstp += nb_channels;
+        //dst2 += nb_channels;
         *t += tincr;
     }
 }
 
-int main(int argc, char **argv)
+
+
+static void fill_samples_2( int16_t *dst, int16_t *dst2, int nb_samples, int nb_channels, int sample_rate, double *t)
+{
+    int i, j;
+    //double tincr = 1.0 / sample_rate;
+    int16_t *dstp = dst;
+    const double c = 2 * M_PI * 440.0;
+
+    /* generate sin tone with 440Hz frequency and duplicated channels */
+    /*for (i = 0; i < nb_samples; i++) {
+        *dstp = sin(c * *t);
+        *dst2 = sin( c* *t);
+        for (j = 1; j < nb_channels; j++)
+        {
+            dstp[j] = dstp[0];
+            dst2[j] = dstp[0];
+        }
+        dstp += nb_channels;
+        dst2 += nb_channels;
+        *t += tincr;
+    }*/
+
+    int v;
+    int16_t *q = dst;
+
+    double tincr = 2 * M_PI * 110.0 / sample_rate;
+    double tincr2 = 2 * M_PI * 110.0 / sample_rate / sample_rate;
+
+
+    for( j = 0; j < nb_samples; j++ ) 
+    {
+        v = (int)(sin(*t) * 10000);
+        for (i = 0; i < 2; i++)
+            *q++ = v;
+        *t     += tincr;
+        tincr += tincr2;
+    }
+}
+
+
+
+
+
+
+int resample_audio()
 {
     int64_t src_ch_layout = AV_CH_LAYOUT_STEREO, dst_ch_layout = AV_CH_LAYOUT_SURROUND;
     int src_rate = 48000, dst_rate = 44100;
@@ -86,7 +136,12 @@ int main(int argc, char **argv)
     int src_nb_channels = 0, dst_nb_channels = 0;
     int src_linesize, dst_linesize;
     int src_nb_samples = 1024, dst_nb_samples, max_dst_nb_samples;
-    enum AVSampleFormat src_sample_fmt = AV_SAMPLE_FMT_DBL, dst_sample_fmt = AV_SAMPLE_FMT_S16;
+
+
+    //enum AVSampleFormat src_sample_fmt = AV_SAMPLE_FMT_DBL, dst_sample_fmt = AV_SAMPLE_FMT_S16;
+    enum AVSampleFormat src_sample_fmt = AV_SAMPLE_FMT_S16, dst_sample_fmt = AV_SAMPLE_FMT_S16;
+
+    
     const char *dst_filename = NULL;
     FILE *dst_file;
     int dst_bufsize;
@@ -95,15 +150,8 @@ int main(int argc, char **argv)
     double t;
     int ret;
 
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s output_file\n"
-                "API example program to show how to resample an audio stream with libswresample.\n"
-                "This program generates a series of audio frames, resamples them to a specified "
-                "output format and rate and saves them to an output file named output_file.\n",
-            argv[0]);
-        exit(1);
-    }
-    dst_filename = argv[1];
+
+    dst_filename = "J:\\aaa.pcm";
 
     dst_file = fopen(dst_filename, "wb");
     if (!dst_file) {
@@ -162,11 +210,15 @@ int main(int argc, char **argv)
     t = 0;
     do {
         /* generate synthetic audio */
-        fill_samples((double *)src_data[0], src_nb_samples, src_nb_channels, src_rate, &t);
+        //fill_samples( (double *)src_data[0], (double *)src_data[1], src_nb_samples, src_nb_channels, src_rate, &t);
+        fill_samples_2( (int16_t *)src_data[0], (int16_t *)src_data[1], src_nb_samples, src_nb_channels, src_rate, &t) ;
+
 
         /* compute destination number of samples */
         dst_nb_samples = av_rescale_rnd(swr_get_delay(swr_ctx, src_rate) +
                                         src_nb_samples, dst_rate, src_rate, AV_ROUND_UP);
+
+
         if (dst_nb_samples > max_dst_nb_samples) {
             av_freep(&dst_data[0]);
             ret = av_samples_alloc(dst_data, &dst_linesize, dst_nb_channels,

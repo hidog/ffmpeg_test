@@ -50,6 +50,7 @@ struct AudioEncodeSetting
     AVCodecID   code_id;
     int64_t     bit_rate;
     int         sample_rate;
+    uint64_t    channel_layout;
 };
 
 

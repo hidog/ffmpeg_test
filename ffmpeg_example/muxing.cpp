@@ -321,7 +321,7 @@ static void open_audio(AVFormatContext *oc, const AVCodec *codec,
  * 'nb_channels' channels. */
 static AVFrame *get_audio_frame(OutputStream *ost)
 {
-#if 0
+#if 1
     AVFrame *frame = ost->tmp_frame;
     int j, i, v;
     int16_t *q = (int16_t*)frame->data[0];
@@ -427,27 +427,30 @@ static int write_audio_frame(AVFormatContext *oc, OutputStream *ost)
     {
         /* convert samples from native format to destination codec format, using the resampler */
         /* compute destination number of samples */
-        /*dst_nb_samples = av_rescale_rnd(swr_get_delay(ost->swr_ctx, c->sample_rate) + frame->nb_samples,
-                                        c->sample_rate, c->sample_rate, AV_ROUND_UP);*/
+        dst_nb_samples = av_rescale_rnd(swr_get_delay(ost->swr_ctx, c->sample_rate) + frame->nb_samples,
+                                        c->sample_rate, c->sample_rate, AV_ROUND_UP);
         //av_assert0(dst_nb_samples == frame->nb_samples);
 
         /* when we pass a frame to the encoder, it may keep a reference to it
          * internally;
          * make sure we do not overwrite it here
          */
-        //ret = av_frame_make_writable(ost->frame);
-        //if (ret < 0)
-          //  exit(1);
+        ret = av_frame_make_writable(ost->frame);
+        if (ret < 0)
+            exit(1);
 
         /* convert to destination format */
-        /*ret = swr_convert(ost->swr_ctx,
+        ret = swr_convert(ost->swr_ctx,
                           ost->frame->data, dst_nb_samples,
                           (const uint8_t **)frame->data, frame->nb_samples);
         if (ret < 0) {
             fprintf(stderr, "Error while converting\n");
             exit(1);
-        }*/
+        }
         //frame = ost->frame;
+
+
+
 
         AVRational avr { 1, c->sample_rate };
         frame->pts = av_rescale_q(ost->samples_count, avr, c->time_base);

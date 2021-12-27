@@ -131,5 +131,8 @@
     <ClInclude Include="..\src\maker\maker_def.h">
       <Filter>src\maker</Filter>
     </ClInclude>
+    <ClInclude Include="..\ffmpeg_example\resampling_audio.h">
+      <Filter>ffmpeg_example</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
