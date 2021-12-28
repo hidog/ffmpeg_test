@@ -16,7 +16,7 @@ class AudioWorker : public QThread
 
 public:
 
-    AudioWorker( QObject *parent );
+    AudioWorker( int _index, QObject *parent );
     ~AudioWorker();
     
     void    run() override;
@@ -50,6 +50,8 @@ private:
     bool    a_start     =   false;
     bool    force_stop  =   false;
     bool    seek_flag   =   false;
+
+    int index = 0;
 
 };
 

@@ -42,6 +42,9 @@ public:
     VideoWorker*    get_video_worker();
     AudioWorker*    get_audio_worker();
 
+    AudioWorker*    get_audio_worker2() { return audio_worker2; }
+
+
     void    keyPressEvent(QKeyEvent *event) override;
     void    closeEvent(QCloseEvent *event) override;
 
@@ -67,6 +70,8 @@ private:
     Worker          *worker         =   nullptr;  // 未來改成 unique pointer
     VideoWorker     *video_worker   =   nullptr;
     AudioWorker     *audio_worker   =   nullptr;
+    AudioWorker     *audio_worker2  =   nullptr;
+
 
     QMutex          *video_mtx      =   nullptr;
     VideoData       *view_data      =   nullptr;

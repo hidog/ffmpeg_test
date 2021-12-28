@@ -16,6 +16,8 @@ extern "C" {
 
 
 static std::queue<AudioData>    audio_queue;
+static std::queue<AudioData>    audio_queue2;
+
 static std::queue<VideoData>    video_queue;
 
 static std::mutex  a_mtx;
@@ -83,9 +85,12 @@ std::mutex& get_v_mtx()
 /*******************************************************************************
 get_audio_queue()
 ********************************************************************************/
-std::queue<AudioData>* get_audio_queue()
+std::queue<AudioData>* get_audio_queue( int index )
 {
-    return  &audio_queue;
+    if( index == 0 )
+        return  &audio_queue;
+    else
+        return  &audio_queue2;
 }
 
 
@@ -125,17 +130,17 @@ int     Player::init()
     fmt_ctx =   demuxer.get_format_context();
 
     //
-    ret     =   v_decoder.open_codec_context( fmt_ctx );
+    //ret     =   v_decoder.open_codec_context( fmt_ctx );
     ret     =   a_decoder.open_codec_context( fmt_ctx );
-    ret     =   s_decoder.open_codec_context( fmt_ctx );
+    //ret     =   s_decoder.open_codec_context( fmt_ctx );
 
     //
-    ret     =   v_decoder.init();
+    //ret     =   v_decoder.init();
     ret     =   a_decoder.init();    
 
     // handle subtitle
     // 有遇到影片會在這邊卡很久, 或許可以考慮用multi-thread的方式做處理, 以後再說...
-    init_subtitle(fmt_ctx);
+    //init_subtitle(fmt_ctx);
 
     return SUCCESS;
 }
@@ -605,15 +610,13 @@ bool    Player::demux_need_wait()
 {
     if( seek_flag == true )
         return  false;
-    else if( v_decoder.exist_stream() == true && a_decoder.exist_stream() == true )
+    else if( a_decoder.exist_stream() == true )
     {
-        if( video_queue.size() >= MAX_QUEUE_SIZE && audio_queue.size() >= MAX_QUEUE_SIZE )
+        if( audio_queue.size() >= MAX_QUEUE_SIZE )
             return  true;
         else
             return  false;
     }
-    else if( v_decoder.exist_stream() == true && video_queue.size() >= MAX_QUEUE_SIZE )    
-        return  true;  
     else if( a_decoder.exist_stream() == true && audio_queue.size() >= MAX_QUEUE_SIZE )
         return  true;
     else
@@ -684,12 +687,6 @@ void    Player::handle_seek()
     int         ret;
     AudioData   adata;
 
-    // clear queue.
-    v_mtx.lock();
-    while( video_queue.empty() == false )
-        video_queue.pop();
-    v_mtx.unlock();
-
     a_mtx.lock();
     while( audio_queue.empty() == false )
     {
@@ -699,9 +696,7 @@ void    Player::handle_seek()
     }
     a_mtx.unlock();
 
-    v_decoder.flush_for_seek();
     a_decoder.flush_for_seek();
-    s_decoder.flush_for_seek();
 
     // run seek.
     AVFormatContext*    fmt_ctx     =   demuxer.get_format_context();
@@ -751,7 +746,7 @@ void    Player::play_QT()
         //
         if( seek_flag == true )     
         {
-            while( ui_v_seek_lock == false || ui_a_seek_lock == false )
+            while( ui_a_seek_lock == false )
                 SLEEP_10MS;
             seek_flag   =   false;
             handle_seek();
@@ -769,15 +764,11 @@ void    Player::play_QT()
 
         //
         pkt     =   demuxer.get_packet();
-        if( v_decoder.find_index( pkt->stream_index ) == true )
-            dc  =   dynamic_cast<Decode*>(&v_decoder);
-        else if( a_decoder.find_index( pkt->stream_index ) == true )
+        if( a_decoder.find_index( pkt->stream_index ) == true )
             dc  =   dynamic_cast<Decode*>(&a_decoder);
-        else if( s_decoder.find_index( pkt->stream_index ) == true )
-            dc  =   dynamic_cast<Decode*>(&s_decoder);  
         else
         {
-            MYLOG( LOG::ERROR, "stream type not handle.");
+            MYLOG( LOG::WARN, "stream type not handle.");
             demuxer.unref_packet();
             continue;
         }
@@ -801,42 +792,11 @@ Player::decode
 ********************************************************************************/
 int     Player::decode( Decode *dc, AVPacket* pkt )
 {
-    // switch subtitle track
-    // 寫在這邊是為了方便未來跟multi-thread decode結合.
-    if( switch_subtitle_flag == true )
-    {
-        switch_subtitle_flag    =   false;
-        if( s_decoder.get_sub_src_type() == SubSourceType::FROM_FILE )
-            s_decoder.switch_subtltle(new_subtitle_path);
-        else if( s_decoder.get_sub_src_type() == SubSourceType::EMBEDDED )
-            s_decoder.switch_subtltle(new_subtitle_index);
-        else
-            MYLOG( LOG::ERROR, "no subtitle.");
-    }
-
-    int     ret     =   0;
-
-    // 必須對 subtitle 進行decode, 不然 filter 會出錯
-    if( s_decoder.find_index( pkt->stream_index ) == true )
-    {
-        ret     =   s_decoder.decode_subtitle(pkt);
-        return  ret;
-    }
-
-    // handle video stream with subtitle
-    if( s_decoder.exist_stream() == true && 
-        s_decoder.is_graphic_subtitle() == false &&
-        v_decoder.find_index( pkt->stream_index ) == true )
-    {
-        decode_video_with_nongraphic_subtitle(pkt);
-        return  SUCCESS;
-    }
-
     // handle video and audio
-    VideoData   vdata;
     AudioData   adata;
+    AudioData   adata2;
 
-    ret     =   dc->send_packet(pkt);
+    int ret     =   dc->send_packet(pkt);
     if( ret >= 0 )
     {
         while(true)
@@ -845,22 +805,15 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
             if( ret <= 0 )
                 break;
 
-            if( pkt->stream_index == v_decoder.current_index() )
-            {
-                if( s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == true )
-                    vdata   =   overlap_subtitle_image();
-                else
-                    vdata   =   v_decoder.output_video_data();
-                v_mtx.lock();
-                video_queue.push(vdata);
-                v_mtx.unlock();
-            }
-            else if( pkt->stream_index == a_decoder.current_index() )
+            if( pkt->stream_index == a_decoder.current_index() )
             {
                 //a_decoder.output_audio_frame_info();
                 adata   =   a_decoder.output_audio_data();
+                adata2   =   a_decoder.output_audio_data();
+
                 a_mtx.lock();
                 audio_queue.push(adata);
+                audio_queue2.push(adata2);
                 a_mtx.unlock();
             }     
 
@@ -957,30 +910,7 @@ flush 過程基本上同 decode, 送 nullptr 進去
 int    Player::flush()
 {
     int         ret     =   0;
-    VideoData   vdata;
     AudioData   adata;
-
-    // flush video
-    ret     =   v_decoder.send_packet(nullptr);
-    if( ret >= 0 )
-    {       
-        while(true)
-        {
-            ret     =   v_decoder.recv_frame(-1);
-            if( ret <= 0 )
-                break;
-
-            if( s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == true )
-                vdata   =   overlap_subtitle_image();
-            else
-                vdata   =   v_decoder.output_video_data();
-
-            // flush 階段本來想處理 subtitle, 但會跳錯誤, 還沒找到解決的做法. 目前只處理graphic subtitle的部分
-            video_queue.push(vdata);
-            v_decoder.unref_frame();  
-        }
-    }
-    v_decoder.flush_all_stream();
 
     // flush audio
     ret     =   a_decoder.send_packet(nullptr);

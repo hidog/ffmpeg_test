@@ -14,8 +14,8 @@
 /*******************************************************************************
 AudioWorker::AudioWorker()
 ********************************************************************************/
-AudioWorker::AudioWorker( QObject *parent )
-    :   QThread(parent)
+AudioWorker::AudioWorker( int _index, QObject *parent )
+    :   QThread(parent), index(_index)
 {}
 
 
@@ -38,8 +38,22 @@ void    AudioWorker::open_audio_output( AudioDecodeSetting as )
     //format.setSampleType(QAudioFormat::UnSignedInt);
     format.setSampleType(QAudioFormat::SignedInt);   // 用unsigned int 在調整音量的時候會爆音
     
+
+    QList<QAudioDeviceInfo> list =  QAudioDeviceInfo::availableDevices(QAudio::Mode::AudioOutput);
+
+    for( int i = 0; i < list.size(); i++ )
+    {
+        qDebug() << list[i].deviceName();
+    }
+
+    QAudioDeviceInfo device;
+    if( index == 0 )
+        device = list[0];  //0 8
+    else
+        device = list[4];  //4 9
+
     //
-    QAudioDeviceInfo info { QAudioDeviceInfo::defaultOutputDevice() };
+    QAudioDeviceInfo info { device };
     if( false == info.isFormatSupported(format) ) 
     {
         MYLOG( LOG::ERROR, "Raw audio format not supported by backend, cannot play audio." );
@@ -172,7 +186,7 @@ seek 的時候, 由 UI 端負責清空資料, 之後等到有資料才繼續播放.
 ********************************************************************************/
 void    AudioWorker::flush_for_seek()
 {
-    std::queue<AudioData>   *a_queue    =   get_audio_queue();
+    std::queue<AudioData>   *a_queue    =   get_audio_queue(index);
 
     bool    &v_start    =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
 
@@ -200,15 +214,12 @@ void AudioWorker::audio_play()
     std::mutex& a_mtx = get_a_mtx();
     
     AudioData   ad;
-    std::queue<AudioData>*  a_queue     =   get_audio_queue();
-    bool    &v_start        =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
+    std::queue<AudioData>*  a_queue     =   get_audio_queue(index);
     bool    &is_play_end    =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_play_end_state();
 
     while( a_queue->size() <= 3 )
         SLEEP_10MS;
     a_start = true;
-    while( v_start == false )
-        SLEEP_10MS;        
 
     std::chrono::steady_clock::time_point       last, now;
     std::chrono::duration<int64_t, std::milli>  duration;
@@ -254,9 +265,12 @@ void AudioWorker::audio_play()
                 remain  =   io->write( (const char*)ptr, remain_bytes );
                 if( remain != remain_bytes )
                     MYLOG( LOG::WARN, "remain != remain_bytes" );
+
+
                 delete [] ad.pcm;
                 ad.pcm      =   nullptr;
                 ad.bytes    =   0;
+
                 break;
             }
             else

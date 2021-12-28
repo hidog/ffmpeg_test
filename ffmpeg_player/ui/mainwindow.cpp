@@ -46,8 +46,9 @@ MainWindow::MainWindow(QWidget *parent)
     view_data->timestamp    =   0;
 
     worker          =   new Worker(this);
-    video_worker    =   new VideoWorker(this);
-    audio_worker    =   new AudioWorker(this);
+    audio_worker    =   new AudioWorker( 0, this);
+    audio_worker2    =   new AudioWorker( 1, this);
+
 
     set_signal_slot();
 }
