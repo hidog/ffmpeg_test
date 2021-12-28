@@ -311,8 +311,8 @@ AVFrame*    VideoEncode::get_frame()
     //if( frame_count > 300 )
         //return  nullptr;
 
-    //return  get_fram_from_file_QT();
-    return  get_fram_from_file_openCV();
+    return  get_fram_from_file_QT();
+    //return  get_fram_from_file_openCV();
 }
 
 
