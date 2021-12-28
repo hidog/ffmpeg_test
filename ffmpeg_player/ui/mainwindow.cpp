@@ -15,7 +15,7 @@
 
 #include <mutex>
 
-#include "player.h"
+#include "player/player.h"
 
 #include "worker.h"
 #include "video_worker.h"
@@ -36,7 +36,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     // 必須註冊自定義的物件.
-    qRegisterMetaType<VideoSetting>("VideoSetting");
+    qRegisterMetaType<VideoDecodeSetting>("VideoDecodeSetting");
     qRegisterMetaType<std::vector<std::string>>("std::vector<std::string>");
 
     //
@@ -144,7 +144,7 @@ void MainWindow::set_signal_slot()
 /*******************************************************************************
 MainWindow::set_video_setting_slot()
 ********************************************************************************/
-void    MainWindow::set_video_setting_slot( VideoSetting vs )
+void    MainWindow::set_video_setting_slot( VideoDecodeSetting vs )
 {
     VideoWidget    *video_widget   =   ui->videoWidget;
 

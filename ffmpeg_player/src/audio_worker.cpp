@@ -24,7 +24,7 @@ AudioWorker::AudioWorker( QObject *parent )
 /*******************************************************************************
 AudioWorker::open_audio_output()
 ********************************************************************************/
-void    AudioWorker::open_audio_output( AudioSetting as )
+void    AudioWorker::open_audio_output( AudioDecodeSetting as )
 {
     QAudioFormat    format;
 

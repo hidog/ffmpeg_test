@@ -268,9 +268,9 @@ Player::~Player()
 /*******************************************************************************
 Player::get_video_setting()
 ********************************************************************************/
-VideoSetting    Player::get_video_setting()
+VideoDecodeSetting    Player::get_video_setting()
 {
-    VideoSetting    vs;
+    VideoDecodeSetting    vs;
     vs.width    =   v_decoder.get_video_width();
     vs.height   =   v_decoder.get_video_height();
     return  vs;
@@ -283,9 +283,9 @@ VideoSetting    Player::get_video_setting()
 /*******************************************************************************
 Player::get_audio_setting()
 ********************************************************************************/
-AudioSetting    Player::get_audio_setting()
+AudioDecodeSetting    Player::get_audio_setting()
 {
-    AudioSetting    as;
+    AudioDecodeSetting    as;
     as.channel      =   a_decoder.get_audio_channel();
     as.sample_rate  =   a_decoder.get_audio_sample_rate();
     return  as;
@@ -303,6 +303,42 @@ int64_t     Player::get_duration_time()
 }
 
 
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+Player::play_decode_video_subtitle()
+********************************************************************************/
+void    Player::play_decode_video_subtitle( AVPacket* pkt )
+{
+    AVFrame     *frame  =   nullptr;
+    int         ret     =   v_decoder.send_packet(pkt);
+
+    if( ret >= 0 )
+    {
+        while(true)
+        {
+            ret     =   v_decoder.recv_frame(pkt->stream_index);
+            if( ret <= 0 )
+                break;
+
+            frame   =   v_decoder.get_frame();
+            ret     =   s_decoder.send_video_frame( frame );
+
+            while(true) // note: 目前測試結果都是一次一張,不確定是否存在一次兩張的case
+            {
+                ret     =   s_decoder.render_subtitle();
+                if( ret <= 0 )
+                    break;
+
+                s_decoder.output_frame_func();
+                s_decoder.unref_frame();
+            }
+
+            v_decoder.unref_frame();
+        }
+    }
+}
+#endif
 
 
 
@@ -343,25 +379,39 @@ void    Player::play()
             dc  =   dynamic_cast<Decode*>(&v_decoder);        
         else if( a_decoder.find_index(pkt->stream_index) )
             dc  =   dynamic_cast<Decode*>(&a_decoder);
+        else if( s_decoder.find_index( pkt->stream_index ) == true )
+            dc  =   dynamic_cast<Decode*>(&s_decoder);
         else        
-            MYLOG( LOG::WARN, "stream type not handle.");        
-
-        //
-        ret     =   dc->send_packet(pkt);
-        if( ret >= 0 )
         {
-            while(true)
-            {
-                ret     =   dc->recv_frame(pkt->stream_index);
-                if( ret <= 0 )
-                    break;
-
-                if( dc->output_frame_func != nullptr )
-                    dc->output_frame_func();
-                dc->unref_frame();
-            }
+            MYLOG( LOG::ERROR, "stream type not handle.");
+            demuxer.unref_packet();
+            continue;
         }
 
+        //
+        if( dc == &s_decoder )
+            s_decoder.decode_subtitle( pkt );
+        // 尚未處理 graphic subtitle. 以後有需要再新增.
+        else if( s_decoder.exist_stream() == true && dc == &v_decoder )
+            play_decode_video_subtitle( pkt );
+        else
+        {
+            //
+            ret     =   dc->send_packet(pkt);
+            if( ret >= 0 )
+            {
+                while(true)
+                {
+                    ret     =   dc->recv_frame(pkt->stream_index);
+                    if( ret <= 0 )
+                        break;
+
+                    if( dc->output_frame_func != nullptr )
+                        dc->output_frame_func();
+                    dc->unref_frame();
+                }
+            }
+        }
         demuxer.unref_packet();
     }
 
@@ -774,7 +824,8 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
     }
 
     // handle video stream with subtitle
-    if( s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == false &&
+    if( s_decoder.exist_stream() == true && 
+        s_decoder.is_graphic_subtitle() == false &&
         v_decoder.find_index( pkt->stream_index ) == true )
     {
         decode_video_with_nongraphic_subtitle(pkt);

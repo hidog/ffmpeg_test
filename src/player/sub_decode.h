@@ -3,6 +3,7 @@
 
 #include "decode.h"
 
+
 /*
 https://www.twblogs.net/a/5ef2639e26bc8c4a8eb3c99e        // 字幕教學 
 http://underpop.online.fr/f/ffmpeg/help/subtitles.htm.gz  // subtitle parameter.
@@ -69,6 +70,12 @@ public:
 
 
     int sub_info(); // 目前無作用
+
+
+#ifdef FFMPEG_TEST
+    std::function<int()>    output_frame_func;
+    int     output_jpg_by_QT();
+#endif
 
 
 private:

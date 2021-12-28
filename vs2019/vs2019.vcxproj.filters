@@ -19,71 +19,119 @@
     <Filter Include="ffmpeg_example">
       <UniqueIdentifier>{30f397a8-4564-42a5-828a-a1142c55323c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\player">
+      <UniqueIdentifier>{1931754f-4c61-445f-babc-75f58643bf7e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\maker">
+      <UniqueIdentifier>{a3afbc7b-d2c7-4fbc-b825-23cbd7351dae}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vs2019.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\player.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\demux.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\tool.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\decode.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="..\src\player\audio_decode.cpp">
+      <Filter>src\player</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\video_decode.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="..\src\player\decode.cpp">
+      <Filter>src\player</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\audio_decode.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="..\src\player\demux.cpp">
+      <Filter>src\player</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\sub_decode.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="..\src\player\player.cpp">
+      <Filter>src\player</Filter>
     </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\demuxing_decoding.c">
+    <ClCompile Include="..\src\player\sub_decode.cpp">
+      <Filter>src\player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\player\video_decode.cpp">
+      <Filter>src\player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maker\maker.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\remuxing.c">
       <Filter>ffmpeg_example</Filter>
     </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\ffplay.c">
+    <ClCompile Include="..\ffmpeg_example\resampling_audio.c">
       <Filter>ffmpeg_example</Filter>
     </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\cmdutils.c">
+    <ClCompile Include="..\ffmpeg_example\scaling_video.c">
       <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\transcode_aac.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\transcoding.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maker\audio_encode.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maker\video_encode.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maker\mux.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\muxing.cpp">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maker\encode.cpp">
+      <Filter>src\maker</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\player.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\demux.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\tool.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\decode.h">
-      <Filter>src</Filter>
+    <ClInclude Include="..\src\player\audio_decode.h">
+      <Filter>src\player</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\audio_decode.h">
-      <Filter>src</Filter>
+    <ClInclude Include="..\src\player\decode.h">
+      <Filter>src\player</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\video_decode.h">
-      <Filter>src</Filter>
+    <ClInclude Include="..\src\player\demux.h">
+      <Filter>src\player</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\sub_decode.h">
-      <Filter>src</Filter>
+    <ClInclude Include="..\src\player\player.h">
+      <Filter>src\player</Filter>
     </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\demuxing_decoding.h">
+    <ClInclude Include="..\src\player\sub_decode.h">
+      <Filter>src\player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\player\video_decode.h">
+      <Filter>src\player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\maker.h">
+      <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\audio_encode.h">
+      <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\video_encode.h">
+      <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\mux.h">
+      <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ffmpeg_example\muxing.h">
       <Filter>ffmpeg_example</Filter>
     </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\ffplay.h">
-      <Filter>ffmpeg_example</Filter>
+    <ClInclude Include="..\src\maker\encode.h">
+      <Filter>src\maker</Filter>
     </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\cmdutils.h">
+    <ClInclude Include="..\src\player\play_def.h">
+      <Filter>src\player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\maker_def.h">
+      <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ffmpeg_example\resampling_audio.h">
       <Filter>ffmpeg_example</Filter>
     </ClInclude>
   </ItemGroup>

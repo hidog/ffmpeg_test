@@ -10,6 +10,7 @@ struct  AVCodecContext;
 enum    AVSampleFormat;
 
 
+
 // 試著要轉sample rate但沒成功,有機會再試試看.
 // 要轉 sample rate 可以參考 ffplay, 需要將buffer size做 sample rate的轉換.  (例如 48000/44100 )
 
@@ -35,11 +36,14 @@ public:
 
     int     get_audio_channel();
     int     get_audio_sample_rate();
-    
+
     void        output_audio_frame_info();    
     AudioData   output_audio_data();
     int64_t     get_timestamp();
 
+#ifdef FFMPEG_TEST
+    int     output_pcm();
+#endif
 
 
     int     audio_info(); // 目前無作用 未來考慮移除

@@ -52,7 +52,7 @@ int     Decode::init()
 {
     int     ret     =   0;
 
-    frame_count =   0;
+    frame_count =   -1;
     frame       =   av_frame_alloc();
     if( frame == nullptr ) 
     {
@@ -63,8 +63,6 @@ int     Decode::init()
 
     return  SUCCESS;
 }
-
-
 
 
 
@@ -397,6 +395,7 @@ int     Decode::end()
 
     //
     cs_index    =   -1;
+    frame_count =   -1;
 
     return  SUCCESS;
 }
@@ -445,6 +444,7 @@ int    Decode::flush()
 
         // write the frame data to output file
         output_frame_func();
+        frame_count++;
         av_frame_unref(frame);
 
         if( ret < 0 )

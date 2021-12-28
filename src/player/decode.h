@@ -4,6 +4,7 @@
 #include <string>
 #include <functional>
 #include "tool.h"
+#include "play_def.h"
 
 
 
@@ -48,7 +49,7 @@ public:
     int     current_index();
     int     get_dec_map_size();
     void    flush_all_stream();
-    
+
     AVFrame*        get_frame();
     AVMediaType     get_decode_context_type();
     AVCodecContext* get_decode_context();
@@ -72,7 +73,8 @@ protected:
     AVStream        *stream     =   nullptr;
     AVFrame         *frame      =   nullptr;
 
-    int     frame_count =   0;
+    int     frame_count =   -1;
+
 
 private:
 

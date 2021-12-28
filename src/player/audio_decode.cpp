@@ -94,9 +94,52 @@ int     AudioDecode::init()
     MYLOG( LOG::INFO, "audio sample format = %s", av_get_sample_fmt_name(sample_fmt) );
     MYLOG( LOG::INFO, "audio channel = %d, sample rate = %d", av_get_channel_layout_nb_channels(channel_layout), sample_rate );
 
+    //
+#ifdef FFMPEG_TEST
+    //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
+    output_frame_func   =   std::bind( &AudioDecode::output_pcm, this );
+#endif
+
     Decode::init();
     return  SUCCESS;
 }
+
+
+
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+AudioDecode::output_pcm()
+********************************************************************************/
+int     AudioDecode::output_pcm()
+{
+    static FILE *fp     =   fopen("J:\\test.pcm", "wb+" );
+
+    static constexpr int    out_channel =   2; // 目前預設輸出成兩聲道. 有空再改
+
+    uint8_t     *data[2]    =   { 0 };  // S16 改 S32, 不確定是不是這邊的 array 要改成 4
+                                        //int         byte_count     =   frame->nb_samples * 2 * 2;  // S16 改 S32, 改成 *4, 理論上資料量會增加, 但不確定是否改的是這邊
+                                        // frame->nb_samples * 2 * 2     表示     分配樣本資料量 * 兩通道 * 每通道2位元組大小
+    int         byte_count  =   av_samples_get_buffer_size( NULL, out_channel, frame->nb_samples, AV_SAMPLE_FMT_S16, 0 );
+
+    unsigned char   *pcm    =   new uint8_t[byte_count];     
+
+    if( pcm == nullptr )
+        MYLOG( LOG::WARN, "pcm is null" );
+
+    data[0]     =   pcm;    // 輸出格式為 AV_SAMPLE_FMT_S16(packet型別), 所以轉換後的 LR 兩通道都存在data[0]中
+                            // 研究一下 S32 是不是存兩個資料
+    int ret     =   swr_convert( swr_ctx,
+                                 data, frame->nb_samples,                              //輸出 
+                                 (const uint8_t**)frame->data, frame->nb_samples );    //輸入
+
+    fwrite( pcm, 1, byte_count, fp );
+    MYLOG( LOG::DEBUG, "audio write %d. frame_count = %d", byte_count, frame_count );
+
+    return  0;
+}
+#endif
 
 
 
@@ -133,7 +176,7 @@ void    AudioDecode::output_audio_frame_info()
     char    buf[AV_TS_MAX_STRING_SIZE]{0};
     int     per_sample  =   av_get_bytes_per_sample( static_cast<AVSampleFormat>(frame->format) );
     auto    pts_str     =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
-    MYLOG( LOG::INFO, "audio_frame n = %d, nb_samples = %d, pts : %s", frame_count++, frame->nb_samples, pts_str );
+    MYLOG( LOG::INFO, "audio_frame n = %d, nb_samples = %d, pts : %s", frame_count, frame->nb_samples, pts_str );
 }
 
 
