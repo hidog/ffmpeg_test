@@ -22,6 +22,8 @@ https://www.cnblogs.com/linuxAndMcu/p/14706012.html
 
 https://www.jianshu.com/p/fd43c1c82945
 https://www.jianshu.com/p/bf5e54f553a4
+
+https://www.itread01.com/content/1545479823.html
 */
 
 
@@ -39,11 +41,13 @@ extern "C" {
 int main()
 {
 #if 0
+    //test_aac();
 
-    resample_audio();
-
-
+    //resample_audio();
     //muxing();
+
+    AudioEncode ae;
+    ae.list_sample_format(AV_CODEC_ID_VORBIS);
 
 #elif 1
 
@@ -66,10 +70,8 @@ int main()
     v_setting.time_base.num     =   1001;
     v_setting.time_base.den     =   24000;
 
-    //v_setting.gop_size      =   30;
-    //v_setting.max_b_frames  =   15;
-    v_setting.gop_size      =   200;  // h265不能設太大
-    v_setting.max_b_frames  =   150;
+    v_setting.gop_size      =   30;
+    v_setting.max_b_frames  =   15;
 
     v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
     //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
@@ -79,14 +81,15 @@ int main()
     v_setting.src_pix_fmt   =   AV_PIX_FMT_BGRA;    // for QImage
     
     AudioEncodeSetting  a_setting;
-    a_setting.code_id     =   AV_CODEC_ID_MP3;
+    //a_setting.code_id     =   AV_CODEC_ID_MP3;
     //a_setting.code_id       =   AV_CODEC_ID_AAC;
     //a_setting.code_id       =   AV_CODEC_ID_AC3;
     //a_setting.code_id     =   AV_CODEC_ID_MP2;
+    a_setting.code_id       =   AV_CODEC_ID_VORBIS;
 
-    a_setting.bit_rate          =   128000;
+    a_setting.bit_rate          =   320000;
     a_setting.sample_rate       =   48000;
-    a_setting.channel_layout    =   3; // AV_CH_LAYOUT_STEREO;
+    a_setting.channel_layout    =   3; // AV_CH_LAYOUT_STEREO = 3;
 
 
 

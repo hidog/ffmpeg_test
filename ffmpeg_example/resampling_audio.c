@@ -130,7 +130,7 @@ static void fill_samples_2( int16_t *dst, int16_t *dst2, int nb_samples, int nb_
 
 int resample_audio()
 {
-    int64_t src_ch_layout = AV_CH_LAYOUT_STEREO, dst_ch_layout = AV_CH_LAYOUT_SURROUND;
+    int64_t src_ch_layout = AV_CH_LAYOUT_STEREO, dst_ch_layout = AV_CH_LAYOUT_STEREO;
     int src_rate = 48000, dst_rate = 44100;
     uint8_t **src_data = NULL, **dst_data = NULL;
     int src_nb_channels = 0, dst_nb_channels = 0;
@@ -207,11 +207,19 @@ int resample_audio()
         goto end;
     }
 
+
+    FILE *input = fopen( "J:\\test.pcm", "rb" );
+
     t = 0;
     do {
         /* generate synthetic audio */
         //fill_samples( (double *)src_data[0], (double *)src_data[1], src_nb_samples, src_nb_channels, src_rate, &t);
-        fill_samples_2( (int16_t *)src_data[0], (int16_t *)src_data[1], src_nb_samples, src_nb_channels, src_rate, &t) ;
+        //fill_samples_2( (int16_t *)src_data[0], (int16_t *)src_data[1], src_nb_samples, src_nb_channels, src_rate, &t) ;
+
+        ret = fread( src_data[0], 1, 4096, input );
+        if( ret == 0 )
+            break;
+
 
 
         /* compute destination number of samples */
@@ -242,7 +250,7 @@ int resample_audio()
         }
         printf("t:%f in:%d out:%d\n", t, src_nb_samples, ret);
         fwrite(dst_data[0], 1, dst_bufsize, dst_file);
-    } while (t < 10);
+    } while (1);
 
     if ((ret = get_format_from_sample_fmt(&fmt, dst_sample_fmt)) < 0)
         goto end;

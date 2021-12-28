@@ -149,9 +149,9 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
     switch ((*codec)->type) 
     {
     case AVMEDIA_TYPE_AUDIO:
-        c->sample_fmt  = AV_SAMPLE_FMT_S16P;
+        c->sample_fmt  = AV_SAMPLE_FMT_FLTP; //AV_SAMPLE_FMT_S16P;
         c->bit_rate    = 3200000;
-        c->sample_rate = 48000;
+        c->sample_rate = 44100; //48000;
         /*if ((*codec)->supported_samplerates) {
             c->sample_rate = (*codec)->supported_samplerates[0];
             for (i = 0; (*codec)->supported_samplerates[i]; i++) {
@@ -280,8 +280,8 @@ static void open_audio(AVFormatContext *oc, const AVCodec *codec,
 
     ost->frame     = alloc_audio_frame(c->sample_fmt, c->channel_layout,
                                        c->sample_rate, nb_samples);
-    ost->tmp_frame = alloc_audio_frame(c->sample_fmt, c->channel_layout,
-                                       c->sample_rate, nb_samples);
+    ost->tmp_frame = alloc_audio_frame(AV_SAMPLE_FMT_S16, c->channel_layout,
+                                       48000, nb_samples);
     //ost->tmp_frame = alloc_audio_frame(AV_SAMPLE_FMT_S16, c->channel_layout,
       //                                 c->sample_rate, nb_samples);
 
@@ -745,7 +745,7 @@ int muxing()
     }
     if (fmt->audio_codec != AV_CODEC_ID_NONE) 
     {
-        fmt->audio_codec = AV_CODEC_ID_MP3;
+        fmt->audio_codec = AV_CODEC_ID_AAC;
         add_stream(&audio_st, oc, &audio_codec, fmt->audio_codec);
         have_audio = 1;
         encode_audio = 1;

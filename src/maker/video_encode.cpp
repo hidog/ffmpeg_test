@@ -54,7 +54,6 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
 
     //
     Encode::init( st_idx, setting.code_id );
-    Encode::open();
 
     int     ret     =   0;
 
@@ -314,10 +313,7 @@ AVFrame*    VideoEncode::get_frame()
     sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
     printf( "str = %s\n", str );
 
-    //if( frame_count > 300 )
-    //    return  nullptr;
-
-    QImage img;
+    QImage  img;
     if( img.load( str ) == false )
         return  nullptr;    
 

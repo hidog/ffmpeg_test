@@ -62,17 +62,7 @@ void    Encode::init( int st_idx, AVCodecID code_id )
     codec   =   avcodec_find_encoder(code_id);
     if( codec == nullptr )
         MYLOG( LOG::ERROR, "codec not find. code id = %s", avcodec_get_name(code_id) );
-}
 
-
-
-
-
-/*******************************************************************************
-Encode::open()
-********************************************************************************/
-void    Encode::open()
-{
     // init codec ctx.
     if( ctx != nullptr )
         avcodec_free_context( &ctx );

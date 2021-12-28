@@ -219,10 +219,9 @@ void    AudioEncode::end()
     swr_free( &swr_ctx );
     swr_ctx     =   nullptr;
 
-    //av_freep( &audio_data[0] );
-    //av_freep( audio_data );
-    //audio_data      =   nullptr;
-    //audio_linesize  =   0;
+    // S16 packed, pcm[1] 未使用.
+    delete [] pcm[0]; 
+    pcm[0]  =   nullptr;
 }
 
 
@@ -238,10 +237,7 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
     AVCodecID   code_id     =   setting.code_id;
     int         ret         =   0;
 
-    // note 可以用 alloc_audio_frame 初始化 frame.
-
-    Encode::init( st_idx, code_id );
-    Encode::open();
+    Encode::init( st_idx, code_id );    
 
     // some codec need set bit rate.
     // 驗證一下這件事情. 部分 codec 會自動產生預設 bit rate.
@@ -251,7 +247,7 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
     // format可更改,但支援度跟codec有關.
     if( code_id == AV_CODEC_ID_MP3 )
         ctx->sample_fmt     =   AV_SAMPLE_FMT_S16P;
-    else if( code_id == AV_CODEC_ID_AAC || code_id == AV_CODEC_ID_AC3 )
+    else if( code_id == AV_CODEC_ID_AAC || code_id == AV_CODEC_ID_AC3 || code_id == AV_CODEC_ID_VORBIS )
         ctx->sample_fmt     =   AV_SAMPLE_FMT_FLTP;
     else if( code_id == AV_CODEC_ID_MP2 || code_id == AV_CODEC_ID_FLAC )
         ctx->sample_fmt     =   AV_SAMPLE_FMT_S16;
@@ -314,7 +310,6 @@ void    AudioEncode::init_swr( AudioEncodeSetting setting )
     if( swr_ctx != nullptr )
         MYLOG( LOG::WARN, "swr_ctx is not null." );
 
-
     /* use for variable frame size.
     if ( ctx->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE)
         nb_samples = 10000;
@@ -342,22 +337,14 @@ void    AudioEncode::init_swr( AudioEncodeSetting setting )
     if( ret < 0 )
         MYLOG( LOG::ERROR, "swr init fail." );
 
-    //
-    //if( src_frame != nullptr )
-        //MYLOG( LOG::WARN, "src_frame not null." );
+    if( pcm[0] != nullptr )
+        MYLOG( LOG::ERROR, "pc is not null" );
 
-    //src_frame   =   alloc_audio_frame( AV_SAMPLE_FMT_S16, AV_CH_LAYOUT_STEREO, 48000, nb_samples);
-    if( src_data != nullptr )
-        MYLOG( LOG::ERROR, "src_data not null." );
-    ret     =   av_samples_alloc_array_and_samples( &src_data, &src_linesize, 2, 48000, AV_SAMPLE_FMT_S16, 0 );
-    if( ret < 0 )
-        MYLOG( LOG::ERROR, "alloc src data fail. " );
+    pcm_size    =   av_samples_get_buffer_size( NULL, ctx->channels, ctx->frame_size, AV_SAMPLE_FMT_S16, 0 );
+    pcm[0]      =   new int16_t[pcm_size];
 
-    if( audio_data != nullptr )
-        MYLOG( LOG::WARN, "audio_data not null." );
-    ret     =   av_samples_alloc_array_and_samples( &audio_data, &audio_linesize, ctx->channels, ctx->sample_rate,  ctx->sample_fmt, 0 );
-    if( ret < 0 )
-        MYLOG( LOG::ERROR, "alloc src data fail. " );
+    if( pcm[0] == nullptr )
+        MYLOG( LOG::ERROR, "pcm init fail." );
 }
 
 
@@ -520,12 +507,12 @@ int64_t     AudioEncode::get_pts()
 
 
 
-
-
 /*******************************************************************************
-AudioEncode::get_frame()
+AudioEncode::get_frame_from_file_test()
+
+測試用程式, 會從檔案讀取 pcm data.
 ********************************************************************************/
-AVFrame*    AudioEncode::get_frame()
+AVFrame*    AudioEncode::get_frame_from_file_test()
 {
     AVCodecID code_id   =   ctx->codec_id; 
 
@@ -534,9 +521,6 @@ AVFrame*    AudioEncode::get_frame()
 
     static FILE *fp = fopen( "J:\\test.pcm", "rb" );
 
-    //if( frame_count > 600 )
-      //  return  nullptr;
-
     //
     if( feof(fp) != 0 )
         return nullptr;
@@ -544,70 +528,6 @@ AVFrame*    AudioEncode::get_frame()
     ret = av_frame_make_writable(frame);
     if( ret < 0 )
         MYLOG( LOG::ERROR, "frame not writeable." );
-    
-#if 1
-    /* convert samples from native format to destination codec format, using the resampler */
-    /* compute destination number of samples */
-    int dst_nb_samples = av_rescale_rnd( swr_get_delay(swr_ctx, ctx->sample_rate) + frame->nb_samples, ctx->sample_rate, ctx->sample_rate, AV_ROUND_UP);
-    //av_assert0(dst_nb_samples == frame->nb_samples);
-
-    /* when we pass a frame to the encoder, it may keep a reference to it
-    * internally;
-    * make sure we do not overwrite it here
-    */
-    ret = av_frame_make_writable(frame);
-    if (ret < 0)
-      exit(1);
-
-    int         byte_count  =   2*2*1152; //av_samples_get_buffer_size( NULL, 2, 1152, AV_SAMPLE_FMT_S16, 0 );
-    //int byte_count = 1024 * 2 * sizeof(int16_t);  // 2 is channels
-    //int byte_count = audio_linesize;
-
-    uint8_t* ptr[2];
-    ptr[0] =  new uint8_t[ byte_count ];
-    //ptr[1] = new uint8_t[ byte_count ];
-    ret = fread( ptr[0], 1, byte_count, fp );
-    //ret = fread( ptr[1], 1, byte_count, fp );
-
-    //ret = fread( src_data[0], 1, byte_count, fp );
-    sp_count = 1152; // ret/2;
-
-
-    //ret = av_samples_alloc(audio_data, &audio_linesize, 2, dst_nb_samples, ctx->sample_fmt, 1);
-
-    /* convert to destination format */
-    /*ret = swr_convert( swr_ctx,
-        audio_data, audio_linesize,
-      (const uint8_t **)src_data, byte_count );*/
-
-      /*ret = swr_convert( swr_ctx,
-      frame->data, 1152,
-          (const uint8_t **)ptr, 1152 );*/
-
-          ret = swr_convert( swr_ctx,
-          audio_data, 1152,
-          (const uint8_t **)ptr, 1152 );
-
-          memcpy( frame->data[0], audio_data[0], 1152*2 );
-          memcpy( frame->data[1], audio_data[1], 1152*2 );
-
-
-      delete ptr[0];
-      //delete ptr[1];
-
-    if (ret < 0) {
-    fprintf(stderr, "Error while converting\n");
-    exit(1);
-    }
-
-    //frame = ost->frame;
-
-
-    //ret     =   fread( 
-
-
-      //  swr_convert
-#else
 
     int     i;
     int16_t     intens[2];
@@ -616,12 +536,8 @@ AVFrame*    AudioEncode::get_frame()
     {
         ret = fread( intens, 2, sizeof(int16_t), fp );
         if( ret == 0 )
-        {
-            //intens[0] = 0;
-            //intens[1] = 0;
             break;
-        }
-
+        
         // 多聲道這邊需要另外處理
         if( code_id == AV_CODEC_ID_AAC || code_id == AV_CODEC_ID_AC3 )
         {
@@ -653,7 +569,7 @@ AVFrame*    AudioEncode::get_frame()
         for( ; i < frame->nb_samples; i++ )
         {
             // 多聲道這邊需要另外處理
-            if( code_id == AV_CODEC_ID_AAC || code_id == AV_CODEC_ID_AC3 )
+            if( code_id == AV_CODEC_ID_AAC || code_id == AV_CODEC_ID_AC3 || code_id == AV_CODEC_ID_VORBIS )
             {
                 *((float*)(frame->data[0]) + i)   =   0;
                 *((float*)(frame->data[1]) + i)   =   0;
@@ -670,19 +586,57 @@ AVFrame*    AudioEncode::get_frame()
             }
         }
     }
-#endif
-
 
     /*if( frame_count == 0 )
-        frame->pts = 0;
+    frame->pts = 0;
     else 
-        frame->pts += frame->nb_samples;  */
+    frame->pts += frame->nb_samples;  */
     // 考慮效能, 沒用 frame->pts = frame->nb_samples * frame_count; 的寫法
     frame->pts  +=  sp_count; //frame->nb_samples;  
-
     frame_count++;
 
     return frame;
+}
+
+
+/*******************************************************************************
+AudioEncode::get_frame()
+********************************************************************************/
+AVFrame*    AudioEncode::get_frame()
+{
+    static int   bytes_per_sample    =   av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+    AVCodecID code_id   =   ctx->codec_id; 
+
+    int     ret;
+    int     sp_count    =   0;
+
+    static FILE *fp     =   fopen( "J:\\test.pcm", "rb" );
+
+    //
+    if( feof(fp) != 0 )
+        return  nullptr;
+
+    ret     =   av_frame_make_writable(frame);
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "frame not writeable." );   
+
+    ret         =   fread( pcm[0], 1, pcm_size, fp );  // 概念上可以想像成 fread( pcm[0], sizeof(int16_t), channels * frame->nb_samples, fp );
+    sp_count    =   ret / ctx->channels / bytes_per_sample;  
+
+    if( ret == 0 && feof(fp) != 0 )
+        return nullptr; // end of file.
+
+    if( ret < pcm_size )    
+        memset( pcm[0] + ret, 0, pcm_size - ret );
+    
+    ret     =   swr_convert( swr_ctx, frame->data, frame->nb_samples, (const uint8_t **)pcm, frame->nb_samples );
+    if( ret < 0 ) 
+        MYLOG( LOG::ERROR, "convert fail." );
+
+    frame->pts  +=  sp_count;
+    frame_count++;
+
+    return  frame;
 }
 
 
@@ -702,222 +656,3 @@ int     AudioEncode::send_frame()
 
 
 
-
-#if 0
-
-/**
-* @example resampling_audio.c
-* libswresample API use example.
-*/
-
-#include <libavutil/opt.h>
-#include <libavutil/channel_layout.h>
-#include <libavutil/samplefmt.h>
-#include <libswresample/swresample.h>
-
-static int get_format_from_sample_fmt(const char **fmt,
-    enum AVSampleFormat sample_fmt)
-{
-    int i;
-    struct sample_fmt_entry {
-        enum AVSampleFormat sample_fmt; const char *fmt_be, *fmt_le;
-    } sample_fmt_entries[] = {
-        { AV_SAMPLE_FMT_U8,  "u8",    "u8"    },
-        { AV_SAMPLE_FMT_S16, "s16be", "s16le" },
-        { AV_SAMPLE_FMT_S32, "s32be", "s32le" },
-        { AV_SAMPLE_FMT_FLT, "f32be", "f32le" },
-        { AV_SAMPLE_FMT_DBL, "f64be", "f64le" },
-    };
-    *fmt = NULL;
-
-    for (i = 0; i < FF_ARRAY_ELEMS(sample_fmt_entries); i++) {
-        struct sample_fmt_entry *entry = &sample_fmt_entries[i];
-        if (sample_fmt == entry->sample_fmt) {
-            *fmt = AV_NE(entry->fmt_be, entry->fmt_le);
-            return 0;
-        }
-    }
-
-    fprintf(stderr,
-        "Sample format %s not supported as output format\n",
-        av_get_sample_fmt_name(sample_fmt));
-    return AVERROR(EINVAL);
-}
-
-/**
-* Fill dst buffer with nb_samples, generated starting from t.
-*/
-static void fill_samples(double *dst, int nb_samples, int nb_channels, int sample_rate, double *t)
-{
-    int i, j;
-    double tincr = 1.0 / sample_rate, *dstp = dst;
-    const double c = 2 * M_PI * 440.0;
-
-    /* generate sin tone with 440Hz frequency and duplicated channels */
-    for (i = 0; i < nb_samples; i++) {
-        *dstp = sin(c * *t);
-        for (j = 1; j < nb_channels; j++)
-            dstp[j] = dstp[0];
-        dstp += nb_channels;
-        *t += tincr;
-    }
-}
-
-int main(int argc, char **argv)
-{
-    int64_t src_ch_layout = AV_CH_LAYOUT_STEREO, dst_ch_layout = AV_CH_LAYOUT_SURROUND;
-    int src_rate = 48000, dst_rate = 44100;
-
-
-    uint8_t **src_data = NULL, **dst_data = NULL;
-    int src_linesize, dst_linesize;
-
-
-    int src_nb_channels = 0, dst_nb_channels = 0;
-
-
-
-
-    int src_nb_samples = 1024, dst_nb_samples, max_dst_nb_samples;
-    enum AVSampleFormat src_sample_fmt = AV_SAMPLE_FMT_DBL, dst_sample_fmt = AV_SAMPLE_FMT_S16;
-    const char *dst_filename = NULL;
-    FILE *dst_file;
-    int dst_bufsize;
-    const char *fmt;
-    struct SwrContext *swr_ctx;
-    double t;
-    int ret;
-
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s output_file\n"
-            "API example program to show how to resample an audio stream with libswresample.\n"
-            "This program generates a series of audio frames, resamples them to a specified "
-            "output format and rate and saves them to an output file named output_file.\n",
-            argv[0]);
-        exit(1);
-    }
-    dst_filename = argv[1];
-
-    dst_file = fopen(dst_filename, "wb");
-    if (!dst_file) {
-        fprintf(stderr, "Could not open destination file %s\n", dst_filename);
-        exit(1);
-    }
-
-    /* create resampler context */
-    swr_ctx = swr_alloc();
-    if (!swr_ctx) {
-        fprintf(stderr, "Could not allocate resampler context\n");
-        ret = AVERROR(ENOMEM);
-        goto end;
-    }
-
-    /* set options */
-    av_opt_set_int(swr_ctx, "in_channel_layout",    src_ch_layout, 0);
-    av_opt_set_int(swr_ctx, "in_sample_rate",       src_rate, 0);
-    av_opt_set_sample_fmt(swr_ctx, "in_sample_fmt", src_sample_fmt, 0);
-
-    av_opt_set_int(swr_ctx, "out_channel_layout",    dst_ch_layout, 0);
-    av_opt_set_int(swr_ctx, "out_sample_rate",       dst_rate, 0);
-    av_opt_set_sample_fmt(swr_ctx, "out_sample_fmt", dst_sample_fmt, 0);
-
-    /* initialize the resampling context */
-    if ((ret = swr_init(swr_ctx)) < 0) {
-        fprintf(stderr, "Failed to initialize the resampling context\n");
-        goto end;
-    }
-
-    /* allocate source and destination samples buffers */
-
-    src_nb_channels = av_get_channel_layout_nb_channels(src_ch_layout);
-    ret = av_samples_alloc_array_and_samples(&src_data, &src_linesize, src_nb_channels,
-        src_nb_samples, src_sample_fmt, 0);
-
-
-    if (ret < 0) {
-        fprintf(stderr, "Could not allocate source samples\n");
-        goto end;
-    }
-
-    /* compute the number of converted samples: buffering is avoided
-    * ensuring that the output buffer will contain at least all the
-    * converted input samples */
-    max_dst_nb_samples = dst_nb_samples =
-        av_rescale_rnd(src_nb_samples, dst_rate, src_rate, AV_ROUND_UP);
-
-    /* buffer is going to be directly written to a rawaudio file, no alignment */
-    dst_nb_channels = av_get_channel_layout_nb_channels(dst_ch_layout);
-    ret = av_samples_alloc_array_and_samples(&dst_data, &dst_linesize, dst_nb_channels,
-        dst_nb_samples, dst_sample_fmt, 0);
-
-
-    if (ret < 0) {
-        fprintf(stderr, "Could not allocate destination samples\n");
-        goto end;
-    }
-
-
-
-
-    t = 0;
-    do {
-        /* generate synthetic audio */
-        fill_samples( (double *)src_data[0], src_nb_samples, src_nb_channels, src_rate, &t );
-
-
-
-        /* compute destination number of samples */
-        dst_nb_samples = av_rescale_rnd(swr_get_delay(swr_ctx, src_rate) +
-            src_nb_samples, dst_rate, src_rate, AV_ROUND_UP);
-        if (dst_nb_samples > max_dst_nb_samples) {
-            av_freep(&dst_data[0]);
-            ret = av_samples_alloc(dst_data, &dst_linesize, dst_nb_channels,
-                dst_nb_samples, dst_sample_fmt, 1);
-            if (ret < 0)
-                break;
-            max_dst_nb_samples = dst_nb_samples;
-        }
-
-
-
-        /* convert to destination format */
-        ret = swr_convert(swr_ctx, dst_data, dst_nb_samples, (const uint8_t **)src_data, src_nb_samples);
-        if (ret < 0) {
-            fprintf(stderr, "Error while converting\n");
-            goto end;
-        }
-
-
-        dst_bufsize = av_samples_get_buffer_size(&dst_linesize, dst_nb_channels,
-            ret, dst_sample_fmt, 1);
-
-
-        if (dst_bufsize < 0) {
-            fprintf(stderr, "Could not get sample buffer size\n");
-            goto end;
-        }
-        printf("t:%f in:%d out:%d\n", t, src_nb_samples, ret);
-        fwrite(dst_data[0], 1, dst_bufsize, dst_file);
-    } while (t < 10);
-
-    if ((ret = get_format_from_sample_fmt(&fmt, dst_sample_fmt)) < 0)
-        goto end;
-    fprintf(stderr, "Resampling succeeded. Play the output file with the command:\n"
-        "ffplay -f %s -channel_layout %"PRId64" -channels %d -ar %d %s\n",
-        fmt, dst_ch_layout, dst_nb_channels, dst_rate, dst_filename);
-
-end:
-    fclose(dst_file);
-
-    if (src_data)
-        av_freep(&src_data[0]);
-    av_freep(&src_data);
-
-    if (dst_data)
-        av_freep(&dst_data[0]);
-    av_freep(&dst_data);
-
-    swr_free(&swr_ctx);
-    return ret < 0;
-}
-#endif
