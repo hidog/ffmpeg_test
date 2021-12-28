@@ -56,15 +56,14 @@ int main()
     //setting.extension   =   "matroska";
     //setting.filename    =   "J:\\test2.mp4";
     //setting.extension   =   "mp4";
-    setting.filename    =   "J:\\test2.rm";  // rmvb 是 variable bitrate. 目前還無法使用
-    setting.extension   =   "rm";
+    setting.filename    =   "J:\\test2.mpeg";  // rmvb 是 variable bitrate. 目前還無法使用
+    setting.extension   =   "mpeg";
 
     VideoEncodeSetting  v_setting;
     //v_setting.code_id   =   AV_CODEC_ID_H264;
     //v_setting.code_id   =   AV_CODEC_ID_H265;
-    //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
+    v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG2VIDEO;
-    v_setting.code_id   =   AV_CODEC_ID_RV10;
 
     v_setting.width     =   1280;
     v_setting.height    =   720;
@@ -72,8 +71,14 @@ int main()
     v_setting.time_base.num     =   1001;
     v_setting.time_base.den     =   24000;
 
+    /*
+        b frame not support on rm
+    */
     v_setting.gop_size      =   30;
-    v_setting.max_b_frames  =   15;
+    v_setting.max_b_frames  =   15; 
+    //v_setting.gop_size      =   12;
+    //v_setting.max_b_frames  =   0; 
+
 
     v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
     //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
@@ -88,8 +93,8 @@ int main()
     //a_setting.code_id     =   AV_CODEC_ID_MP3;
     //a_setting.code_id       =   AV_CODEC_ID_AAC;
     //a_setting.code_id       =   AV_CODEC_ID_AC3;
-    //a_setting.code_id     =   AV_CODEC_ID_MP2;
-    a_setting.code_id       =   AV_CODEC_ID_VORBIS;
+    a_setting.code_id     =   AV_CODEC_ID_MP2;
+    //a_setting.code_id       =   AV_CODEC_ID_VORBIS;
 
     a_setting.bit_rate          =   320000;
     a_setting.sample_rate       =   48000;
