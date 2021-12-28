@@ -54,7 +54,7 @@ void Mux::init( EncodeSetting setting )
     AVDictionary    *opt    =   nullptr;
 
     // alloc output.
-    // avformat_alloc_output_context2( &output_ctx, NULL, NULL, setting.filename.c_str() );  副檔名參數可以不用傳進去,讓系統自動判斷
+    //avformat_alloc_output_context2( &output_ctx, NULL, NULL, setting.filename.c_str() );  //副檔名參數可以不用傳進去,讓系統自動判斷
     avformat_alloc_output_context2( &output_ctx, NULL, setting.extension.c_str(), setting.filename.c_str() );
     if( output_ctx == nullptr ) 
         MYLOG( LOG::ERROR, "output_ctx = nullptr" );

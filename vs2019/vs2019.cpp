@@ -52,17 +52,19 @@ int main()
 #elif 1
 
     EncodeSetting   setting;
-    setting.filename    =   "J:\\test2.mkv";
-    setting.extension   =   "matroska";
+    //setting.filename    =   "J:\\test2.mkv";
+    //setting.extension   =   "matroska";
     //setting.filename    =   "J:\\test2.mp4";
     //setting.extension   =   "mp4";
-
+    setting.filename    =   "J:\\test2.rm";  // rmvb 是 variable bitrate. 目前還無法使用
+    setting.extension   =   "rm";
 
     VideoEncodeSetting  v_setting;
-    v_setting.code_id   =   AV_CODEC_ID_H264;
+    //v_setting.code_id   =   AV_CODEC_ID_H264;
     //v_setting.code_id   =   AV_CODEC_ID_H265;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG2VIDEO;
+    v_setting.code_id   =   AV_CODEC_ID_RV10;
 
     v_setting.width     =   1280;
     v_setting.height    =   720;
@@ -78,8 +80,10 @@ int main()
 
     v_setting.src_width     =   1920;
     v_setting.src_height    =   1080;
-    v_setting.src_pix_fmt   =   AV_PIX_FMT_BGRA;    // for QImage
-    
+    //v_setting.src_pix_fmt   =   AV_PIX_FMT_BGRA;    // for QImage
+    v_setting.src_pix_fmt   =   AV_PIX_FMT_BGR24;    // for openCV
+
+
     AudioEncodeSetting  a_setting;
     //a_setting.code_id     =   AV_CODEC_ID_MP3;
     //a_setting.code_id       =   AV_CODEC_ID_AAC;

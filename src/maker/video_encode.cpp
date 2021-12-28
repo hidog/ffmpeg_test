@@ -1,11 +1,12 @@
 #include "video_encode.h"
+#include "tool.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "tool.h"
-#include <QImage>
 
+#include <QImage>
+#include <opencv2/opencv.hpp>
 
 extern "C" {
 
@@ -14,7 +15,7 @@ extern "C" {
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
 
-}
+} // end extern "C"
 
 
 
@@ -307,6 +308,24 @@ VideoEncode::get_frame()
 ********************************************************************************/
 AVFrame*    VideoEncode::get_frame()
 {
+    //if( frame_count > 300 )
+        //return  nullptr;
+
+    //return  get_fram_from_file_QT();
+    return  get_fram_from_file_openCV();
+}
+
+
+
+
+
+/*******************************************************************************
+VideoEncode::get_fram_from_file_QT()
+
+這邊需要擴充, 以及考慮使用讀取檔案處理一些參數的 init
+********************************************************************************/
+AVFrame*    VideoEncode::get_fram_from_file_QT()
+{
     char str[1000];
     int ret;
 
@@ -323,7 +342,7 @@ AVFrame*    VideoEncode::get_frame()
 
     int         linesize[8]     =   { img.bytesPerLine() };
     uint8_t     *data[4]         =   { img.bits() };
-    
+
     sws_scale( sws_ctx, data, linesize, 0, img.height(), video_data, video_linesize );
 
 #if 1
@@ -340,6 +359,44 @@ AVFrame*    VideoEncode::get_frame()
     memcpy( frame->data[1], video_dst_data[1], video_dst_linesize[1] * ctx->height / 2);
     memcpy( frame->data[2], video_dst_data[2], video_dst_linesize[2] * ctx->height / 2);
 #endif
+
+    frame->pts = frame_count;
+    frame_count++;
+
+    return frame;
+}
+
+
+
+
+
+/*******************************************************************************
+VideoEncode::get_fram_from_file_openCV()
+
+這邊需要擴充, 以及考慮使用讀取檔案處理一些參數的 init
+********************************************************************************/
+AVFrame*    VideoEncode::get_fram_from_file_openCV()
+{
+    char str[1000];
+    int ret;
+
+    sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
+    printf( "str = %s\n", str );
+
+    cv::Mat img =   cv::imread( str, cv::IMREAD_COLOR );
+    if( img.empty() == true )
+        return  nullptr;    
+
+    ret = av_frame_make_writable( frame );
+    if( ret < 0 )
+        assert(0);
+
+    size_t      bytes_per_line  =   img.channels() * img.cols;
+    int         linesize[8]     =   { bytes_per_line };
+    uint8_t     *data[4]        =   { img.ptr() };
+
+    sws_scale( sws_ctx, data, linesize, 0, img.rows, video_data, video_linesize );
+    av_image_copy( frame->data, frame->linesize, (const uint8_t**)video_data, video_linesize, ctx->pix_fmt, ctx->width, ctx->height );
 
     frame->pts = frame_count;
     frame_count++;

@@ -599,10 +599,14 @@ AVFrame*    AudioEncode::get_frame_from_file_test()
 }
 
 
+
+
+
+
 /*******************************************************************************
-AudioEncode::get_frame()
+AudioEncode::get_frame_from_pcm_file()
 ********************************************************************************/
-AVFrame*    AudioEncode::get_frame()
+AVFrame*    AudioEncode::get_frame_from_pcm_file()
 {
     static int   bytes_per_sample    =   av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
     AVCodecID code_id   =   ctx->codec_id; 
@@ -610,7 +614,7 @@ AVFrame*    AudioEncode::get_frame()
     int     ret;
     int     sp_count    =   0;
 
-    static FILE *fp     =   fopen( "J:\\test.pcm", "rb" );
+    static FILE *fp     =   fopen( "J:\\test.pcm", "rb" );    
 
     //
     if( feof(fp) != 0 )
@@ -628,7 +632,7 @@ AVFrame*    AudioEncode::get_frame()
 
     if( ret < pcm_size )    
         memset( pcm[0] + ret, 0, pcm_size - ret );
-    
+
     ret     =   swr_convert( swr_ctx, frame->data, frame->nb_samples, (const uint8_t **)pcm, frame->nb_samples );
     if( ret < 0 ) 
         MYLOG( LOG::ERROR, "convert fail." );
@@ -637,6 +641,25 @@ AVFrame*    AudioEncode::get_frame()
     frame_count++;
 
     return  frame;
+}
+
+
+
+
+
+
+
+
+/*******************************************************************************
+AudioEncode::get_frame()
+********************************************************************************/
+AVFrame*    AudioEncode::get_frame()
+{
+    //if( frame_count > 1000 )
+        //return  nullptr;
+
+    return  get_frame_from_pcm_file();
+    //return  get_frame_from_file_test();
 }
 
 
