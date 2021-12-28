@@ -60,6 +60,10 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
 
     //
     ctx->bit_rate   =   3000000;
+    /*ret = av_opt_set_int( ctx->priv_data, "crf", 50, 0 );
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "error");*/
+
     ctx->width      =   setting.width;
     ctx->height     =   setting.height;
 
