@@ -6,6 +6,11 @@
 #include "mux.h"
 
 
+/*
+    未來如果要做 subtitle encode 的話
+    do_subtitle_out, avcodec_encode_subtitle, 用這兩個關鍵字去搜尋
+*/
+
 
 class Maker
 {
