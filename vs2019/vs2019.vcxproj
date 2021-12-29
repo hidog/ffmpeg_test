@@ -273,7 +273,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Debug\*.lib D:\code\ffmpeg_test\</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>D:\code\opencv\build\install\x64\vc16\lib;C:\Qt\lib;C:\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_imgproc454.lib;opencv_videoio454.lib;opencv_highgui454.lib;opencv_core454.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Multimedia.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_imgcodecs454.lib;opencv_imgproc454.lib;opencv_videoio454.lib;opencv_highgui454.lib;opencv_core454.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Multimedia.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy D:\code\ffmpeg_test\vs2019\x64\Release\*.dll D:\code\ffmpeg_test\
