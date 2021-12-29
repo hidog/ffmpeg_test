@@ -69,8 +69,9 @@ MainWindow::~MainWindow()
     delete video_widget;*/
 
     delete worker;
-    delete video_worker;
+    //delete video_worker;
     delete audio_worker;
+    delete audio_worker2;
 
     delete video_mtx;
     delete view_data;
@@ -136,6 +137,7 @@ void MainWindow::set_signal_slot()
     connect(    video_worker,       &VideoWorker::update_seekbar_signal,            this,           &MainWindow::update_seekbar_slot            );
 
     connect(    ui->volumeSlider,   &QSlider::valueChanged,                         audio_worker,   &AudioWorker::volume_slot                   );
+    connect(    ui->volumeSlider,   &QSlider::valueChanged,                         audio_worker2,   &AudioWorker::volume_slot                   );
 
 }
 
@@ -175,7 +177,8 @@ void    MainWindow::duration_slot( int du )
     // 暫時用設置完才 connect 跟 disconnect 的作法.
     seek_connect[0]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     worker,         &Worker::seek_slot            );
     seek_connect[1]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     audio_worker,   &AudioWorker::seek_slot       );
-    seek_connect[2]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     video_worker,   &VideoWorker::seek_slot       );
+    seek_connect[1]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     audio_worker2,   &AudioWorker::seek_slot       );
+    //seek_connect[2]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     video_worker,   &VideoWorker::seek_slot       );
 }
 
 
@@ -258,8 +261,9 @@ MainWindow::pause()
 ********************************************************************************/
 void    MainWindow::pause()
 {
-    video_worker->pause();
+    //video_worker->pause();
     audio_worker->pause();
+    audio_worker2->pause();
 }
 
 
@@ -428,8 +432,10 @@ void    MainWindow::closeEvent( QCloseEvent *event )
 
     while( worker->isRunning() == true )
         SLEEP_10MS;
-    while( video_worker->isRunning() == true )
-        SLEEP_10MS;
+    //while( video_worker->isRunning() == true )
+      //  SLEEP_10MS;
     while( audio_worker->isRunning() == true )
+        SLEEP_10MS;
+    while( audio_worker2->isRunning() == true )
         SLEEP_10MS;
 }
