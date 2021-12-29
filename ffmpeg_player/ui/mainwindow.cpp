@@ -224,11 +224,15 @@ MainWindow::play_slot()
 ********************************************************************************/
 void MainWindow::play_slot()
 {
+    static QDir dir("D:\\");
+
     ui->subCBox->clear();
 
-    QString filename     =   QFileDialog::getOpenFileName( this, tr("select src file"), "D:\\" );
+    QString filename     =   QFileDialog::getOpenFileName( this, tr("select src file"), dir.path() );
     if( filename.isEmpty() == true )
         return;
+
+    dir =   QDir( filename ); // 紀錄上次的位置
 
     MYLOG( LOG::INFO, "load file %s", filename.toStdString().c_str() );
     worker->set_src_file(filename.toStdString());
