@@ -55,7 +55,7 @@ public:
     AVCodecContext* get_decode_context();
 
 #ifdef FFMPEG_TEST
-    int     flush();
+    virtual int     flush();
     std::function<int()>    output_frame_func;
 #endif
 

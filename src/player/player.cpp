@@ -391,9 +391,11 @@ void    Player::play()
         //
         if( dc == &s_decoder )
             s_decoder.decode_subtitle( pkt );
+#ifdef RENDER_SUBTITLE
         // 尚未處理 graphic subtitle. 以後有需要再新增.
         else if( s_decoder.exist_stream() == true && dc == &v_decoder )
             play_decode_video_subtitle( pkt );
+#endif
         else
         {
             //
@@ -415,7 +417,38 @@ void    Player::play()
         demuxer.unref_packet();
     }
 
+    // flush
+    s_decoder.flush();
+#ifdef RENDER_SUBTITLE
+    ret     =   v_decoder.send_packet(nullptr);
+    if( ret >= 0 )
+    {       
+        while(true)
+        {
+            ret     =   v_decoder.recv_frame(-1);
+            if( ret <= 0 )
+                break;
+
+            frame   =   v_decoder.get_frame();
+            ret     =   s_decoder.send_video_frame( frame );
+
+            while(true)
+            {
+                // 這邊一樣沒處理 subtitle 為 image 的 case.
+                ret     =   s_decoder.render_subtitle();
+                if( ret <= 0 )
+                    break;
+
+                s_decoder.output_frame_func();
+                s_decoder.unref_frame();
+            }
+
+            v_decoder.unref_frame();  
+        }
+    }
+#else
     v_decoder.flush();
+#endif
     a_decoder.flush();
 
     printf("Demuxing succeeded.\n");

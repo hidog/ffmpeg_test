@@ -1,4 +1,4 @@
-#include "sub_decode.h"
+ï»¿#include "sub_decode.h"
 #include "tool.h"
 #include <sstream>
 
@@ -27,7 +27,7 @@ SubDecode::SubDecode()
 {
     type  =   AVMEDIA_TYPE_SUBTITLE;
 
-#ifdef FFMPEG_TEST
+#ifdef OUTPUT_SUBTITLE_DATA
     pkt_fp      =   fopen( "J:\\pkt.txt", "w+" );
     output_fp   =   fopen( "J:\\test.txt", "w+" );
 #endif
@@ -73,12 +73,12 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     ss.str("");
     ss.clear();   
 
-    // make filename param. ¯d·Nµ´¹ï¸ô®|ªº®æ¦¡, ¤£¯à¶Ã§ï, ·|³y¦¨¿ù»~.
+    // make filename param. ç•™æ„çµ•å°è·¯å¾‘çš„æ ¼å¼, ä¸èƒ½äº‚æ”¹, æœƒé€ æˆéŒ¯èª¤.
     std::string     filename_param  =   "\\";
     filename_param  +=  src_file;
     filename_param.insert( 2, 1, '\\' );
     
-    // ²z½×¤W³oÃäªº¦r¦ê¥i¥HºëÂ²...
+    // ç†è«–ä¸Šé€™é‚Šçš„å­—ä¸²å¯ä»¥ç²¾ç°¡...
     sub_index   =   sd.sub_index;
     ss << "subtitles='" << filename_param << "':stream_index=" << sub_index;
     
@@ -254,7 +254,7 @@ int SubDecode::render_subtitle()
     int ret     =   av_buffersink_get_frame_flags( bf_sink_ctx, frame, 0 );    
 
     if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF ) 
-        return  0;  // ¨S¸ê®Æ,¦ı¨S¿ù»~.
+        return  0;  // æ²’è³‡æ–™,ä½†æ²’éŒ¯èª¤.
     else if( ret < 0 )
     {
         MYLOG( LOG::ERROR, "get frame fail." );
@@ -303,6 +303,20 @@ SubDecode::end()
 ********************************************************************************/
 int     SubDecode::end()
 {
+#ifdef OUTPUT_SUBTITLE_DATAd
+    if( pkt_fp != NULL )
+    {
+        fclose(pkt_fp);
+        pkt_fp  =   NULL;
+    }
+
+    if( output_fp != NULL )
+    {
+        fclose(output_fp);
+        output_fp   =   NULL;
+    }
+#endif
+
     if( bf_src_ctx != nullptr )
     {
         avfilter_free( bf_src_ctx );
@@ -335,14 +349,6 @@ int     SubDecode::end()
     sub_dpts        =   -1; 
     sub_duration    =   -1;
     has_sub_image   =   false;
-
-#ifdef FFMPEG_TEST
-    fclose(pkt_fp);
-    pkt_fp  =   NULL;
-
-    fclose(output_fp);
-    output_fp   =   NULL;
-#endif
 
     Decode::end();
     return  SUCCESS;
@@ -415,7 +421,7 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
     AVFilterInOut   *output         =   avfilter_inout_alloc();
     AVFilterInOut   *input          =   avfilter_inout_alloc();
 
-    // lambda operator, ¬Ù²¤¤F¶Ç¤J°Ñ¼Æ¬A¸¹. 
+    // lambda operator, çœç•¥äº†å‚³å…¥åƒæ•¸æ‹¬è™Ÿ. 
     auto release    =   [ &output, &input ]
     {
         avfilter_inout_free( &output );
@@ -492,16 +498,16 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
 /*******************************************************************************
 SubDecode::generate_subtitle_image()
 
-³o­Óµ{¦¡½X¨S°õ¦æ¹L, ¬O±qºô¸ô½Æ»s¹L¨Óªº, ·Q¿ìªk´ú¸Õ.
+é€™å€‹ç¨‹å¼ç¢¼æ²’åŸ·è¡Œé, æ˜¯å¾ç¶²è·¯è¤‡è£½éä¾†çš„, æƒ³è¾¦æ³•æ¸¬è©¦.
 ********************************************************************************/
 void    SubDecode::generate_subtitle_image( AVSubtitle &subtitle )
 {
     // set time stamp.
     if( subtitle.pts != AV_NOPTS_VALUE)
-        sub_dpts    =   1000.0 * subtitle.pts / AV_TIME_BASE; // ³æ¦ì ms
+        sub_dpts    =   1000.0 * subtitle.pts / AV_TIME_BASE; // å–®ä½ ms
     else
         sub_dpts    =   0;
-    sub_duration    =   1.0 * (subtitle.end_display_time - subtitle.start_display_time) / 1000;  // ³æ¦ì¤£©ú ¥¼¨Ó¬İ¯à¤£¯à§ä¨ì¼v¤ù´ú¸Õ end_display_time
+    sub_duration    =   1.0 * (subtitle.end_display_time - subtitle.start_display_time) / 1000;  // å–®ä½ä¸æ˜ æœªä¾†çœ‹èƒ½ä¸èƒ½æ‰¾åˆ°å½±ç‰‡æ¸¬è©¦ end_display_time
 
     if( subtitle.start_display_time != 0 )
         MYLOG( LOG::ERROR, "start time not zero, need handle." );
@@ -514,14 +520,14 @@ void    SubDecode::generate_subtitle_image( AVSubtitle &subtitle )
         has_sub_image   =   true;
 
         int     i;
-        int     w, h, x, y;
+        int     w, h;
 
         if( subtitle.num_rects > 1 )
-            MYLOG( LOG::ERROR, "subtitle.num_rects = %d", subtitle.num_rects ); // ¹J¨ì¦A¨Ó¸Ñ¨M,¥Ø«e´ú¸Õ¼v¤ù¤@¦¸¥u¦³¤@±i¹Ï
+            MYLOG( LOG::ERROR, "subtitle.num_rects = %d", subtitle.num_rects ); // é‡åˆ°å†ä¾†è§£æ±º,ç›®å‰æ¸¬è©¦å½±ç‰‡ä¸€æ¬¡åªæœ‰ä¸€å¼µåœ–
 
         for( i = 0; i < subtitle.num_rects; i++ )
         {
-            // ²z½×¤W»İ­n°µ¤@¨Ç¶V¬ÉÀË¬dµ¥µ¥,³oÃä¬Ù²¤¤F. ¥H«á¦³ªÅ¦b»¡
+            // ç†è«–ä¸Šéœ€è¦åšä¸€äº›è¶Šç•Œæª¢æŸ¥ç­‰ç­‰,é€™é‚Šçœç•¥äº†. ä»¥å¾Œæœ‰ç©ºåœ¨èªª
             AVSubtitleRect  *rect   =   subtitle.rects[i];
             AVRational      ra { video_width, dec_ctx->width };
 
@@ -542,7 +548,7 @@ void    SubDecode::generate_subtitle_image( AVSubtitle &subtitle )
 
             sws_scale( ctx, rect->data, rect->linesize, 0, rect->h, dst_data, dst_linesize );
 
-            sub_image  =    QImage( dst_data[0], w, h, QImage::Format_RGBA8888 ).copy();  // ³oÃä¤£¥[copy·|¥X²{¯}¹Ï°İÃD
+            sub_image  =    QImage( dst_data[0], w, h, QImage::Format_RGBA8888 ).copy();  // é€™é‚Šä¸åŠ copyæœƒå‡ºç¾ç ´åœ–å•é¡Œ
          
             av_freep( &dst_data[0] );
             sws_freeContext(ctx);        
@@ -575,11 +581,19 @@ SubDecode::decode_subtitle()
 ********************************************************************************/
 int    SubDecode::decode_subtitle( AVPacket* pkt )
 {
-#ifdef FFMPEG_TEST
+
+    if( pkt == nullptr )
+        printf("Test");
+
+    if( pkt->data == nullptr || pkt->size == 0 )
+        printf("test");
+
+#ifdef OUTPUT_SUBTITLE_DATA
     if( pkt != nullptr )
     {
+        char    c   =   '\n';
         fwrite( pkt->data, 1, pkt->size, pkt_fp );
-        fprintf( pkt_fp, "\n" );
+        fwrite( &c, 1, 1, pkt_fp );
     }
 #endif
 
@@ -594,11 +608,11 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
     {
         if( got_sub > 0 )
         {
-            // ¥Nªí¦r¹õ¬O¹Ï¤ù®æ¦¡, »İ­n²£¥Í¹ïÀ³ªº¦r¹õ¹ÏÀÉ.
+            // ä»£è¡¨å­—å¹•æ˜¯åœ–ç‰‡æ ¼å¼, éœ€è¦ç”¢ç”Ÿå°æ‡‰çš„å­—å¹•åœ–æª”.
             if( subtitle.format == 0 )     
                 generate_subtitle_image( subtitle );       
 
-#ifdef FFMPEG_TEST
+#ifdef OUTPUT_SUBTITLE_DATA
             AVSubtitleRect **rects  =   subtitle.rects;
             for( int i = 0; i < subtitle.num_rects; i++ )
             {
@@ -624,18 +638,18 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
     
 
 #if 0
-    // ¥Î¨Ó¿é¥X°T®§ªº´ú¸Õµ{¦¡½X
+    // ç”¨ä¾†è¼¸å‡ºè¨Šæ¯çš„æ¸¬è©¦ç¨‹å¼ç¢¼
     qreal pts = pkt->pts * av_q2d(subStream->time_base);
     qreal duration = pkt->duration * av_q2d(subStream->time_base);
 
     // https://tsduck.io/doxy/namespacets.html
-    // ¥i¥H¥Î ts ®M¥ó°µ¤å¦rÂà´«.
+    // å¯ä»¥ç”¨ ts å¥—ä»¶åšæ–‡å­—è½‰æ›.
     const char *text = const_int8_ptr(pkt->data);
     MYLOG( LOG::DEBUG, "pts = %lf, duration = %lf, text = %s", pts, duration, pkt->data );
 #endif
 
 #if 0
-    // ¥Î¨Ó¿é¥X°T®§ªº´ú¸Õµ{¦¡½X
+    // ç”¨ä¾†è¼¸å‡ºè¨Šæ¯çš„æ¸¬è©¦ç¨‹å¼ç¢¼
     AVSubtitleRect **rects = subtitle.rects;
     for (int i = 0; i < subtitle.num_rects; i++) 
     {
@@ -713,7 +727,7 @@ std::vector<std::string>    SubDecode::get_embedded_subtitle_list()
             list.emplace_back( std::string(dic->value) );
         }
         else
-            list.emplace_back( std::string("default") );  // ¹J¨ì¦h¦r¹õ³£¨S¦³©w¸q title ¦A¨Ó½Õ¾ã³o¸Ìªºµ{¦¡½X...
+            list.emplace_back( std::string("default") );  // é‡åˆ°å¤šå­—å¹•éƒ½æ²’æœ‰å®šç¾© title å†ä¾†èª¿æ•´é€™è£¡çš„ç¨‹å¼ç¢¼...
     }
 
     return  list;
@@ -729,7 +743,7 @@ SubDecode::sub_info()
 
 https://www.jianshu.com/p/89f2da631e16
 
-¹ê»Ú¤W¤£¥²¸Ñ¶}¦h­Ó¦r¹õ­y, ¦³ªÅ¦A¬ã¨s.
+å¯¦éš›ä¸Šä¸å¿…è§£é–‹å¤šå€‹å­—å¹•è»Œ, æœ‰ç©ºå†ç ”ç©¶.
 ********************************************************************************/
 int     SubDecode::sub_info()
 {  
@@ -759,7 +773,7 @@ int     SubDecode::sub_info()
     AVCodecID   codec_id    =   fmt_ctx->streams[ss_idx]->codecpar->codec_id;
     MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(codec_id) );
 
-    // ´ú¸Õ¥Î ¥¼¨Ó»İ­n¯à±½´y metadata, ¨Ã¥B¨q¥X¹ïÀ³ªº sub title, audio title.
+    // æ¸¬è©¦ç”¨ æœªä¾†éœ€è¦èƒ½æƒæ metadata, ä¸¦ä¸”ç§€å‡ºå°æ‡‰çš„ sub title, audio title.
     AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)fmt_ctx->streams[ss_idx]->metadata, "title", NULL, AV_DICT_MATCH_CASE );
     MYLOG( LOG::DEBUG, "title %s", dic->value );
 
@@ -864,12 +878,253 @@ int    SubDecode::output_jpg_by_QT()
 
 
 
+/*******************************************************************************
+SubDecode::test_flush()
+********************************************************************************/
+int    SubDecode::flush()
+{
+    AVPacket    pkt;
+    pkt.data    =   nullptr;
+    pkt.size    =   0;
 
+    AVCodecContext  *dec    =   dec_map[cs_index];
+    AVSubtitle      subtitle;
+
+    int     ret, got_sub;
+
+    for( auto dec : dec_map )
+    {
+        while(true)
+        {
+            got_sub     =   0;
+            ret         =   avcodec_decode_subtitle2( dec.second, &subtitle, &got_sub, &pkt );
+            if( ret < 0 )
+                MYLOG( LOG::ERROR, "error." );            
+            if( got_sub > 0 )
+            {
+#ifdef OUTPUT_SUBTITLE_DATA
+                AVSubtitleRect **rects  =   subtitle.rects;
+                for( int i = 0; i < subtitle.num_rects; i++ )
+                {
+                    AVSubtitleRect rect     =   *rects[i];
+                    if (rect.type == SUBTITLE_ASS)                 
+                        fprintf( output_fp, "%s\n", rect.ass );             
+                    else if (rect.x == SUBTITLE_TEXT)                 
+                        fprintf( output_fp, "%s\n", rect.text );
+                }
+#endif
+            }
+
+            avsubtitle_free(&subtitle);        
+
+            if( got_sub <= 0 )
+                break;
+        }
+    }
+
+    return  1;
+}
 
 
 
 /*******************************************************************************
 extract_subtitle_frome_file()
+
+ref : https://github.com/TatuLund/audiovideo
 ********************************************************************************/
 void    extract_subtitle_frome_file()
-{}
+{
+    char output_file_path[1000] = "J:\\test.ass";
+
+    int ret = 0;
+    int subidx = 0;
+    AVCodec *input_decodec = nullptr;
+
+    AVFormatContext* input_formatctx = nullptr;
+    AVCodecContext* input_decodecctx = nullptr;
+
+    AVFormatContext* output_formatctx = nullptr;
+    AVCodecContext* output_encodecctx = nullptr;
+    AVCodec *output_encodec = nullptr;
+
+    // open input file
+
+    input_formatctx = avformat_alloc_context();
+    ret = avformat_open_input( &input_formatctx, "D:\\code\\test2.mkv", nullptr, nullptr );
+    if( ret != 0)
+        MYLOG( LOG::ERROR, "open fail." );
+
+    ret = avformat_find_stream_info( input_formatctx, nullptr );
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "get stream fail." );
+
+    // ç¬¬ä¸‰å€‹å¼•æ•¸, è¡¨ç¤ºè¦é–‹å•Ÿç¬¬å¹¾å€‹stream.
+    // -1 è¡¨ç¤ºè‡ªå‹•æœå°‹
+    // é€™é‚Šæ”¾ 3 æ˜¯å› ç‚ºå½±ç‰‡å…©å€‹å­—å¹•è»Œ, æˆ‘å€‘è¦é–‹å•Ÿç¬¬ä¸‰å€‹
+    subidx = av_find_best_stream( input_formatctx, AVMEDIA_TYPE_SUBTITLE, 3, -1, nullptr, 0 );
+    if( subidx < 0 )
+        MYLOG( LOG::ERROR, "find stream fail." );  
+
+    AVStream* input_stream = input_formatctx->streams[subidx];
+    input_decodec = avcodec_find_decoder( input_stream->codecpar->codec_id );
+    if( input_decodec == nullptr )
+        MYLOG( LOG::ERROR, "find decoder fail." );
+
+    input_decodecctx = avcodec_alloc_context3(input_decodec); // or avcodec_alloc_context3(nullptr);
+    ret = avcodec_parameters_to_context(input_decodecctx, input_stream->codecpar);
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "param fail." );
+
+    // input_decodecctx->pkt_timebaseä¸º{name=0,den=1} input_stream->time_baseã€€{name=1,den=1000}
+    //
+    input_decodecctx->pkt_timebase = input_stream->time_base;
+
+    // end open input file
+
+
+    // open output file
+
+    ret = avformat_alloc_output_context2( &output_formatctx, nullptr, nullptr, output_file_path );
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "open output fail." );
+
+    ret = avio_open2( &output_formatctx->pb, output_file_path, AVIO_FLAG_WRITE, &output_formatctx->interrupt_callback, nullptr );
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "open fail." );
+
+    AVStream* st = avformat_new_stream( output_formatctx, nullptr );
+    if( st == nullptr)
+        MYLOG( LOG::ERROR, "get stream fail." );
+
+    assert( output_formatctx->nb_streams == 1 );
+
+    st->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
+    st->codecpar->codec_id = av_guess_codec(output_formatctx->oformat, nullptr, output_formatctx->url, nullptr, st->codecpar->codec_type );
+    output_encodec = avcodec_find_encoder(st->codecpar->codec_id);
+    output_encodecctx = avcodec_alloc_context3(output_encodec);  
+    if( output_encodecctx == nullptr )
+        MYLOG( LOG::ERROR, "open encoder fail." );
+
+
+    //
+    output_encodecctx->time_base = AVRational{ 1, 100000 };
+    output_formatctx->streams[0]->time_base = output_encodecctx->time_base;
+
+    // end open output file.
+
+
+    // run main function
+
+    ret = avcodec_open2( input_decodecctx, input_decodec, nullptr );
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "open fail." );
+
+    if( input_decodecctx->subtitle_header )
+    {
+        output_encodecctx->subtitle_header = (uint8_t*)av_mallocz( input_decodecctx->subtitle_header_size + 1 );
+        memcpy(output_encodecctx->subtitle_header, input_decodecctx->subtitle_header, input_decodecctx->subtitle_header_size);
+        output_encodecctx->subtitle_header_size = input_decodecctx->subtitle_header_size;
+    }
+
+    ret = avcodec_open2( output_encodecctx, output_encodec, nullptr );
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "open fail." );
+
+    avcodec_parameters_from_context( output_formatctx->streams[0]->codecpar, output_encodecctx );
+
+    AVStream* ist = input_formatctx->streams[subidx];
+    if( output_formatctx->streams[0]->duration <= 0 && ist->duration > 0 )
+        output_formatctx->streams[0]->duration = av_rescale_q(ist->duration, ist->time_base, output_formatctx->streams[0]->time_base);
+
+
+    // é–‹å§‹å¯«å…¥
+    auto subtitle_output_func = []( AVSubtitle* sub, AVCodecContext* encctx, AVFormatContext* fmtctx, AVRational pkt_timebase ) -> int
+    {
+        const int subtitle_out_max_size = 1024*1024;
+
+        sub->pts += av_rescale_q(sub->start_display_time, pkt_timebase, AVRational{ 1, AV_TIME_BASE });
+        sub->end_display_time -= sub->start_display_time;
+        sub->start_display_time = 0;
+        int64_t sub_duration = sub->end_display_time;
+
+        uint8_t * subtitle_out = (uint8_t*)av_mallocz(subtitle_out_max_size);
+        int subtitle_out_size = avcodec_encode_subtitle(encctx , subtitle_out,
+            subtitle_out_max_size, sub);
+
+        AVPacket pkt;
+        av_init_packet(&pkt);
+        pkt.data = subtitle_out;
+        pkt.size = subtitle_out_size;
+
+        pkt.pts = av_rescale_q(sub->pts, AVRational { 1, AV_TIME_BASE }, fmtctx->streams[0]->time_base);
+        pkt.duration = av_rescale_q(sub_duration, pkt_timebase, fmtctx->streams[0]->time_base);
+        pkt.dts = pkt.pts;
+
+        int ret = 0;
+        ret = av_write_frame(fmtctx, &pkt);
+        if( ret < 0 )
+            MYLOG( LOG::ERROR, "write fail." );
+        return 0;
+    };
+
+
+    avformat_write_header( output_formatctx, nullptr );
+
+    AVPacket pkt_from_input;
+    av_init_packet( &pkt_from_input );
+    pkt_from_input.data = NULL;
+    pkt_from_input.size = 0;
+
+    AVPacket pkt_for_output;
+    av_init_packet( &pkt_for_output );
+    pkt_for_output.data = NULL;
+    pkt_for_output.size = 0;
+
+    while( av_read_frame( input_formatctx, &pkt_from_input ) == 0 )
+    {
+        if( pkt_from_input.stream_index != subidx )
+        {
+            av_packet_unref(&pkt_from_input);
+            continue;
+        }
+
+        if( pkt_from_input.size > 0 )
+        {
+            AVSubtitle subtitle;
+            memset( &subtitle, 0, sizeof(subtitle) );
+            int gotSubtitle = 0;
+            
+            ret = avcodec_decode_subtitle2(input_decodecctx, &subtitle, &gotSubtitle, &pkt_from_input); 
+            
+            // pkt_timebase={1,1000}
+            if( ret < 0 )
+                MYLOG( LOG::ERROR, "decode fail." );
+
+            if( gotSubtitle > 0 )
+                ret = subtitle_output_func( &subtitle, output_encodecctx, output_formatctx,input_decodecctx->pkt_timebase );
+            
+            avsubtitle_free(&subtitle);
+        }
+        else if( pkt_from_input.data == nullptr && pkt_from_input.size == 0 )
+        {
+            int gotSubtitle = 1;
+            while (gotSubtitle != 0)
+            {
+                AVSubtitle subtitle;
+                memset(&subtitle, 0, sizeof(subtitle));
+                ret = avcodec_decode_subtitle2( input_decodecctx, &subtitle, &gotSubtitle, &pkt_from_input );
+                if( ret < 0 )
+                    MYLOG( LOG::ERROR, "decode fail." );
+
+                if( gotSubtitle > 0 )                 
+                    ret = subtitle_output_func( &subtitle, output_encodecctx, output_formatctx, input_decodecctx->pkt_timebase );
+                
+                avsubtitle_free(&subtitle);
+            }
+        }
+        av_packet_unref(&pkt_from_input);
+    }
+
+    av_write_trailer(output_formatctx);
+    
+}

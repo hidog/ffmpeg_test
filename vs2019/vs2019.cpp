@@ -40,6 +40,8 @@ extern "C" {
 
 int main()
 {
+    extract_subtitle_frome_file();
+
 #if 0
     //test_aac();
 

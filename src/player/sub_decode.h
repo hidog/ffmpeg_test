@@ -19,6 +19,9 @@ struct AVSubtitle;
 struct SwsContext;
 
 
+#define     OUTPUT_SUBTITLE_DATA
+
+
 class DLL_API SubDecode : public Decode
 {
 public:
@@ -73,12 +76,14 @@ public:
 #ifdef FFMPEG_TEST
     std::function<int()>    output_frame_func;
     int     output_jpg_by_QT();
+    int     flush() override;
 #endif
+
 
 
 private:
 
-#ifdef FFMPEG_TEST
+#ifdef OUTPUT_SUBTITLE_DATA
     FILE    *pkt_fp     =   NULL;
     FILE    *output_fp  =   NULL;
 #endif
