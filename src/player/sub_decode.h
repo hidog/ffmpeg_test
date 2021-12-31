@@ -68,9 +68,7 @@ public:
     std::pair<std::string,std::string>  get_subtitle_param( AVFormatContext *fmt_ctx, std::string src_file, SubData sd );
     std::vector<std::string>            get_embedded_subtitle_list();
 
-
     int sub_info(); // 目前無作用
-
 
 #ifdef FFMPEG_TEST
     std::function<int()>    output_frame_func;
@@ -79,6 +77,11 @@ public:
 
 
 private:
+
+#ifdef FFMPEG_TEST
+    FILE    *pkt_fp     =   NULL;
+    FILE    *output_fp  =   NULL;
+#endif
 
     AVMediaType     type;    
 
@@ -113,6 +116,9 @@ private:
 
 };
 
+
+
+void    extract_subtitle_frome_file();
 
 
 

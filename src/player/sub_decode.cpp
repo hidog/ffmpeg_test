@@ -25,7 +25,12 @@ SubDecode::SubDecode()
 SubDecode::SubDecode()
     :   Decode()
 {
-    type  =   AVMEDIA_TYPE_SUBTITLE; 
+    type  =   AVMEDIA_TYPE_SUBTITLE;
+
+#ifdef FFMPEG_TEST
+    pkt_fp      =   fopen( "J:\\pkt.txt", "w+" );
+    output_fp   =   fopen( "J:\\test.txt", "w+" );
+#endif
 }
 
 
@@ -331,6 +336,14 @@ int     SubDecode::end()
     sub_duration    =   -1;
     has_sub_image   =   false;
 
+#ifdef FFMPEG_TEST
+    fclose(pkt_fp);
+    pkt_fp  =   NULL;
+
+    fclose(output_fp);
+    output_fp   =   NULL;
+#endif
+
     Decode::end();
     return  SUCCESS;
 }
@@ -562,6 +575,14 @@ SubDecode::decode_subtitle()
 ********************************************************************************/
 int    SubDecode::decode_subtitle( AVPacket* pkt )
 {
+#ifdef FFMPEG_TEST
+    if( pkt != nullptr )
+    {
+        fwrite( pkt->data, 1, pkt->size, pkt_fp );
+        fprintf( pkt_fp, "\n" );
+    }
+#endif
+
     AVCodecContext  *dec    =   pkt == nullptr ? dec_map[cs_index] : dec_map[pkt->stream_index];
 
     AVSubtitle  subtitle {0};
@@ -575,7 +596,19 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
         {
             // 代表字幕是圖片格式, 需要產生對應的字幕圖檔.
             if( subtitle.format == 0 )     
-                generate_subtitle_image( subtitle );                        
+                generate_subtitle_image( subtitle );       
+
+#ifdef FFMPEG_TEST
+            AVSubtitleRect **rects  =   subtitle.rects;
+            for( int i = 0; i < subtitle.num_rects; i++ )
+            {
+                AVSubtitleRect rect     =   *rects[i];
+                if (rect.type == SUBTITLE_ASS)                 
+                    fprintf( output_fp, "%s\n", rect.ass );             
+                else if (rect.x == SUBTITLE_TEXT)                 
+                    fprintf( output_fp, "%s\n", rect.text );
+            }
+#endif
 
             avsubtitle_free( &subtitle );
             return  SUCCESS;
@@ -832,3 +865,11 @@ int    SubDecode::output_jpg_by_QT()
 
 
 
+
+
+
+/*******************************************************************************
+extract_subtitle_frome_file()
+********************************************************************************/
+void    extract_subtitle_frome_file()
+{}
