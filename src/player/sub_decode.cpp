@@ -1033,8 +1033,8 @@ void    extract_subtitle_frome_file()
 
 
 
-    //ret = av_opt_set_int        ( dst_fmtctx->priv_data, "ignore_readorder",  0,       0 );
-    //printf("ret = %d\n", ret);
+    ret     =   av_opt_set_int( dst_fmtctx->priv_data, "ignore_readorder",  0,       0 );
+    MYLOG( LOG::INFO, "ret = %d\n", ret );
 
 
     // 開始寫入
@@ -1054,38 +1054,32 @@ void    extract_subtitle_frome_file()
         av_init_packet( &pkt );
 
         if( subtitle_out_size == 0 )
-            pkt.data = nullptr;
+            pkt.data    =   nullptr;
         else
-            pkt.data        =   subtitle_out;
+            pkt.data    =   subtitle_out;
 
         pkt.size        =   subtitle_out_size;
         pkt.pts         =   av_rescale_q( subtitle.pts, AVRational { 1, AV_TIME_BASE }, dst_fmtctx->streams[0]->time_base );
         pkt.duration    =   av_rescale_q( sub_duration, src_dec->pkt_timebase, dst_fmtctx->streams[0]->time_base );
         pkt.dts         =   pkt.pts;
 
-        static int64_t last_pts = pkt.pts;
+        static int64_t  last_pts    =   pkt.pts;    // 用來處理 flush 的 pts
 
+        // note: flush 的處理可以參考 got_sub 或其他方式.
         if( pkt.pts > 0 )
-            last_pts = pkt.pts;
+            last_pts    =   pkt.pts;
         else
         {
-            pkt.pts = last_pts;
-            pkt.dts = last_pts;
-            pkt.duration = 0;
+            pkt.pts =   last_pts;
+            pkt.dts =   last_pts;
+            pkt.duration    =   0;
         }
 
-        
-        //src_pkt.data = nullptr;
-        //src_pkt.size = 0;
-        //ret = av_interleaved_write_frame( dst_fmtctx, &src_pkt );
-
-        int ret;
-
+        int ret =   0;
         if( subtitle_out_size != 0 )
             ret =   av_write_frame( dst_fmtctx, &pkt );
         else 
-            ret = av_interleaved_write_frame( dst_fmtctx, &pkt );
-
+            ret =   av_interleaved_write_frame( dst_fmtctx, &pkt );  // 沒找到相關說明...
 
         if( ret < 0 )
             MYLOG( LOG::ERROR, "write fail." );
@@ -1126,46 +1120,38 @@ void    extract_subtitle_frome_file()
             if( got_sub > 0 )
                 ret = subtitle_output_func();
             else
-                printf("got < 0");
+                MYLOG( LOG::DEBUG, "got < 0" );
             
             avsubtitle_free(&subtitle);
         }       
         else
-            printf("fail");
+            MYLOG( LOG::ERROR, "demux fail." );
 
         av_packet_unref(&src_pkt);
     }
 
-    // flush
-    //if( src_pkt.data == nullptr && src_pkt.size == 0 )  // flush
+    // flush    
+    src_pkt.data    =   nullptr;
+    src_pkt.size    =   0;
+    
+    got_sub     =   1;
+    while( got_sub != 0 )
     {
-        src_pkt.data = nullptr;
-        src_pkt.size = 0;
-
-        got_sub     =   1;
-        while( got_sub != 0 )
-        {
-            memset( &subtitle, 0, sizeof(subtitle) );
-            ret     =   avcodec_decode_subtitle2( src_dec, &subtitle, &got_sub, &src_pkt );
-            if( ret < 0 )
-                MYLOG( LOG::ERROR, "decode fail." );
-
-            //if( got_sub > 0 )                 
-            ret     =   subtitle_output_func();
-
-            //src_pkt.data = nullptr;
-            //src_pkt.size = 0;
-            //ret = av_interleaved_write_frame( dst_fmtctx, &src_pkt );
-
-            //ret     =   av_write_frame( dst_fmtctx, &src_pkt );
-
-            avsubtitle_free(&subtitle);
-        }
+        memset( &subtitle, 0, sizeof(subtitle) );
+        ret     =   avcodec_decode_subtitle2( src_dec, &subtitle, &got_sub, &src_pkt );
+        if( ret < 0 )
+            MYLOG( LOG::ERROR, "decode fail." );                 
+        ret     =   subtitle_output_func();
+        avsubtitle_free(&subtitle);
     }
+    
 
     if( dst_enc->subtitle_header != nullptr )
         av_free( dst_enc->subtitle_header );
 
-    av_write_trailer(dst_fmtctx);    
+    // note: 還有一些資料需要 free. 有空再來補
+    av_write_trailer(dst_fmtctx);
+
+    MYLOG( LOG::INFO, "finish encode subtitle." );
 }
 
