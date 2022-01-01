@@ -939,6 +939,8 @@ void    extract_subtitle_frome_file()
     AVFormatContext*    dst_fmtctx  =   nullptr;
     AVCodecContext*     dst_enc     =   nullptr;
 
+    AVSubtitle  subtitle;
+
     // open input file
 
     src_fmtctx  =   avformat_alloc_context();
@@ -1027,27 +1029,27 @@ void    extract_subtitle_frome_file()
         dst_fmtctx->streams[0]->duration = av_rescale_q( src_stream->duration, src_stream->time_base, dst_fmtctx->streams[0]->time_base );
 
     // 開始寫入
-    auto subtitle_output_func = []( AVSubtitle* sub, AVCodecContext* encctx, AVFormatContext* fmtctx, AVRational pkt_timebase ) -> int
+    auto subtitle_output_func = [ &subtitle, &dst_enc, &dst_fmtctx, &src_dec ] () -> int
     {
         static const int subtitle_out_max_size     =   1024*1024;
 
-        sub->pts                    +=  av_rescale_q(sub->start_display_time, pkt_timebase, AVRational{ 1, AV_TIME_BASE });
-        sub->end_display_time       -=  sub->start_display_time;
-        sub->start_display_time     =   0;
-        int64_t sub_duration        =   sub->end_display_time;
+        subtitle.pts                   +=   av_rescale_q( subtitle.start_display_time, src_dec->pkt_timebase, AVRational{ 1, AV_TIME_BASE } );
+        subtitle.end_display_time      -=   subtitle.start_display_time;
+        subtitle.start_display_time    =    0;
+        int64_t sub_duration            =   subtitle.end_display_time;
 
         uint8_t*    subtitle_out        =   (uint8_t*)av_mallocz(subtitle_out_max_size);
-        int         subtitle_out_size   =   avcodec_encode_subtitle( encctx , subtitle_out, subtitle_out_max_size, sub );
+        int         subtitle_out_size   =   avcodec_encode_subtitle( dst_enc , subtitle_out, subtitle_out_max_size, &subtitle );
 
         AVPacket    pkt;
         av_init_packet( &pkt );
         pkt.data        =   subtitle_out;
         pkt.size        =   subtitle_out_size;
-        pkt.pts         =   av_rescale_q(sub->pts, AVRational { 1, AV_TIME_BASE }, fmtctx->streams[0]->time_base);
-        pkt.duration    =   av_rescale_q(sub_duration, pkt_timebase, fmtctx->streams[0]->time_base);
+        pkt.pts         =   av_rescale_q( subtitle.pts, AVRational { 1, AV_TIME_BASE }, dst_fmtctx->streams[0]->time_base );
+        pkt.duration    =   av_rescale_q( sub_duration, src_dec->pkt_timebase, dst_fmtctx->streams[0]->time_base );
         pkt.dts         =   pkt.pts;
         
-        int ret     =   av_write_frame( fmtctx, &pkt );
+        int ret     =   av_write_frame( dst_fmtctx, &pkt );
         if( ret < 0 )
             MYLOG( LOG::ERROR, "write fail." );
         return 0;
@@ -1066,7 +1068,6 @@ void    extract_subtitle_frome_file()
     dst_pkt.data = NULL;
     dst_pkt.size = 0;*/
 
-    AVSubtitle  subtitle;
     int         got_sub     =   0;
 
 
@@ -1088,7 +1089,7 @@ void    extract_subtitle_frome_file()
                 MYLOG( LOG::ERROR, "decode fail." );
 
             if( got_sub > 0 )
-                ret = subtitle_output_func( &subtitle, dst_enc, dst_fmtctx,src_dec->pkt_timebase );
+                ret = subtitle_output_func();
             
             avsubtitle_free(&subtitle);
         }       
@@ -1103,7 +1104,7 @@ void    extract_subtitle_frome_file()
                     MYLOG( LOG::ERROR, "decode fail." );
 
                 if( got_sub > 0 )                 
-                    ret     =   subtitle_output_func( &subtitle, dst_enc, dst_fmtctx, src_dec->pkt_timebase );
+                    ret     =   subtitle_output_func();
                 
                 avsubtitle_free(&subtitle);
             }
