@@ -35,6 +35,7 @@ int      video_dst_linesize[4]  =   { 0 };
 int      video_dst_bufsize      =   0;
 
 
+AVStream* sub_stream = NULL;
 
 
 
@@ -59,6 +60,11 @@ typedef struct OutputStream {
 
     struct SwsContext *sws_ctx;
     struct SwrContext *swr_ctx;
+
+    struct AVFormatContext* sub_fmtctx;
+    struct AVCodecContext*  sub_dec;
+    int subidx;
+
 } OutputStream;
 
 static void log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt)
@@ -111,10 +117,11 @@ static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
 }
 
 /* Add an output stream. */
-static void add_stream(OutputStream *ost, AVFormatContext *oc,
-                       const AVCodec **codec,
-                       enum AVCodecID codec_id)
+static void add_stream( OutputStream *ost, AVFormatContext *oc, const AVCodec **codec, enum AVCodecID codec_id )
 {
+    int ret = 0;
+    AVCodec* sub_codec = NULL;
+
     AVCodecContext *c;
     int i;
 
@@ -133,7 +140,7 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
         exit(1);
     }
 
-    ost->st = avformat_new_stream(oc, NULL);
+    ost->st = avformat_new_stream( oc, NULL );
     if (!ost->st) {
         fprintf(stderr, "Could not allocate stream\n");
         exit(1);
@@ -150,8 +157,8 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
     {
     case AVMEDIA_TYPE_AUDIO:
         c->sample_fmt  = AV_SAMPLE_FMT_FLTP; //AV_SAMPLE_FMT_S16P;
-        c->bit_rate    = 3200000;
-        c->sample_rate = 44100; //48000;
+        c->bit_rate    = 320000;
+        c->sample_rate = 48000;
         /*if ((*codec)->supported_samplerates) {
             c->sample_rate = (*codec)->supported_samplerates[0];
             for (i = 0; (*codec)->supported_samplerates[i]; i++) {
@@ -208,6 +215,49 @@ static void add_stream(OutputStream *ost, AVFormatContext *oc,
         }
         break;
 
+    case AVMEDIA_TYPE_SUBTITLE :
+
+        //ost->st->codecpar->codec_tag = 0x6134706d;
+        //ost->st->codecpar->codec_type    =   AVMEDIA_TYPE_SUBTITLE;
+        //ost->st->codecpar->codec_id      =   av_guess_codec( oc->oformat, nullptr, oc->url, nullptr, ost->st->codecpar->codec_type );
+
+        ost->sub_fmtctx = avformat_alloc_context();
+        ret = avformat_open_input( &ost->sub_fmtctx, "J:\\test.ass", nullptr, nullptr );
+        ret = avformat_find_stream_info( ost->sub_fmtctx, nullptr );
+        ost->subidx = av_find_best_stream( ost->sub_fmtctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, nullptr, 0 );
+        
+        sub_stream = ost->sub_fmtctx->streams[ost->subidx];
+
+        sub_codec = avcodec_find_decoder( sub_stream->codecpar->codec_id );
+        ost->sub_dec = avcodec_alloc_context3( sub_codec );
+
+        ret = avcodec_parameters_to_context( ost->sub_dec, sub_stream->codecpar );
+        if( ret < 0 )
+            printf(" add_stream AVMEDIA_TYPE_SUBTITLE fail.\n" );
+
+        ost->sub_dec->pkt_timebase = sub_stream->time_base;
+
+
+        //uint8_t *subtitle_header;
+        //int subtitle_header_size;
+        c->pkt_timebase = AVRational{ 1, 1 }; // 看敘述這邊不影響結果, 驗證一下結合影片的時候是否需要修改
+        c->time_base = AVRational{ 1, 1 };
+        ost->st->time_base = c->time_base;
+        
+        ret = avcodec_open2( ost->sub_dec, sub_codec, nullptr );
+        if( ret < 0 )
+            printf("AVMEDIA_TYPE_SUBTITLE avcodec_open2 fail\n");
+
+        if( ost->sub_dec->subtitle_header != NULL )
+        {
+            // if not set header, open subtitle enc will fail.
+            c->subtitle_header = (uint8_t*)av_mallocz( ost->sub_dec->subtitle_header_size );
+            memcpy( c->subtitle_header, ost->sub_dec->subtitle_header, ost->sub_dec->subtitle_header_size );
+            c->subtitle_header_size = ost->sub_dec->subtitle_header_size;
+        }
+
+        break;
+
     default:
         break;
     }
@@ -248,8 +298,37 @@ static AVFrame *alloc_audio_frame(enum AVSampleFormat sample_fmt,
     return frame;
 }
 
-static void open_audio(AVFormatContext *oc, const AVCodec *codec,
-                       OutputStream *ost, AVDictionary *opt_arg)
+
+
+static void open_subtitle(AVFormatContext *oc, const AVCodec *codec, OutputStream *ost, AVDictionary *opt_arg)
+{
+    AVCodecContext *c;
+    int ret;
+    AVDictionary *opt = NULL;
+
+
+    c = ost->enc;
+
+    av_dict_copy(&opt, opt_arg, 0);
+    ret = avcodec_open2( c, codec, &opt );
+    av_dict_free(&opt);
+    if( ret < 0 )
+        printf("open_subtitle open fail.");
+
+    ret = avcodec_parameters_from_context( ost->st->codecpar, c );
+    //ost->st->codecpar->codec_tag = 0x6134706d;
+
+    if( ret < 0 )
+        printf("open_subtitle copy param fail." );
+
+    if( ost->st->duration <= 0 && sub_stream->duration > 0 )
+        ost->st->duration = av_rescale_q( sub_stream->duration, sub_stream->time_base, ost->st->time_base );
+
+}
+
+
+
+static void open_audio(AVFormatContext *oc, const AVCodec *codec, OutputStream *ost, AVDictionary *opt_arg)
 {
     AVCodecContext *c;
     int nb_samples;
@@ -259,8 +338,8 @@ static void open_audio(AVFormatContext *oc, const AVCodec *codec,
     c = ost->enc;
 
     /* open it */
-    av_dict_copy(&opt, opt_arg, 0);
-    ret = avcodec_open2(c, codec, &opt);
+    av_dict_copy( &opt, opt_arg, 0 );
+    ret = avcodec_open2( c, codec, &opt );
     av_dict_free(&opt);
     if (ret < 0) {
         fprintf(stderr, "Could not open audio codec: %d\n", ret );
@@ -700,26 +779,26 @@ static void close_stream(AVFormatContext *oc, OutputStream *ost)
 
 int muxing()
 {
-    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, 1920, 1080, AV_PIX_FMT_YUV420P10LE, 1 );
+    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, 1920, 1080, AV_PIX_FMT_YUV420P, 1 );
 
 
 
 
 
-    OutputStream video_st = { 0 }, audio_st = { 0 };
+    OutputStream video_st = { 0 }, audio_st = { 0 }, subtitle_st = {0};
     AVOutputFormat *fmt;
     const char *filename;
     AVFormatContext *oc;
-    const AVCodec *audio_codec = NULL, *video_codec = NULL;
+    const AVCodec *audio_codec = NULL, *video_codec = NULL, *subtitle_codec = NULL;
     int ret;
-    int have_video = 0, have_audio = 0;
-    int encode_video = 0, encode_audio = 0;
+    int have_video = 0, have_audio = 0, have_subtitle = 0;
+    int encode_video = 0, encode_audio = 0, encode_subtitle = 0;
     AVDictionary *opt = NULL;
     int i;
 
 
 
-    filename = "J:\\test.mkv";
+    filename = "J:\\output.mkv";
 
 
     /* allocate the output media context */
@@ -750,9 +829,17 @@ int muxing()
         have_audio = 1;
         encode_audio = 1;
     }
+    //if (fmt->subtitle_codec != AV_CODEC_ID_NONE) 
+    {
+        // AV_CODEC_ID_MOV_TEXT
+        //fmt->subtitle_codec = AV_CODEC_ID_SUBRIP;
+        fmt->subtitle_codec = AV_CODEC_ID_ASS;
+        add_stream( &subtitle_st, oc, &subtitle_codec, fmt->subtitle_codec );
+        have_subtitle = 1;
+        encode_subtitle = 1;
+    }
 
 
-    printf( "v time base = %d %d\n", video_st.st->time_base.num, video_st.st->time_base.den );
 
 
     /* Now that all the parameters are set, we can open the audio and
@@ -763,9 +850,10 @@ int muxing()
     if (have_audio)
         open_audio(oc, audio_codec, &audio_st, opt);
 
-    av_dump_format(oc, 0, filename, 1);
+    if( have_subtitle)
+        open_subtitle( oc, subtitle_codec, &subtitle_st, opt );
 
-    printf( "v time base = %d %d\n", video_st.st->time_base.num, video_st.st->time_base.den );
+    av_dump_format(oc, 0, filename, 1);
 
 
     /* open the output file, if needed */
@@ -779,18 +867,21 @@ int muxing()
         }
     }
 
-    printf( "v time base = %d %d\n", video_st.st->time_base.num, video_st.st->time_base.den );
 
 
     /* Write the stream header, if any. */
     ret = avformat_write_header(oc, &opt);
     if (ret < 0) 
     {
-        fprintf(stderr, "Error occurred when opening output file: %d\n", ret );
+        //av_err2str(ret)
+        char temp_str[AV_ERROR_MAX_STRING_SIZE];
+        
+
+        fprintf(stderr, "Error occurred when opening output file: %d %s\n", ret, av_make_error_string( temp_str, AV_ERROR_MAX_STRING_SIZE, ret) );
         return 1;
     }
 
-    printf( "v time base = %d %d\n", video_st.st->time_base.num, video_st.st->time_base.den );
+
 
 
     while (encode_video || encode_audio) 

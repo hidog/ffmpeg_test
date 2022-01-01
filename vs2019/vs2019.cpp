@@ -46,16 +46,16 @@ int main()
 {
     //extract_subtitle_frome_file();
 
-#if 0
+#if 1
     //test_aac();
 
     //resample_audio();
-    //muxing();
+    muxing();
 
-    AudioEncode ae;
-    ae.list_sample_format(AV_CODEC_ID_VORBIS);
+    //AudioEncode ae;
+    //ae.list_sample_format(AV_CODEC_ID_VORBIS);
 
-#elif 1
+#elif 0
 
     EncodeSetting   setting;
     //setting.filename    =   "J:\\test2.mkv";
