@@ -927,7 +927,7 @@ ref : https://github.com/mythsaber/AudioVideo
 void    extract_subtitle_frome_file()
 {
     char src_file_path[1000]    =   "D:\\code\\test2.mkv";
-    char dst_file_path[1000]    =   "D:\\test.ass";
+    char dst_file_path[1000]    =   "J:\\test.ass";
 
     int     ret     =   0;
     int     subidx  =   0;

@@ -44,7 +44,7 @@ extern "C" {
 
 int main()
 {
-    extract_subtitle_frome_file();
+    //extract_subtitle_frome_file();
 
 #if 0
     //test_aac();
@@ -55,15 +55,15 @@ int main()
     AudioEncode ae;
     ae.list_sample_format(AV_CODEC_ID_VORBIS);
 
-#elif 0
+#elif 1
 
     EncodeSetting   setting;
     //setting.filename    =   "J:\\test2.mkv";
     //setting.extension   =   "matroska";
-    //setting.filename    =   "J:\\test2.mp4";
-    //setting.extension   =   "mp4";
-    setting.filename    =   "J:\\test2.avi";  // rmvb 是 variable bitrate. 目前還無法使用
-    setting.extension   =   "avi";
+    setting.filename    =   "J:\\test2.mp4";
+    setting.extension   =   "mp4";
+    //setting.filename    =   "J:\\test2.avi";  // rmvb 是 variable bitrate. 目前還無法使用
+    //setting.extension   =   "avi";
 
     VideoEncodeSetting  v_setting;
     //v_setting.code_id   =   AV_CODEC_ID_H264;
@@ -86,8 +86,8 @@ int main()
     //v_setting.max_b_frames  =   0; 
 
 
-    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
-    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
+    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
+    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
 
     v_setting.src_width     =   1920;
     v_setting.src_height    =   1080;
@@ -96,8 +96,8 @@ int main()
 
 
     AudioEncodeSetting  a_setting;
-    a_setting.code_id     =   AV_CODEC_ID_MP3;
-    //a_setting.code_id       =   AV_CODEC_ID_AAC;
+    //a_setting.code_id     =   AV_CODEC_ID_MP3;
+    a_setting.code_id       =   AV_CODEC_ID_AAC;
     //a_setting.code_id       =   AV_CODEC_ID_AC3;
     //a_setting.code_id     =   AV_CODEC_ID_MP2;
     //a_setting.code_id       =   AV_CODEC_ID_VORBIS;
