@@ -36,6 +36,8 @@ int      video_dst_bufsize      =   0;
 
 
 AVStream* sub_stream = NULL;
+AVPacket* sub_pkt = NULL;
+AVSubtitle subtitle;
 
 
 
@@ -98,7 +100,7 @@ static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
        
 
         /* rescale output packet timestamp values from codec to stream timebase */
-        av_packet_rescale_ts(pkt, c->time_base, st->time_base);
+        av_packet_rescale_ts( pkt, c->time_base, st->time_base);
         pkt->stream_index = st->index;
 
         /* Write the compressed frame to the media file. */
@@ -199,10 +201,10 @@ static void add_stream( OutputStream *ost, AVFormatContext *oc, const AVCodec **
 
         c->time_base       = ost->st->time_base;
 
-        c->gop_size      = 30; /* emit one intra frame every twelve frames at most */
-        c->max_b_frames  = 15;
+        c->gop_size      = 1;//30; /* emit one intra frame every twelve frames at most */
+        c->max_b_frames  = 0;//15;
 
-        c->pix_fmt       = AV_PIX_FMT_YUV420P10LE;
+        c->pix_fmt       = AV_PIX_FMT_YUV420P;
         if (c->codec_id == AV_CODEC_ID_MPEG2VIDEO) {
             /* just for testing, we also add B-frames */
             c->max_b_frames = 2;
@@ -222,7 +224,7 @@ static void add_stream( OutputStream *ost, AVFormatContext *oc, const AVCodec **
         //ost->st->codecpar->codec_id      =   av_guess_codec( oc->oformat, nullptr, oc->url, nullptr, ost->st->codecpar->codec_type );
 
         ost->sub_fmtctx = avformat_alloc_context();
-        ret = avformat_open_input( &ost->sub_fmtctx, "J:\\test.ass", nullptr, nullptr );
+        ret = avformat_open_input( &ost->sub_fmtctx, "J:\\test.srt", nullptr, nullptr );
         ret = avformat_find_stream_info( ost->sub_fmtctx, nullptr );
         ost->subidx = av_find_best_stream( ost->sub_fmtctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, nullptr, 0 );
         
@@ -237,11 +239,11 @@ static void add_stream( OutputStream *ost, AVFormatContext *oc, const AVCodec **
 
         ost->sub_dec->pkt_timebase = sub_stream->time_base;
 
-
+        // AV_TIME_BASE
         //uint8_t *subtitle_header;
         //int subtitle_header_size;
-        c->pkt_timebase = AVRational{ 1, 1 }; // 看敘述這邊不影響結果, 驗證一下結合影片的時候是否需要修改
-        c->time_base = AVRational{ 1, 1 };
+        c->pkt_timebase = AVRational{ 1, 1000 /*AV_TIME_BASE*/ }; // 看敘述這邊不影響結果, 驗證一下結合影片的時候是否需要修改
+        c->time_base = AVRational{ 1, 1000 };
         ost->st->time_base = c->time_base;
         
         ret = avcodec_open2( ost->sub_dec, sub_codec, nullptr );
@@ -400,7 +402,7 @@ static void open_audio(AVFormatContext *oc, const AVCodec *codec, OutputStream *
  * 'nb_channels' channels. */
 static AVFrame *get_audio_frame(OutputStream *ost)
 {
-#if 1
+#if 0
     AVFrame *frame = ost->tmp_frame;
     int j, i, v;
     int16_t *q = (int16_t*)frame->data[0];
@@ -506,6 +508,7 @@ static int write_audio_frame(AVFormatContext *oc, OutputStream *ost)
     {
         /* convert samples from native format to destination codec format, using the resampler */
         /* compute destination number of samples */
+#if 0
         dst_nb_samples = av_rescale_rnd(swr_get_delay(ost->swr_ctx, c->sample_rate) + frame->nb_samples,
                                         c->sample_rate, c->sample_rate, AV_ROUND_UP);
         //av_assert0(dst_nb_samples == frame->nb_samples);
@@ -527,7 +530,7 @@ static int write_audio_frame(AVFormatContext *oc, OutputStream *ost)
             exit(1);
         }
         //frame = ost->frame;
-
+#endif
 
 
 
@@ -538,6 +541,125 @@ static int write_audio_frame(AVFormatContext *oc, OutputStream *ost)
 
     return write_frame(oc, c, ost->st, frame, ost->tmp_pkt);
 }
+
+
+
+
+
+
+
+static int write_subtitle_frame( AVFormatContext *oc, OutputStream *ost )
+{
+    static const int subtitle_out_max_size = 1024*1024;
+
+    AVCodecContext *c;
+    //AVFrame *frame;
+    int ret, got_sub;
+
+
+    int dst_nb_samples;
+
+    c = ost->enc;
+
+    if( sub_pkt->size > 0 )
+    {
+        memset( &subtitle, 0, sizeof(subtitle) );            
+        ret = avcodec_decode_subtitle2( ost->sub_dec, &subtitle, &got_sub, sub_pkt ); 
+        if( ret < 0 )
+            printf( "write_subtitle_frame decode fail.\n" );
+        if( got_sub > 0 )
+        {
+            subtitle.pts                   +=   av_rescale_q( subtitle.start_display_time, ost->sub_dec->pkt_timebase, AVRational{ 1, AV_TIME_BASE } );
+            subtitle.end_display_time      -=   subtitle.start_display_time;
+            subtitle.start_display_time    =    0;
+            int64_t sub_duration           =    subtitle.end_display_time;
+
+            uint8_t*    subtitle_out        =   (uint8_t*)av_mallocz(subtitle_out_max_size);
+            int         subtitle_out_size   =   avcodec_encode_subtitle( c , subtitle_out, subtitle_out_max_size, &subtitle );
+
+            AVPacket    pkt;
+            av_init_packet( &pkt );
+
+            if( subtitle_out_size == 0 )
+                pkt.data    =   nullptr;
+            else
+                pkt.data    =   subtitle_out;
+
+            pkt.size        =   subtitle_out_size;
+            pkt.pts         =   av_rescale_q( subtitle.pts, AVRational { 1, AV_TIME_BASE }, ost->st->time_base );
+            pkt.duration    =   av_rescale_q( sub_duration, ost->sub_dec->pkt_timebase, ost->st->time_base );
+            pkt.dts         =   pkt.pts;
+
+            static int64_t  last_pts    =   pkt.pts;    // 用來處理 flush 的 pts
+
+                                                        // note: flush 的處理可以參考 got_sub 或其他方式.
+            if( pkt.pts > 0 )
+                last_pts    =   pkt.pts;
+            else
+            {
+                pkt.pts =   last_pts;
+                pkt.dts =   last_pts;
+                pkt.duration    =   0;
+            }
+
+            //AVRational avr { 1, 1000 };
+            //pkt.pts = av_rescale_q( ost->samples_count, avr, c->time_base);
+
+
+            int ret =   0;
+            pkt.stream_index = ost->st->index;
+            if( subtitle_out_size != 0 )
+                ret =   av_write_frame( oc, &pkt );
+            else 
+                ret =   av_interleaved_write_frame( oc, &pkt );  // 沒找到相關說明...
+
+            if( ret < 0 )
+                printf( "write_subtitle_frame write fail." );
+            return 0;
+        }
+
+        avsubtitle_free(&subtitle);
+    }
+    else
+        printf("write_subtitle_frame size < 0. error.\n");
+
+
+    /*if (frame) 
+    {
+        AVRational avr { 1, c->sample_rate };
+        frame->pts = av_rescale_q(ost->samples_count, avr, c->time_base);
+        ost->samples_count += frame->nb_samples; //  dst_nb_samples;
+    }
+
+    return write_frame(oc, c, ost->st, frame, ost->tmp_pkt);*/
+
+    return 1;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**************************************************************/
 /* video output */
@@ -708,7 +830,7 @@ static AVFrame *get_video_frame(OutputStream *ost)
     if( !ost->sws_ctx )
     {
         ost->sws_ctx = sws_getContext( 1920, 1080, AV_PIX_FMT_BGRA,
-                                       1920, 1080, AV_PIX_FMT_YUV420P10LE,
+                                       1920, 1080, AV_PIX_FMT_YUV420P,
                                        SWS_BICUBIC, NULL, NULL, NULL);
         if (!ost->sws_ctx) 
         {
@@ -817,7 +939,7 @@ int muxing()
      * and initialize the codecs. */
     if (fmt->video_codec != AV_CODEC_ID_NONE) 
     {
-        fmt->video_codec = AV_CODEC_ID_H265;
+        fmt->video_codec = AV_CODEC_ID_H264;
         add_stream(&video_st, oc, &video_codec, fmt->video_codec);
         have_video = 1;
         encode_video = 1;
@@ -830,6 +952,7 @@ int muxing()
         encode_audio = 1;
     }
     //if (fmt->subtitle_codec != AV_CODEC_ID_NONE) 
+#if 1
     {
         // AV_CODEC_ID_MOV_TEXT
         //fmt->subtitle_codec = AV_CODEC_ID_SUBRIP;
@@ -838,7 +961,7 @@ int muxing()
         have_subtitle = 1;
         encode_subtitle = 1;
     }
-
+#endif
 
 
 
@@ -883,23 +1006,76 @@ int muxing()
 
 
 
+    int cpr1, cpr2;  // cpr = compare
 
-    while (encode_video || encode_audio) 
+
+
+    sub_pkt = av_packet_alloc();
+    ret = av_read_frame( subtitle_st.sub_fmtctx, sub_pkt );
+
+
+    int encode_target = 0; // 0 video   1 audio    2 subtitle
+
+
+    int video_cc = 0, audio_cc = 0, sub_cc = 0;
+
+
+    //sub_pkt->pts = 99999999;
+
+
+    while( encode_video || encode_audio )
     {
-        printf( "v time base = %d %d\n", video_st.st->time_base.num, video_st.st->time_base.den );
+        //cpr2 = -1;
+        //printf( "v time base = %d %d\n", video_st.st->time_base.num, video_st.st->time_base.den );
 
+        printf( "vc = %d, ac = %d, sc = %d\n", video_cc, audio_cc, sub_cc );
+
+        if( video_cc == 19 && audio_cc == 38 && sub_cc == 229 )
+            printf("test\n");
+
+        cpr1 = av_compare_ts( video_st.next_pts, video_st.enc->time_base, audio_st.next_pts, audio_st.enc->time_base );
+        // cpr <= 0  video
+        // cpr > 0  audio
+        if( cpr1 <= 0 )        
+            cpr2 = av_compare_ts( video_st.next_pts, video_st.enc->time_base, sub_pkt->pts , subtitle_st.enc->time_base );        
+        else
+            cpr2 = av_compare_ts( audio_st.next_pts, audio_st.enc->time_base, sub_pkt->pts , subtitle_st.enc->time_base );
+        // cpr2 > 0    subtitle
+        // cpr2 <= 0   cpr1 <= 0    video
+        // cpr2 <= 0   cpr1 > 0     audio
+        if( cpr2 > 0 )
+        {
+            encode_target = 2;
+            sub_cc++;
+        }
+        else if( cpr1 <= 0 )
+        {
+            encode_target = 0;
+            video_cc++;
+        }
+        else
+        {
+            encode_target = 1;
+            audio_cc++;
+        }
+        
+        if( encode_audio == 0 )
+            encode_target = 0;
+        if( encode_video == 0 )
+            encode_target = 1;
 
         /* select the stream to encode */
-        if (encode_video &&
-            (!encode_audio || av_compare_ts(video_st.next_pts, video_st.enc->time_base,
-                                            audio_st.next_pts, audio_st.enc->time_base) <= 0)) 
-        {
-            encode_video = !write_video_frame(oc, &video_st);
-        } 
-        else 
-        {
+        if( encode_target == 0 )         
+            encode_video = !write_video_frame(oc, &video_st);        
+        else if( encode_target == 1 )       
             encode_audio = !write_audio_frame(oc, &audio_st);
+        else
+        {
+            // encode subtitle
+            encode_subtitle = !write_subtitle_frame( oc, &subtitle_st );
+            ret = av_read_frame( subtitle_st.sub_fmtctx, sub_pkt );
         }
+        
     }
 
     /* Write the trailer, if any. The trailer must be written before you
