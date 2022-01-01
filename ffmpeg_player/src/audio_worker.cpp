@@ -146,8 +146,8 @@ void AudioWorker::run()
 
     // start play
     // 光纖會比較快播出,用sleep work around來控制
-    //if( index == 0 )
-      //  std::this_thread::sleep_for( std::chrono::milliseconds(100) );
+    if( index == 0 )
+        std::this_thread::sleep_for( std::chrono::milliseconds(100) );
     audio_play();
 
     io->close();
