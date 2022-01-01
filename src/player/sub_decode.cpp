@@ -132,6 +132,7 @@ SubDecode::~SubDecode()
 
 
 
+
 /*******************************************************************************
 SubDecode::open_codec_context()
 ********************************************************************************/
@@ -581,13 +582,6 @@ SubDecode::decode_subtitle()
 ********************************************************************************/
 int    SubDecode::decode_subtitle( AVPacket* pkt )
 {
-
-    if( pkt == nullptr )
-        printf("Test");
-
-    if( pkt->data == nullptr || pkt->size == 0 )
-        printf("test");
-
 #ifdef OUTPUT_SUBTITLE_DATA
     if( pkt != nullptr )
     {
@@ -613,14 +607,17 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
                 generate_subtitle_image( subtitle );       
 
 #ifdef OUTPUT_SUBTITLE_DATA
-            AVSubtitleRect **rects  =   subtitle.rects;
-            for( int i = 0; i < subtitle.num_rects; i++ )
+            if( subtitle.format != 0 )
             {
-                AVSubtitleRect rect     =   *rects[i];
-                if (rect.type == SUBTITLE_ASS)                 
-                    fprintf( output_fp, "%s\n", rect.ass );             
-                else if (rect.x == SUBTITLE_TEXT)                 
-                    fprintf( output_fp, "%s\n", rect.text );
+                AVSubtitleRect **rects  =   subtitle.rects;
+                for( int i = 0; i < subtitle.num_rects; i++ )
+                {
+                    AVSubtitleRect rect     =   *rects[i];
+                    if (rect.type == SUBTITLE_ASS)                 
+                        fprintf( output_fp, "%s\n", rect.ass );             
+                    else if (rect.x == SUBTITLE_TEXT)                 
+                        fprintf( output_fp, "%s\n", rect.text );
+                }
             }
 #endif
 
@@ -878,6 +875,50 @@ int    SubDecode::output_jpg_by_QT()
 
 
 
+
+
+/*******************************************************************************
+SubDecode::flush_all_stream()
+********************************************************************************/
+void    SubDecode::flush_all_stream() 
+{
+    int     ret     =   0;
+    int     got_sub =   0;
+
+    // for subtitle flush, data = null, size = 0. 
+    // 這邊可以省略 pkt 的初始化
+    AVPacket    pkt;
+    pkt.data    =   nullptr;
+    pkt.size    =   0;
+
+    AVSubtitle      subtitle;
+
+    for( auto dec : dec_map )
+    {
+        while(true)
+        {
+            ret     =   avcodec_decode_subtitle2( dec.second, &subtitle, &got_sub, &pkt );
+            if( ret < 0 )
+                MYLOG( LOG::ERROR, "flush decode subtitle fail." );
+
+            avsubtitle_free(&subtitle);
+
+            if( got_sub <= 0 )
+                break;
+            
+            if( dec.first == cs_index && subtitle.format == 0 )       
+                generate_subtitle_image( subtitle );
+        }
+    }
+}
+
+
+
+
+
+
+
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 SubDecode::test_flush()
 ********************************************************************************/
@@ -924,6 +965,9 @@ int    SubDecode::flush()
 
     return  1;
 }
+#endif
+
+
 
 
 
