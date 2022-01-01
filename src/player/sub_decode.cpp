@@ -914,7 +914,9 @@ int    SubDecode::flush()
 #endif
 
 
-
+extern "C" {
+#include <libavutil/opt.h>
+}
 
 
 /*******************************************************************************
@@ -925,7 +927,7 @@ ref : https://github.com/mythsaber/AudioVideo
 void    extract_subtitle_frome_file()
 {
     char src_file_path[1000]    =   "D:\\code\\test2.mkv";
-    char dst_file_path[1000]    =   "J:\\test.ass";
+    char dst_file_path[1000]    =   "D:\\test.ass";
 
     int     ret     =   0;
     int     subidx  =   0;
@@ -970,8 +972,8 @@ void    extract_subtitle_frome_file()
         MYLOG( LOG::ERROR, "param fail." );
 
     // input_decodecctx->pkt_timebase为{name=0,den=1} input_stream->time_base　{name=1,den=1000}
-    // 參考註解, 這行不能刪除, 有空測試看看
-    src_dec->pkt_timebase = src_stream->time_base;
+    // 這行刪除了會造成 timestamp 錯掉
+    src_dec->pkt_timebase   =   src_stream->time_base;
 
     // end open input file
     // *****************************************************************************************************************************
@@ -1000,7 +1002,8 @@ void    extract_subtitle_frome_file()
         MYLOG( LOG::ERROR, "open encoder fail." );
 
     // 看註解說這邊沒影響, 有空測試一下
-    dst_enc->time_base      =   AVRational{ 1, 100000 };
+    // 不能不設置
+    dst_enc->time_base      =   AVRational{ 1, 1 };
     dst_fmtctx->streams[0]->time_base   =   dst_enc->time_base;
 
     // end open output file.
@@ -1013,8 +1016,8 @@ void    extract_subtitle_frome_file()
 
     if( src_dec->subtitle_header )
     {
-        dst_enc->subtitle_header        =   (uint8_t*)av_mallocz( src_dec->subtitle_header_size + 1 );
-        memcpy(dst_enc->subtitle_header, src_dec->subtitle_header, src_dec->subtitle_header_size);
+        dst_enc->subtitle_header        =   (uint8_t*)av_mallocz( src_dec->subtitle_header_size );
+        memcpy( dst_enc->subtitle_header, src_dec->subtitle_header, src_dec->subtitle_header_size );
         dst_enc->subtitle_header_size   =   src_dec->subtitle_header_size;
     }
 
@@ -1027,6 +1030,12 @@ void    extract_subtitle_frome_file()
     // AVStream*   ist =   src_fmtctx->streams[subidx];  // src_stream
     if( dst_fmtctx->streams[0]->duration <= 0 && src_stream->duration > 0 )
         dst_fmtctx->streams[0]->duration = av_rescale_q( src_stream->duration, src_stream->time_base, dst_fmtctx->streams[0]->time_base );
+
+
+
+    //ret = av_opt_set_int        ( dst_fmtctx->priv_data, "ignore_readorder",  0,       0 );
+    //printf("ret = %d\n", ret);
+
 
     // 開始寫入
     auto subtitle_output_func = [ &subtitle, &dst_enc, &dst_fmtctx, &src_dec ] () -> int
@@ -1043,19 +1052,47 @@ void    extract_subtitle_frome_file()
 
         AVPacket    pkt;
         av_init_packet( &pkt );
-        pkt.data        =   subtitle_out;
+
+        if( subtitle_out_size == 0 )
+            pkt.data = nullptr;
+        else
+            pkt.data        =   subtitle_out;
+
         pkt.size        =   subtitle_out_size;
         pkt.pts         =   av_rescale_q( subtitle.pts, AVRational { 1, AV_TIME_BASE }, dst_fmtctx->streams[0]->time_base );
         pkt.duration    =   av_rescale_q( sub_duration, src_dec->pkt_timebase, dst_fmtctx->streams[0]->time_base );
         pkt.dts         =   pkt.pts;
+
+        static int64_t last_pts = pkt.pts;
+
+        if( pkt.pts > 0 )
+            last_pts = pkt.pts;
+        else
+        {
+            pkt.pts = last_pts;
+            pkt.dts = last_pts;
+            pkt.duration = 0;
+        }
+
         
-        int ret     =   av_write_frame( dst_fmtctx, &pkt );
+        //src_pkt.data = nullptr;
+        //src_pkt.size = 0;
+        //ret = av_interleaved_write_frame( dst_fmtctx, &src_pkt );
+
+        int ret;
+
+        if( subtitle_out_size != 0 )
+            ret =   av_write_frame( dst_fmtctx, &pkt );
+        else 
+            ret = av_interleaved_write_frame( dst_fmtctx, &pkt );
+
+
         if( ret < 0 )
             MYLOG( LOG::ERROR, "write fail." );
         return 0;
     };
 
-
+    //
     avformat_write_header( dst_fmtctx, nullptr );
 
     AVPacket    src_pkt;
@@ -1063,16 +1100,14 @@ void    extract_subtitle_frome_file()
     src_pkt.data    =   nullptr;
     src_pkt.size    =   0;
 
-    /*AVPacket    dst_pkt;
-    av_init_packet( &dst_pkt );
-    dst_pkt.data = NULL;
-    dst_pkt.size = 0;*/
-
     int         got_sub     =   0;
 
-
-    while( av_read_frame( src_fmtctx, &src_pkt ) == 0 )
+    while( true )
     {
+        ret     =   av_read_frame( src_fmtctx, &src_pkt );
+        if( ret < 0 )
+            break;
+
         if( src_pkt.stream_index != subidx )
         {
             av_packet_unref( &src_pkt );
@@ -1082,7 +1117,7 @@ void    extract_subtitle_frome_file()
         if( src_pkt.size > 0 )
         {
             memset( &subtitle, 0, sizeof(subtitle) );            
-            ret     =   avcodec_decode_subtitle2(src_dec, &subtitle, &got_sub, &src_pkt); 
+            ret     =   avcodec_decode_subtitle2( src_dec, &subtitle, &got_sub, &src_pkt ); 
             
             // pkt_timebase={1,1000}
             if( ret < 0 )
@@ -1090,27 +1125,47 @@ void    extract_subtitle_frome_file()
 
             if( got_sub > 0 )
                 ret = subtitle_output_func();
+            else
+                printf("got < 0");
             
             avsubtitle_free(&subtitle);
         }       
-        else if( src_pkt.data == nullptr && src_pkt.size == 0 )  // flush
-        {
-            got_sub     =   1;
-            while( got_sub != 0 )
-            {
-                memset( &subtitle, 0, sizeof(subtitle) );
-                ret     =   avcodec_decode_subtitle2( src_dec, &subtitle, &got_sub, &src_pkt );
-                if( ret < 0 )
-                    MYLOG( LOG::ERROR, "decode fail." );
+        else
+            printf("fail");
 
-                if( got_sub > 0 )                 
-                    ret     =   subtitle_output_func();
-                
-                avsubtitle_free(&subtitle);
-            }
-        }
         av_packet_unref(&src_pkt);
     }
 
+    // flush
+    //if( src_pkt.data == nullptr && src_pkt.size == 0 )  // flush
+    {
+        src_pkt.data = nullptr;
+        src_pkt.size = 0;
+
+        got_sub     =   1;
+        while( got_sub != 0 )
+        {
+            memset( &subtitle, 0, sizeof(subtitle) );
+            ret     =   avcodec_decode_subtitle2( src_dec, &subtitle, &got_sub, &src_pkt );
+            if( ret < 0 )
+                MYLOG( LOG::ERROR, "decode fail." );
+
+            //if( got_sub > 0 )                 
+            ret     =   subtitle_output_func();
+
+            //src_pkt.data = nullptr;
+            //src_pkt.size = 0;
+            //ret = av_interleaved_write_frame( dst_fmtctx, &src_pkt );
+
+            //ret     =   av_write_frame( dst_fmtctx, &src_pkt );
+
+            avsubtitle_free(&subtitle);
+        }
+    }
+
+    if( dst_enc->subtitle_header != nullptr )
+        av_free( dst_enc->subtitle_header );
+
     av_write_trailer(dst_fmtctx);    
 }
+
