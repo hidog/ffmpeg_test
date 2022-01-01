@@ -19,7 +19,7 @@ struct AVSubtitle;
 struct SwsContext;
 
 
-//#define     OUTPUT_SUBTITLE_DATA
+
 
 
 class DLL_API SubDecode : public Decode
@@ -82,11 +82,6 @@ public:
 
 
 private:
-
-#ifdef OUTPUT_SUBTITLE_DATA
-    FILE    *pkt_fp     =   NULL;
-    FILE    *output_fp  =   NULL;
-#endif
 
     AVMediaType     type;    
 

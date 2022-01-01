@@ -26,11 +26,6 @@ SubDecode::SubDecode()
     :   Decode()
 {
     type  =   AVMEDIA_TYPE_SUBTITLE;
-
-#ifdef OUTPUT_SUBTITLE_DATA
-    pkt_fp      =   fopen( "J:\\pkt.txt", "w+" );
-    output_fp   =   fopen( "J:\\test.txt", "w+" );
-#endif
 }
 
 
@@ -304,20 +299,6 @@ SubDecode::end()
 ********************************************************************************/
 int     SubDecode::end()
 {
-#ifdef OUTPUT_SUBTITLE_DATAd
-    if( pkt_fp != NULL )
-    {
-        fclose(pkt_fp);
-        pkt_fp  =   NULL;
-    }
-
-    if( output_fp != NULL )
-    {
-        fclose(output_fp);
-        output_fp   =   NULL;
-    }
-#endif
-
     if( bf_src_ctx != nullptr )
     {
         avfilter_free( bf_src_ctx );
@@ -582,15 +563,6 @@ SubDecode::decode_subtitle()
 ********************************************************************************/
 int    SubDecode::decode_subtitle( AVPacket* pkt )
 {
-#ifdef OUTPUT_SUBTITLE_DATA
-    if( pkt != nullptr )
-    {
-        char    c   =   '\n';
-        fwrite( pkt->data, 1, pkt->size, pkt_fp );
-        fwrite( &c, 1, 1, pkt_fp );
-    }
-#endif
-
     AVCodecContext  *dec    =   pkt == nullptr ? dec_map[cs_index] : dec_map[pkt->stream_index];
 
     AVSubtitle  subtitle {0};
@@ -606,21 +578,6 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
             if( subtitle.format == 0 )     
                 generate_subtitle_image( subtitle );       
 
-#ifdef OUTPUT_SUBTITLE_DATA
-            if( subtitle.format != 0 )
-            {
-                AVSubtitleRect **rects  =   subtitle.rects;
-                for( int i = 0; i < subtitle.num_rects; i++ )
-                {
-                    AVSubtitleRect rect     =   *rects[i];
-                    if (rect.type == SUBTITLE_ASS)                 
-                        fprintf( output_fp, "%s\n", rect.ass );             
-                    else if (rect.x == SUBTITLE_TEXT)                 
-                        fprintf( output_fp, "%s\n", rect.text );
-                }
-            }
-#endif
-
             avsubtitle_free( &subtitle );
             return  SUCCESS;
         }
@@ -632,7 +589,6 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
         MYLOG( LOG::ERROR, "decode subtitle fail" );
         return  ERROR;
     }   
-    
 
 #if 0
     // 用來輸出訊息的測試程式碼
@@ -941,20 +897,10 @@ int    SubDecode::flush()
             ret         =   avcodec_decode_subtitle2( dec.second, &subtitle, &got_sub, &pkt );
             if( ret < 0 )
                 MYLOG( LOG::ERROR, "error." );            
-            if( got_sub > 0 )
-            {
-#ifdef OUTPUT_SUBTITLE_DATA
-                AVSubtitleRect **rects  =   subtitle.rects;
-                for( int i = 0; i < subtitle.num_rects; i++ )
-                {
-                    AVSubtitleRect rect     =   *rects[i];
-                    if (rect.type == SUBTITLE_ASS)                 
-                        fprintf( output_fp, "%s\n", rect.ass );             
-                    else if (rect.x == SUBTITLE_TEXT)                 
-                        fprintf( output_fp, "%s\n", rect.text );
-                }
-#endif
-            }
+            
+            // if need output message, use this flag.
+            //if( got_sub > 0 )
+            //{}
 
             avsubtitle_free(&subtitle);        
 
