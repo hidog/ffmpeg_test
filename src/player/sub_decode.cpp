@@ -920,111 +920,113 @@ int    SubDecode::flush()
 /*******************************************************************************
 extract_subtitle_frome_file()
 
-ref : https://github.com/TatuLund/audiovideo
+ref : https://github.com/mythsaber/AudioVideo
 ********************************************************************************/
 void    extract_subtitle_frome_file()
 {
-    char output_file_path[1000] = "J:\\test.ass";
+    char src_file_path[1000]    =   "D:\\code\\test2.mkv";
+    char dst_file_path[1000]    =   "J:\\test.ass";
 
-    int ret = 0;
-    int subidx = 0;
-    AVCodec *input_decodec = nullptr;
+    int     ret     =   0;
+    int     subidx  =   0;
 
-    AVFormatContext* input_formatctx = nullptr;
-    AVCodecContext* input_decodecctx = nullptr;
+    AVCodec     *src_codec  =   nullptr;
+    AVCodec     *dst_codec  =   nullptr;
 
-    AVFormatContext* output_formatctx = nullptr;
-    AVCodecContext* output_encodecctx = nullptr;
-    AVCodec *output_encodec = nullptr;
+    AVFormatContext*    src_fmtctx  =   nullptr;
+    AVCodecContext*     src_dec     =   nullptr;
+
+    AVFormatContext*    dst_fmtctx  =   nullptr;
+    AVCodecContext*     dst_enc     =   nullptr;
 
     // open input file
 
-    input_formatctx = avformat_alloc_context();
-    ret = avformat_open_input( &input_formatctx, "D:\\code\\test2.mkv", nullptr, nullptr );
+    src_fmtctx = avformat_alloc_context();
+    ret = avformat_open_input( &src_fmtctx, src_file_path, nullptr, nullptr );
     if( ret != 0)
         MYLOG( LOG::ERROR, "open fail." );
 
-    ret = avformat_find_stream_info( input_formatctx, nullptr );
+    ret = avformat_find_stream_info( src_fmtctx, nullptr );
     if( ret < 0 )
         MYLOG( LOG::ERROR, "get stream fail." );
 
     // 第三個引數, 表示要開啟第幾個stream.
     // -1 表示自動搜尋
     // 這邊放 3 是因為影片兩個字幕軌, 我們要開啟第三個
-    subidx = av_find_best_stream( input_formatctx, AVMEDIA_TYPE_SUBTITLE, 3, -1, nullptr, 0 );
+    subidx = av_find_best_stream( src_fmtctx, AVMEDIA_TYPE_SUBTITLE, 3, -1, nullptr, 0 );
     if( subidx < 0 )
         MYLOG( LOG::ERROR, "find stream fail." );  
 
-    AVStream* input_stream = input_formatctx->streams[subidx];
-    input_decodec = avcodec_find_decoder( input_stream->codecpar->codec_id );
-    if( input_decodec == nullptr )
+    AVStream* input_stream = src_fmtctx->streams[subidx];
+    src_codec = avcodec_find_decoder( input_stream->codecpar->codec_id );
+    if( src_codec == nullptr )
         MYLOG( LOG::ERROR, "find decoder fail." );
 
-    input_decodecctx = avcodec_alloc_context3(input_decodec); // or avcodec_alloc_context3(nullptr);
-    ret = avcodec_parameters_to_context(input_decodecctx, input_stream->codecpar);
+    src_dec = avcodec_alloc_context3(src_codec); // or avcodec_alloc_context3(nullptr);
+    ret = avcodec_parameters_to_context(src_dec, input_stream->codecpar);
     if( ret < 0 )
         MYLOG( LOG::ERROR, "param fail." );
 
     // input_decodecctx->pkt_timebase为{name=0,den=1} input_stream->time_base　{name=1,den=1000}
     //
-    input_decodecctx->pkt_timebase = input_stream->time_base;
+    src_dec->pkt_timebase = input_stream->time_base;
 
     // end open input file
 
 
     // open output file
 
-    ret = avformat_alloc_output_context2( &output_formatctx, nullptr, nullptr, output_file_path );
+    ret = avformat_alloc_output_context2( &dst_fmtctx, nullptr, nullptr, dst_file_path );
     if( ret < 0 )
         MYLOG( LOG::ERROR, "open output fail." );
 
-    ret = avio_open2( &output_formatctx->pb, output_file_path, AVIO_FLAG_WRITE, &output_formatctx->interrupt_callback, nullptr );
+    ret = avio_open2( &dst_fmtctx->pb, dst_file_path, AVIO_FLAG_WRITE, &dst_fmtctx->interrupt_callback, nullptr );
     if( ret < 0 )
         MYLOG( LOG::ERROR, "open fail." );
 
-    AVStream* st = avformat_new_stream( output_formatctx, nullptr );
+    AVStream* st = avformat_new_stream( dst_fmtctx, nullptr );
     if( st == nullptr)
         MYLOG( LOG::ERROR, "get stream fail." );
 
-    assert( output_formatctx->nb_streams == 1 );
+    assert( dst_fmtctx->nb_streams == 1 );
 
     st->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
-    st->codecpar->codec_id = av_guess_codec(output_formatctx->oformat, nullptr, output_formatctx->url, nullptr, st->codecpar->codec_type );
-    output_encodec = avcodec_find_encoder(st->codecpar->codec_id);
-    output_encodecctx = avcodec_alloc_context3(output_encodec);  
-    if( output_encodecctx == nullptr )
+    st->codecpar->codec_id = av_guess_codec(dst_fmtctx->oformat, nullptr, dst_fmtctx->url, nullptr, st->codecpar->codec_type );
+    dst_codec = avcodec_find_encoder(st->codecpar->codec_id);
+    dst_enc = avcodec_alloc_context3(dst_codec);  
+    if( dst_enc == nullptr )
         MYLOG( LOG::ERROR, "open encoder fail." );
 
 
     //
-    output_encodecctx->time_base = AVRational{ 1, 100000 };
-    output_formatctx->streams[0]->time_base = output_encodecctx->time_base;
+    dst_enc->time_base = AVRational{ 1, 100000 };
+    dst_fmtctx->streams[0]->time_base = dst_enc->time_base;
 
     // end open output file.
 
 
     // run main function
 
-    ret = avcodec_open2( input_decodecctx, input_decodec, nullptr );
+    ret = avcodec_open2( src_dec, src_codec, nullptr );
     if( ret < 0 )
         MYLOG( LOG::ERROR, "open fail." );
 
-    if( input_decodecctx->subtitle_header )
+    if( src_dec->subtitle_header )
     {
-        output_encodecctx->subtitle_header = (uint8_t*)av_mallocz( input_decodecctx->subtitle_header_size + 1 );
-        memcpy(output_encodecctx->subtitle_header, input_decodecctx->subtitle_header, input_decodecctx->subtitle_header_size);
-        output_encodecctx->subtitle_header_size = input_decodecctx->subtitle_header_size;
+        dst_enc->subtitle_header = (uint8_t*)av_mallocz( src_dec->subtitle_header_size + 1 );
+        memcpy(dst_enc->subtitle_header, src_dec->subtitle_header, src_dec->subtitle_header_size);
+        dst_enc->subtitle_header_size = src_dec->subtitle_header_size;
     }
 
-    ret = avcodec_open2( output_encodecctx, output_encodec, nullptr );
+    ret = avcodec_open2( dst_enc, dst_codec, nullptr );
     if( ret < 0 )
         MYLOG( LOG::ERROR, "open fail." );
 
-    avcodec_parameters_from_context( output_formatctx->streams[0]->codecpar, output_encodecctx );
+    avcodec_parameters_from_context( dst_fmtctx->streams[0]->codecpar, dst_enc );
 
-    AVStream* ist = input_formatctx->streams[subidx];
-    if( output_formatctx->streams[0]->duration <= 0 && ist->duration > 0 )
-        output_formatctx->streams[0]->duration = av_rescale_q(ist->duration, ist->time_base, output_formatctx->streams[0]->time_base);
+    AVStream* ist = src_fmtctx->streams[subidx];
+    if( dst_fmtctx->streams[0]->duration <= 0 && ist->duration > 0 )
+        dst_fmtctx->streams[0]->duration = av_rescale_q(ist->duration, ist->time_base, dst_fmtctx->streams[0]->time_base);
 
 
     // 開始寫入
@@ -1058,7 +1060,7 @@ void    extract_subtitle_frome_file()
     };
 
 
-    avformat_write_header( output_formatctx, nullptr );
+    avformat_write_header( dst_fmtctx, nullptr );
 
     AVPacket pkt_from_input;
     av_init_packet( &pkt_from_input );
@@ -1070,7 +1072,7 @@ void    extract_subtitle_frome_file()
     pkt_for_output.data = NULL;
     pkt_for_output.size = 0;
 
-    while( av_read_frame( input_formatctx, &pkt_from_input ) == 0 )
+    while( av_read_frame( src_fmtctx, &pkt_from_input ) == 0 )
     {
         if( pkt_from_input.stream_index != subidx )
         {
@@ -1084,14 +1086,14 @@ void    extract_subtitle_frome_file()
             memset( &subtitle, 0, sizeof(subtitle) );
             int gotSubtitle = 0;
             
-            ret = avcodec_decode_subtitle2(input_decodecctx, &subtitle, &gotSubtitle, &pkt_from_input); 
+            ret = avcodec_decode_subtitle2(src_dec, &subtitle, &gotSubtitle, &pkt_from_input); 
             
             // pkt_timebase={1,1000}
             if( ret < 0 )
                 MYLOG( LOG::ERROR, "decode fail." );
 
             if( gotSubtitle > 0 )
-                ret = subtitle_output_func( &subtitle, output_encodecctx, output_formatctx,input_decodecctx->pkt_timebase );
+                ret = subtitle_output_func( &subtitle, dst_enc, dst_fmtctx,src_dec->pkt_timebase );
             
             avsubtitle_free(&subtitle);
         }
@@ -1102,12 +1104,12 @@ void    extract_subtitle_frome_file()
             {
                 AVSubtitle subtitle;
                 memset(&subtitle, 0, sizeof(subtitle));
-                ret = avcodec_decode_subtitle2( input_decodecctx, &subtitle, &gotSubtitle, &pkt_from_input );
+                ret = avcodec_decode_subtitle2( src_dec, &subtitle, &gotSubtitle, &pkt_from_input );
                 if( ret < 0 )
                     MYLOG( LOG::ERROR, "decode fail." );
 
                 if( gotSubtitle > 0 )                 
-                    ret = subtitle_output_func( &subtitle, output_encodecctx, output_formatctx, input_decodecctx->pkt_timebase );
+                    ret = subtitle_output_func( &subtitle, dst_enc, dst_fmtctx, src_dec->pkt_timebase );
                 
                 avsubtitle_free(&subtitle);
             }
@@ -1115,6 +1117,6 @@ void    extract_subtitle_frome_file()
         av_packet_unref(&pkt_from_input);
     }
 
-    av_write_trailer(output_formatctx);
+    av_write_trailer(dst_fmtctx);
     
 }
