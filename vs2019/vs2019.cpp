@@ -24,6 +24,10 @@ https://www.jianshu.com/p/fd43c1c82945
 https://www.jianshu.com/p/bf5e54f553a4
 
 https://www.itread01.com/content/1545479823.html
+
+https://libav.org/avconv.html#Subtitle-options_003a
+
+https://en.wikibooks.org/wiki/FFMPEG_An_Intermediate_Guide/subtitle_options#Set_Subtitles_Character_Encoding_Conversion
 */
 
 
@@ -40,6 +44,8 @@ extern "C" {
 
 int main()
 {
+    extract_subtitle_frome_file();
+
 #if 0
     //test_aac();
 

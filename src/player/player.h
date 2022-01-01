@@ -28,6 +28,11 @@ DLL_API bool& get_a_seek_lock();
 struct AVPacket;
 
 
+#ifdef FFMPEG_TEST
+//#define RENDER_SUBTITLE
+#endif
+
+
 
 class DLL_API Player
 {

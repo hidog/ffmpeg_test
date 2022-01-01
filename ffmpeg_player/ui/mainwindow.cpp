@@ -118,7 +118,8 @@ MainWindow::set_signal_slot()
 void MainWindow::set_signal_slot()
 {
     // ÂÂ¦¡¼gªk
-    connect(    worker,             SIGNAL(video_setting_signal(VideoSetting)),     this,           SLOT(set_video_setting_slot(VideoSetting))  );
+    connect(    worker,             SIGNAL(video_setting_signal(VideoDecodeSetting)),     this,           SLOT(set_video_setting_slot(VideoDecodeSetting))  );
+
     //connect(    worker,           &Worker::video_setting_singal,                  this,           &MainWindow::set_video_setting_slot         );
     connect(    worker,             &Worker::subtitle_list_signal,                  this,           &MainWindow::set_subtitle_list_slot         );
     connect(    worker,             &Worker::embedded_sublist_signal,               this,           &MainWindow::embedded_sublist_slot          );

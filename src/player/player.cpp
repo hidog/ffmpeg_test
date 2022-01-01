@@ -391,9 +391,11 @@ void    Player::play()
         //
         if( dc == &s_decoder )
             s_decoder.decode_subtitle( pkt );
+#ifdef RENDER_SUBTITLE
         // 尚未處理 graphic subtitle. 以後有需要再新增.
         else if( s_decoder.exist_stream() == true && dc == &v_decoder )
             play_decode_video_subtitle( pkt );
+#endif
         else
         {
             //
@@ -415,7 +417,38 @@ void    Player::play()
         demuxer.unref_packet();
     }
 
+    // flush
+    s_decoder.flush();
+#ifdef RENDER_SUBTITLE
+    ret     =   v_decoder.send_packet(nullptr);
+    if( ret >= 0 )
+    {       
+        while(true)
+        {
+            ret     =   v_decoder.recv_frame(-1);
+            if( ret <= 0 )
+                break;
+
+            frame   =   v_decoder.get_frame();
+            ret     =   s_decoder.send_video_frame( frame );
+
+            while(true)
+            {
+                // 這邊一樣沒處理 subtitle 為 image 的 case.
+                ret     =   s_decoder.render_subtitle();
+                if( ret <= 0 )
+                    break;
+
+                s_decoder.output_frame_func();
+                s_decoder.unref_frame();
+            }
+
+            v_decoder.unref_frame();  
+        }
+    }
+#else
     v_decoder.flush();
+#endif
     a_decoder.flush();
 
     printf("Demuxing succeeded.\n");
@@ -945,8 +978,6 @@ int    Player::decode_video_with_nongraphic_subtitle( AVPacket* pkt )
 
 
 
-
-
 /*******************************************************************************
 Player::flush()
 
@@ -960,6 +991,36 @@ int    Player::flush()
     VideoData   vdata;
     AudioData   adata;
 
+    // 處理subtitle, 非圖片.
+    auto    flush_with_nongraphic_subtitle  =   [this] () -> VideoData
+    {
+        VideoData   vd;
+        int         ret;
+        AVFrame     *frame  =   v_decoder.get_frame();
+
+        // 認為這邊應該不需要迴圈控制, 但留意是否會出現一張 frame render 出多張圖片的現象.
+        ret =   s_decoder.send_video_frame( frame );
+        if( ret < 0 )
+            MYLOG( LOG::ERROR, "flush send fail." );
+
+        ret =   s_decoder.render_subtitle();
+        if( ret < 0 )
+            MYLOG( LOG::ERROR, "flush render fail." );
+        
+        vd.frame         =   s_decoder.get_subtitle_image();
+        vd.index         =   v_decoder.get_frame_count();
+        vd.timestamp     =   v_decoder.get_timestamp();
+
+        s_decoder.unref_frame();
+
+        return  vd;
+    };
+
+
+    // flush subtitle
+    // 需要考慮 graphic 的 case
+    s_decoder.flush_all_stream();       
+
     // flush video
     ret     =   v_decoder.send_packet(nullptr);
     if( ret >= 0 )
@@ -970,13 +1031,21 @@ int    Player::flush()
             if( ret <= 0 )
                 break;
 
-            if( s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == true )
-                vdata   =   overlap_subtitle_image();
+            if( s_decoder.exist_stream() == true )
+            {
+                if( s_decoder.is_graphic_subtitle() == true )
+                    vdata   =   overlap_subtitle_image();
+                else                
+                    vdata   =   flush_with_nongraphic_subtitle();                
+            }
             else
                 vdata   =   v_decoder.output_video_data();
 
             // flush 階段本來想處理 subtitle, 但會跳錯誤, 還沒找到解決的做法. 目前只處理graphic subtitle的部分
+            v_mtx.lock();
             video_queue.push(vdata);
+            v_mtx.unlock();
+
             v_decoder.unref_frame();  
         }
     }

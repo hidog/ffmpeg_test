@@ -410,45 +410,51 @@ Decode::flush()
 
 flush 過程基本上同 decode, 送 nullptr 進去
 也會吐出一張 frame, 需要將此 frame 資料寫入 output.
-
 ********************************************************************************/
 int    Decode::flush()
 {
     int     ret =   0;
     char    buf[AV_ERROR_MAX_STRING_SIZE]{0};
 
-    // submit the packet to the decoder
-    ret =   avcodec_send_packet( dec_ctx, nullptr );
-    if( ret < 0 ) 
+    for( auto dec : dec_map )
     {
-        auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
-        MYLOG( LOG::ERROR, "Error submitting a packet for decoding (%s)", str );
-        return  ERROR;
-    }
-
-    // get all the available frames from the decoder
-    while( ret >= 0 )
-    {
-        ret =   avcodec_receive_frame( dec_ctx, frame );
+        // submit the packet to the decoder
+        ret =   avcodec_send_packet( dec.second, nullptr );
         if( ret < 0 ) 
         {
-            // those two return values are special and mean there is no output
-            // frame available, but there were no errors during decoding
-            if( ret == AVERROR_EOF || ret == AVERROR(EAGAIN) )
-                break; //return 0;
-
             auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
-            MYLOG( LOG::ERROR, "Error during decoding (%s)", str );
-            break; //return  ret;
+            MYLOG( LOG::ERROR, "Error submitting a packet for decoding (%s)", str );
+            return  ERROR;
         }
 
-        // write the frame data to output file
-        output_frame_func();
-        frame_count++;
-        av_frame_unref(frame);
+        // get all the available frames from the decoder
+        while( ret >= 0 )
+        {
+            ret =   avcodec_receive_frame( dec.second, frame );
+            if( ret < 0 ) 
+            {
+                // those two return values are special and mean there is no output
+                // frame available, but there were no errors during decoding
+                if( ret == AVERROR_EOF || ret == AVERROR(EAGAIN) )
+                    break; //return 0;
 
-        if( ret < 0 )
-            break; //return ret;
+                auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
+                MYLOG( LOG::ERROR, "Error during decoding (%s)", str );
+                break; //return  ret;
+            }
+
+            // write the frame data to output file
+            if( dec_ctx == dec.second )
+            {
+                frame_count++;
+                output_frame_func();
+            }
+
+            av_frame_unref(frame);
+
+            if( ret < 0 )
+                break; //return ret;
+        }
     }
 
     return 0;
