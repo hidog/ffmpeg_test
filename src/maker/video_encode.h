@@ -34,12 +34,17 @@ public:
     void    end();
     void    init_sws( VideoEncodeSetting setting );
 
+    void    list_frame_rate( AVCodecID code_id );
+    void    list_pix_fmt( AVCodecID code_id );
+
+
     int64_t     get_pts() override;
     AVFrame*    get_frame() override;
     int         send_frame() override;
 
     AVFrame*    get_fram_from_file_QT();
     AVFrame*    get_fram_from_file_openCV();
+
 
 
     // for test. run without mux.

@@ -116,6 +116,62 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
 
 
 /*******************************************************************************
+VideoEncode::list_pixfmt()
+********************************************************************************/
+void    VideoEncode::list_pix_fmt( AVCodecID code_id )
+{
+    AVCodec*     codec   =   avcodec_find_encoder(code_id);
+
+    const AVPixelFormat  *pix_fmt   =   nullptr;
+
+    pix_fmt    =   codec->pix_fmts;
+    if( pix_fmt == nullptr )
+    {
+        MYLOG( LOG::INFO, "can not list.\n" );
+        return;
+    }
+
+    while( *pix_fmt != AV_PIX_FMT_NONE ) 
+    {
+        printf( "%s support pix_fmt = %d %s\n", avcodec_get_name(code_id), static_cast<int>(*pix_fmt), av_get_pix_fmt_name(*pix_fmt) );
+        pix_fmt++;
+    }
+    MYLOG( LOG::DEBUG, "finish.");
+}
+
+
+
+/*******************************************************************************
+VideoEncode::list_frame_rate()
+h264, h265 等沒資料.
+********************************************************************************/
+void    VideoEncode::list_frame_rate( AVCodecID code_id )
+{
+    AVCodec*     codec   =   avcodec_find_encoder(code_id);
+
+    const AVRational  *rt   =   nullptr;
+
+    rt    =   codec->supported_framerates;
+    if( rt == nullptr )
+    {
+        MYLOG( LOG::INFO, "can not list.\n" );
+        return;
+    }
+
+    while( rt->den != 0 || rt->num != 0 ) 
+    {
+        printf( "%s support frame rate = %d/%d = %lf\n", avcodec_get_name(code_id), rt->num, rt->den, av_q2d(*rt) );
+        rt++;
+    }
+    MYLOG( LOG::DEBUG, "finish.");
+}
+
+
+
+
+
+
+/*******************************************************************************
 VideoEncode::init_sws()
 ********************************************************************************/
 void    VideoEncode::init_sws( VideoEncodeSetting setting )

@@ -28,6 +28,84 @@ https://www.itread01.com/content/1545479823.html
 https://libav.org/avconv.html#Subtitle-options_003a
 
 https://en.wikibooks.org/wiki/FFMPEG_An_Intermediate_Guide/subtitle_options#Set_Subtitles_Character_Encoding_Conversion
+
+https://www.itread01.com/content/1544555544.html
+
+
+
+
+
+
+
+https://github.com/FFmpeg/FFmpeg/blob/master/libavfilter/vf_subtitles.c
+
+static const AVOption subtitles_options[] = {
+COMMON_OPTIONS
+{"charenc",      "set input character encoding", OFFSET(charenc),      AV_OPT_TYPE_STRING, {.str = NULL}, 0, 0, FLAGS},
+{"stream_index", "set stream index",             OFFSET(stream_index), AV_OPT_TYPE_INT,    { .i64 = -1 }, -1,       INT_MAX,  FLAGS},
+{"si",           "set stream index",             OFFSET(stream_index), AV_OPT_TYPE_INT,    { .i64 = -1 }, -1,       INT_MAX,  FLAGS},
+{"force_style",  "force subtitle style",         OFFSET(force_style),  AV_OPT_TYPE_STRING, {.str = NULL}, 0, 0, FLAGS},
+{NULL},
+};
+
+
+
+-metadata:s:s:1 language=English 
+-metadata:s:s:2 language=Dansk
+
+ffmpeg -i input.mkv -map 0 -c copy -c:s mov_text -metadata:s:s:0 language=eng -metadata:s:s:1 language=ipk output.mp4
+
+
+https://srtlab.github.io/srt-cookbook/apps/ffmpeg/
+ffmpeg -f lavfi -re -i smptebars=duration=60:size=1280x720:rate=30 -f lavfi -re \
+-i sine=frequency=1000:duration=60:sample_rate=44100 -pix_fmt yuv420p \
+-c:v libx264 -b:v 1000k -g 30 -keyint_min 120 -profile:v baseline \
+-preset veryfast -f mpegts "srt://127.0.0.1:4200?pkt_size=1316"
+
+
+
+
+底下這個命令可以保持font size. 但需要研究
+ffmpeg -i abc.mkv -i abc.srt -map 0:0 -map 0:1 -map 1:0 -c:s copy output.mkv
+
+
+
+ffmpeg -h ass
+
+
+
+
+https://www.jianshu.com/p/f33910818a1c
+
+
+
+https://github.com/nldzsz/ffmpeg-demo/blob/master/cppsrc/Subtitles.cpp
+
+
+
+https://gist.github.com/TBNolan/a887c5d069425119dd41461b779aa75b
+*/
+
+
+/*
+失敗
+ffmpeg -i mysubs.srt -filter "subtitles=mysubs.srt:force_style='Fontname=Helvetica,Fontsize=16,PrimaryColour=&H23EEF1&,BackColour=&H000000&,BorderStyle=3,Outline=3,Shadow=0,Alignment=2,MarginL=10,MarginR=10,MarginV=10,Encoding=0'" mysubs.ass
+
+ffmpeg -i mysubs.srt -filter 
+"subtitles=mysubs.srt:force_style='
+Fontname=Helvetica,
+Fontsize=16,
+PrimaryColour=&H23EEF1&,
+BackColour=&H000000&,
+BorderStyle=3,
+Outline=3,S
+hadow=0,
+Alignment=2,
+MarginL=10,
+MarginR=10,
+MarginV=10,
+Encoding=0'" 
+mysubs.ass
 */
 
 
@@ -46,6 +124,12 @@ int main()
 {
     //extract_subtitle_frome_file();
 
+
+    //VideoEncode ve;
+    //ve.list_pix_fmt(AV_CODEC_ID_MJPEG);
+    //printf("finish");
+
+
 #if 1
     //test_aac();
 
@@ -55,24 +139,24 @@ int main()
     //AudioEncode ae;
     //ae.list_sample_format(AV_CODEC_ID_VORBIS);
 
-#elif 0
+#elif 1
 
     EncodeSetting   setting;
-    //setting.filename    =   "J:\\test2.mkv";
-    //setting.extension   =   "matroska";
-    setting.filename    =   "J:\\test2.mp4";
-    setting.extension   =   "mp4";
+    setting.filename    =   "J:\\aaaaa.mkv";
+    setting.extension   =   "matroska";
+    //setting.filename    =   "J:\\test2.mp4";
+    //setting.extension   =   "mp4";
     //setting.filename    =   "J:\\test2.avi";  // rmvb 是 variable bitrate. 目前還無法使用
     //setting.extension   =   "avi";
 
     VideoEncodeSetting  v_setting;
-    //v_setting.code_id   =   AV_CODEC_ID_H264;
-    v_setting.code_id   =   AV_CODEC_ID_H265;
+    v_setting.code_id   =   AV_CODEC_ID_H264;
+    //v_setting.code_id   =   AV_CODEC_ID_H265;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG2VIDEO;
 
-    v_setting.width     =   1280;
-    v_setting.height    =   720;
+    v_setting.width     =   1920;
+    v_setting.height    =   1080;
 
     v_setting.time_base.num     =   1001;
     v_setting.time_base.den     =   24000;
@@ -86,8 +170,8 @@ int main()
     //v_setting.max_b_frames  =   0; 
 
 
-    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
-    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
+    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
+    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
 
     v_setting.src_width     =   1920;
     v_setting.src_height    =   1080;
