@@ -122,8 +122,8 @@ extern "C" {
 
 int main()
 {
-    //extract_subtitle_frome_file();
-
+    extract_subtitle_frome_file();
+    return 1;
 
     //VideoEncode ve;
     //ve.list_pix_fmt(AV_CODEC_ID_MJPEG);

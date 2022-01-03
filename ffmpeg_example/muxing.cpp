@@ -264,7 +264,7 @@ static void add_stream( OutputStream *ost, AVFormatContext *oc, const AVCodec **
         if( ost->sub_dec->subtitle_header != NULL )
         {
             // if not set header, open subtitle enc will fail.
-            c->subtitle_header = (uint8_t*)av_mallocz( ost->sub_dec->subtitle_header_size + 1 );
+            c->subtitle_header = (uint8_t*)av_mallocz( ost->sub_dec->subtitle_header_size + 1 );   // 沒查到 + 1 的理由
             memcpy( c->subtitle_header, ost->sub_dec->subtitle_header, ost->sub_dec->subtitle_header_size );
             c->subtitle_header_size = ost->sub_dec->subtitle_header_size;
 

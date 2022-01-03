@@ -1016,9 +1016,12 @@ void    extract_subtitle_frome_file()
 
     if( src_dec->subtitle_header )
     {
-        dst_enc->subtitle_header        =   (uint8_t*)av_mallocz( src_dec->subtitle_header_size );
+        dst_enc->subtitle_header        =   (uint8_t*)av_mallocz( src_dec->subtitle_header_size + 1);  // 沒查到為什麼要 + 1
         memcpy( dst_enc->subtitle_header, src_dec->subtitle_header, src_dec->subtitle_header_size );
         dst_enc->subtitle_header_size   =   src_dec->subtitle_header_size;
+        dst_enc->subtitle_header[dst_enc->subtitle_header_size] = '\0';
+
+        printf( "header = %s\n", dst_enc->subtitle_header );
     }
 
     ret     =   avcodec_open2( dst_enc, dst_codec, nullptr );
@@ -1042,6 +1045,7 @@ void    extract_subtitle_frome_file()
     {
         static const int subtitle_out_max_size     =   1024*1024;
 
+        // 看討論是一些舊格式相容性問題...但實驗結果似乎可以移除
         subtitle.pts                   +=   av_rescale_q( subtitle.start_display_time, src_dec->pkt_timebase, AVRational{ 1, AV_TIME_BASE } );
         subtitle.end_display_time      -=   subtitle.start_display_time;
         subtitle.start_display_time    =    0;
@@ -1104,14 +1108,26 @@ void    extract_subtitle_frome_file()
 
         if( src_pkt.stream_index != subidx )
         {
+            if( src_pkt.stream_index == 0 )
+                printf("v   ");
+            else if( src_pkt.stream_index == 1 )
+                printf(" a  ");
+            
+            if( src_pkt.stream_index != 2 )
+                printf("pts = %6lld, dts = %6lld\n", src_pkt.pts, src_pkt.dts );
+
             av_packet_unref( &src_pkt );
             continue;
         }
 
         if( src_pkt.size > 0 )
         {
+            printf("  s pts = %6lld, dts = %6lld\n", src_pkt.pts, src_pkt.dts );
+
             memset( &subtitle, 0, sizeof(subtitle) );            
             ret     =   avcodec_decode_subtitle2( src_dec, &subtitle, &got_sub, &src_pkt ); 
+            
+            printf("subtitle pts = %6lld\n", subtitle.pts );
             
             // pkt_timebase={1,1000}
             if( ret < 0 )
