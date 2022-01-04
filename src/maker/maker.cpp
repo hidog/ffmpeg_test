@@ -35,20 +35,26 @@ Maker::~Maker()
 /*******************************************************************************
 Maker::init()
 ********************************************************************************/
-void Maker::init( EncodeSetting setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting )
+void Maker::init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting, SubEncodeSetting s_setting )
 {
+    setting     =   _setting;
+
     muxer.init( setting );
 
     bool    need_global_header  =   muxer.is_need_global_header();
 
     v_encoder.init( 0, v_setting, need_global_header );
     a_encoder.init( 1, a_setting, need_global_header );
+    if( setting.has_subtitle == true )
+        s_encoder.init( 2, s_setting, need_global_header );
+
 
     //
     auto v_ctx      =   v_encoder.get_ctx();
     auto a_ctx      =   a_encoder.get_ctx();
 
     muxer.open( setting, v_ctx, a_ctx );
+
 }
 
 

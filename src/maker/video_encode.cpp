@@ -60,7 +60,7 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
 
     //
     ctx->bit_rate   =   3000000;
-    /*ret = av_opt_set_int( ctx->priv_data, "crf", 50, 0 );
+    /*ret = av_opt_set_int( ctx->priv_data, "crf", 50, 0 );   // 看討論是要用 AVDictionary 在 open 的時候設置, 有空研究一下
     if( ret < 0 )
         MYLOG( LOG::ERROR, "error");*/
 

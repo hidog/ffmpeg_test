@@ -914,9 +914,11 @@ int    SubDecode::flush()
 #endif
 
 
-extern "C" {
-#include <libavutil/opt.h>
-}
+
+
+
+
+
 
 
 /*******************************************************************************
@@ -1036,8 +1038,8 @@ void    extract_subtitle_frome_file()
 
 
 
-    ret     =   av_opt_set_int( dst_fmtctx->priv_data, "ignore_readorder",  0,       0 );
-    MYLOG( LOG::INFO, "ret = %d\n", ret );
+    //ret     =   av_opt_set_int( dst_fmtctx->priv_data, "ignore_readorder",  0,       0 );
+    //MYLOG( LOG::INFO, "ret = %d\n", ret );
 
 
     // 開始寫入

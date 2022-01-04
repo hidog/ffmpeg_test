@@ -62,17 +62,32 @@ void Mux::init( EncodeSetting setting )
     // 
     MYLOG( LOG::INFO, "default video codec is %s", avcodec_get_name(output_ctx->oformat->video_codec) );
     MYLOG( LOG::INFO, "default audio codec is %s", avcodec_get_name(output_ctx->oformat->audio_codec) );
+    MYLOG( LOG::INFO, "default audio codec is %s", avcodec_get_name(output_ctx->oformat->subtitle_codec) );
+
 
     // add stream
-    v_stream    =   avformat_new_stream( output_ctx, nullptr ); // 未來改成從encode傳入
+    // video
+    v_stream    =   avformat_new_stream( output_ctx, nullptr );  // 第二個參數丟 nullptr 即可
     if( v_stream == nullptr )
         MYLOG( LOG::ERROR, "v_stream is nullptr." );
-    v_stream->id    =   output_ctx->nb_streams - 1;         // 未來改掉這邊的寫法. 增加彈性.
-                                                            // audio
+    v_stream->id    =   output_ctx->nb_streams - 1;         // 未來改掉這邊的寫法. 增加彈性. 方便增加多個 audio stream, subtitle stream
+    
+    // audio
     a_stream    =   avformat_new_stream( output_ctx, nullptr );
     if( a_stream == nullptr )
         MYLOG( LOG::ERROR, "a_stream is nullptr." );
     a_stream->id    =   output_ctx->nb_streams - 1;
+
+    // subtitle
+    if( setting.has_subtitle == true )
+    {
+        s_stream    =   avformat_new_stream( output_ctx, nullptr );
+        if( s_stream == nullptr )
+            MYLOG( LOG::ERROR, "a_stream is nullptr." );
+        s_stream->id    =   output_ctx->nb_streams - 1;
+    }
+
+
 }
 
 

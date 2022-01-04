@@ -22,6 +22,7 @@ struct EncodeSetting
 {
     std::string     filename;
     std::string     extension;
+    bool            has_subtitle;
 };
 
 
@@ -53,6 +54,14 @@ struct AudioEncodeSetting
     uint64_t    channel_layout;
 };
 
+
+
+struct SubEncodeSetting
+{
+    AVCodecID       code_id;
+    std::string     subtitle_file;
+    std::string     subtitle_ext;
+};
 
 
 

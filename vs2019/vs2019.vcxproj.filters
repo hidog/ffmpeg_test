@@ -84,6 +84,9 @@
     <ClCompile Include="..\src\maker\encode.cpp">
       <Filter>src\maker</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\maker\sub_encode.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -133,6 +136,9 @@
     </ClInclude>
     <ClInclude Include="..\ffmpeg_example\resampling_audio.h">
       <Filter>ffmpeg_example</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\sub_encode.h">
+      <Filter>src\maker</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

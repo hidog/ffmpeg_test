@@ -122,32 +122,23 @@ extern "C" {
 
 int main()
 {
-    extract_subtitle_frome_file();
-    return 1;
 
-    //VideoEncode ve;
-    //ve.list_pix_fmt(AV_CODEC_ID_MJPEG);
-    //printf("finish");
-
-
-#if 1
-    //test_aac();
-
-    //resample_audio();
+#if 0
     muxing();
-
-    //AudioEncode ae;
-    //ae.list_sample_format(AV_CODEC_ID_VORBIS);
-
 #elif 1
 
-    EncodeSetting   setting;
-    setting.filename    =   "J:\\aaaaa.mkv";
+    EncodeSetting   setting;    
+    // rmvb 是 variable bitrate. 目前還無法使用
+    setting.filename    =   "J:\\output.mkv";
     setting.extension   =   "matroska";
     //setting.filename    =   "J:\\test2.mp4";
     //setting.extension   =   "mp4";
-    //setting.filename    =   "J:\\test2.avi";  // rmvb 是 variable bitrate. 目前還無法使用
+    //setting.filename    =   "J:\\test2.avi"; 
     //setting.extension   =   "avi";
+
+    setting.has_subtitle    =   true;
+
+
 
     VideoEncodeSetting  v_setting;
     v_setting.code_id   =   AV_CODEC_ID_H264;
@@ -192,9 +183,16 @@ int main()
 
 
 
-    Maker maker;
 
-    maker.init( setting, v_setting, a_setting );
+    SubtitleEncodeSetting   s_setting;
+    s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
+    s_setting.subtitle_file =   "J:\\test.ass";
+    s_setting.subtitle_ext  =   "ass";
+
+
+    Maker   maker;
+
+    maker.init( setting, v_setting, a_setting, s_setting );
     maker.work();
     maker.end();
 

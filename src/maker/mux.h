@@ -53,6 +53,7 @@ private:
 
     AVStream    *v_stream   =   nullptr;
     AVStream    *a_stream   =   nullptr;
+    AVStream    *s_stream   =   nullptr;
 
 };
 

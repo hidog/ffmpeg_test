@@ -1,9 +1,11 @@
 #ifndef MAKER_H
 #define MAKER_H
 
+
+#include "mux.h"
 #include "audio_encode.h"
 #include "video_encode.h"
-#include "mux.h"
+#include "sub_encode.h"
 
 
 /*
@@ -25,15 +27,19 @@ public:
     Maker& operator = ( const Maker& ) = delete;
     Maker& operator = ( Maker&& ) = delete;
 
-    void    init( EncodeSetting setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting );
+    void    init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting, SubEncodeSetting s_setting );
     void    work();
     void    end();
 
 private:
 
-    AudioEncode a_encoder;
-    VideoEncode v_encoder;
-    Mux muxer;
+    Mux     muxer;
+
+    AudioEncode     a_encoder;
+    VideoEncode     v_encoder;
+    SubEncode       s_encoder;
+
+    EncodeSetting   setting;
 
 };
 

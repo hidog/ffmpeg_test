@@ -1,24 +1,25 @@
-#ifndef SUBTITLE_ENCODE_H
-#define SUBTITLE_ENCODE_H
+#ifndef SUB_ENCODE_H
+#define SUB_ENCODE_H
 
 
 #include "maker_def.h"
 #include "encode.h"
 
 
-class SubtitleEncode : public Encode
+class SubEncode : public Encode
 {
 public:
-    SubtitleEncode();
-    ~SubtitleEncode();
+    SubEncode();
+    ~SubEncode();
 
-    SubtitleEncode( const SubtitleEncode& ) =   delete;
-    SubtitleEncode( SubtitleEncode&& )      =   delete;
+    SubEncode( const SubEncode& ) =   delete;
+    SubEncode( SubEncode&& )      =   delete;
 
-    SubtitleEncode& operator = ( const SubtitleEncode& )    =   delete;
-    SubtitleEncode& operator = ( SubtitleEncode&& )         =   delete;
+    SubEncode& operator = ( const SubEncode& )    =   delete;
+    SubEncode& operator = ( SubEncode&& )         =   delete;
 
-    void    init( int st_idx, SubtitleEncodeSetting setting, bool need_global_header );
+    void    init( int st_idx, SubEncodeSetting setting, bool need_global_header );
+    int     open_subtitle_source();
 
     int64_t     get_pts() override;
     AVFrame*    get_frame() override;

@@ -242,7 +242,8 @@ static void add_stream( OutputStream *ost, AVFormatContext *oc, const AVCodec **
         // AV_TIME_BASE
         //uint8_t *subtitle_header;
         //int subtitle_header_size;
-        c->pkt_timebase = AVRational{ 1, 1000 /*AV_TIME_BASE*/ }; // 看敘述這邊不影響結果, 驗證一下結合影片的時候是否需要修改
+        c->pkt_timebase = AVRational{ 1, 1000 }; // 看敘述這邊不影響結果, 驗證一下結合影片的時候是否需要修改
+        //c->pkt_timebase = AVRational{ 1, AV_TIME_BASE }; // 看敘述這邊不影響結果, 驗證一下結合影片的時候是否需要修改
         c->time_base = AVRational{ 1, 1000 };
         ost->st->time_base = c->time_base;
         
