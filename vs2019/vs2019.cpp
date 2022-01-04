@@ -84,6 +84,10 @@ https://github.com/nldzsz/ffmpeg-demo/blob/master/cppsrc/Subtitles.cpp
 
 
 https://gist.github.com/TBNolan/a887c5d069425119dd41461b779aa75b
+
+
+
+https://blog.csdn.net/qq_21743659/article/details/109305411
 */
 
 
@@ -125,7 +129,7 @@ int main()
     //extract_subtitle_frome_file();
     //printf("test");
 
-#if 1
+#if 0
     muxing();
 #elif 1
 
@@ -187,7 +191,8 @@ int main()
 
 
     SubEncodeSetting   s_setting;
-    s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
+    s_setting.code_id       =   AV_CODEC_ID_ASS;
+    //s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
     s_setting.subtitle_file =   "J:\\test.ass";
     s_setting.subtitle_ext  =   "ass";
 

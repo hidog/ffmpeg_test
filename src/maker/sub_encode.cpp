@@ -102,6 +102,8 @@ void    SubEncode::init( int st_idx, SubEncodeSetting setting, bool need_global_
     ctx->pkt_timebase   =   AVRational{ 1, 1000 };   // 研究一下這邊該怎麼設置. 有程式碼說不影響結果, 實驗看看.
     //ctx->pkt_timebase   =   AVRational{ 1, AV_TIME_BASE };
     ctx->time_base      =   AVRational{ 1, 1000 };   
+    //ctx->time_base      =   AVRational{ 1, 1 };
+
 
     copy_sub_header();
 
@@ -209,6 +211,7 @@ int     SubEncode::open_subtitle_source( std::string src_sub_file )
         return  ERROR;
     }
 
+    MYLOG( LOG::INFO, "source subtitle file is %s", avcodec_get_name(sub_stream->codecpar->codec_id) );
     const AVCodec   *src_codec  =   avcodec_find_decoder( sub_stream->codecpar->codec_id );
     if( src_codec == nullptr )
     {
@@ -315,7 +318,8 @@ void    SubEncode::encode_subtitle()
     int     ret     =   0, 
             got_sub =   0;
 
-    AVPacket    sub_pkt     =   sub_queue.top();
+    //AVPacket    sub_pkt     =   sub_queue.top();
+    sub_pkt     =   sub_queue.top();
     sub_queue.pop();
 
     if( sub_pkt.size > 0 )
@@ -356,7 +360,7 @@ void    SubEncode::encode_subtitle()
     else
         MYLOG( LOG::ERROR, "sub_pkt.size = 0" );
 
-    av_packet_unref( &sub_pkt );
+    //av_packet_unref( &sub_pkt );
 }
 
 
@@ -389,6 +393,8 @@ SubEncode::get_subtitle_pts()
 ********************************************************************************/
 int64_t     SubEncode::get_subtitle_pts()
 {
+    //return  sub_pkt.pts;
+
     if( subtitle == nullptr )
         MYLOG( LOG::ERROR, "subtitle is null." );
     return  subtitle->pts;

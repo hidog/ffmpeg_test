@@ -610,10 +610,11 @@ static int write_subtitle_frame( AVFormatContext *oc, OutputStream *ost )
             printf( "write_subtitle_frame decode fail.\n" );
         if( got_sub > 0 )
         {
-            //subtitle.pts                   =    av_rescale_q( sub_pkt->pts, ost->sub_dec->pkt_timebase, AVRational{ 1, 1000 } );
+            subtitle.pts                   =    av_rescale_q( sub_pkt->pts, ost->sub_dec->pkt_timebase, AVRational{ 1, 1000 } );
             //subtitle.start_display_time    =    subtitle.pts;
             //subtitle.end_display_time      +=    subtitle.start_display_time;
             int64_t sub_duration           =    subtitle.end_display_time - subtitle.start_display_time;
+            sub_duration /= 1000;
 
             uint8_t*    subtitle_out        =   (uint8_t*)av_mallocz(subtitle_out_max_size);
             int         subtitle_out_size   =   avcodec_encode_subtitle( c , subtitle_out, subtitle_out_max_size, &subtitle );

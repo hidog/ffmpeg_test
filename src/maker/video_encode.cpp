@@ -368,7 +368,7 @@ VideoEncode::get_frame()
 ********************************************************************************/
 AVFrame*    VideoEncode::get_frame()
 {
-    if( frame_count > 300 )
+    if( frame_count > 800 )
         return  nullptr;
 
     return  get_fram_from_file_QT();
@@ -390,7 +390,7 @@ AVFrame*    VideoEncode::get_fram_from_file_QT()
     int ret;
 
     sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
-    printf( "str = %s\n", str );
+    //printf( "str = %s\n", str );
 
     QImage  img;
     if( img.load( str ) == false )

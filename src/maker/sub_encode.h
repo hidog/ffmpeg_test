@@ -79,6 +79,10 @@ private:
     // use for encode
     AVSubtitle*     subtitle    =   nullptr;
 
+
+    AVPacket    sub_pkt;
+
+
 };
 
 

@@ -117,13 +117,13 @@ void    Mux::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext*
     int     ret     =   0;
 
     // after open
-    ret =   avcodec_parameters_from_context( v_stream->codecpar, v_ctx );
+    ret     =   avcodec_parameters_from_context( v_stream->codecpar, v_ctx );
     assert( ret == 0 );
-    ret =   avcodec_parameters_from_context( a_stream->codecpar, a_ctx );
+    ret     =   avcodec_parameters_from_context( a_stream->codecpar, a_ctx );
     assert( ret == 0 );
     if( setting.has_subtitle == true )
     {
-        ret =   avcodec_parameters_from_context( s_stream->codecpar, s_ctx );
+        ret     =   avcodec_parameters_from_context( s_stream->codecpar, s_ctx );
         assert( ret == 0 );
     }
 
@@ -157,7 +157,7 @@ bool    Mux::is_need_global_header()
 /*******************************************************************************
 Mux::write_header()
 ********************************************************************************/
-void Mux::write_header()
+void    Mux::write_header()
 {
     AVDictionary    *opt    =   nullptr; // 未來改成class member. 方便寫入參數 
     int ret =   avformat_write_header( output_ctx, &opt );
@@ -172,7 +172,7 @@ void Mux::write_header()
 /*******************************************************************************
 Mux::write_frame()
 ********************************************************************************/
-void Mux::write_frame( AVPacket* pkt )
+void    Mux::write_frame( AVPacket* pkt )
 {
     int ret =   av_interleaved_write_frame( output_ctx, pkt );
     if( ret < 0 ) 

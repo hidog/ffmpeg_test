@@ -48,7 +48,6 @@ void Maker::init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEnc
     if( setting.has_subtitle == true )
         s_encoder.init( 2, s_setting, need_global_header );
 
-
     //
     auto v_ctx  =   v_encoder.get_ctx();
     auto a_ctx  =   a_encoder.get_ctx();
@@ -57,6 +56,11 @@ void Maker::init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEnc
     muxer.open( setting, v_ctx, a_ctx, s_ctx );
 }
 
+
+
+extern "C" {
+#include <libavformat/avformat.h>
+}
 
 
 
@@ -68,7 +72,15 @@ void    Maker::work_with_subtitle()
     int     ret     =   0;
 
     s_encoder.load_all_subtitle();
+
+    printf( "%d %d\n", muxer.output_ctx->streams[2]->time_base.num,  muxer.output_ctx->streams[2]->time_base.den );
+
+
     muxer.write_header();
+
+
+    printf( "%d %d\n", muxer.output_ctx->streams[2]->time_base.num,  muxer.output_ctx->streams[2]->time_base.den );
+    //muxer.output_ctx->streams[2]->time_base.den = 100;
 
     AVRational  v_time_base     =   v_encoder.get_timebase();
     AVRational  a_time_base     =   a_encoder.get_timebase();
@@ -155,21 +167,21 @@ void    Maker::work_with_subtitle()
         {
             a_pts   =   a_frame->pts;
             s_pts   =   s_encoder.get_pts();
-            ret     =   av_compare_ts( a_pts, a_time_base, s_pts, s_time_base );
+            ret     =   av_compare_ts( s_pts, s_time_base, a_pts, a_time_base );
             if( ret <= 0 )
-                order   =   EncodeOrder::AUDIO;
-            else
                 order   =   EncodeOrder::SUBTITLE;
+            else
+                order   =   EncodeOrder::AUDIO;
         }
         else if( a_frame == nullptr )
         {
             v_pts   =   v_frame->pts;
             s_pts   =   s_encoder.get_pts();
-            ret     =   av_compare_ts( v_pts, v_time_base, s_pts, s_time_base );
+            ret     =   av_compare_ts( s_pts, s_time_base, v_pts, v_time_base );
             if( ret <= 0 )
-                order   =   EncodeOrder::VIDEO;
-            else
                 order   =   EncodeOrder::SUBTITLE;
+            else
+                order   =   EncodeOrder::VIDEO;
         }
         else
         {
@@ -180,19 +192,20 @@ void    Maker::work_with_subtitle()
             ret     =   av_compare_ts( v_pts, v_time_base, a_pts, a_time_base );
             if( ret <= 0 )
             {
-                ret     =   av_compare_ts( v_pts, v_time_base, s_pts, s_time_base );
-                if( ret <= 0 )
-                    order   =   EncodeOrder::VIDEO;
-                else
+                ret     =   av_compare_ts( s_pts, s_time_base, v_pts, v_time_base );
+                if( ret < 0 )
                     order   =   EncodeOrder::SUBTITLE;
+                else
+                    order   =   EncodeOrder::VIDEO;
             }
             else
             {
-                ret     =   av_compare_ts( a_pts, a_time_base, s_pts, s_time_base );
-                if( ret <= 0 )
-                    order   =   EncodeOrder::AUDIO;
-                else
+                ret     =   av_compare_ts( s_pts, s_time_base, a_pts, a_time_base );
+                if( ret < 0 )
                     order   =   EncodeOrder::SUBTITLE;
+                else
+                    order   =   EncodeOrder::AUDIO;
+
             }
         }
 
@@ -231,22 +244,42 @@ void    Maker::work_with_subtitle()
             sc++;
         }
 
-        printf( "vc = %d, ac = %d, sc = %d\n", vc, ac, sc );
-        if( vc == 301 && ac == 401 && sc == 421 )
-            printf("test");
+        //printf( "vc = %d, ac = %d, sc = %d\n", vc, ac, sc );
+        //if( vc == 65 && ac == 128 && sc == 9 )
+          //  printf("test");
+        printf(".");
 
 
         //
         if( order == EncodeOrder::SUBTITLE )
         {
             s_encoder.encode_subtitle();
+
             auto        pkt             =   s_encoder.get_pkt();
             auto        ctx_tb          =   s_encoder.get_timebase();
             int64_t     subtitle_pts    =   s_encoder.get_subtitle_pts();
             int64_t     duration        =   s_encoder.get_duration();
+
+            // AV_TIME_BASE
             pkt->pts         =   av_rescale_q( subtitle_pts, AVRational { 1, AV_TIME_BASE }, st_tb );
-            pkt->duration    =   av_rescale_q( duration, ctx_tb, st_tb );
+            //pkt->pts         =   av_rescale_q( subtitle_pts, AVRational { 1, AV_TIME_BASE }, AVRational { 1, 100 } );
+
+            //pkt->pts = subtitle_pts;
+            //av_packet_rescale_ts( pkt, ctx_tb, st_tb );
+
+            //pkt->pts = subtitle_pts;
+            pkt->duration    =   av_rescale_q( duration, AVRational { 1, 1000 }, st_tb );
+            //pkt->duration    =   av_rescale_q( duration, AVRational { 1, 1000 }, AVRational { 1, 100 } );
+
+
+            //av_packet_rescale_ts( pkt, ctx_tb, st_tb );
+            //av_packet_rescale_ts( pkt, ctx_tb, st_tb );
+
+
             pkt->dts         =   pkt->pts;
+
+            //printf("subtitle pts = %lld\n", pkt->pts );
+
 
             muxer.write_subtitle( pkt );
             s_encoder.unref_subtitle();
@@ -269,6 +302,11 @@ void    Maker::work_with_subtitle()
                 auto pkt    =   encoder->get_pkt();
                 auto ctx_tb =   encoder->get_timebase();
                 av_packet_rescale_ts( pkt, ctx_tb, st_tb );
+
+                /*if( order == EncodeOrder::AUDIO )
+                    printf("audio pts = %lld\n", pkt->pts );
+                else
+                    printf("video pts = %lld\n", pkt->pts );*/
 
                 muxer.write_frame( pkt );
                 encoder->unref_pkt();
@@ -428,6 +466,11 @@ void    Maker::work_without_subtitle()
             auto pkt    =   encoder->get_pkt();
             auto ctx_tb =   encoder->get_timebase();
             av_packet_rescale_ts( pkt, ctx_tb, st_tb );
+
+            if( encoder == &v_encoder )
+                printf( "video pts = %lld\n", pkt->pts );
+            else
+                printf( "audio pts = %lld\n", pkt->pts );            
 
             muxer.write_frame( pkt );
             encoder->unref_pkt();
