@@ -224,7 +224,7 @@ static void add_stream( OutputStream *ost, AVFormatContext *oc, const AVCodec **
         //ost->st->codecpar->codec_id      =   av_guess_codec( oc->oformat, nullptr, oc->url, nullptr, ost->st->codecpar->codec_type );
 
         ost->sub_fmtctx = avformat_alloc_context();
-        ret = avformat_open_input( &ost->sub_fmtctx, "J:\\test.srt", nullptr, nullptr );
+        ret = avformat_open_input( &ost->sub_fmtctx, "J:\\test.ass", nullptr, nullptr );
         ret = avformat_find_stream_info( ost->sub_fmtctx, nullptr );
         ost->subidx = av_find_best_stream( ost->sub_fmtctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, nullptr, 0 );
         
@@ -477,8 +477,8 @@ static AVFrame *get_audio_frame(OutputStream *ost)
     int     ret;
     int16_t     intens[2];
 
-    if( feof(fp) != 0 )
-    //if( a_frame_count > 400 )
+    //if( feof(fp) != 0 )
+    if( a_frame_count > 4000 )
         return NULL;
 
     ret = av_frame_make_writable(frame);
@@ -858,8 +858,8 @@ static AVFrame *get_video_frame(OutputStream *ost)
         return NULL;*/
 
     static int v_frame_count = 0;
-    if( v_frame_count > 35719 )
-    //if( v_frame_count > 300 )
+    //if( v_frame_count > 35719 )
+    if( v_frame_count > 3000 )
         return NULL;
 
 
@@ -935,16 +935,32 @@ static void close_stream(AVFormatContext *oc, OutputStream *ost)
 
 
 
+/*typedef struct AVIOInterruptCB {
+    int (*callback)(void*);
+    void *opaque;
+} AVIOInterruptCB;*/
 
 
 
+struct AVIOInterruptCB cb;
 
+
+int test( void* ptr )
+{
+    printf("test");
+    return 0;
+}
 
 /**************************************************************/
 /* media file output */
 
 int muxing()
 {
+
+    cb.opaque = NULL;
+    cb.callback = &test;
+
+
     video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, 1920, 1080, AV_PIX_FMT_YUV420P, 1 );
 
 
@@ -999,8 +1015,8 @@ int muxing()
 #if 1
     {
         // AV_CODEC_ID_MOV_TEXT
-        fmt->subtitle_codec = AV_CODEC_ID_SUBRIP;
-        //fmt->subtitle_codec = AV_CODEC_ID_ASS;
+        //fmt->subtitle_codec = AV_CODEC_ID_SUBRIP;
+        fmt->subtitle_codec = AV_CODEC_ID_ASS;
         add_stream( &subtitle_st, oc, &subtitle_codec, fmt->subtitle_codec );
         have_subtitle = 1;
         encode_subtitle = 1;
@@ -1026,7 +1042,10 @@ int muxing()
     /* open the output file, if needed */
     if (!(fmt->flags & AVFMT_NOFILE)) 
     {
-        ret = avio_open(&oc->pb, filename, AVIO_FLAG_WRITE);
+        //ret = avio_open(&oc->pb, filename, AVIO_FLAG_WRITE);
+        oc->interrupt_callback = cb;
+        ret     =   avio_open2( &oc->pb, filename, AVIO_FLAG_WRITE, &oc->interrupt_callback, nullptr );
+
         if (ret < 0) 
         {
             fprintf(stderr, "Could not open '%s': %d\n", filename, ret);

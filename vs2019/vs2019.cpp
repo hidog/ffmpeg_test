@@ -122,8 +122,10 @@ extern "C" {
 
 int main()
 {
+    //extract_subtitle_frome_file();
+    //printf("test");
 
-#if 0
+#if 1
     muxing();
 #elif 1
 

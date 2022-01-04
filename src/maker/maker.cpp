@@ -199,6 +199,8 @@ void    Maker::work_with_subtitle()
         return  order;
     };
 
+    int vc = 0, ac = 0, sc = 0;
+
     // 休息一下再來思考這邊怎麼改寫, 希望寫得好看一點
     EncodeOrder     order;
     while( v_frame != nullptr || a_frame != nullptr || s_encoder.get_queue_size() > 0 )
@@ -214,15 +216,25 @@ void    Maker::work_with_subtitle()
             encoder =   &v_encoder;
             frame   =   v_frame;
             st_tb   =   muxer.get_video_stream_timebase();
+            vc++;
         }
         else if( order == EncodeOrder::AUDIO ) // audio
         {
             encoder =   &a_encoder;
             frame   =   a_frame;
             st_tb   =   muxer.get_audio_stream_timebase();
+            ac++;
         }
         else        
-            st_tb   =   muxer.get_sub_stream_timebase();        
+        {
+            st_tb   =   muxer.get_sub_stream_timebase();
+            sc++;
+        }
+
+        printf( "vc = %d, ac = %d, sc = %d\n", vc, ac, sc );
+        if( vc == 301 && ac == 401 && sc == 421 )
+            printf("test");
+
 
         //
         if( order == EncodeOrder::SUBTITLE )
@@ -236,7 +248,7 @@ void    Maker::work_with_subtitle()
             pkt->duration    =   av_rescale_q( duration, ctx_tb, st_tb );
             pkt->dts         =   pkt->pts;
 
-            muxer.write_frame( pkt );
+            muxer.write_subtitle( pkt );
             s_encoder.unref_subtitle();
             s_encoder.unref_pkt();
         }
@@ -269,6 +281,7 @@ void    Maker::work_with_subtitle()
         }
     }
 
+    // 邏輯上不需要 flush subtitle.
     if( s_encoder.get_queue_size() > 0 )
         MYLOG( LOG::ERROR, "subtitie queue is not empty." );
     
