@@ -111,6 +111,48 @@ void    SubEncode::init( int st_idx, SubEncodeSetting setting, bool need_global_
 
 
 
+
+
+
+/*******************************************************************************
+SubEncode::load_all_subtitle()
+
+某些字幕檔不會按照時間來排序字幕資料,所以一次讀取完畢並且根據時間做重新排序.
+會有字幕檔長度限制.
+如果需要,再寫無長度限制的版本.
+********************************************************************************/
+void    SubEncode::load_all_subtitle()
+{
+    int     ret     =   0;
+
+    while( true )
+    {
+        AVPacket    sub_pkt;
+        av_init_packet( &sub_pkt );
+
+        ret     =   av_read_frame( fmt_ctx, &sub_pkt );
+        if( ret < 0 )
+            break;
+
+        //MYLOG( LOG::DEBUG, "sub pkt pts = %lld", sub_pkt.pts );
+        sub_queue.emplace( sub_pkt );
+    }
+    MYLOG( LOG::ERROR, "load subtitle file finish." );
+
+#if 0
+    // print queue for test.
+    while( false == sub_queue.empty()) 
+    {
+        MYLOG( LOG::DEBUG, "pts = %lld, str = %s", sub_queue.top().pts, sub_queue.top().data );
+        sub_queue.pop();
+    }
+#endif
+}
+
+
+
+
+
 /*******************************************************************************
 SubEncode::open_subtitle_source()
 ********************************************************************************/

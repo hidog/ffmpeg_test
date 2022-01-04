@@ -70,6 +70,9 @@ void Maker::work()
 
     muxer.write_header();
 
+    if( setting.has_subtitle == true )
+        s_encoder.load_all_subtitle();
+
     AVRational v_time_base  =   v_encoder.get_timebase();
     AVRational a_time_base  =   a_encoder.get_timebase();
 

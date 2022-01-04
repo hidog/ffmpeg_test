@@ -367,7 +367,7 @@ void    Player::play()
     // read frames from the file 
     while( true ) 
     {
-        ret = demuxer.demux();
+        ret     =   demuxer.demux();
         if( ret < 0 )
         {
             printf("play end.\n");
