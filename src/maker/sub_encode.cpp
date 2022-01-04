@@ -337,7 +337,7 @@ void    SubEncode::encode_subtitle()
             uint8_t*    subtitle_out        =   (uint8_t*)av_mallocz(subtitle_out_max_size);
             int         subtitle_out_size   =   avcodec_encode_subtitle( ctx , subtitle_out, subtitle_out_max_size, subtitle );
 
-            MYLOG( LOG::DEBUG, "encode subtitle = %s", subtitle.rects[0]->ass );
+            MYLOG( LOG::DEBUG, "encode subtitle = %s", subtitle->rects[0]->ass );
 
             if( subtitle_out_size == 0 )
             {
