@@ -29,6 +29,8 @@ public:
 
     void    init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting, SubEncodeSetting s_setting );
     void    work();
+    void    work_with_subtitle();
+    void    work_without_subtitle();
     void    end();
 
 private:

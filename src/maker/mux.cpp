@@ -221,3 +221,18 @@ AVRational  Mux::get_audio_stream_timebase()
         MYLOG( LOG::ERROR, "a stream is null." );
     return  a_stream->time_base;
 }
+
+
+
+
+
+
+/*******************************************************************************
+Mux::get_sub_stream_timebase()
+********************************************************************************/
+AVRational  Mux::get_sub_stream_timebase()
+{
+    if( s_stream == nullptr )
+        MYLOG( LOG::ERROR, "a stream is null." );
+    return  s_stream->time_base;
+}

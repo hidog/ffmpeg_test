@@ -20,6 +20,7 @@ struct AVFormatContext;
 struct AVCodecContext;
 struct AVStream;
 struct AVPacket;
+struct AVSubtitle;
 
 
 
@@ -52,14 +53,19 @@ public:
     int     open_subtitle_source( std::string src_sub_file );
     void    copy_sub_header();
     void    load_all_subtitle();
+    int     get_queue_size();
+    void    encode_subtitle();
+    void    unref_subtitle();
+    
+    int64_t     get_subtitle_pts();
+    int64_t     get_duration();
 
+    void        unref_pkt() override;
     int64_t     get_pts() override;
     AVFrame*    get_frame() override;
 
 
-
 private:
-
 
     // ¥Î¨ÓÅª¨ú subtitle file.
     AVFormatContext*    fmt_ctx     =   nullptr;
@@ -69,6 +75,9 @@ private:
     int     sub_idx =   0;
 
     std::priority_queue< AVPacket, std::vector<AVPacket>, compare_pkt_by_pts >  sub_queue;
+
+    // use for encode
+    AVSubtitle*     subtitle    =   nullptr;
 
 };
 

@@ -1074,9 +1074,6 @@ int muxing()
 
         printf( "vc = %d, ac = %d, sc = %d\n", video_cc, audio_cc, sub_cc );
 
-        if( video_cc == 19 && audio_cc == 38 && sub_cc == 229 )
-            printf("test\n");
-
         cpr1 = av_compare_ts( video_st.next_pts, video_st.enc->time_base, audio_st.next_pts, audio_st.enc->time_base );
         // cpr <= 0  video
         // cpr > 0  audio

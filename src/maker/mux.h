@@ -46,6 +46,7 @@ public:
 
     AVRational  get_video_stream_timebase();
     AVRational  get_audio_stream_timebase();
+    AVRational  get_sub_stream_timebase();
 
 private:
 
