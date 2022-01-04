@@ -151,7 +151,7 @@ void    SubEncode::load_all_subtitle()
         //MYLOG( LOG::DEBUG, "sub pkt pts = %lld", sub_pkt.pts );
         sub_queue.emplace( sub_pkt );
     }
-    MYLOG( LOG::ERROR, "load subtitle file finish." );
+    MYLOG( LOG::INFO, "load subtitle file finish." );
 
 #if 0
     // print queue for test.
@@ -315,9 +315,6 @@ void    SubEncode::encode_subtitle()
     int     ret     =   0, 
             got_sub =   0;
 
-    int     dst_nb_samples;
-
-
     AVPacket    sub_pkt     =   sub_queue.top();
     sub_queue.pop();
 
@@ -355,6 +352,8 @@ void    SubEncode::encode_subtitle()
     }
     else
         MYLOG( LOG::ERROR, "sub_pkt.size = 0" );
+
+    av_packet_unref( &sub_pkt );
 }
 
 

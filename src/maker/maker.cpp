@@ -154,7 +154,8 @@ void    Maker::work_with_subtitle()
         else if( v_frame == nullptr )
         {
             a_pts   =   a_frame->pts;
-            ret     =   av_compare_ts( a_pts, a_time_base, s_encoder.get_pts(), s_time_base );
+            s_pts   =   s_encoder.get_pts();
+            ret     =   av_compare_ts( a_pts, a_time_base, s_pts, s_time_base );
             if( ret <= 0 )
                 order   =   EncodeOrder::AUDIO;
             else
@@ -163,7 +164,8 @@ void    Maker::work_with_subtitle()
         else if( a_frame == nullptr )
         {
             v_pts   =   v_frame->pts;
-            ret     =   av_compare_ts( v_pts, v_time_base, s_encoder.get_pts(), s_time_base );
+            s_pts   =   s_encoder.get_pts();
+            ret     =   av_compare_ts( v_pts, v_time_base, s_pts, s_time_base );
             if( ret <= 0 )
                 order   =   EncodeOrder::VIDEO;
             else
@@ -174,10 +176,11 @@ void    Maker::work_with_subtitle()
             // 原本想用 INT64_MAX, 但會造成 overflow.
             v_pts   =   v_frame->pts;
             a_pts   =   a_frame->pts;
+            s_pts   =   s_encoder.get_pts();
             ret     =   av_compare_ts( v_pts, v_time_base, a_pts, a_time_base );
             if( ret <= 0 )
             {
-                ret     =   av_compare_ts( v_pts, v_time_base, s_encoder.get_pts(), s_time_base );
+                ret     =   av_compare_ts( v_pts, v_time_base, s_pts, s_time_base );
                 if( ret <= 0 )
                     order   =   EncodeOrder::VIDEO;
                 else
@@ -185,7 +188,7 @@ void    Maker::work_with_subtitle()
             }
             else
             {
-                ret     =   av_compare_ts( a_pts, a_time_base, s_encoder.get_pts(), s_time_base );
+                ret     =   av_compare_ts( a_pts, a_time_base, s_pts, s_time_base );
                 if( ret <= 0 )
                     order   =   EncodeOrder::AUDIO;
                 else
@@ -265,6 +268,9 @@ void    Maker::work_with_subtitle()
                 a_frame     =   encoder->get_frame();
         }
     }
+
+    if( s_encoder.get_queue_size() > 0 )
+        MYLOG( LOG::ERROR, "subtitie queue is not empty." );
     
     // flush
     if( v_encoder.is_flush() == false )
