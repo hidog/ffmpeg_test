@@ -99,16 +99,19 @@ void Mux::init( EncodeSetting setting )
 /*******************************************************************************
 Mux::open()
 ********************************************************************************/
-void    Mux::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx )
+void    Mux::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, AVCodecContext* s_ctx )
 {
     if( v_ctx == nullptr || a_ctx == nullptr )
         MYLOG( LOG::ERROR, "v ctx or a ctx is null" );
 
+    if( setting.has_subtitle == true && s_ctx == nullptr )
+        MYLOG( LOG::ERROR, "subtitle ctx is null." );   
+
     // copy time base.
-    v_stream->time_base.num     =   v_ctx->time_base.num;   // 在某個操作後這邊的 value 會變.
-    v_stream->time_base.den     =   v_ctx->time_base.den;
-    a_stream->time_base.num     =   a_ctx->time_base.num;
-    a_stream->time_base.den     =   a_ctx->time_base.den;
+    v_stream->time_base     =   v_ctx->time_base;   // 在某個操作後這邊的 value 會變.
+    a_stream->time_base     =   a_ctx->time_base;
+    if( setting.has_subtitle == true )
+        s_stream->time_base     =   s_ctx->time_base;
 
     //
     int     ret     =   0;
@@ -118,6 +121,11 @@ void    Mux::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext*
     assert( ret == 0 );
     ret =   avcodec_parameters_from_context( a_stream->codecpar, a_ctx );
     assert( ret == 0 );
+    if( setting.has_subtitle == true )
+    {
+        ret =   avcodec_parameters_from_context( s_stream->codecpar, s_ctx );
+        assert( ret == 0 );
+    }
 
     // 研究一下這邊跟範例程式的差異
     av_dump_format( output_ctx, 0, setting.filename.c_str(), 1 );

@@ -50,11 +50,11 @@ void Maker::init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEnc
 
 
     //
-    auto v_ctx      =   v_encoder.get_ctx();
-    auto a_ctx      =   a_encoder.get_ctx();
+    auto v_ctx  =   v_encoder.get_ctx();
+    auto a_ctx  =   a_encoder.get_ctx();
+    auto s_ctx  =   s_encoder.get_ctx();
 
-    muxer.open( setting, v_ctx, a_ctx );
-
+    muxer.open( setting, v_ctx, a_ctx, s_ctx );
 }
 
 

@@ -42,7 +42,7 @@ void    Encode::init( int st_idx, AVCodecID code_id )
     flush_state    =   false;
 
     // init frame
-    if( frame == nullptr )
+    if( frame != nullptr )
         av_frame_free( &frame );
 
     frame   =   av_frame_alloc();

@@ -184,7 +184,7 @@ int main()
 
 
 
-    SubtitleEncodeSetting   s_setting;
+    SubEncodeSetting   s_setting;
     s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
     s_setting.subtitle_file =   "J:\\test.ass";
     s_setting.subtitle_ext  =   "ass";

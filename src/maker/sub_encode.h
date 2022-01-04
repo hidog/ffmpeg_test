@@ -6,6 +6,11 @@
 #include "encode.h"
 
 
+struct AVFormatContext;
+struct AVCodecContext;
+struct AVStream;
+
+
 class SubEncode : public Encode
 {
 public:
@@ -19,12 +24,21 @@ public:
     SubEncode& operator = ( SubEncode&& )         =   delete;
 
     void    init( int st_idx, SubEncodeSetting setting, bool need_global_header );
-    int     open_subtitle_source();
+    void    end();
+    int     open_subtitle_source( std::string src_sub_file );
+    void    copy_sub_header();    
 
     int64_t     get_pts() override;
     AVFrame*    get_frame() override;
 
 private:
+
+    // ¥Î¨ÓÅª¨ú subtitle file.
+    AVFormatContext*    fmt_ctx     =   nullptr;
+    AVCodecContext*     dec         =   nullptr;
+    AVStream*           sub_stream  =   nullptr;
+
+    int     sub_idx =   0;
 
 };
 

@@ -36,7 +36,7 @@ public:
 
     void    init( EncodeSetting setting );
     void    end();
-    void    open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx );
+    void    open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, AVCodecContext* s_ctx );
 
     bool    is_need_global_header();
 
