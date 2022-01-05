@@ -72,8 +72,7 @@ typedef struct OutputStream {
 static void log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt)
 {
     AVRational *time_base = &fmt_ctx->streams[pkt->stream_index]->time_base;
-
-    printf("pts : %d \n", pkt->stream_index );
+    //printf("pts : %d \n", pkt->stream_index );
 }
 
 static int write_frame(AVFormatContext *fmt_ctx, AVCodecContext *c,
@@ -477,8 +476,8 @@ static AVFrame *get_audio_frame(OutputStream *ost)
     int     ret;
     int16_t     intens[2];
 
-    //if( feof(fp) != 0 )
-    if( a_frame_count > 4000 )
+    if( feof(fp) != 0 )
+    //if( a_frame_count > 4000 )
         return NULL;
 
     ret = av_frame_make_writable(frame);
@@ -597,24 +596,30 @@ static int write_subtitle_frame( AVFormatContext *oc, OutputStream *ost )
 
     if( sub_pkt->size > 0 )
     {
-        printf( "sub_pkt = %s\n", sub_pkt->data );
+        //printf( "sub_pkt = %s\n", sub_pkt->data );
 
 
         memset( &subtitle, 0, sizeof(subtitle) );            
         ret = avcodec_decode_subtitle2( ost->sub_dec, &subtitle, &got_sub, sub_pkt ); 
 
-        printf( "subtitle = %s\n", subtitle.rects[0]->ass );
+        //printf( "subtitle = %s\n", subtitle.rects[0]->ass );
 
 
         if( ret < 0 )
             printf( "write_subtitle_frame decode fail.\n" );
         if( got_sub > 0 )
         {
-            subtitle.pts                   =    av_rescale_q( sub_pkt->pts, ost->sub_dec->pkt_timebase, AVRational{ 1, 1000 } );
+            //subtitle.pts                   =    av_rescale_q( sub_pkt->pts, ost->sub_dec->pkt_timebase, AVRational{ 1, 1000 } );
             //subtitle.start_display_time    =    subtitle.pts;
             //subtitle.end_display_time      +=    subtitle.start_display_time;
+
+            int64_t mini_pts = av_rescale_q( subtitle.pts, AVRational{ 1, AV_TIME_BASE }, AVRational{ 1, 1000 } );
+
+            //subtitle.start_display_time     +=  mini_pts; //subtitle.pts / 1000;
+            //subtitle.end_display_time       +=  mini_pts; //subtitle.pts / 1000;
+
             int64_t sub_duration           =    subtitle.end_display_time - subtitle.start_display_time;
-            sub_duration /= 1000;
+            //sub_duration /= 1000;
 
             uint8_t*    subtitle_out        =   (uint8_t*)av_mallocz(subtitle_out_max_size);
             int         subtitle_out_size   =   avcodec_encode_subtitle( c , subtitle_out, subtitle_out_max_size, &subtitle );
@@ -629,11 +634,12 @@ static int write_subtitle_frame( AVFormatContext *oc, OutputStream *ost )
             else
                 pkt.data    =   subtitle_out;
            
-            printf( "pkt = %s\n", pkt.data );
+            //printf( "pkt = %s\n", pkt.data );
 
             pkt.size        =   subtitle_out_size;  //strlen( (char*)pkt.data );
             pkt.pts         =   av_rescale_q( subtitle.pts, AVRational { 1, AV_TIME_BASE }, ost->st->time_base );
-            pkt.duration    =   av_rescale_q( sub_duration, ost->sub_dec->pkt_timebase, ost->st->time_base );
+            //pkt.duration    =   av_rescale_q( sub_duration, ost->sub_dec->pkt_timebase, ost->st->time_base );
+            pkt.duration    =   av_rescale_q( sub_duration, AVRational { 1, 1000 }, ost->st->time_base );
             pkt.dts         =   pkt.pts;
 
             static int64_t  last_pts    =   pkt.pts;    // 用來處理 flush 的 pts
@@ -655,8 +661,8 @@ static int write_subtitle_frame( AVFormatContext *oc, OutputStream *ost )
             int ret =   0;
             pkt.stream_index = ost->st->index;
             if( subtitle_out_size != 0 )
-                ret =   av_interleaved_write_frame( oc, &pkt );  // 沒找到相關說明...
-                //ret =   av_write_frame( oc, &pkt );
+                //ret =   av_interleaved_write_frame( oc, &pkt );  // 沒找到相關說明...
+                ret =   av_write_frame( oc, &pkt );
             else 
                 ret =   av_interleaved_write_frame( oc, &pkt );  // 沒找到相關說明...
 
@@ -859,8 +865,8 @@ static AVFrame *get_video_frame(OutputStream *ost)
         return NULL;*/
 
     static int v_frame_count = 0;
-    //if( v_frame_count > 35719 )
-    if( v_frame_count > 3000 )
+    if( v_frame_count > 35719 )
+    //if( v_frame_count > 3000 )
         return NULL;
 
 
@@ -885,7 +891,7 @@ static AVFrame *get_video_frame(OutputStream *ost)
     }
 
     sprintf( str, "J:\\jpg\\%d.jpg", v_frame_count );
-    printf("file = %s\n", str );
+    //printf("file = %s\n", str );
     QImage img(str);
 
     int linesize[8] = { img.bytesPerLine() };
@@ -943,14 +949,14 @@ static void close_stream(AVFormatContext *oc, OutputStream *ost)
 
 
 
-struct AVIOInterruptCB cb;
+/*struct AVIOInterruptCB cb;
 
 
 int test( void* ptr )
 {
-    printf("test");
+    printf("-");
     return 0;
-}
+}*/
 
 /**************************************************************/
 /* media file output */
@@ -958,8 +964,8 @@ int test( void* ptr )
 int muxing()
 {
 
-    cb.opaque = NULL;
-    cb.callback = &test;
+    //cb.opaque = NULL;
+    //cb.callback = &test;
 
 
     video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, 1920, 1080, AV_PIX_FMT_YUV420P, 1 );
@@ -1044,8 +1050,8 @@ int muxing()
     if (!(fmt->flags & AVFMT_NOFILE)) 
     {
         //ret = avio_open(&oc->pb, filename, AVIO_FLAG_WRITE);
-        oc->interrupt_callback = cb;
-        ret     =   avio_open2( &oc->pb, filename, AVIO_FLAG_WRITE, &oc->interrupt_callback, nullptr );
+        //oc->interrupt_callback = cb;
+        ret     =   avio_open2( &oc->pb, filename, AVIO_FLAG_WRITE, nullptr, nullptr );
 
         if (ret < 0) 
         {
@@ -1092,15 +1098,19 @@ int muxing()
         //cpr2 = -1;
         //printf( "v time base = %d %d\n", video_st.st->time_base.num, video_st.st->time_base.den );
 
-        printf( "vc = %d, ac = %d, sc = %d\n", video_cc, audio_cc, sub_cc );
+        //printf( "vc = %d, ac = %d, sc = %d\n", video_cc, audio_cc, sub_cc );
+        printf( "." );
+
 
         cpr1 = av_compare_ts( video_st.next_pts, video_st.enc->time_base, audio_st.next_pts, audio_st.enc->time_base );
         // cpr <= 0  video
         // cpr > 0  audio
         if( cpr1 <= 0 )        
-            cpr2 = av_compare_ts( video_st.next_pts, video_st.enc->time_base, sub_pkt->pts , subtitle_st.enc->time_base );        
+            cpr2 = av_compare_ts( video_st.next_pts, video_st.enc->time_base, sub_pkt->pts , AVRational{1,100} );  
+            //cpr2 = av_compare_ts( video_st.next_pts, video_st.enc->time_base, sub_pkt->pts , subtitle_st.enc->time_base );
         else
-            cpr2 = av_compare_ts( audio_st.next_pts, audio_st.enc->time_base, sub_pkt->pts , subtitle_st.enc->time_base );
+            cpr2 = av_compare_ts( audio_st.next_pts, audio_st.enc->time_base, sub_pkt->pts , AVRational{1,100} );
+            //cpr2 = av_compare_ts( audio_st.next_pts, audio_st.enc->time_base, sub_pkt->pts , subtitle_st.enc->time_base );
         // cpr2 > 0    subtitle
         // cpr2 <= 0   cpr1 <= 0    video
         // cpr2 <= 0   cpr1 > 0     audio
