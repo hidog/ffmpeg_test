@@ -64,6 +64,7 @@ public:
     int64_t     get_pts() override;
     AVFrame*    get_frame() override;
 
+    AVRational  get_src_stream_timebase();
 
 //private:
 

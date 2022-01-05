@@ -87,8 +87,6 @@ void Mux::init( EncodeSetting setting )
         if( s_stream == nullptr )
             MYLOG( LOG::ERROR, "a_stream is nullptr." );
         s_stream->id    =   output_ctx->nb_streams - 1;
-
-        printf(" start time = %lld\n", s_stream->start_time );
     }
 
 

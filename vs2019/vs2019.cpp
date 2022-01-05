@@ -129,7 +129,7 @@ int main()
     //extract_subtitle_frome_file();
     //printf("test");
 
-#if 1
+#if 0
     muxing();
 #elif 1
 

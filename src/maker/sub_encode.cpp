@@ -129,6 +129,18 @@ void    SubEncode::init( int st_idx, SubEncodeSetting setting, bool need_global_
 
 
 
+/*******************************************************************************
+SubEncode::get_src_stream_timebase()
+********************************************************************************/
+AVRational  SubEncode::get_src_stream_timebase()
+{
+    return  sub_stream->time_base;
+}
+
+
+
+
+
 
 /*******************************************************************************
 SubEncode::load_all_subtitle()
