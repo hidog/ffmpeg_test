@@ -135,10 +135,10 @@ int main()
 
     EncodeSetting   setting;    
     // rmvb 是 variable bitrate. 目前還無法使用
-    setting.filename    =   "J:\\output.mkv";
-    setting.extension   =   "matroska";
-    //setting.filename    =   "J:\\test2.mp4";
-    //setting.extension   =   "mp4";
+    //setting.filename    =   "J:\\output.mkv";
+    //setting.extension   =   "matroska";
+    setting.filename    =   "J:\\output.mp4";
+    setting.extension   =   "mp4";
     //setting.filename    =   "J:\\test2.avi"; 
     //setting.extension   =   "avi";
 
@@ -161,10 +161,10 @@ int main()
     /*
         b frame not support on rm
     */
-    v_setting.gop_size      =   30;
-    v_setting.max_b_frames  =   15; 
-    //v_setting.gop_size      =   12;
-    //v_setting.max_b_frames  =   0; 
+    //v_setting.gop_size      =   30;
+    //v_setting.max_b_frames  =   15; 
+    v_setting.gop_size      =   120;
+    v_setting.max_b_frames  =   80; 
 
 
     v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
@@ -177,8 +177,8 @@ int main()
 
 
     AudioEncodeSetting  a_setting;
-    //a_setting.code_id     =   AV_CODEC_ID_MP3;
-    a_setting.code_id       =   AV_CODEC_ID_AAC;
+    a_setting.code_id     =   AV_CODEC_ID_MP3;
+    //a_setting.code_id       =   AV_CODEC_ID_AAC;
     //a_setting.code_id       =   AV_CODEC_ID_AC3;
     //a_setting.code_id     =   AV_CODEC_ID_MP2;
     //a_setting.code_id       =   AV_CODEC_ID_VORBIS;
@@ -191,8 +191,9 @@ int main()
 
 
     SubEncodeSetting   s_setting;
-    s_setting.code_id       =   AV_CODEC_ID_ASS;
+    //s_setting.code_id       =   AV_CODEC_ID_ASS;
     //s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
+    s_setting.code_id       =   AV_CODEC_ID_MOV_TEXT;
     s_setting.subtitle_file =   "J:\\test.ass";
     s_setting.subtitle_ext  =   "ass";
 
