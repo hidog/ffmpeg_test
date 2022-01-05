@@ -197,8 +197,6 @@ void    Maker::work_with_subtitle()
         return  order;
     };
 
-    //int vc = 0, ac = 0, sc = 0;
-
     // 休息一下再來思考這邊怎麼改寫, 希望寫得好看一點
     EncodeOrder     order;
     AVPacket*       pkt =   nullptr;
@@ -216,25 +214,17 @@ void    Maker::work_with_subtitle()
             encoder =   &v_encoder;
             frame   =   v_frame;
             st_tb   =   muxer.get_video_stream_timebase();
-            //vc++;
         }
         else if( order == EncodeOrder::AUDIO ) // audio
         {
             encoder =   &a_encoder;
             frame   =   a_frame;
             st_tb   =   muxer.get_audio_stream_timebase();
-            //ac++;
         }
-        else        
-        {
+        else if( order == EncodeOrder::SUBTITLE ) // subtitle        
             st_tb   =   muxer.get_sub_stream_timebase();
-            //sc++;
-        }
-
-        //printf( "vc = %d, ac = %d, sc = %d\n", vc, ac, sc );
-        //if( vc == 65 && ac == 128 && sc == 9 )
-          //  printf("test");
-        printf(".");
+        else
+            assert(0);
 
         //
         if( order == EncodeOrder::SUBTITLE )
