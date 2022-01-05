@@ -223,7 +223,7 @@ static void add_stream( OutputStream *ost, AVFormatContext *oc, const AVCodec **
         //ost->st->codecpar->codec_id      =   av_guess_codec( oc->oformat, nullptr, oc->url, nullptr, ost->st->codecpar->codec_type );
 
         ost->sub_fmtctx = avformat_alloc_context();
-        ret = avformat_open_input( &ost->sub_fmtctx, "J:\\abc.ass", nullptr, nullptr );
+        ret = avformat_open_input( &ost->sub_fmtctx, "J:\\test.ass", nullptr, nullptr );
         ret = avformat_find_stream_info( ost->sub_fmtctx, nullptr );
         ost->subidx = av_find_best_stream( ost->sub_fmtctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, nullptr, 0 );
         
@@ -476,8 +476,8 @@ static AVFrame *get_audio_frame(OutputStream *ost)
     int     ret;
     int16_t     intens[2];
 
-    if( feof(fp) != 0 )
-    //if( a_frame_count > 4000 )
+    //if( feof(fp) != 0 )
+    if( a_frame_count > 400 )
         return NULL;
 
     ret = av_frame_make_writable(frame);
@@ -613,8 +613,7 @@ static int write_subtitle_frame( AVFormatContext *oc, OutputStream *ost )
             //subtitle.start_display_time    =    subtitle.pts;
             //subtitle.end_display_time      +=    subtitle.start_display_time;
 
-            int64_t mini_pts = av_rescale_q( subtitle.pts, AVRational{ 1, AV_TIME_BASE }, AVRational{ 1, 1000 } );
-
+            //int64_t mini_pts = av_rescale_q( subtitle.pts, AVRational{ 1, AV_TIME_BASE }, AVRational{ 1, 1000 } );
             //subtitle.start_display_time     +=  mini_pts; //subtitle.pts / 1000;
             //subtitle.end_display_time       +=  mini_pts; //subtitle.pts / 1000;
 
@@ -867,8 +866,8 @@ static AVFrame *get_video_frame(OutputStream *ost)
         return NULL;*/
 
     static int v_frame_count = 0;
-    if( v_frame_count > 35719 )
-    //if( v_frame_count > 3000 )
+    //if( v_frame_count > 35719 )
+    if( v_frame_count > 300 )
         return NULL;
 
 

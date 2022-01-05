@@ -37,7 +37,6 @@ public:
 
     void    init( int st_idx, AVCodecID code_id ); 
 
-    int     flush();
     bool    is_flush();
     void    set_flush( bool flag );
 
@@ -49,10 +48,10 @@ public:
     AVCodecContext*     get_ctx();
     AVRational          get_timebase();
 
-    virtual int         send_frame();
-    virtual int         recv_frame();
-    virtual void        unref_pkt();
-
+    virtual int     send_frame();
+    virtual int     recv_frame();
+    virtual void    unref_pkt();
+    virtual int     flush();
 
     virtual int64_t     get_pts() = 0;
     virtual AVFrame*    get_frame() = 0;

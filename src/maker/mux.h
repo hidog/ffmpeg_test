@@ -42,7 +42,6 @@ public:
 
     void    write_header();
     void    write_frame( AVPacket* pkt );
-    void    write_subtitle( AVPacket* pkt );
     void    write_end();
 
     AVRational  get_video_stream_timebase();

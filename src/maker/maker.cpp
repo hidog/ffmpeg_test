@@ -229,8 +229,7 @@ void    Maker::work_with_subtitle()
         }
         else        
         {
-            //st_tb   =   muxer.get_video_stream_timebase(); 
-            st_tb = muxer.get_sub_stream_timebase();
+            st_tb   =   muxer.get_sub_stream_timebase();
             sc++;
         }
 
@@ -239,33 +238,22 @@ void    Maker::work_with_subtitle()
           //  printf("test");
         //printf(".");
 
-
         //
         if( order == EncodeOrder::SUBTITLE )
         {
             s_encoder.encode_subtitle();
 
             auto        pkt             =   s_encoder.get_pkt();
-            //auto        pkt             =   s_encoder.sub_queue.top();
-            //pkt.stream_index = 2;
-            //s_encoder.sub_queue.pop();
-
             auto        ctx_tb          =   s_encoder.get_timebase();
             int64_t     subtitle_pts    =   s_encoder.get_subtitle_pts();
             int64_t     duration        =   s_encoder.get_duration();
 
-            // AV_TIME_BASE
-            //auto tmp_pts_1 = av_rescale_q(pts, ist->st->time_base, AV_TIME_BASE_Q);
-            //pkt->pts = av_rescale_q(tmp_pts_1 + pFFmpeg->input_files_ts_offset[ist->file_index], AV_TIME_BASE_Q,  ost->st->time_base);
-
-            pkt->pts         =   av_rescale_q( subtitle_pts, AVRational { 1, AV_TIME_BASE }, st_tb );
-            pkt->duration    =   av_rescale_q( duration, s_encoder.dec->pkt_timebase, st_tb );
+            pkt->pts         =   av_rescale_q( subtitle_pts, AVRational{1,AV_TIME_BASE}, st_tb );
+            pkt->duration    =   av_rescale_q( duration, AVRational{1,1000}, st_tb );
             pkt->dts         =   pkt->pts;
+            s_encoder.set_last_pts( pkt->pts );
 
-            printf("subtitle pts = %lld\n", pkt->pts );
-
-
-            muxer.write_subtitle( pkt );
+            muxer.write_frame( pkt );
             s_encoder.unref_subtitle();
             s_encoder.unref_pkt();
         }
@@ -306,6 +294,14 @@ void    Maker::work_with_subtitle()
     // 邏輯上不需要 flush subtitle.
     if( s_encoder.get_queue_size() > 0 )
         MYLOG( LOG::ERROR, "subtitie queue is not empty." );
+
+    // flush subtitle
+    {
+        s_encoder.flush();
+        auto pkt    =   s_encoder.get_pkt();
+        muxer.write_frame( pkt );
+    }
+
     
     // flush
     if( v_encoder.is_flush() == false )

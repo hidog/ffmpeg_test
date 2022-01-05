@@ -185,23 +185,6 @@ void    Mux::write_frame( AVPacket* pkt )
 
 
 
-/*******************************************************************************
-Mux::write_frame()
-********************************************************************************/
-void    Mux::write_subtitle( AVPacket* pkt )
-{
-    int     ret     =   0;
-
-    if( pkt->size != 0 )
-        ret =   av_write_frame( output_ctx, pkt );   // 沒找到相關說明...
-    else 
-        ret =   av_interleaved_write_frame( output_ctx, pkt );  
-}
-
-
-
-
-
 
 
 /*******************************************************************************

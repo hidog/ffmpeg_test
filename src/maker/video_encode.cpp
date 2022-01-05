@@ -368,7 +368,7 @@ VideoEncode::get_frame()
 ********************************************************************************/
 AVFrame*    VideoEncode::get_frame()
 {
-    if( frame_count > 800 )
+    if( frame_count > 30 )
         return  nullptr;
 
     return  get_fram_from_file_QT();
@@ -396,7 +396,7 @@ AVFrame*    VideoEncode::get_fram_from_file_QT()
     if( img.load( str ) == false )
         return  nullptr;    
 
-    ret = av_frame_make_writable( frame );
+    ret =   av_frame_make_writable( frame );
     if( ret < 0 )
         assert(0);
 
@@ -447,7 +447,7 @@ AVFrame*    VideoEncode::get_fram_from_file_openCV()
     if( img.empty() == true )
         return  nullptr;    
 
-    ret = av_frame_make_writable( frame );
+    ret     =   av_frame_make_writable( frame );
     if( ret < 0 )
         assert(0);
 

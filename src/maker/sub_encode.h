@@ -56,6 +56,7 @@ public:
     int     get_queue_size();
     void    encode_subtitle();
     void    unref_subtitle();
+    void    set_last_pts( int64_t _pts );
     
     int64_t     get_subtitle_pts();
     int64_t     get_duration();
@@ -63,10 +64,12 @@ public:
     void        unref_pkt() override;
     int64_t     get_pts() override;
     AVFrame*    get_frame() override;
+    int         flush() override;
+
 
     AVRational  get_src_stream_timebase();
 
-//private:
+private:
 
     // ¥Î¨ÓÅª¨ú subtitle file.
     AVFormatContext*    fmt_ctx     =   nullptr;
@@ -81,8 +84,9 @@ public:
     AVSubtitle*     subtitle    =   nullptr;
 
 
-    AVPacket    sub_pkt;
+    AVPacket    sub_pkt, end_pkt;
 
+    int64_t     last_pts    =   0;
 
 };
 

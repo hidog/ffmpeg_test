@@ -655,7 +655,7 @@ AudioEncode::get_frame()
 ********************************************************************************/
 AVFrame*    AudioEncode::get_frame()
 {
-    if( frame_count > 1000 )
+    if( frame_count > 40 )
         return  nullptr;
 
     return  get_frame_from_pcm_file();
