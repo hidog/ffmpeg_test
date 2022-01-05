@@ -57,15 +57,15 @@ public:
     void    encode_subtitle();
     void    unref_subtitle();
     void    set_last_pts( int64_t _pts );
+    int     generate_flush_pkt();
     
+
     int64_t     get_subtitle_pts();
     int64_t     get_duration();
 
     void        unref_pkt() override;
     int64_t     get_pts() override;
     AVFrame*    get_frame() override;
-    int         flush() override;
-
 
     AVRational  get_src_stream_timebase();
 
@@ -76,18 +76,15 @@ private:
     AVCodecContext*     dec         =   nullptr;
     AVStream*           sub_stream  =   nullptr;
 
-    int     sub_idx =   0;
+    int     sub_idx =   -1;
 
     std::priority_queue< AVPacket, std::vector<AVPacket>, compare_pkt_by_pts >  sub_queue;
 
     // use for encode
     AVSubtitle*     subtitle    =   nullptr;
 
-
-    AVPacket    sub_pkt, end_pkt;
-
+    AVPacket*   sub_pkt;
     int64_t     last_pts    =   0;
-
 };
 
 

@@ -48,7 +48,7 @@ public:
     AVRational  get_audio_stream_timebase();
     AVRational  get_sub_stream_timebase();
 
-//private:
+private:
 
     AVFormatContext     *output_ctx     =   nullptr;
 

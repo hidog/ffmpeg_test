@@ -70,8 +70,6 @@ void    Maker::work_with_subtitle()
     s_encoder.load_all_subtitle();
     muxer.write_header();
 
-    //muxer.output_ctx->streams[2]->time_base.den = 100;
-
     AVRational  v_time_base     =   v_encoder.get_timebase();
     AVRational  a_time_base     =   a_encoder.get_timebase();
     AVRational  s_time_base     =   s_encoder.get_src_stream_timebase();
@@ -201,10 +199,12 @@ void    Maker::work_with_subtitle()
         return  order;
     };
 
-    int vc = 0, ac = 0, sc = 0;
+    //int vc = 0, ac = 0, sc = 0;
 
     // 休息一下再來思考這邊怎麼改寫, 希望寫得好看一點
     EncodeOrder     order;
+    AVPacket*       pkt =   nullptr;
+    AVRational      ctx_tb;
     while( v_frame != nullptr || a_frame != nullptr || s_encoder.get_queue_size() > 0 )
     {        
         assert( v_frame != nullptr || a_frame != nullptr || s_encoder.get_queue_size() > 0 );
@@ -218,33 +218,33 @@ void    Maker::work_with_subtitle()
             encoder =   &v_encoder;
             frame   =   v_frame;
             st_tb   =   muxer.get_video_stream_timebase();
-            vc++;
+            //vc++;
         }
         else if( order == EncodeOrder::AUDIO ) // audio
         {
             encoder =   &a_encoder;
             frame   =   a_frame;
             st_tb   =   muxer.get_audio_stream_timebase();
-            ac++;
+            //ac++;
         }
         else        
         {
             st_tb   =   muxer.get_sub_stream_timebase();
-            sc++;
+            //sc++;
         }
 
-        printf( "vc = %d, ac = %d, sc = %d\n", vc, ac, sc );
+        //printf( "vc = %d, ac = %d, sc = %d\n", vc, ac, sc );
         //if( vc == 65 && ac == 128 && sc == 9 )
           //  printf("test");
-        //printf(".");
+        printf(".");
 
         //
         if( order == EncodeOrder::SUBTITLE )
         {
             s_encoder.encode_subtitle();
 
-            auto        pkt             =   s_encoder.get_pkt();
-            auto        ctx_tb          =   s_encoder.get_timebase();
+            pkt     =   s_encoder.get_pkt();
+            ctx_tb  =   s_encoder.get_timebase();
             int64_t     subtitle_pts    =   s_encoder.get_subtitle_pts();
             int64_t     duration        =   s_encoder.get_duration();
 
@@ -271,8 +271,8 @@ void    Maker::work_with_subtitle()
                 else if( ret < 0 )
                     MYLOG( LOG::ERROR, "recv fail." );
 
-                auto pkt    =   encoder->get_pkt();
-                auto ctx_tb =   encoder->get_timebase();
+                pkt    =   encoder->get_pkt();
+                ctx_tb =   encoder->get_timebase();
                 av_packet_rescale_ts( pkt, ctx_tb, st_tb );
 
                 if( order == EncodeOrder::AUDIO )
@@ -295,13 +295,10 @@ void    Maker::work_with_subtitle()
     if( s_encoder.get_queue_size() > 0 )
         MYLOG( LOG::ERROR, "subtitie queue is not empty." );
 
-    // flush subtitle
-    {
-        s_encoder.flush();
-        auto pkt    =   s_encoder.get_pkt();
-        muxer.write_frame( pkt );
-    }
-
+    // flush subtitle    
+    s_encoder.generate_flush_pkt();
+    pkt     =   s_encoder.get_pkt();
+    muxer.write_frame( pkt );
     
     // flush
     if( v_encoder.is_flush() == false )
@@ -502,5 +499,6 @@ void Maker::end()
 {
     v_encoder.end();
     a_encoder.end();
+    s_encoder.end();
     muxer.end();
 }

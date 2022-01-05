@@ -368,7 +368,7 @@ VideoEncode::get_frame()
 ********************************************************************************/
 AVFrame*    VideoEncode::get_frame()
 {
-    if( frame_count > 30 )
+    if( frame_count > 3000 )
         return  nullptr;
 
     return  get_fram_from_file_QT();

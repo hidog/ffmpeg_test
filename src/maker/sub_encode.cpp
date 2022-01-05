@@ -17,6 +17,7 @@ extern "C" {
 SubEncode::SubEncode()
 ********************************************************************************/
 SubEncode::SubEncode()
+    :   Encode()
 {}
 
 
@@ -64,6 +65,36 @@ void    SubEncode::end()
         if( ctx->subtitle_header    !=  nullptr )
             av_free( ctx->subtitle_header );
     }
+
+    // close subtitle input
+    if( fmt_ctx != nullptr )
+    {
+        avformat_close_input( &fmt_ctx );
+        fmt_ctx     =   nullptr;
+    }
+
+    if( dec != nullptr )
+    {
+        avcodec_free_context( &dec );
+        dec     =   nullptr;
+    }
+
+    sub_stream  =   nullptr;
+    sub_idx     =   -1;
+    last_pts    =   0;
+
+    if( subtitle != nullptr )
+    {
+        av_free(subtitle);
+        subtitle    =   nullptr;
+    }
+
+    if( sub_pkt != nullptr )
+    {
+        av_packet_free( &sub_pkt );
+        sub_pkt =   nullptr;
+    }
+
 }
 
 
@@ -92,10 +123,15 @@ void    SubEncode::init( int st_idx, SubEncodeSetting setting, bool need_global_
 
     int ret =   0;
 
+    //
     last_pts    =   0;
+    sub_pkt     =   av_packet_alloc();
+    if( sub_pkt == nullptr )
+        MYLOG( LOG::ERROR, "alloc sub pkt fail." );
 
-    av_init_packet( &sub_pkt );
-    av_init_packet( &end_pkt );
+    subtitle    =   static_cast<AVSubtitle*>(av_malloc(sizeof(subtitle)));
+    if( subtitle == nullptr )
+        MYLOG( LOG::ERROR, "subtitle is null." );
 
     // open subtitle file.    
     ret     =   open_subtitle_source( setting.subtitle_file );
@@ -126,7 +162,6 @@ void    SubEncode::init( int st_idx, SubEncodeSetting setting, bool need_global_
     if( ret < 0 ) 
         MYLOG( LOG::ERROR, "open fail" );
 
-    subtitle    =   static_cast<AVSubtitle*>(av_malloc(sizeof(subtitle)));
 }
 
 
@@ -160,19 +195,14 @@ void    SubEncode::load_all_subtitle()
 
     while( true )
     {
-        //AVPacket    sub_pkt;
-        //av_init_packet( &sub_pkt );
-
-        ret     =   av_read_frame( fmt_ctx, &sub_pkt );
+        ret     =   av_read_frame( fmt_ctx, sub_pkt );
         if( ret < 0 )
             break;
 
         //MYLOG( LOG::DEBUG, "sub pkt pts = %lld", sub_pkt.pts );
-        sub_queue.emplace( sub_pkt );
+        sub_queue.emplace( *sub_pkt );
     }
     MYLOG( LOG::INFO, "load subtitle file finish." );
-
-    end_pkt     =   sub_pkt;
 
 #if 0
     // print queue for test.
@@ -337,47 +367,32 @@ void    SubEncode::encode_subtitle()
     int     ret     =   0, 
             got_sub =   0;
 
-    sub_pkt     =   sub_queue.top();
+    *sub_pkt    =   sub_queue.top();
     sub_queue.pop();
 
-    if( sub_queue.empty() == true )
-        printf("tes");
+    if( sub_pkt->size == 0 )
+        MYLOG( LOG::ERROR, "sub pkt size is 0" );
 
-    if( sub_pkt.size > 0 )
+    //MYLOG( LOG::DEBUG, "sub_pkt = %s", sub_pkt.data );
+    memset( subtitle, 0, sizeof(subtitle) );            
+    ret     =   avcodec_decode_subtitle2( dec, subtitle, &got_sub, sub_pkt ); 
+    av_packet_unref( sub_pkt );
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "decode fail." );    
+
+    //MYLOG( LOG::DEBUG, "decode subtitle = %s", subtitle->rects[0]->ass );
+    if( got_sub > 0 )
     {
-        //MYLOG( LOG::DEBUG, "sub_pkt = %s", sub_pkt.data );
-        memset( subtitle, 0, sizeof(subtitle) );            
-        ret     =   avcodec_decode_subtitle2( dec, subtitle, &got_sub, &sub_pkt ); 
-        if( ret < 0 )
-            MYLOG( LOG::ERROR, "decode fail." );
-
-        //MYLOG( LOG::DEBUG, "decode subtitle = %s", subtitle->rects[0]->ass );
-        if( got_sub > 0 )
-        {
-            uint8_t*    subtitle_out        =   (uint8_t*)av_mallocz(subtitle_out_max_size);
-            int         subtitle_out_size   =   avcodec_encode_subtitle( ctx , subtitle_out, subtitle_out_max_size, subtitle );
-
-            //MYLOG( LOG::DEBUG, "encode subtitle = %s", subtitle->rects[0]->ass );
-            if( subtitle_out_size == 0 )
-            {
-                av_free( subtitle_out );
-                pkt->data    =   nullptr;
-            }
-            else
-                pkt->data    =   subtitle_out;
-           
-            //MYLOG( LOG::DEBUG, "pkt = %s", pkt->data );
-            pkt->size           =   subtitle_out_size;
-            pkt->stream_index   =   stream_index;
-
-            if( pkt->pts == 0 )
-                printf("test");
-        }
+        uint8_t*    subtitle_out        =   (uint8_t*)av_mallocz(subtitle_out_max_size);
+        int         subtitle_out_size   =   avcodec_encode_subtitle( ctx , subtitle_out, subtitle_out_max_size, subtitle );
+    
+        if( subtitle_out_size == 0 )
+            MYLOG( LOG::ERROR, "subtitle_out_size = 0" );
+        
+        pkt->data           =   subtitle_out;
+        pkt->size           =   subtitle_out_size;
+        pkt->stream_index   =   stream_index;
     }
-    else
-        MYLOG( LOG::ERROR, "sub_pkt.size = 0" );
-
-    //av_packet_unref( &sub_pkt );
 }
 
 
@@ -396,16 +411,10 @@ void    SubEncode::set_last_pts( int64_t _pts )
 
 
 /*******************************************************************************
-SubEncode::flush()
+SubEncode::generate_flush_pkt()
 ********************************************************************************/
-int     SubEncode::flush()
+int     SubEncode::generate_flush_pkt()
 {
-    int got_sub = 0;
-    int ret     =   avcodec_decode_subtitle2( dec, subtitle, &got_sub, &end_pkt );
-
-    printf( "ret = %d, got_sub = %d\n", ret, got_sub );
-
-
     pkt->data   =   nullptr;
     pkt->size   =   0;
     pkt->pts    =   last_pts;
@@ -413,15 +422,6 @@ int     SubEncode::flush()
 
     pkt->duration       =   0;
     pkt->stream_index   =   stream_index;
-
-
-
-
-    //av_free( subtitle_out );
-    avsubtitle_free(subtitle);
-
-
-
 
     return  SUCCESS;
 }

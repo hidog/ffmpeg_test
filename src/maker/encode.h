@@ -39,6 +39,8 @@ public:
 
     bool    is_flush();
     void    set_flush( bool flag );
+    int     flush();
+
 
     virtual void    end();
 
@@ -51,7 +53,6 @@ public:
     virtual int     send_frame();
     virtual int     recv_frame();
     virtual void    unref_pkt();
-    virtual int     flush();
 
     virtual int64_t     get_pts() = 0;
     virtual AVFrame*    get_frame() = 0;
