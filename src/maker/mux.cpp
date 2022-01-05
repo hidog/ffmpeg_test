@@ -59,6 +59,8 @@ void Mux::init( EncodeSetting setting )
     if( output_ctx == nullptr ) 
         MYLOG( LOG::ERROR, "output_ctx = nullptr" );
 
+    output_ctx->start_time;
+
     // 
     MYLOG( LOG::INFO, "default video codec is %s", avcodec_get_name(output_ctx->oformat->video_codec) );
     MYLOG( LOG::INFO, "default audio codec is %s", avcodec_get_name(output_ctx->oformat->audio_codec) );
@@ -85,6 +87,8 @@ void Mux::init( EncodeSetting setting )
         if( s_stream == nullptr )
             MYLOG( LOG::ERROR, "a_stream is nullptr." );
         s_stream->id    =   output_ctx->nb_streams - 1;
+
+        printf(" start time = %lld\n", s_stream->start_time );
     }
 
 

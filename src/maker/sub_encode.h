@@ -65,7 +65,7 @@ public:
     AVFrame*    get_frame() override;
 
 
-private:
+//private:
 
     // ¥Î¨ÓÅª¨ú subtitle file.
     AVFormatContext*    fmt_ctx     =   nullptr;

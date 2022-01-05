@@ -194,7 +194,7 @@ Encode::get_pkt()
 ********************************************************************************/
 AVPacket*   Encode::get_pkt()
 {
-    return  pkt;
+    return  pkt;   
 }
 
 

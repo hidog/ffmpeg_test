@@ -30,7 +30,10 @@ Maker::~Maker()
 
 
 
-
+extern "C" {
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+}
 
 /*******************************************************************************
 Maker::init()
@@ -54,6 +57,9 @@ void Maker::init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEnc
     auto s_ctx  =   s_encoder.get_ctx();
 
     muxer.open( setting, v_ctx, a_ctx, s_ctx );
+
+    printf(" start time = %lld\n", muxer.s_stream->start_time );
+
 }
 
 
@@ -240,14 +246,15 @@ void    Maker::work_with_subtitle()
         }
         else        
         {
-            st_tb   =   muxer.get_sub_stream_timebase();
+            //st_tb   =   muxer.get_video_stream_timebase(); 
+            st_tb = muxer.get_sub_stream_timebase();
             sc++;
         }
 
-        //printf( "vc = %d, ac = %d, sc = %d\n", vc, ac, sc );
+        printf( "vc = %d, ac = %d, sc = %d\n", vc, ac, sc );
         //if( vc == 65 && ac == 128 && sc == 9 )
           //  printf("test");
-        printf(".");
+        //printf(".");
 
 
         //
@@ -256,29 +263,23 @@ void    Maker::work_with_subtitle()
             s_encoder.encode_subtitle();
 
             auto        pkt             =   s_encoder.get_pkt();
+            //auto        pkt             =   s_encoder.sub_queue.top();
+            //pkt.stream_index = 2;
+            //s_encoder.sub_queue.pop();
+
             auto        ctx_tb          =   s_encoder.get_timebase();
             int64_t     subtitle_pts    =   s_encoder.get_subtitle_pts();
             int64_t     duration        =   s_encoder.get_duration();
 
             // AV_TIME_BASE
+            //auto tmp_pts_1 = av_rescale_q(pts, ist->st->time_base, AV_TIME_BASE_Q);
+            //pkt->pts = av_rescale_q(tmp_pts_1 + pFFmpeg->input_files_ts_offset[ist->file_index], AV_TIME_BASE_Q,  ost->st->time_base);
+
             pkt->pts         =   av_rescale_q( subtitle_pts, AVRational { 1, AV_TIME_BASE }, st_tb );
-            //pkt->pts         =   av_rescale_q( subtitle_pts, AVRational { 1, AV_TIME_BASE }, AVRational { 1, 100 } );
-
-            //pkt->pts = subtitle_pts;
-            //av_packet_rescale_ts( pkt, ctx_tb, st_tb );
-
-            //pkt->pts = subtitle_pts;
-            pkt->duration    =   av_rescale_q( duration, AVRational { 1, 1000 }, st_tb );
-            //pkt->duration    =   av_rescale_q( duration, AVRational { 1, 1000 }, AVRational { 1, 100 } );
-
-
-            //av_packet_rescale_ts( pkt, ctx_tb, st_tb );
-            //av_packet_rescale_ts( pkt, ctx_tb, st_tb );
-
-
+            pkt->duration    =   av_rescale_q( duration, s_encoder.dec->pkt_timebase, st_tb );
             pkt->dts         =   pkt->pts;
 
-            //printf("subtitle pts = %lld\n", pkt->pts );
+            printf("subtitle pts = %lld\n", pkt->pts );
 
 
             muxer.write_subtitle( pkt );
@@ -303,10 +304,10 @@ void    Maker::work_with_subtitle()
                 auto ctx_tb =   encoder->get_timebase();
                 av_packet_rescale_ts( pkt, ctx_tb, st_tb );
 
-                /*if( order == EncodeOrder::AUDIO )
+                if( order == EncodeOrder::AUDIO )
                     printf("audio pts = %lld\n", pkt->pts );
                 else
-                    printf("video pts = %lld\n", pkt->pts );*/
+                    printf("video pts = %lld\n", pkt->pts );
 
                 muxer.write_frame( pkt );
                 encoder->unref_pkt();

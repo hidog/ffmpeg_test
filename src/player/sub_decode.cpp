@@ -1037,7 +1037,6 @@ void    extract_subtitle_frome_file()
         dst_fmtctx->streams[0]->duration = av_rescale_q( src_stream->duration, src_stream->time_base, dst_fmtctx->streams[0]->time_base );
 
 
-
     //ret     =   av_opt_set_int( dst_fmtctx->priv_data, "ignore_readorder",  0,       0 );
     //MYLOG( LOG::INFO, "ret = %d\n", ret );
 
@@ -1047,11 +1046,11 @@ void    extract_subtitle_frome_file()
     {
         static const int subtitle_out_max_size     =   1024*1024;
 
-        // 看討論是一些舊格式相容性問題...但實驗結果似乎可以移除
-        subtitle.pts                   +=   av_rescale_q( subtitle.start_display_time, src_dec->pkt_timebase, AVRational{ 1, AV_TIME_BASE } );
-        subtitle.end_display_time      -=   subtitle.start_display_time;
-        subtitle.start_display_time    =    0;
-        int64_t sub_duration            =   subtitle.end_display_time;
+        // 看討論是DVD格式問題....
+        //subtitle.pts                   +=   av_rescale_q( subtitle.start_display_time, src_dec->pkt_timebase, AVRational{ 1, AV_TIME_BASE } );
+        //subtitle.end_display_time      -=   subtitle.start_display_time;
+        //subtitle.start_display_time    =    0;
+        int64_t sub_duration            =   subtitle.end_display_time - subtitle.start_display_time;
 
         uint8_t*    subtitle_out        =   (uint8_t*)av_mallocz(subtitle_out_max_size);
         int         subtitle_out_size   =   avcodec_encode_subtitle( dst_enc , subtitle_out, subtitle_out_max_size, &subtitle );
@@ -1141,7 +1140,7 @@ void    extract_subtitle_frome_file()
                 MYLOG( LOG::ERROR, "decode fail." );
 
             if( got_sub > 0 )
-                ret = subtitle_output_func();
+                ret     =   subtitle_output_func();
             else
                 MYLOG( LOG::DEBUG, "got < 0" );
             

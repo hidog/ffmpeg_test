@@ -298,6 +298,7 @@ int64_t     SubEncode::get_duration()
     if( subtitle == nullptr )
         MYLOG( LOG::ERROR, "subtitle is null." );
     return  subtitle->end_display_time - subtitle->start_display_time;
+    //return  subtitle->end_display_time;
 }
 
 
@@ -335,6 +336,12 @@ void    SubEncode::encode_subtitle()
 
         if( got_sub > 0 )
         {
+            //subtitle->pts                   +=   av_rescale_q( subtitle->start_display_time, dec->pkt_timebase, AVRational{ 1, AV_TIME_BASE } );
+            //subtitle->end_display_time      -=   subtitle->start_display_time;
+            //subtitle->start_display_time    =    0;
+            //int64_t sub_duration            =   subtitle->end_display_time;
+
+
             uint8_t*    subtitle_out        =   (uint8_t*)av_mallocz(subtitle_out_max_size);
             int         subtitle_out_size   =   avcodec_encode_subtitle( ctx , subtitle_out, subtitle_out_max_size, subtitle );
 
