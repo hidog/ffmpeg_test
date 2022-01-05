@@ -197,7 +197,7 @@ void    Maker::work_with_subtitle()
         return  order;
     };
 
-    int vc = 0, ac = 0, sc = 0;
+    //int vc = 0, ac = 0, sc = 0;
 
     // 休息一下再來思考這邊怎麼改寫, 希望寫得好看一點
     EncodeOrder     order;
@@ -216,25 +216,25 @@ void    Maker::work_with_subtitle()
             encoder =   &v_encoder;
             frame   =   v_frame;
             st_tb   =   muxer.get_video_stream_timebase();
-            vc++;
+            //vc++;
         }
         else if( order == EncodeOrder::AUDIO ) // audio
         {
             encoder =   &a_encoder;
             frame   =   a_frame;
             st_tb   =   muxer.get_audio_stream_timebase();
-            ac++;
+            //ac++;
         }
         else        
         {
             st_tb   =   muxer.get_sub_stream_timebase();
-            sc++;
+            //sc++;
         }
 
-        printf( "vc = %d, ac = %d, sc = %d\n", vc, ac, sc );
+        //printf( "vc = %d, ac = %d, sc = %d\n", vc, ac, sc );
         //if( vc == 65 && ac == 128 && sc == 9 )
           //  printf("test");
-        //printf(".");
+        printf(".");
 
         //
         if( order == EncodeOrder::SUBTITLE )
@@ -247,7 +247,7 @@ void    Maker::work_with_subtitle()
             int64_t     duration        =   s_encoder.get_duration();
 
             pkt->pts         =   av_rescale_q( subtitle_pts, AVRational{1,AV_TIME_BASE}, st_tb );
-            pkt->duration    =   av_rescale_q( duration, AVRational{1,1000}, st_tb );
+            pkt->duration    =   av_rescale_q( duration, ctx_tb, st_tb );
             pkt->dts         =   pkt->pts;
             s_encoder.set_last_pts( pkt->pts );
 
