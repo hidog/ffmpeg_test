@@ -624,9 +624,8 @@ static int write_subtitle_frame( AVFormatContext *oc, OutputStream *ost )
             int         subtitle_out_size   =   avcodec_encode_subtitle( c , subtitle_out, subtitle_out_max_size, &subtitle );
 
             //printf( "%s\n", subtitle.rects[0]->ass );
-
             AVPacket    pkt;
-            av_init_packet( &pkt );
+            av_new_packet( &pkt, 1 );
 
             if( subtitle_out_size == 0 )
                 pkt.data    =   nullptr;
@@ -1200,7 +1199,7 @@ int muxing()
                     //printf( "%s\n", subtitle.rects[0]->ass );
 
                     AVPacket    pkt;
-                    av_init_packet( &pkt );
+                    av_new_packet( &pkt, 1 );
 
                     if( subtitle_out_size == 0 )
                         pkt.data    =   nullptr;

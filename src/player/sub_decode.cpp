@@ -1058,7 +1058,7 @@ void    extract_subtitle_frome_file()
         int         subtitle_out_size   =   avcodec_encode_subtitle( dst_enc , subtitle_out, subtitle_out_max_size, &subtitle );
 
         AVPacket    pkt;
-        av_init_packet( &pkt );
+        av_new_packet( &pkt, 1 );
 
         if( subtitle_out_size == 0 )
             pkt.data    =   nullptr;
@@ -1102,7 +1102,7 @@ void    extract_subtitle_frome_file()
 
 
     AVPacket    src_pkt;
-    av_init_packet( &src_pkt );
+    av_new_packet( &src_pkt, 1 );
     src_pkt.data    =   nullptr;
     src_pkt.size    =   0;
 

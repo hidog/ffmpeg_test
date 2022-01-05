@@ -147,13 +147,13 @@ int main()
 
 
     VideoEncodeSetting  v_setting;
-    v_setting.code_id   =   AV_CODEC_ID_H264;
-    //v_setting.code_id   =   AV_CODEC_ID_H265;
+    //v_setting.code_id   =   AV_CODEC_ID_H264;
+    v_setting.code_id   =   AV_CODEC_ID_H265;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG2VIDEO;
 
-    v_setting.width     =   1920;
-    v_setting.height    =   1080;
+    v_setting.width     =   1280;
+    v_setting.height    =   720;
 
     v_setting.time_base.num     =   1001;
     v_setting.time_base.den     =   24000;
@@ -167,8 +167,9 @@ int main()
     //v_setting.max_b_frames  =   0; 
 
 
-    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
+    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
     //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
+    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P12LE;
 
     v_setting.src_width     =   1920;
     v_setting.src_height    =   1080;
@@ -178,10 +179,11 @@ int main()
 
     AudioEncodeSetting  a_setting;
     //a_setting.code_id     =   AV_CODEC_ID_MP3;
-    a_setting.code_id       =   AV_CODEC_ID_AAC;
+    //a_setting.code_id       =   AV_CODEC_ID_AAC;
     //a_setting.code_id       =   AV_CODEC_ID_AC3;
     //a_setting.code_id     =   AV_CODEC_ID_MP2;
     //a_setting.code_id       =   AV_CODEC_ID_VORBIS;
+    a_setting.code_id       =   AV_CODEC_ID_FLAC;
 
     a_setting.bit_rate          =   320000;
     a_setting.sample_rate       =   48000;
@@ -191,8 +193,8 @@ int main()
 
 
     SubEncodeSetting   s_setting;
-    s_setting.code_id       =   AV_CODEC_ID_ASS;
-    //s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
+    //s_setting.code_id       =   AV_CODEC_ID_ASS;
+    s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
     s_setting.subtitle_file =   "J:\\test.ass";
     s_setting.subtitle_ext  =   "ass";
 
