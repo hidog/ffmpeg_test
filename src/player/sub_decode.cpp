@@ -928,8 +928,10 @@ ref : https://github.com/mythsaber/AudioVideo
 ********************************************************************************/
 void    extract_subtitle_frome_file()
 {
-    char src_file_path[1000]    =   "D:\\code\\test2.mkv";
-    char dst_file_path[1000]    =   "J:\\test2.ass";
+    //char src_file_path[1000]    =   "D:\\code\\test2.mkv";
+    char src_file_path[1000]    =   "D:\\code\\output.mkv";
+    //char src_file_path[1000]    =   "J:\\abc.ass";
+    char dst_file_path[1000]    =   "J:\\abccccc.ass";
 
     int     ret     =   0;
     int     subidx  =   0;
@@ -959,7 +961,7 @@ void    extract_subtitle_frome_file()
     // 第三個引數, 表示要開啟第幾個stream.
     // -1 表示自動搜尋
     // 這邊放 3 是因為影片兩個字幕軌, 我們要開啟第三個
-    subidx  =   av_find_best_stream( src_fmtctx, AVMEDIA_TYPE_SUBTITLE, 3, -1, nullptr, 0 );
+    subidx  =   av_find_best_stream( src_fmtctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, nullptr, 0 );
     if( subidx < 0 )
         MYLOG( LOG::ERROR, "find stream fail." );  
 
@@ -1106,9 +1108,12 @@ void    extract_subtitle_frome_file()
 
     int         got_sub     =   0;
 
+    int count = 0;
+
     while( true )
     {
         ret     =   av_read_frame( src_fmtctx, &src_pkt );
+        //printf("count = %d", ++count );
         if( ret < 0 )
             break;
 

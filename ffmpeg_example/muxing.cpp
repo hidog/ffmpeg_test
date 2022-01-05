@@ -186,7 +186,7 @@ static void add_stream( OutputStream *ost, AVFormatContext *oc, const AVCodec **
     case AVMEDIA_TYPE_VIDEO:
         c->codec_id = codec_id;
 
-        c->bit_rate = 80000000;
+        c->bit_rate = 3500000;
         /* Resolution must be a multiple of two. */
         c->width    = 1920;
         c->height   = 1080;
@@ -223,7 +223,7 @@ static void add_stream( OutputStream *ost, AVFormatContext *oc, const AVCodec **
         //ost->st->codecpar->codec_id      =   av_guess_codec( oc->oformat, nullptr, oc->url, nullptr, ost->st->codecpar->codec_type );
 
         ost->sub_fmtctx = avformat_alloc_context();
-        ret = avformat_open_input( &ost->sub_fmtctx, "J:\\test.ass", nullptr, nullptr );
+        ret = avformat_open_input( &ost->sub_fmtctx, "J:\\abc.ass", nullptr, nullptr );
         ret = avformat_find_stream_info( ost->sub_fmtctx, nullptr );
         ost->subidx = av_find_best_stream( ost->sub_fmtctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, nullptr, 0 );
         
@@ -241,8 +241,8 @@ static void add_stream( OutputStream *ost, AVFormatContext *oc, const AVCodec **
         // AV_TIME_BASE
         //uint8_t *subtitle_header;
         //int subtitle_header_size;
-        c->pkt_timebase = AVRational{ 1, 1000 }; // 看敘述這邊不影響結果, 驗證一下結合影片的時候是否需要修改
-        //c->pkt_timebase = AVRational{ 1, AV_TIME_BASE }; // 看敘述這邊不影響結果, 驗證一下結合影片的時候是否需要修改
+        //c->pkt_timebase = AVRational{ 1, 1000 }; // 看敘述這邊不影響結果, 驗證一下結合影片的時候是否需要修改
+        c->pkt_timebase = AVRational{ 1, AV_TIME_BASE }; // 看敘述這邊不影響結果, 驗證一下結合影片的時候是否需要修改
         c->time_base = AVRational{ 1, 1000 };
         ost->st->time_base = c->time_base;
         
@@ -661,8 +661,8 @@ static int write_subtitle_frame( AVFormatContext *oc, OutputStream *ost )
             int ret =   0;
             pkt.stream_index = ost->st->index;
             if( subtitle_out_size != 0 )
-                //ret =   av_interleaved_write_frame( oc, &pkt );  // 沒找到相關說明...
-                ret =   av_write_frame( oc, &pkt );
+                ret =   av_interleaved_write_frame( oc, &pkt );  // 沒找到相關說明...
+                //ret =   av_write_frame( oc, &pkt );
             else 
                 ret =   av_interleaved_write_frame( oc, &pkt );  // 沒找到相關說明...
 
@@ -677,7 +677,9 @@ static int write_subtitle_frame( AVFormatContext *oc, OutputStream *ost )
         avsubtitle_free(&subtitle);
     }
     else
+    {
         printf("write_subtitle_frame size < 0. error.\n");
+    }
 
 
     /*if (frame) 
@@ -1078,16 +1080,19 @@ int muxing()
 
     int cpr1, cpr2;  // cpr = compare
 
+    
+    //int sub_decode_count = 0;
 
 
     sub_pkt = av_packet_alloc();
     ret = av_read_frame( subtitle_st.sub_fmtctx, sub_pkt );
-
+    //++sub_decode_count;
 
     int encode_target = 0; // 0 video   1 audio    2 subtitle
 
 
     int video_cc = 0, audio_cc = 0, sub_cc = 0;
+
 
 
     //sub_pkt->pts = 99999999;
@@ -1100,6 +1105,9 @@ int muxing()
 
         //printf( "vc = %d, ac = %d, sc = %d\n", video_cc, audio_cc, sub_cc );
         printf( "." );
+
+        //if( video_cc == 502 && audio_cc == 502 && sub_cc == 419 )
+            //printf("Test");
 
 
         cpr1 = av_compare_ts( video_st.next_pts, video_st.enc->time_base, audio_st.next_pts, audio_st.enc->time_base );
@@ -1114,21 +1122,12 @@ int muxing()
         // cpr2 > 0    subtitle
         // cpr2 <= 0   cpr1 <= 0    video
         // cpr2 <= 0   cpr1 > 0     audio
-        if( cpr2 > 0 )
-        {
-            encode_target = 2;
-            sub_cc++;
-        }
-        else if( cpr1 <= 0 )
-        {
-            encode_target = 0;
-            video_cc++;
-        }
-        else
-        {
-            encode_target = 1;
-            audio_cc++;
-        }
+        if( cpr2 > 0 )        
+            encode_target = 2;        
+        else if( cpr1 <= 0 )        
+            encode_target = 0;        
+        else        
+            encode_target = 1;        
         
         if( encode_target == 0 && encode_video == 0 )
         {
@@ -1152,6 +1151,13 @@ int muxing()
                 encode_target = 1;
         }
 
+        if( encode_target == 0 )
+            video_cc++;
+        else if( encode_target == 1 )
+            audio_cc++;
+        else
+            sub_cc++;
+
 
         /* select the stream to encode */
         if( encode_target == 0 )         
@@ -1163,6 +1169,79 @@ int muxing()
             // encode subtitle
             encode_subtitle = !write_subtitle_frame( oc, &subtitle_st );
             ret = av_read_frame( subtitle_st.sub_fmtctx, sub_pkt );
+            //printf(" sub_decode_count = %d\n", ++sub_decode_count );
+
+            if( ret < 0 )
+            {
+                encode_subtitle = 0;
+                // flush 
+                //printf("test");
+                   
+                sub_pkt->data    =   nullptr;
+                sub_pkt->size    =   0;
+    
+                int got_sub     =   1;
+                while( got_sub != 0 )
+                {
+                    memset( &subtitle, 0, sizeof(subtitle) );
+                    ret     =   avcodec_decode_subtitle2( subtitle_st.sub_dec, &subtitle, &got_sub, sub_pkt );
+                    if( ret < 0 )
+                        printf( "decode fail.\n" );
+
+                    int64_t mini_pts = av_rescale_q( subtitle.pts, AVRational{ 1, AV_TIME_BASE }, AVRational{ 1, 1000 } );
+
+                    int64_t sub_duration           =    subtitle.end_display_time - subtitle.start_display_time;
+                    //sub_duration /= 1000;
+
+                    int aaa_subtitle_out_max_size     =   1024*1024;
+
+                    uint8_t*    subtitle_out        =   (uint8_t*)av_mallocz(aaa_subtitle_out_max_size);
+                    int         subtitle_out_size   =   avcodec_encode_subtitle( subtitle_st.enc , subtitle_out, aaa_subtitle_out_max_size, &subtitle );
+
+                    //printf( "%s\n", subtitle.rects[0]->ass );
+
+                    AVPacket    pkt;
+                    av_init_packet( &pkt );
+
+                    if( subtitle_out_size == 0 )
+                        pkt.data    =   nullptr;
+                    else
+                        pkt.data    =   subtitle_out;
+           
+                    //printf( "pkt = %s\n", pkt.data );
+
+                    pkt.size        =   subtitle_out_size;  //strlen( (char*)pkt.data );
+
+                                       // note: flush 的處理可以參考 got_sub 或其他方式.
+                    if( pkt.size == 0 )
+                    {
+                        pkt.pts =   1484830;
+                        pkt.dts =   1484830;
+                        pkt.duration    =   0;
+                    }
+                        
+                    //AVRational avr { 1, 1000 };
+                    //pkt.pts = av_rescale_q( ost->samples_count, avr, c->time_base);
+
+                    int ret =   0;
+                    pkt.stream_index = subtitle_st.st->index;
+                    if( subtitle_out_size != 0 )
+                        ret =   av_interleaved_write_frame( oc, &pkt );  // 沒找到相關說明...
+                        //ret =   av_write_frame( oc, &pkt );
+                    else 
+                        ret =   av_interleaved_write_frame( oc, &pkt );  // 沒找到相關說明...
+
+                    if( ret < 0 )
+                        printf( "write_subtitle_frame write fail." );
+
+                    av_free( subtitle_out );
+                    avsubtitle_free(&subtitle);
+
+                }
+
+
+            }
+
         }
         
     }
@@ -1178,6 +1257,9 @@ int muxing()
         close_stream(oc, &video_st);
     if (have_audio)
         close_stream(oc, &audio_st);
+    if (have_subtitle)
+        close_stream( oc, &subtitle_st );
+
 
     if (!(fmt->flags & AVFMT_NOFILE))
         /* Close the output file. */
