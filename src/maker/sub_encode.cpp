@@ -46,9 +46,8 @@ void    SubEncode::copy_sub_header()
         // if not set header, open subtitle enc will fail.
         ctx->subtitle_header        =   (uint8_t*)av_mallocz( dec->subtitle_header_size + 1 );   // 沒查到 + 1 的理由. 也有沒+1的. 都可執行
         memcpy( ctx->subtitle_header, dec->subtitle_header, dec->subtitle_header_size );
-        ctx->subtitle_header_size   =   dec->subtitle_header_size;
-    
-        MYLOG( LOG::INFO, "subtitle header = \n%s", ctx->subtitle_header );    
+        ctx->subtitle_header_size   =   dec->subtitle_header_size;    
+        //MYLOG( LOG::INFO, "subtitle header = \n%s", ctx->subtitle_header );    
     }
 }
 

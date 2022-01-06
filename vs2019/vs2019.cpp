@@ -88,6 +88,9 @@ https://gist.github.com/TBNolan/a887c5d069425119dd41461b779aa75b
 
 
 https://blog.csdn.net/qq_21743659/article/details/109305411
+
+
+http://www.famous1993.com.tw/tech/tech545.html
 */
 
 
@@ -117,17 +120,13 @@ mysubs.ass
 #include "maker/maker.h"
 
 
-extern "C" {
-#include "../ffmpeg_example/resampling_audio.h"
-}
-
 
 
 
 int main()
 {
-    //extract_subtitle_frome_file();
-    //printf("test");
+    extract_subtitle_frome_file();
+    printf("test");
 
 #if 0
     muxing();
@@ -152,8 +151,8 @@ int main()
     //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG2VIDEO;
 
-    v_setting.width     =   1280;
-    v_setting.height    =   720;
+    v_setting.width     =   1920;
+    v_setting.height    =   1080;
 
     v_setting.time_base.num     =   1001;
     v_setting.time_base.den     =   24000;
@@ -161,10 +160,10 @@ int main()
     /*
         b frame not support on rm
     */
-    //v_setting.gop_size      =   30;
-    //v_setting.max_b_frames  =   15; 
-    v_setting.gop_size      =   120;
-    v_setting.max_b_frames  =   80; 
+    v_setting.gop_size      =   30;
+    v_setting.max_b_frames  =   15; 
+    //v_setting.gop_size      =   120;
+    //v_setting.max_b_frames  =   80;
 
 
     //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
@@ -178,12 +177,12 @@ int main()
 
 
     AudioEncodeSetting  a_setting;
-    a_setting.code_id     =   AV_CODEC_ID_MP3;
+    //a_setting.code_id     =   AV_CODEC_ID_MP3;
     //a_setting.code_id       =   AV_CODEC_ID_AAC;
-    //a_setting.code_id       =   AV_CODEC_ID_AC3;
+    a_setting.code_id       =   AV_CODEC_ID_AC3;
     //a_setting.code_id     =   AV_CODEC_ID_MP2;
     //a_setting.code_id       =   AV_CODEC_ID_VORBIS;
-    a_setting.code_id       =   AV_CODEC_ID_FLAC;
+    //a_setting.code_id       =   AV_CODEC_ID_FLAC;
 
     a_setting.bit_rate          =   320000;
     a_setting.sample_rate       =   48000;
