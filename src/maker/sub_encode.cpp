@@ -69,10 +69,10 @@ void    SubEncode::end()
     sub_idx     =   -1;
     last_pts    =   0;
 
-    if( subtitle != nullptr )
+    if( sub != nullptr )
     {
-        av_free(subtitle);
-        subtitle    =   nullptr;
+        av_free(sub);
+        sub    =   nullptr;
     }
 
     if( sub_pkt != nullptr )
@@ -81,17 +81,18 @@ void    SubEncode::end()
         sub_pkt =   nullptr;
     }
 
-    if( subtitle_out != nullptr )
+    if( sub_buf != nullptr )
     {
-        av_free(subtitle_out);
-        subtitle_out    =   nullptr;
+        av_free(sub_buf);
+        sub_buf    =   nullptr;
     }
 
     // note: header是自己額外allocate出來的,所以要在Encode::end()之前釋放
     if( ctx != nullptr )
     {
-        if( ctx->subtitle_header    !=  nullptr )
+        if( ctx->subtitle_header    !=  nullptr )        
             av_free( ctx->subtitle_header );
+        ctx->subtitle_header    =   nullptr;
     }
 
     Encode::end();
@@ -136,15 +137,15 @@ void    SubEncode::init( int st_idx, SubEncodeSetting setting, bool need_global_
     if( sub_pkt == nullptr )
         MYLOG( LOG::ERROR, "alloc sub pkt fail." );
 
-    subtitle    =   static_cast<AVSubtitle*>(av_malloc(sizeof(subtitle)));
-    if( subtitle == nullptr )
-        MYLOG( LOG::ERROR, "subtitle is null." );
+    sub    =   static_cast<AVSubtitle*>(av_malloc(sizeof(sub)));
+    if( sub == nullptr )
+        MYLOG( LOG::ERROR, "sub is null." );
 
-    if( subtitle_out == nullptr )
+    if( sub_buf == nullptr )
     {
-        subtitle_out    =   (uint8_t*)av_mallocz(subtitle_out_max_size);
-        if( subtitle_out == nullptr )
-            MYLOG( LOG::ERROR, "subtitle_out is null." );
+        sub_buf    =   (uint8_t*)av_mallocz(sub_buf_max_size);
+        if( sub_buf == nullptr )
+            MYLOG( LOG::ERROR, "sub_buf is null." );
     }
 
 
@@ -359,9 +360,9 @@ SubEncode::get_duration()
 ********************************************************************************/
 int64_t     SubEncode::get_duration()
 {
-    if( subtitle == nullptr )
-        MYLOG( LOG::ERROR, "subtitle is null." );
-    return  subtitle->end_display_time - subtitle->start_display_time;
+    if( sub == nullptr )
+        MYLOG( LOG::ERROR, "sub is null." );
+    return  sub->end_display_time - sub->start_display_time;
 }
 
 
@@ -388,7 +389,7 @@ void    SubEncode::encode_subtitle()
 
     //MYLOG( LOG::DEBUG, "sub_pkt = %s", sub_pkt.data );
     //memset( subtitle, 0, sizeof(subtitle) );            
-    ret     =   avcodec_decode_subtitle2( dec, subtitle, &got_sub, sub_pkt ); 
+    ret     =   avcodec_decode_subtitle2( dec, sub, &got_sub, sub_pkt ); 
     av_packet_unref( sub_pkt );
     if( ret < 0 )
         MYLOG( LOG::ERROR, "decode fail." );    
@@ -396,12 +397,12 @@ void    SubEncode::encode_subtitle()
     //MYLOG( LOG::DEBUG, "decode subtitle = %s", subtitle->rects[0]->ass );
     if( got_sub > 0 )
     {
-        int subtitle_out_size   =   avcodec_encode_subtitle( ctx , subtitle_out, subtitle_out_max_size, subtitle );   
-        if( subtitle_out_size == 0 )
+        int sub_buf_size   =   avcodec_encode_subtitle( ctx , sub_buf, sub_buf_max_size, sub );   
+        if( sub_buf_size == 0 )
             MYLOG( LOG::ERROR, "subtitle_out_size = 0" );
         
-        pkt->data           =   subtitle_out;
-        pkt->size           =   subtitle_out_size;
+        pkt->data           =   sub_buf;
+        pkt->size           =   sub_buf_size;
         pkt->stream_index   =   stream_index;
     }
 }
@@ -446,7 +447,7 @@ SubEncode::unref_subtitle()
 ********************************************************************************/
 void    SubEncode::unref_subtitle()
 {
-    avsubtitle_free(subtitle);
+    avsubtitle_free(sub);
 }
 
 
@@ -468,8 +469,8 @@ SubEncode::get_subtitle_pts()
 ********************************************************************************/
 int64_t     SubEncode::get_subtitle_pts()
 {
-    if( subtitle == nullptr )
-        MYLOG( LOG::ERROR, "subtitle is null." );
-    return  subtitle->pts;
+    if( sub == nullptr )
+        MYLOG( LOG::ERROR, "sub is null." );
+    return  sub->pts;
 }
 

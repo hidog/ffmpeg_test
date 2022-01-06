@@ -81,14 +81,14 @@ private:
     std::priority_queue< AVPacket, std::vector<AVPacket>, compare_pkt_by_pts >  sub_queue;
 
     // use for encode
-    AVSubtitle*     subtitle    =   nullptr;
+    AVSubtitle*     sub    =   nullptr;
 
     AVPacket*   sub_pkt;
     int64_t     last_pts    =   0;
 
     // use for output
-    static constexpr int    subtitle_out_max_size  =   1024*1024;
-    uint8_t*    subtitle_out    =   nullptr;
+    static constexpr int    sub_buf_max_size  =   1024*1024;
+    uint8_t*    sub_buf    =   nullptr;
 };
 
 
