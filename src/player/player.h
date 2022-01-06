@@ -78,7 +78,6 @@ public:
 
     std::vector<std::string>    get_embedded_subtitle_list();
 
-
 #ifdef USE_MT
     void    play_QT_multi_thread();
     void    video_decode();
@@ -90,6 +89,9 @@ public:
     void    play_decode_video_subtitle( AVPacket* pkt );
     std::function<void(QImage)> output_video_frame_func;
     std::function<void(AudioData)> output_audio_pcm_func;
+
+    void    set_output_jpg_root( std::string _root_path );
+    void    set_output_audio_pcm_path( std::string _path );
 #endif
 
 private:

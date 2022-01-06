@@ -43,6 +43,7 @@ public:
 
 #ifdef FFMPEG_TEST
     int     output_pcm();
+    void    set_output_audio_pcm_path( std::string _path );
 #endif
 
 
@@ -59,6 +60,10 @@ private:
     SwrContext      *swr_ctx    =   nullptr;   // use for chagne audio data to play.
 
     //AVCodecID   a_codec_id;
+
+#ifdef FFMPEG_TEST
+    std::string     output_pcm_path =   "J:\\test.pcm";
+#endif
 
 };
 
