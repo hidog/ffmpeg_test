@@ -171,8 +171,8 @@ int main()
 
     v_setting.src_width     =   1920;
     v_setting.src_height    =   1080;
-    v_setting.src_pix_fmt   =   AV_PIX_FMT_BGRA;    // for QImage
-    //v_setting.src_pix_fmt   =   AV_PIX_FMT_BGR24;    // for openCV
+    //v_setting.src_pix_fmt   =   AV_PIX_FMT_BGRA;    // for QImage
+    v_setting.src_pix_fmt   =   AV_PIX_FMT_BGR24;    // for openCV
 
 
     AudioEncodeSetting  a_setting;
@@ -204,6 +204,7 @@ int main()
     maker.init( setting, v_setting, a_setting, s_setting );
     maker.work();
     maker.end();
+    break;
 
     }
 #else
