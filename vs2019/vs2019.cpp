@@ -204,7 +204,6 @@ int main()
     maker.init( setting, v_setting, a_setting, s_setting );
     maker.work();
     maker.end();
-    break;
 
     }
 #else
