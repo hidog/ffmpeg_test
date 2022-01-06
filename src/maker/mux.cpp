@@ -39,7 +39,11 @@ Mux::close_stream()
 ********************************************************************************/
 void Mux::end()
 {
-    avformat_free_context(output_ctx);
+    if( output_ctx != nullptr )
+    {
+        avformat_free_context(output_ctx);
+        output_ctx  =   nullptr;
+    }
 }
 
 
