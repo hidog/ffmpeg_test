@@ -449,7 +449,7 @@ int    VideoDecode::output_jpg_by_QT()
     memcpy( img.bits(), video_dst_data[0], video_dst_bufsize );
 
     char str[1000];
-    sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
+    sprintf( str, "H:\\jpg\\%d.jpg", frame_count );
     MYLOG( LOG::DEBUG, "save jpg %s", str );
     img.save(str);
 

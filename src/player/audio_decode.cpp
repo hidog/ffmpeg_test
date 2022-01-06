@@ -114,7 +114,7 @@ AudioDecode::output_pcm()
 ********************************************************************************/
 int     AudioDecode::output_pcm()
 {
-    static FILE *fp     =   fopen("J:\\test.pcm", "wb+" );
+    static FILE *fp     =   fopen("H:\\test.pcm", "wb+" );
 
     static constexpr int    out_channel =   2; // 目前預設輸出成兩聲道. 有空再改
 

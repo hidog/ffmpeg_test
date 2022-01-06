@@ -126,12 +126,14 @@ mysubs.ass
 int main()
 {
 #if 1
+    while(true)
+    {
 
     EncodeSetting   setting;    
     // rmvb 是 variable bitrate. 目前還無法使用
     //setting.filename    =   "J:\\output.mkv";
     //setting.extension   =   "matroska";
-    setting.filename    =   "J:\\output.mp4";
+    setting.filename    =   "H:\\output.mp4";
     setting.extension   =   "mp4";
     //setting.filename    =   "J:\\test2.avi"; 
     //setting.extension   =   "avi";
@@ -200,6 +202,7 @@ int main()
     maker.work();
     maker.end();
 
+    }
 #else
 
     Player  player;  
