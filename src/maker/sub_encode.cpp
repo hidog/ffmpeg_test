@@ -59,19 +59,6 @@ SubEncode::end()
 ********************************************************************************/
 void    SubEncode::end()
 {
-    if( ctx != nullptr )
-    {
-        if( ctx->subtitle_header    !=  nullptr )
-            av_free( ctx->subtitle_header );
-    }
-
-    // close subtitle input
-    if( fmt_ctx != nullptr )
-    {
-        avformat_close_input( &fmt_ctx );
-        fmt_ctx     =   nullptr;
-    }
-
     if( dec != nullptr )
     {
         avcodec_free_context( &dec );
@@ -100,6 +87,21 @@ void    SubEncode::end()
         subtitle_out    =   nullptr;
     }
 
+    // note: header是自己額外allocate出來的,所以要在Encode::end()之前釋放
+    if( ctx != nullptr )
+    {
+        if( ctx->subtitle_header    !=  nullptr )
+            av_free( ctx->subtitle_header );
+    }
+
+    Encode::end();
+
+    // close subtitle input
+    if( fmt_ctx != nullptr )
+    {
+        avformat_close_input( &fmt_ctx );
+        fmt_ctx     =   nullptr;
+    }
 }
 
 
