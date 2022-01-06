@@ -125,7 +125,7 @@ mysubs.ass
 
 int main()
 {
-#if 1
+#if 0
     while(true)
     {
 
@@ -211,8 +211,14 @@ int main()
     player.set_sub_file("D:/code/test2.mkv");
 
     player.init();
+
+    player.set_output_jpg_root( "E:\\jpg" );
+    player.set_output_audio_pcm_path( "E:\\test.pcm" );
+
     player.play();
     player.end();
+
+
 #endif
 
     return 0;

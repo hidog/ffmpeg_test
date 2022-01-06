@@ -143,6 +143,35 @@ int     Player::init()
 
 
 
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+Player::set_output_openCV_jpg_root()
+********************************************************************************/
+void    Player::set_output_jpg_root( std::string _root_path )
+{
+    v_decoder.set_output_jpg_root(_root_path);
+}
+#endif
+
+
+
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+Player::set_output_audio_pcm_path()
+********************************************************************************/
+void    Player::set_output_audio_pcm_path( std::string _path )
+{
+    a_decoder.set_output_audio_pcm_path(_path);
+}
+#endif
+
+
+
+
+
+
 
 /*******************************************************************************
 Player::init_subtitle()
