@@ -242,8 +242,9 @@ void    Maker::work_with_subtitle()
             s_encoder.set_last_pts( pkt->pts );
 
             muxer.write_frame( pkt );
-            s_encoder.unref_subtitle();
-            s_encoder.unref_pkt();
+            // 實驗看看到底需不需要 unref.
+            //s_encoder.unref_subtitle();
+            //s_encoder.unref_pkt();
         }
         else
         {

@@ -94,6 +94,12 @@ void    SubEncode::end()
         sub_pkt =   nullptr;
     }
 
+    if( subtitle_out != nullptr )
+    {
+        av_free(subtitle_out);
+        subtitle_out    =   nullptr;
+    }
+
 }
 
 
@@ -131,6 +137,14 @@ void    SubEncode::init( int st_idx, SubEncodeSetting setting, bool need_global_
     subtitle    =   static_cast<AVSubtitle*>(av_malloc(sizeof(subtitle)));
     if( subtitle == nullptr )
         MYLOG( LOG::ERROR, "subtitle is null." );
+
+    if( subtitle_out == nullptr )
+    {
+        subtitle_out    =   (uint8_t*)av_mallocz(subtitle_out_max_size);
+        if( subtitle_out == nullptr )
+            MYLOG( LOG::ERROR, "subtitle_out is null." );
+    }
+
 
     // open subtitle file.    
     ret     =   open_subtitle_source( setting.subtitle_file );
@@ -358,8 +372,6 @@ SubEncode::encode_subtitle()
 ********************************************************************************/
 void    SubEncode::encode_subtitle()
 {
-    static const int subtitle_out_max_size  =   1024*1024;
-
     if( sub_queue.empty() == true )
         MYLOG( LOG::ERROR, "queue is empty." );
 
@@ -373,7 +385,7 @@ void    SubEncode::encode_subtitle()
         MYLOG( LOG::ERROR, "sub pkt size is 0" );
 
     //MYLOG( LOG::DEBUG, "sub_pkt = %s", sub_pkt.data );
-    memset( subtitle, 0, sizeof(subtitle) );            
+    //memset( subtitle, 0, sizeof(subtitle) );            
     ret     =   avcodec_decode_subtitle2( dec, subtitle, &got_sub, sub_pkt ); 
     av_packet_unref( sub_pkt );
     if( ret < 0 )
@@ -382,8 +394,7 @@ void    SubEncode::encode_subtitle()
     //MYLOG( LOG::DEBUG, "decode subtitle = %s", subtitle->rects[0]->ass );
     if( got_sub > 0 )
     {
-        uint8_t*    subtitle_out        =   (uint8_t*)av_mallocz(subtitle_out_max_size);
-        int         subtitle_out_size   =   avcodec_encode_subtitle( ctx , subtitle_out, subtitle_out_max_size, subtitle );
+        int subtitle_out_size   =   avcodec_encode_subtitle( ctx , subtitle_out, subtitle_out_max_size, subtitle );
     
         if( subtitle_out_size == 0 )
             MYLOG( LOG::ERROR, "subtitle_out_size = 0" );

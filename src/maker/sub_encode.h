@@ -85,6 +85,10 @@ private:
 
     AVPacket*   sub_pkt;
     int64_t     last_pts    =   0;
+
+    // use for output
+    static constexpr int    subtitle_out_max_size  =   1024*1024;
+    uint8_t*    subtitle_out    =   nullptr;
 };
 
 
