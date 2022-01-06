@@ -441,7 +441,7 @@ AVFrame*    VideoEncode::get_fram_from_file_openCV()
 
     sprintf( str, "%s\\%d.jpg", load_jpg_root_path.c_str(), frame_count );
     if( frame_count % 100 == 0 )
-        MYLOG( LOG::DEBUG, "load jpg = %s\n", str );
+        MYLOG( LOG::DEBUG, "load jpg = %s", str );
 
     cv::Mat img =   cv::imread( str, cv::IMREAD_COLOR );
     if( img.empty() == true )
