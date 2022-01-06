@@ -131,10 +131,10 @@ int main()
 
     EncodeSetting   setting;    
     // rmvb 是 variable bitrate. 目前還無法使用
-    setting.filename    =   "J:\\output.mkv";
-    setting.extension   =   "matroska";
-    //setting.filename    =   "J:\\output.mp4";
-    //setting.extension   =   "mp4";
+    ///setting.filename    =   "J:\\output.mkv";
+    //s/etting.extension   =   "matroska";
+    setting.filename    =   "J:\\output.mp4";
+    setting.extension   =   "mp4";
     //setting.filename    =   "J:\\test2.avi"; 
     //setting.extension   =   "avi";
 
@@ -189,9 +189,9 @@ int main()
 
 
     SubEncodeSetting   s_setting;
-    s_setting.code_id       =   AV_CODEC_ID_ASS;
+    //s_setting.code_id       =   AV_CODEC_ID_ASS;
     //s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
-    //s_setting.code_id       =   AV_CODEC_ID_MOV_TEXT;
+    s_setting.code_id       =   AV_CODEC_ID_MOV_TEXT;
     s_setting.subtitle_file =   "J:\\test.ass";
     s_setting.subtitle_ext  =   "ass";
 
