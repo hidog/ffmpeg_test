@@ -51,6 +51,8 @@ struct VideoEncodeSetting
     int             src_width;
     int             src_height;
     AVPixelFormat   src_pix_fmt;
+
+    std::string     load_jpg_root_path;
 };
 
 
@@ -61,6 +63,8 @@ struct AudioEncodeSetting
     int64_t     bit_rate;
     int         sample_rate;
     uint64_t    channel_layout;
+
+    std::string     load_pcm_path;
 };
 
 

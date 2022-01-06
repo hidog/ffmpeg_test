@@ -50,6 +50,8 @@ https://www.itread01.com/content/1549629205.html
 ********************************************************************************/
 void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_global_header )
 {
+    load_jpg_root_path  =   setting.load_jpg_root_path;
+
     src_width   =   setting.src_width;
     src_height  =   setting.src_height;
 
@@ -368,8 +370,8 @@ VideoEncode::get_frame()
 ********************************************************************************/
 AVFrame*    VideoEncode::get_frame()
 {
-    return  get_fram_from_file_QT();
-    //return  get_fram_from_file_openCV();
+    //return  get_fram_from_file_QT();
+    return  get_fram_from_file_openCV();
 }
 
 
@@ -386,7 +388,7 @@ AVFrame*    VideoEncode::get_fram_from_file_QT()
     char str[1000];
     int ret;
 
-    sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
+    sprintf( str, "%s\\%d.jpg", load_jpg_root_path.c_str(), frame_count );
     printf( "str = %s\n", str );
 
     QImage  img;
@@ -437,7 +439,7 @@ AVFrame*    VideoEncode::get_fram_from_file_openCV()
     char str[1000];
     int ret;
 
-    sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
+    sprintf( str, "%s\\%d.jpg", load_jpg_root_path, frame_count );
     printf( "str = %s\n", str );
 
     cv::Mat img =   cv::imread( str, cv::IMREAD_COLOR );

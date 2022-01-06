@@ -75,9 +75,10 @@ private:
         但考慮 pcm 可能是其他 framework 傳入, 改用 point 處理.
         目前傳入格式通常是 S16.
     */
-    int16_t*    pcm[2] =   { nullptr, nullptr };   
-    int pcm_size = 0;
+    int16_t*    pcm[2]      =   { nullptr, nullptr };   
+    int         pcm_size    =   0;
 
+    std::string     load_pcm_path   =   "J:\\test.pcm";
 };
 
 

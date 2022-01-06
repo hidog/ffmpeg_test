@@ -45,8 +45,6 @@ public:
     AVFrame*    get_fram_from_file_QT();
     AVFrame*    get_fram_from_file_openCV();
 
-
-
     // for test. run without mux.
     // 目前不能動, 需要修復.
     void    work_test();
@@ -60,6 +58,7 @@ private:
     int     src_width   =   0;
     int     src_height  =   0;
 
+    std::string     load_jpg_root_path  =   "J:\\jpg";
 };
 
 
