@@ -135,7 +135,7 @@ int     AudioDecode::output_pcm()
                                  (const uint8_t**)frame->data, frame->nb_samples );    //¿é¤J
 
     fwrite( pcm, 1, byte_count, fp );
-    MYLOG( LOG::DEBUG, "audio write %d. frame_count = %d", byte_count, frame_count );
+    //MYLOG( LOG::DEBUG, "audio write %d. frame_count = %d", byte_count, frame_count );
 
     return  0;
 }
