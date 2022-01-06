@@ -394,8 +394,7 @@ void    SubEncode::encode_subtitle()
     //MYLOG( LOG::DEBUG, "decode subtitle = %s", subtitle->rects[0]->ass );
     if( got_sub > 0 )
     {
-        int subtitle_out_size   =   avcodec_encode_subtitle( ctx , subtitle_out, subtitle_out_max_size, subtitle );
-        avsubtitle_free(subtitle);    
+        int subtitle_out_size   =   avcodec_encode_subtitle( ctx , subtitle_out, subtitle_out_max_size, subtitle );   
         if( subtitle_out_size == 0 )
             MYLOG( LOG::ERROR, "subtitle_out_size = 0" );
         
