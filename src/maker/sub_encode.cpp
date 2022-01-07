@@ -406,7 +406,7 @@ void    SubEncode::encode_subtitle()
     {
         int sub_buf_size   =   avcodec_encode_subtitle( ctx , sub_buf, sub_buf_max_size, sub );   
         if( sub_buf_size == 0 )
-            MYLOG( LOG::ERROR, "subtitle_out_size = 0" );
+            MYLOG( LOG::WARN, "subtitle_out_size = 0" );
         
         pkt->data           =   sub_buf;
         pkt->size           =   sub_buf_size;
