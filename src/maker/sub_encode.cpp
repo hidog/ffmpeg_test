@@ -76,12 +76,6 @@ void    SubEncode::end()
     sub_idx     =   -1;
     last_pts    =   0;
 
-    if( sub != nullptr )
-    {
-        av_free(sub);
-        sub    =   nullptr;
-    }
-
     if( sub_pkt != nullptr )
     {
         av_packet_free( &sub_pkt );
@@ -143,10 +137,6 @@ void    SubEncode::init( int st_idx, SubEncodeSetting setting, bool need_global_
     sub_pkt     =   av_packet_alloc();
     if( sub_pkt == nullptr )
         MYLOG( LOG::ERROR, "alloc sub pkt fail." );
-
-    sub    =   static_cast<AVSubtitle*>(av_malloc(sizeof(sub)));
-    if( sub == nullptr )
-        MYLOG( LOG::ERROR, "sub is null." );
 
     if( sub_buf == nullptr )
     {
@@ -367,9 +357,7 @@ SubEncode::get_duration()
 ********************************************************************************/
 int64_t     SubEncode::get_duration()
 {
-    if( sub == nullptr )
-        MYLOG( LOG::ERROR, "sub is null." );
-    return  sub->end_display_time - sub->start_display_time;
+    return  sub.end_display_time - sub.start_display_time;
 }
 
 
@@ -396,7 +384,7 @@ void    SubEncode::encode_subtitle()
 
     //MYLOG( LOG::DEBUG, "sub_pkt = %s", sub_pkt.data );
     //memset( subtitle, 0, sizeof(subtitle) );            
-    ret     =   avcodec_decode_subtitle2( dec, sub, &got_sub, sub_pkt ); 
+    ret     =   avcodec_decode_subtitle2( dec, &sub, &got_sub, sub_pkt ); 
     av_packet_unref( sub_pkt );
     if( ret < 0 )
         MYLOG( LOG::ERROR, "decode fail." );    
@@ -404,7 +392,7 @@ void    SubEncode::encode_subtitle()
     //MYLOG( LOG::DEBUG, "decode subtitle = %s", subtitle->rects[0]->ass );
     if( got_sub > 0 )
     {
-        int sub_buf_size   =   avcodec_encode_subtitle( ctx , sub_buf, sub_buf_max_size, sub );   
+        int sub_buf_size   =   avcodec_encode_subtitle( ctx , sub_buf, sub_buf_max_size, &sub );   
         if( sub_buf_size == 0 )
             MYLOG( LOG::WARN, "subtitle_out_size = 0" );
         
@@ -454,7 +442,7 @@ SubEncode::unref_subtitle()
 ********************************************************************************/
 void    SubEncode::unref_subtitle()
 {
-    avsubtitle_free(sub);
+    avsubtitle_free(&sub);
 }
 
 
@@ -476,8 +464,6 @@ SubEncode::get_subtitle_pts()
 ********************************************************************************/
 int64_t     SubEncode::get_subtitle_pts()
 {
-    if( sub == nullptr )
-        MYLOG( LOG::ERROR, "sub is null." );
-    return  sub->pts;
+    return  sub.pts;
 }
 

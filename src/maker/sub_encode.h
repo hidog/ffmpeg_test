@@ -10,6 +10,7 @@
 extern "C" {
 
 #include <libavcodec/packet.h>
+#include <libavcodec/avcodec.h>
 
 } // extern "C"
 
@@ -20,7 +21,7 @@ struct AVFormatContext;
 struct AVCodecContext;
 struct AVStream;
 struct AVPacket;
-struct AVSubtitle;
+
 
 
 
@@ -81,7 +82,7 @@ private:
     std::priority_queue< AVPacket, std::vector<AVPacket>, compare_pkt_by_pts >  sub_queue;
 
     // use for encode
-    AVSubtitle*     sub    =   nullptr;
+    AVSubtitle  sub;
 
     AVPacket*   sub_pkt;
     int64_t     last_pts    =   0;
