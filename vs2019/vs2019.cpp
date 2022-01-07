@@ -91,6 +91,9 @@ https://blog.csdn.net/qq_21743659/article/details/109305411
 
 
 http://www.famous1993.com.tw/tech/tech545.html
+
+
+https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/435707/
 */
 
 
@@ -125,104 +128,10 @@ mysubs.ass
 
 int main()
 {
-#if 1
-    for( int i = 0; ; i++ )
-    {
-    printf("loop index = %d\n", i );
 
-    EncodeSetting   setting;    
-    // rmvb 是 variable bitrate. 目前還無法使用
-    ///setting.filename    =   "J:\\output.mkv";
-    //s/etting.extension   =   "matroska";
-    setting.filename    =   "E:\\output.mp4";
-    setting.extension   =   "mp4";
-    //setting.filename    =   "J:\\test2.avi"; 
-    //setting.extension   =   "avi";
+    maker_encode_example();
 
-    setting.has_subtitle    =   true;
-
-
-
-    VideoEncodeSetting  v_setting;
-    v_setting.load_jpg_root_path    =   "E:\\jpg";
-    v_setting.code_id   =   AV_CODEC_ID_H264;
-    //v_setting.code_id   =   AV_CODEC_ID_H265;
-    //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
-    //v_setting.code_id   =   AV_CODEC_ID_MPEG2VIDEO;
-
-    v_setting.width     =   1920;
-    v_setting.height    =   1080;
-
-    v_setting.time_base.num     =   1001;
-    v_setting.time_base.den     =   24000;
-
-    /*
-        b frame not support on rm
-    */
-    v_setting.gop_size      =   30;
-    v_setting.max_b_frames  =   15; 
-    //v_setting.gop_size      =   120;
-    //v_setting.max_b_frames  =   80;
-
-
-    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
-    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
-    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P12LE;
-
-    v_setting.src_width     =   1920;
-    v_setting.src_height    =   1080;
-    //v_setting.src_pix_fmt   =   AV_PIX_FMT_BGRA;    // for QImage
-    v_setting.src_pix_fmt   =   AV_PIX_FMT_BGR24;    // for openCV
-
-
-    AudioEncodeSetting  a_setting;
-    a_setting.load_pcm_path     =   "E:\\test.pcm";
-    a_setting.code_id     =   AV_CODEC_ID_MP3;
-    //a_setting.code_id       =   AV_CODEC_ID_AAC;
-    //a_setting.code_id       =   AV_CODEC_ID_AC3;
-    //a_setting.code_id     =   AV_CODEC_ID_MP2;
-    //a_setting.code_id       =   AV_CODEC_ID_VORBIS;
-    //a_setting.code_id       =   AV_CODEC_ID_FLAC;
-
-    a_setting.bit_rate          =   320000;
-    a_setting.sample_rate       =   48000;
-    a_setting.channel_layout    =   3; // AV_CH_LAYOUT_STEREO = 3;
-
-
-
-
-    SubEncodeSetting   s_setting;
-    //s_setting.code_id       =   AV_CODEC_ID_ASS;
-    //s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
-    s_setting.code_id       =   AV_CODEC_ID_MOV_TEXT;
-    s_setting.subtitle_file =   "E:\\test.ass";
-    s_setting.subtitle_ext  =   "ass";
-
-
-    Maker   maker;
-
-    maker.init( setting, v_setting, a_setting, s_setting );
-    maker.work();
-    maker.end();
-
-    }
-#else
-
-    Player  player;  
-
-    player.set_input_file("D:/code/test2.mkv");
-    player.set_sub_file("D:/code/test2.mkv");
-
-    player.init();
-
-    player.set_output_jpg_root( "E:\\jpg" );
-    player.set_output_audio_pcm_path( "E:\\test.pcm" );
-
-    player.play();
-    player.end();
-
-
-#endif
+    player_decode_example();
 
     return 0;
 }

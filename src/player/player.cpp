@@ -1200,3 +1200,26 @@ void    Player::seek( int value, int old_value )
 }
 
 
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+player_decode_example
+********************************************************************************/
+void    player_decode_example()
+{
+    Player  player;  
+
+    player.set_input_file("D:/input.avi");
+    //player.set_sub_file("D:/input.mkv");
+
+    player.init();
+
+    player.set_output_jpg_root( "H:\\jpg" );
+    player.set_output_audio_pcm_path( "H:\\test.pcm" );
+
+    player.play();
+    player.end();
+
+}
+#endif

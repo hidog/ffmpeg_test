@@ -47,4 +47,9 @@ private:
 
 
 
+
+void    maker_encode_example();
+
+
+
 #endif

@@ -131,6 +131,10 @@ private:
 
 
 
+#ifdef FFMPEG_TEST
+void    player_decode_example();
+#endif
+
 
 
 #endif
