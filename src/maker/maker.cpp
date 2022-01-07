@@ -471,6 +471,8 @@ void Maker::work()
         work_with_subtitle();
     else
         work_without_subtitle();
+
+    MYLOG( LOG::INFO, "encode finish." );
 }
 
 
