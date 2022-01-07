@@ -50,6 +50,8 @@ https://www.itread01.com/content/1549629205.html
 ********************************************************************************/
 void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_global_header )
 {
+    load_jpg_root_path  =   setting.load_jpg_root_path;
+
     src_width   =   setting.src_width;
     src_height  =   setting.src_height;
 
@@ -60,7 +62,7 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
 
     //
     ctx->bit_rate   =   3000000;
-    /*ret = av_opt_set_int( ctx->priv_data, "crf", 50, 0 );
+    /*ret = av_opt_set_int( ctx->priv_data, "crf", 50, 0 );   // 看討論是要用 AVDictionary 在 open 的時候設置, 有空研究一下
     if( ret < 0 )
         MYLOG( LOG::ERROR, "error");*/
 
@@ -110,6 +112,62 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
     //
     init_sws( setting );
 }
+
+
+
+
+
+/*******************************************************************************
+VideoEncode::list_pixfmt()
+********************************************************************************/
+void    VideoEncode::list_pix_fmt( AVCodecID code_id )
+{
+    AVCodec*     codec   =   avcodec_find_encoder(code_id);
+
+    const AVPixelFormat  *pix_fmt   =   nullptr;
+
+    pix_fmt    =   codec->pix_fmts;
+    if( pix_fmt == nullptr )
+    {
+        MYLOG( LOG::INFO, "can not list.\n" );
+        return;
+    }
+
+    while( *pix_fmt != AV_PIX_FMT_NONE ) 
+    {
+        printf( "%s support pix_fmt = %d %s\n", avcodec_get_name(code_id), static_cast<int>(*pix_fmt), av_get_pix_fmt_name(*pix_fmt) );
+        pix_fmt++;
+    }
+    MYLOG( LOG::DEBUG, "finish.");
+}
+
+
+
+/*******************************************************************************
+VideoEncode::list_frame_rate()
+h264, h265 等沒資料.
+********************************************************************************/
+void    VideoEncode::list_frame_rate( AVCodecID code_id )
+{
+    AVCodec*     codec   =   avcodec_find_encoder(code_id);
+
+    const AVRational  *rt   =   nullptr;
+
+    rt    =   codec->supported_framerates;
+    if( rt == nullptr )
+    {
+        MYLOG( LOG::INFO, "can not list.\n" );
+        return;
+    }
+
+    while( rt->den != 0 || rt->num != 0 ) 
+    {
+        printf( "%s support frame rate = %d/%d = %lf\n", avcodec_get_name(code_id), rt->num, rt->den, av_q2d(*rt) );
+        rt++;
+    }
+    MYLOG( LOG::DEBUG, "finish.");
+}
+
 
 
 
@@ -312,11 +370,8 @@ VideoEncode::get_frame()
 ********************************************************************************/
 AVFrame*    VideoEncode::get_frame()
 {
-    //if( frame_count > 300 )
-        //return  nullptr;
-
-    return  get_fram_from_file_QT();
-    //return  get_fram_from_file_openCV();
+    //return  get_fram_from_file_QT();
+    return  get_fram_from_file_openCV();
 }
 
 
@@ -333,14 +388,14 @@ AVFrame*    VideoEncode::get_fram_from_file_QT()
     char str[1000];
     int ret;
 
-    sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
+    sprintf( str, "%s\\%d.jpg", load_jpg_root_path.c_str(), frame_count );
     printf( "str = %s\n", str );
 
     QImage  img;
     if( img.load( str ) == false )
         return  nullptr;    
 
-    ret = av_frame_make_writable( frame );
+    ret =   av_frame_make_writable( frame );
     if( ret < 0 )
         assert(0);
 
@@ -384,14 +439,15 @@ AVFrame*    VideoEncode::get_fram_from_file_openCV()
     char str[1000];
     int ret;
 
-    sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
-    printf( "str = %s\n", str );
+    sprintf( str, "%s\\%d.jpg", load_jpg_root_path.c_str(), frame_count );
+    if( frame_count % 100 == 0 )
+        MYLOG( LOG::DEBUG, "load jpg = %s", str );
 
     cv::Mat img =   cv::imread( str, cv::IMREAD_COLOR );
     if( img.empty() == true )
         return  nullptr;    
 
-    ret = av_frame_make_writable( frame );
+    ret     =   av_frame_make_writable( frame );
     if( ret < 0 )
         assert(0);
 

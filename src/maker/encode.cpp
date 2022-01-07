@@ -42,7 +42,7 @@ void    Encode::init( int st_idx, AVCodecID code_id )
     flush_state    =   false;
 
     // init frame
-    if( frame == nullptr )
+    if( frame != nullptr )
         av_frame_free( &frame );
 
     frame   =   av_frame_alloc();
@@ -114,6 +114,21 @@ void    Encode::end()
 
 
 
+
+
+/*******************************************************************************
+Encode::unref_pkt()
+********************************************************************************/
+void    Encode::unref_pkt()
+{
+    av_packet_unref(pkt);
+}
+
+
+
+
+
+
 /*******************************************************************************
 Encode::is_flush()
 ********************************************************************************/
@@ -179,7 +194,7 @@ Encode::get_pkt()
 ********************************************************************************/
 AVPacket*   Encode::get_pkt()
 {
-    return  pkt;
+    return  pkt;   
 }
 
 

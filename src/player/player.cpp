@@ -143,6 +143,35 @@ int     Player::init()
 
 
 
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+Player::set_output_openCV_jpg_root()
+********************************************************************************/
+void    Player::set_output_jpg_root( std::string _root_path )
+{
+    v_decoder.set_output_jpg_root(_root_path);
+}
+#endif
+
+
+
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+Player::set_output_audio_pcm_path()
+********************************************************************************/
+void    Player::set_output_audio_pcm_path( std::string _path )
+{
+    a_decoder.set_output_audio_pcm_path(_path);
+}
+#endif
+
+
+
+
+
+
 
 /*******************************************************************************
 Player::init_subtitle()
@@ -367,7 +396,7 @@ void    Player::play()
     // read frames from the file 
     while( true ) 
     {
-        ret = demuxer.demux();
+        ret     =   demuxer.demux();
         if( ret < 0 )
         {
             printf("play end.\n");
@@ -418,7 +447,8 @@ void    Player::play()
     }
 
     // flush
-    s_decoder.flush();
+    if( s_decoder.exist_stream() == true )
+        s_decoder.flush();
 #ifdef RENDER_SUBTITLE
     ret     =   v_decoder.send_packet(nullptr);
     if( ret >= 0 )
@@ -1170,3 +1200,26 @@ void    Player::seek( int value, int old_value )
 }
 
 
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+player_decode_example
+********************************************************************************/
+void    player_decode_example()
+{
+    Player  player;  
+
+    player.set_input_file("D:/input.avi");
+    //player.set_sub_file("D:/input.mkv");
+
+    player.init();
+
+    player.set_output_jpg_root( "H:\\jpg" );
+    player.set_output_audio_pcm_path( "H:\\test.pcm" );
+
+    player.play();
+    player.end();
+
+}
+#endif

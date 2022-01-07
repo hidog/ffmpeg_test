@@ -273,7 +273,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Debug\*.lib D:\code\ffmpeg_test\</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>D:\code\opencv\build\install\x64\vc16\lib;C:\Qt\lib;C:\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_imgproc454.lib;opencv_videoio454.lib;opencv_highgui454.lib;opencv_core454.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Multimedia.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_imgcodecs454.lib;opencv_imgproc454.lib;opencv_videoio454.lib;opencv_highgui454.lib;opencv_core454.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Multimedia.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy D:\code\ffmpeg_test\vs2019\x64\Release\*.dll D:\code\ffmpeg_test\
@@ -281,9 +281,6 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\ffmpeg_example\muxing.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="..\ffmpeg_example\remuxing.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_cmd|x64'">true</ExcludedFromBuild>
@@ -320,6 +317,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClCompile Include="..\src\maker\encode.cpp" />
     <ClCompile Include="..\src\maker\maker.cpp" />
     <ClCompile Include="..\src\maker\mux.cpp" />
+    <ClCompile Include="..\src\maker\sub_encode.cpp" />
     <ClCompile Include="..\src\maker\video_encode.cpp" />
     <ClCompile Include="..\src\player\audio_decode.cpp" />
     <ClCompile Include="..\src\player\decode.cpp" />
@@ -336,9 +334,6 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\ffmpeg_example\muxing.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="..\ffmpeg_example\resampling_audio.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
     </ClInclude>
@@ -349,6 +344,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClInclude Include="..\src\maker\maker.h" />
     <ClInclude Include="..\src\maker\maker_def.h" />
     <ClInclude Include="..\src\maker\mux.h" />
+    <ClInclude Include="..\src\maker\sub_encode.h" />
     <ClInclude Include="..\src\maker\video_encode.h" />
     <ClInclude Include="..\src\player\audio_decode.h" />
     <ClInclude Include="..\src\player\decode.h" />

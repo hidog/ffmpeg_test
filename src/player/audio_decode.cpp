@@ -108,13 +108,29 @@ int     AudioDecode::init()
 
 
 
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+AudioDecode::set_output_audio_pcm_path()
+********************************************************************************/
+void    AudioDecode::set_output_audio_pcm_path( std::string _path )
+{
+    output_pcm_path =   _path;
+}
+#endif
+
+
+
+
+
+
 #ifdef FFMPEG_TEST
 /*******************************************************************************
 AudioDecode::output_pcm()
 ********************************************************************************/
 int     AudioDecode::output_pcm()
 {
-    static FILE *fp     =   fopen("J:\\test.pcm", "wb+" );
+    static FILE *fp     =   fopen( output_pcm_path.c_str(), "wb+" );
 
     static constexpr int    out_channel =   2; // 目前預設輸出成兩聲道. 有空再改
 
@@ -135,7 +151,7 @@ int     AudioDecode::output_pcm()
                                  (const uint8_t**)frame->data, frame->nb_samples );    //輸入
 
     fwrite( pcm, 1, byte_count, fp );
-    MYLOG( LOG::DEBUG, "audio write %d. frame_count = %d", byte_count, frame_count );
+    //MYLOG( LOG::DEBUG, "audio write %d. frame_count = %d", byte_count, frame_count );
 
     return  0;
 }

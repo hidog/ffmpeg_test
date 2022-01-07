@@ -36,7 +36,7 @@ public:
 
     void    init( EncodeSetting setting );
     void    end();
-    void    open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx );
+    void    open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, AVCodecContext* s_ctx );
 
     bool    is_need_global_header();
 
@@ -46,6 +46,7 @@ public:
 
     AVRational  get_video_stream_timebase();
     AVRational  get_audio_stream_timebase();
+    AVRational  get_sub_stream_timebase();
 
 private:
 
@@ -53,6 +54,7 @@ private:
 
     AVStream    *v_stream   =   nullptr;
     AVStream    *a_stream   =   nullptr;
+    AVStream    *s_stream   =   nullptr;
 
 };
 

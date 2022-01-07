@@ -914,20 +914,29 @@ int    SubDecode::flush()
 #endif
 
 
-extern "C" {
-#include <libavutil/opt.h>
-}
+
+
+
+
+
 
 
 /*******************************************************************************
 extract_subtitle_frome_file()
 
 ref : https://github.com/mythsaber/AudioVideo
+
+測試用
 ********************************************************************************/
 void    extract_subtitle_frome_file()
 {
+    static int64_t  last_pts    =   -1;    // 用來處理 flush 的 pts
+
+
     char src_file_path[1000]    =   "D:\\code\\test2.mkv";
-    char dst_file_path[1000]    =   "D:\\test.ass";
+    //char src_file_path[1000]    =   "D:\\code\\output.mkv";
+    //char src_file_path[1000]    =   "J:\\abc.ass";
+    char dst_file_path[1000]    =   "J:\\abccccc.ass";
 
     int     ret     =   0;
     int     subidx  =   0;
@@ -957,7 +966,7 @@ void    extract_subtitle_frome_file()
     // 第三個引數, 表示要開啟第幾個stream.
     // -1 表示自動搜尋
     // 這邊放 3 是因為影片兩個字幕軌, 我們要開啟第三個
-    subidx  =   av_find_best_stream( src_fmtctx, AVMEDIA_TYPE_SUBTITLE, 3, -1, nullptr, 0 );
+    subidx  =   av_find_best_stream( src_fmtctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, nullptr, 0 );
     if( subidx < 0 )
         MYLOG( LOG::ERROR, "find stream fail." );  
 
@@ -1016,9 +1025,12 @@ void    extract_subtitle_frome_file()
 
     if( src_dec->subtitle_header )
     {
-        dst_enc->subtitle_header        =   (uint8_t*)av_mallocz( src_dec->subtitle_header_size );
+        dst_enc->subtitle_header        =   (uint8_t*)av_mallocz( src_dec->subtitle_header_size + 1);  // 沒查到為什麼要 + 1
         memcpy( dst_enc->subtitle_header, src_dec->subtitle_header, src_dec->subtitle_header_size );
         dst_enc->subtitle_header_size   =   src_dec->subtitle_header_size;
+        dst_enc->subtitle_header[dst_enc->subtitle_header_size] = '\0';
+
+        printf( "header = %s\n", dst_enc->subtitle_header );
     }
 
     ret     =   avcodec_open2( dst_enc, dst_codec, nullptr );
@@ -1032,9 +1044,8 @@ void    extract_subtitle_frome_file()
         dst_fmtctx->streams[0]->duration = av_rescale_q( src_stream->duration, src_stream->time_base, dst_fmtctx->streams[0]->time_base );
 
 
-
-    ret     =   av_opt_set_int( dst_fmtctx->priv_data, "ignore_readorder",  0,       0 );
-    MYLOG( LOG::INFO, "ret = %d\n", ret );
+    //ret     =   av_opt_set_int( dst_fmtctx->priv_data, "ignore_readorder",  0,       0 );
+    //MYLOG( LOG::INFO, "ret = %d\n", ret );
 
 
     // 開始寫入
@@ -1042,16 +1053,17 @@ void    extract_subtitle_frome_file()
     {
         static const int subtitle_out_max_size     =   1024*1024;
 
-        subtitle.pts                   +=   av_rescale_q( subtitle.start_display_time, src_dec->pkt_timebase, AVRational{ 1, AV_TIME_BASE } );
-        subtitle.end_display_time      -=   subtitle.start_display_time;
-        subtitle.start_display_time    =    0;
-        int64_t sub_duration            =   subtitle.end_display_time;
+        // 看討論是DVD格式問題....
+        //subtitle.pts                   +=   av_rescale_q( subtitle.start_display_time, src_dec->pkt_timebase, AVRational{ 1, AV_TIME_BASE } );
+        //subtitle.end_display_time      -=   subtitle.start_display_time;
+        //subtitle.start_display_time    =    0;
+        int64_t sub_duration            =   subtitle.end_display_time - subtitle.start_display_time;
 
         uint8_t*    subtitle_out        =   (uint8_t*)av_mallocz(subtitle_out_max_size);
         int         subtitle_out_size   =   avcodec_encode_subtitle( dst_enc , subtitle_out, subtitle_out_max_size, &subtitle );
 
         AVPacket    pkt;
-        av_init_packet( &pkt );
+        av_new_packet( &pkt, 1 );
 
         if( subtitle_out_size == 0 )
             pkt.data    =   nullptr;
@@ -1063,21 +1075,22 @@ void    extract_subtitle_frome_file()
         pkt.duration    =   av_rescale_q( sub_duration, src_dec->pkt_timebase, dst_fmtctx->streams[0]->time_base );
         pkt.dts         =   pkt.pts;
 
-        static int64_t  last_pts    =   pkt.pts;    // 用來處理 flush 的 pts
+        last_pts    =   pkt.pts;    // 用來處理 flush 的 pts
 
         // note: flush 的處理可以參考 got_sub 或其他方式.
-        if( pkt.pts > 0 )
+        /*if( pkt.pts > 0 )
             last_pts    =   pkt.pts;
         else
         {
             pkt.pts =   last_pts;
             pkt.dts =   last_pts;
             pkt.duration    =   0;
-        }
+        }*/
 
         int ret =   0;
         if( subtitle_out_size != 0 )
-            ret =   av_write_frame( dst_fmtctx, &pkt );
+            //ret =   av_write_frame( dst_fmtctx, &pkt );
+            ret =   av_interleaved_write_frame( dst_fmtctx, &pkt );
         else 
             ret =   av_interleaved_write_frame( dst_fmtctx, &pkt );  // 沒找到相關說明...
 
@@ -1086,39 +1099,59 @@ void    extract_subtitle_frome_file()
         return 0;
     };
 
+    printf( "%d %d\n", dst_fmtctx->streams[0]->time_base.num,  dst_fmtctx->streams[0]->time_base.den );
+
     //
     avformat_write_header( dst_fmtctx, nullptr );
 
+    printf( "%d %d\n", dst_fmtctx->streams[0]->time_base.num,  dst_fmtctx->streams[0]->time_base.den );
+
+
     AVPacket    src_pkt;
-    av_init_packet( &src_pkt );
+    av_new_packet( &src_pkt, 1 );
     src_pkt.data    =   nullptr;
     src_pkt.size    =   0;
 
     int         got_sub     =   0;
 
+    int count = 0;
+
     while( true )
     {
         ret     =   av_read_frame( src_fmtctx, &src_pkt );
+        //printf("count = %d", ++count );
         if( ret < 0 )
             break;
 
         if( src_pkt.stream_index != subidx )
         {
+            /*if( src_pkt.stream_index == 0 )
+                printf("v   ");
+            else if( src_pkt.stream_index == 1 )
+                printf(" a  ");*/
+            
+            //if( src_pkt.stream_index != 2 )
+              //  printf("pts = %6lld, dts = %6lld\n", src_pkt.pts, src_pkt.dts );
+
             av_packet_unref( &src_pkt );
             continue;
         }
 
         if( src_pkt.size > 0 )
         {
+            //printf("  s pts = %6lld, dts = %6lld\n", src_pkt.pts, src_pkt.dts );
+
             memset( &subtitle, 0, sizeof(subtitle) );            
             ret     =   avcodec_decode_subtitle2( src_dec, &subtitle, &got_sub, &src_pkt ); 
+            
+            //printf("subtitle pts = %6lld\n", subtitle.pts );
             
             // pkt_timebase={1,1000}
             if( ret < 0 )
                 MYLOG( LOG::ERROR, "decode fail." );
 
             if( got_sub > 0 )
-                ret = subtitle_output_func();
+                ret     =   subtitle_output_func();
             else
                 MYLOG( LOG::DEBUG, "got < 0" );
             
@@ -1131,19 +1164,12 @@ void    extract_subtitle_frome_file()
     }
 
     // flush    
-    src_pkt.data    =   nullptr;
-    src_pkt.size    =   0;
-    
-    got_sub     =   1;
-    while( got_sub != 0 )
-    {
-        memset( &subtitle, 0, sizeof(subtitle) );
-        ret     =   avcodec_decode_subtitle2( src_dec, &subtitle, &got_sub, &src_pkt );
-        if( ret < 0 )
-            MYLOG( LOG::ERROR, "decode fail." );                 
-        ret     =   subtitle_output_func();
-        avsubtitle_free(&subtitle);
-    }
+    src_pkt.data   =   nullptr;
+    src_pkt.size   =   0;
+    src_pkt.pts    =   last_pts;
+    src_pkt.dts    =   last_pts;
+    src_pkt.duration       =   0;
+    src_pkt.stream_index   =   0;
     
 
     if( dst_enc->subtitle_header != nullptr )
@@ -1154,4 +1180,8 @@ void    extract_subtitle_frome_file()
 
     MYLOG( LOG::INFO, "finish encode subtitle." );
 }
+
+
+
+
 

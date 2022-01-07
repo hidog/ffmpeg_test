@@ -239,6 +239,8 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
 
     Encode::init( st_idx, code_id );    
 
+    load_pcm_path   =   setting.load_pcm_path;
+
     // some codec need set bit rate.
     // 驗證一下這件事情. 部分 codec 會自動產生預設 bit rate.
     if( setting.code_id != AV_CODEC_ID_FLAC )
@@ -614,7 +616,7 @@ AVFrame*    AudioEncode::get_frame_from_pcm_file()
     int     ret;
     int     sp_count    =   0;
 
-    static FILE *fp     =   fopen( "J:\\test.pcm", "rb" );    
+    static FILE *fp     =   fopen( load_pcm_path.c_str(), "rb" );    
 
     //
     if( feof(fp) != 0 )
@@ -655,9 +657,6 @@ AudioEncode::get_frame()
 ********************************************************************************/
 AVFrame*    AudioEncode::get_frame()
 {
-    //if( frame_count > 1000 )
-        //return  nullptr;
-
     return  get_frame_from_pcm_file();
     //return  get_frame_from_file_test();
 }

@@ -448,9 +448,10 @@ int    VideoDecode::output_jpg_by_QT()
     sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, video_dst_data, video_dst_linesize );
     memcpy( img.bits(), video_dst_data[0], video_dst_bufsize );
 
-    char str[1000];
-    sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
-    MYLOG( LOG::DEBUG, "save jpg %s", str );
+    char    str[1000];
+    sprintf( str, "%s\\%d.jpg", output_jpg_root_path.c_str(), frame_count );
+    if( frame_count % 100 == 0 )
+        MYLOG( LOG::DEBUG, "save jpg %s", str );
     img.save(str);
 
     return  0;
@@ -461,6 +462,15 @@ int    VideoDecode::output_jpg_by_QT()
 
 
 
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoDecode::set_output_openCV_jpg_root()
+********************************************************************************/
+void    VideoDecode::set_output_jpg_root( std::string _root_path )
+{
+    output_jpg_root_path    =   _root_path;
+}
+#endif
 
 
 
@@ -492,8 +502,17 @@ int     VideoDecode::output_jpg_by_openCV()
 
     cv::Mat     bgr;
     cv::cvtColor( img, bgr, cv::COLOR_YUV2BGR_I420 );
+
+#if 1
+    // show image by opencv
     cv::imshow( "RGB frame", bgr );
     cv::waitKey(1);
+#else
+    static int output_count =   0;
+    char    output_path[1000];
+    sprintf( output_path, "%s\\%d.jpg",  opencv_jpg_root_path.c_str(), output_count++ );
+    cv::imwrite( output_path, bgr );
+#endif
 
     return 0;
 }
