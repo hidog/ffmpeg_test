@@ -59,6 +59,13 @@ SubEncode::end()
 ********************************************************************************/
 void    SubEncode::end()
 {
+    while( sub_queue.empty() == false )
+    {
+        auto    pkt =   sub_queue.top();
+        av_packet_unref(&pkt);
+        sub_queue.pop();
+    }
+
     if( dec != nullptr )
     {
         avcodec_free_context( &dec );
@@ -87,7 +94,7 @@ void    SubEncode::end()
         sub_buf    =   nullptr;
     }
 
-    // note: header是自己額外allocate出來的,所以要在Encode::end()之前釋放
+    // note: header是自己額外allocate出來的,所以要在Encode::end之前釋放
     if( ctx != nullptr )
     {
         if( ctx->subtitle_header    !=  nullptr )        

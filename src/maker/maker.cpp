@@ -275,7 +275,7 @@ void    Maker::work_with_subtitle()
         }
     }
 
-    // 邏輯上不需要 flush subtitle.
+    //
     if( s_encoder.get_queue_size() > 0 )
         MYLOG( LOG::ERROR, "subtitie queue is not empty." );
 
