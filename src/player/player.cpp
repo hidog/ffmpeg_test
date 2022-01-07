@@ -447,7 +447,8 @@ void    Player::play()
     }
 
     // flush
-    s_decoder.flush();
+    if( s_decoder.exist_stream() == true )
+        s_decoder.flush();
 #ifdef RENDER_SUBTITLE
     ret     =   v_decoder.send_packet(nullptr);
     if( ret >= 0 )
