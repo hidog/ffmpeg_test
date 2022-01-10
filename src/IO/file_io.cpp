@@ -33,6 +33,17 @@ void    FileIO::init()
 
 
 
+/*******************************************************************************
+FileIO::init()
+********************************************************************************/
+void    FileIO::close()
+{
+    fclose(fp);
+    fp  =   nullptr;
+}
+
+
+
     
 /*******************************************************************************
 FileIO::open()
@@ -62,16 +73,7 @@ int     FileIO::read( uint8_t *buf, int buf_size )
     if( feof(fp) != 0 )
         return  EOF;
 
-    int ret     =   fread( buf, 1, 4096, fp );
-
-    if( buf_size != 4096 )
-        printf( "read %d\n", buf_size );
-
-    if( ret == 0 )
-    {
-        if( feof(fp) != 0 )
-            return  EOF;
-    }
+    int ret     =   fread( buf, 1, buf_size, fp );
 
     return ret;
 }

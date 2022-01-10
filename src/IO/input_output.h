@@ -22,6 +22,7 @@ public:
     virtual void    init()  =   0;
     virtual void    open()  =   0;
     virtual int     read( uint8_t *buf, int buf_size ) =  0;
+    virtual void    close() =   0;
 
 protected:
     DecodeSetting   get_setting();

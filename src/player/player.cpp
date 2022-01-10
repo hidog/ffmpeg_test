@@ -124,14 +124,12 @@ int     Player::init_demuxer()
     }
     else
     {
-        demuxer     =   new DemuxIO;
-
-        IO          =   create_IO( setting.io_type );
-        IO->set( setting );
-        IO->init();
-        IO->open();
-
-        dynamic_cast<DemuxIO*>(demuxer)->set_IO(IO);
+        demuxer     =   new DemuxIO{ setting };
+        if( demuxer == nullptr )
+        {
+            MYLOG( LOG::ERROR, "init demuxer fail." );
+            return  ERROR;
+        }
     }
 
     return  SUCCESS;
@@ -1216,12 +1214,6 @@ int     Player::end()
     demuxer->end();
     delete demuxer;
     demuxer =   nullptr;
-
-    if( IO != nullptr )
-    {
-        delete IO;
-        IO  =   nullptr;
-    }
 
     return  SUCCESS;
 }

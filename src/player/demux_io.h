@@ -2,6 +2,7 @@
 #define DEMUX_IO_H
 
 #include "demux.h"
+#include "play_def.h"
 
 
 class InputOutput;
@@ -12,7 +13,7 @@ class InputOutput;
 class DemuxIO : public Demux 
 {
 public:
-    DemuxIO();
+    DemuxIO( DecodeSetting _st );
     ~DemuxIO();
 
     DemuxIO( const DemuxIO& ) = delete;
@@ -21,13 +22,16 @@ public:
     DemuxIO& operator = ( const DemuxIO& ) = delete;
     DemuxIO& operator = ( DemuxIO&& ) = delete;
 
-
     int     open_input() override;
     void    set_IO( InputOutput* _io );
 
+    int     init() override;    
+    int     end() override;
+
 private:
 
-    InputOutput     *IO     =   nullptr; // note: owener is player.
+    InputOutput     *IO     =   nullptr;
+    DecodeSetting   setting;
 
 };
 

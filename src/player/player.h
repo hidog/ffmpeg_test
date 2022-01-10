@@ -12,7 +12,7 @@
 #include "video_decode.h"
 #include "sub_decode.h"
 #include "tool.h"
-#include "../IO/input_output.h"
+//#include "../IO/input_output.h"
 
 #include <QImage>
 
@@ -133,7 +133,7 @@ private:
 
     DecodeSetting   setting;
 
-    InputOutput     *IO     =   nullptr;
+    //InputOutput     *IO     =   nullptr;
 };
 
 

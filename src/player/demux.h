@@ -33,9 +33,7 @@ public:
     Demux& operator = ( Demux&& ) = delete;
 
     //
-    int     init();
     int     demux();
-    int     end();
     int     stream_info();
     void    set_input_file( std::string fn );
     
@@ -46,6 +44,8 @@ public:
     AVFormatContext*    get_format_context();
 
     virtual int     open_input();
+    virtual int     init();
+    virtual int     end();
 
 
 #ifdef USE_MT
