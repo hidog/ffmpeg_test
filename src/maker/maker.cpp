@@ -500,7 +500,7 @@ void    maker_encode_example()
 {
     EncodeSetting   setting;    
     // rmvb 是 variable bitrate. 目前還無法使用
-    setting.filename    =   "H:\\output.mkv";
+    setting.filename    =   "J:\\output.mkv";
     setting.extension   =   "matroska";
     //setting.filename    =   "H:\\output.mp4";
     //setting.extension   =   "mp4";
@@ -512,14 +512,14 @@ void    maker_encode_example()
 
 
     VideoEncodeSetting  v_setting;
-    v_setting.load_jpg_root_path    =   "H:\\jpg";
-    v_setting.code_id   =   AV_CODEC_ID_H264;
-    //v_setting.code_id   =   AV_CODEC_ID_H265;
+    v_setting.load_jpg_root_path    =   "J:\\jpg";
+    //v_setting.code_id   =   AV_CODEC_ID_H264;
+    v_setting.code_id   =   AV_CODEC_ID_H265;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG2VIDEO;
 
-    v_setting.width     =   640;
-    v_setting.height    =   480;
+    v_setting.width     =   1920;
+    v_setting.height    =   1080;
 
     v_setting.time_base.num     =   1001;
     v_setting.time_base.den     =   24000;
@@ -537,17 +537,17 @@ void    maker_encode_example()
     v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
     //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P12LE;
 
-    v_setting.src_width     =   640;
-    v_setting.src_height    =   480;
+    v_setting.src_width     =   1920;
+    v_setting.src_height    =   1080;
     //v_setting.src_pix_fmt   =   AV_PIX_FMT_BGRA;    // for QImage
     v_setting.src_pix_fmt   =   AV_PIX_FMT_BGR24;    // for openCV
 
 
     AudioEncodeSetting  a_setting;
-    a_setting.load_pcm_path     =   "H:\\test.pcm";
+    a_setting.load_pcm_path     =   "J:\\test.pcm";
     //a_setting.code_id     =   AV_CODEC_ID_MP3;
-    a_setting.code_id       =   AV_CODEC_ID_AAC;
-    //a_setting.code_id       =   AV_CODEC_ID_AC3;
+    //a_setting.code_id       =   AV_CODEC_ID_AAC;
+    a_setting.code_id       =   AV_CODEC_ID_AC3;
     //a_setting.code_id     =   AV_CODEC_ID_MP2;
     //a_setting.code_id       =   AV_CODEC_ID_VORBIS;
     //a_setting.code_id       =   AV_CODEC_ID_FLAC;
@@ -563,8 +563,8 @@ void    maker_encode_example()
     s_setting.code_id       =   AV_CODEC_ID_ASS;
     //s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
     //s_setting.code_id       =   AV_CODEC_ID_MOV_TEXT;
-    s_setting.subtitle_file =   "H:\\test.ssa";
-    s_setting.subtitle_ext  =   "ssa";
+    s_setting.subtitle_file =   "J:\\test.ass";
+    s_setting.subtitle_ext  =   "ass";
 
 
     Maker   maker;
