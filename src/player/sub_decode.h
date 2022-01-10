@@ -3,6 +3,7 @@
 
 #include "decode.h"
 
+
 /*
 https://www.twblogs.net/a/5ef2639e26bc8c4a8eb3c99e        // 字幕教學 
 http://underpop.online.fr/f/ffmpeg/help/subtitles.htm.gz  // subtitle parameter.
@@ -16,6 +17,9 @@ struct AVFilterContext;
 struct AVFilterGraph;
 struct AVSubtitle;
 struct SwsContext;
+
+
+
 
 
 class DLL_API SubDecode : public Decode
@@ -37,7 +41,7 @@ public:
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
     bool    exist_stream() override;
     void    flush_for_seek() override;
-
+    void    flush_all_stream() override;
 
     int     decode_subtitle( AVPacket* pkt );
     void    generate_subtitle_image( AVSubtitle &subtitle );
@@ -67,8 +71,14 @@ public:
     std::pair<std::string,std::string>  get_subtitle_param( AVFormatContext *fmt_ctx, std::string src_file, SubData sd );
     std::vector<std::string>            get_embedded_subtitle_list();
 
-
     int sub_info(); // 目前無作用
+
+#ifdef FFMPEG_TEST
+    std::function<int()>    output_frame_func;
+    int     output_jpg_by_QT();
+    int     flush() override;
+#endif
+
 
 
 private:
@@ -106,6 +116,9 @@ private:
 
 };
 
+
+
+void    extract_subtitle_frome_file();
 
 
 

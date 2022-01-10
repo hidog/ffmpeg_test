@@ -73,8 +73,8 @@ Worker::run()
 ********************************************************************************/
 void    Worker::run()  
 {
-    VideoSetting    vs;
-    AudioSetting    as;
+    VideoDecodeSetting    vs;
+    AudioDecodeSetting    as;
     AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
     VideoWorker     *vw     =   dynamic_cast<MainWindow*>(parent())->get_video_worker();
    
@@ -108,8 +108,11 @@ void    Worker::run()
     vw->start();
     
     //
-    //player.play_QT_multi_thread();
+#ifdef USE_MT
+    player.play_QT_multi_thread();
+#else
     player.play_QT();
+#endif
     player.end();
     is_play_end     =   true;
     

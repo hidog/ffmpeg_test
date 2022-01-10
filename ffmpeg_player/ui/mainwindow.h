@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "tool.h"
+#include "player/play_def.h"
 
 
 
@@ -50,7 +51,7 @@ public slots:
     void    pause_slot();
 
     void    recv_video_frame_slot();
-    void    set_video_setting_slot( VideoSetting vs );
+    void    set_video_setting_slot( VideoDecodeSetting vs );
     void    set_subtitle_list_slot( QStringList list );
     void    embedded_sublist_slot( std::vector<std::string> );
     void    finish_slot();

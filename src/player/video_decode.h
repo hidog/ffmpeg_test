@@ -43,11 +43,12 @@ public:
 
     AVPixelFormat   get_pix_fmt();
 
-    int video_info(); // 未來增加 nv decode 可以參考這邊
+    int     video_info(); // 未來增加 nv decode 可以參考這邊
 
 #ifdef FFMPEG_TEST
     int     output_jpg_by_QT();
     int     output_jpg_by_openCV();
+    void    set_output_jpg_root( std::string _root_path );
 #endif
 
 private:
@@ -63,7 +64,9 @@ private:
     int      width   =   0;
     int      height  =   0;
 
-
+#ifdef FFMPEG_TEST
+    std::string     output_jpg_root_path    =   "J:\\jpg";
+#endif
 
 /*
     未來增加nv decode 可以參考這邊

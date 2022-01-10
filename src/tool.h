@@ -4,60 +4,8 @@
 #include <cassert>
 #include <QImage>
 
+//#define USE_MT
 
-
-
-enum class SubSourceType
-{
-    NONE,
-    FROM_FILE,
-    EMBEDDED,
-};
-
-
-
-struct SubData
-{
-    int     video_index;
-    int     width;
-    int     height;
-    int     sub_index;
-    int     pix_fmt;
-};
-
-
-
-struct AudioData
-{
-    uint8_t     *pcm;
-    int         bytes;
-    int64_t     timestamp;
-};
-
-
-struct AudioSetting
-{
-    int     channel;
-    int     sample_rate;
-    //int     sample_size;
-};
-
-
-
-struct VideoData
-{
-    int         index;
-    QImage      frame;
-    int64_t     timestamp;
-};
-
-
-
-struct VideoSetting
-{
-    int     width;
-    int     height;
-};
 
 
 

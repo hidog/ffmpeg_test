@@ -68,7 +68,7 @@ VideoDecode::open_codec_context()
 int     VideoDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
     Decode::open_all_codec( fmt_ctx, type );
-    //dec_ctx->thread_count = 4;
+    dec_ctx->thread_count = 4;
     return  SUCCESS;
 }
 
@@ -89,7 +89,11 @@ int     VideoDecode::init()
 
     MYLOG( LOG::INFO, "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
     
+#ifndef FFMPEG_TEST
     video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
+#else
+    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
+#endif
     if( video_dst_bufsize < 0 )
     {
         MYLOG( LOG::ERROR, "Could not allocate raw video buffer" );
@@ -99,7 +103,7 @@ int     VideoDecode::init()
     // NOTE : 可以改變寬高. 
     sws_ctx     =   sws_getContext( width, height, pix_fmt,                     // src
                                     width, height, AV_PIX_FMT_RGB24,            // dst
-                                    SWS_BICUBIC, NULL, NULL, NULL);                                    
+                                    SWS_BICUBIC, NULL, NULL, NULL);                        
 
     //
 #ifdef FFMPEG_TEST
@@ -444,9 +448,10 @@ int    VideoDecode::output_jpg_by_QT()
     sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, video_dst_data, video_dst_linesize );
     memcpy( img.bits(), video_dst_data[0], video_dst_bufsize );
 
-    static int  jpg_count   =   0;
-    char str[1000];
-    sprintf( str, "H:\\%d.jpg", jpg_count++ );
+    char    str[1000];
+    sprintf( str, "%s\\%d.jpg", output_jpg_root_path.c_str(), frame_count );
+    if( frame_count % 100 == 0 )
+        MYLOG( LOG::DEBUG, "save jpg %s", str );
     img.save(str);
 
     return  0;
@@ -457,6 +462,15 @@ int    VideoDecode::output_jpg_by_QT()
 
 
 
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoDecode::set_output_openCV_jpg_root()
+********************************************************************************/
+void    VideoDecode::set_output_jpg_root( std::string _root_path )
+{
+    output_jpg_root_path    =   _root_path;
+}
+#endif
 
 
 
@@ -482,14 +496,23 @@ int     VideoDecode::output_jpg_by_openCV()
     memcpy( img.data + width*height, frame->data[1], width*height/4 );
     memcpy( img.data + width*height*5/4, frame->data[2], width*height/4 );
 #else
-    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, static_cast<AVPixelFormat>(pix_fmt), width, height );
+    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, pix_fmt, width, height );
     cv::Mat img( cv::Size( width, height*3/2 ), CV_8UC1, video_dst_data[0] );
 #endif
 
     cv::Mat     bgr;
     cv::cvtColor( img, bgr, cv::COLOR_YUV2BGR_I420 );
+
+#if 1
+    // show image by opencv
     cv::imshow( "RGB frame", bgr );
     cv::waitKey(1);
+#else
+    static int output_count =   0;
+    char    output_path[1000];
+    sprintf( output_path, "%s\\%d.jpg",  opencv_jpg_root_path.c_str(), output_count++ );
+    cv::imwrite( output_path, bgr );
+#endif
 
     return 0;
 }

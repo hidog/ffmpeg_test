@@ -3,7 +3,7 @@
 
 
 #include <QThread>
-#include "player.h"
+#include "player/player.h"
 
 
 class Worker : public QThread
@@ -32,7 +32,7 @@ public slots:
     void    seek_slot( int value );
 
 signals:
-    void    video_setting_signal( VideoSetting );
+    void    video_setting_signal( VideoDecodeSetting );
     void    subtitle_list_signal( QStringList );
     void    embedded_sublist_signal( std::vector<std::string> );
     void    duration_signal(int);

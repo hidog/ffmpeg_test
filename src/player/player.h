@@ -28,6 +28,11 @@ DLL_API bool& get_a_seek_lock();
 struct AVPacket;
 
 
+#ifdef FFMPEG_TEST
+//#define RENDER_SUBTITLE
+#endif
+
+
 
 class DLL_API Player
 {
@@ -65,14 +70,13 @@ public:
     void    init_subtitle( AVFormatContext *fmt_ctx );
     void    handle_seek();    
 
-    int64_t     get_duration_time();
-
+    int64_t         get_duration_time();
     VideoData       overlap_subtitle_image();
-    VideoSetting    get_video_setting();
-    AudioSetting    get_audio_setting();
+
+    VideoDecodeSetting    get_video_setting();
+    AudioDecodeSetting    get_audio_setting();
 
     std::vector<std::string>    get_embedded_subtitle_list();
-
 
 #ifdef USE_MT
     void    play_QT_multi_thread();
@@ -81,9 +85,13 @@ public:
 #endif
 
 #ifdef FFMPEG_TEST
-    void    play();
+    void    play(); 
+    void    play_decode_video_subtitle( AVPacket* pkt );
     std::function<void(QImage)> output_video_frame_func;
     std::function<void(AudioData)> output_audio_pcm_func;
+
+    void    set_output_jpg_root( std::string _root_path );
+    void    set_output_audio_pcm_path( std::string _path );
 #endif
 
 private:
@@ -122,6 +130,10 @@ private:
 };
 
 
+
+#ifdef FFMPEG_TEST
+void    player_decode_example();
+#endif
 
 
 

@@ -45,8 +45,7 @@ int    Demux::init()
         use for multi-thread
     */
 #ifdef USE_MT
-    int     i;
-    for( i = 0; i < 10; i++ )
+    for( int i = 0; i < pkt_size; i++ )
     {
         pkt_array[i]    =   av_packet_alloc();
         
@@ -126,7 +125,7 @@ int     Demux::end()
 #ifdef USE_MT
     while( pkt_queue.empty() == false )
         pkt_queue.pop();
-    for( i = 0; i < 10; i++ )
+    for( int i = 0; i < pkt_size; i++ )
         av_packet_free( &pkt_array[i] );
 #endif
 
@@ -215,8 +214,8 @@ int    Demux::demux()
     int     ret;
     ret     =   av_read_frame( fmt_ctx, pkt );
 
-    if( ret < 0 )    
-        MYLOG( LOG::INFO, "load file end." );
+    //if( ret < 0 )    
+      //  MYLOG( LOG::INFO, "load file end." );
 
     return ret;
 }
@@ -256,15 +255,17 @@ std::pair<int,AVPacket*>     Demux::demux_multi_thread()
 
     if( pkt_queue.empty() == true )
     {
-        MYLOG( LOG::WARN, "pkt stack empty." );
+        MYLOG( LOG::ERROR, "pkt stack empty." );
         return  std::make_pair( 0, nullptr );
     }
 
     if( pkt_queue.size() < 10 )
-        MYLOG( LOG::DEBUG, "queue size = %d", pkt_queue.size() );
+        MYLOG( LOG::WARN, "queue size = %d", pkt_queue.size() );
 
+    pkt_mtx.lock();
     packet  =   pkt_queue.front();
     pkt_queue.pop();
+    pkt_mtx.unlock();
 
     ret     =   av_read_frame( fmt_ctx, packet );
 

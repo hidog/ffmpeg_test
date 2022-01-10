@@ -215,7 +215,8 @@ int main(int argc, char **argv)
             exit(1);
         samples = (uint16_t*)frame->data[0];
 
-        for (j = 0; j < c->frame_size; j++) {
+        for (j = 0; j < c->frame_size; j++) 
+        {
             samples[2*j] = (int)(sin(t) * 10000);
 
             for (k = 1; k < c->channels; k++)

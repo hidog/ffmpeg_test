@@ -3,6 +3,7 @@
 
 #include <string>
 #include <queue>
+#include <mutex>
 
 #include "tool.h"
 
@@ -57,7 +58,8 @@ private:
     AVPacket        *pkt        =   nullptr;
 
 #ifdef USE_MT
-    AVPacket*               pkt_array[10]  =   {nullptr};  
+    static constexpr int   pkt_size    =   500;
+    AVPacket*               pkt_array[pkt_size]  =   {nullptr};  
     std::queue<AVPacket*>   pkt_queue;
     std::mutex              pkt_mtx; 
 #endif

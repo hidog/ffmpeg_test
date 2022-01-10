@@ -4,6 +4,7 @@
 #include <string>
 #include <functional>
 #include "tool.h"
+#include "play_def.h"
 
 
 
@@ -40,6 +41,7 @@ public:
     virtual bool    exist_stream();
     virtual int     recv_frame( int index );
     virtual void    flush_for_seek();
+    virtual void    flush_all_stream();
 
     int     send_packet( const AVPacket *pkt );
     void    unref_frame();
@@ -47,14 +49,13 @@ public:
     bool    find_index( int index );
     int     current_index();
     int     get_dec_map_size();
-    void    flush_all_stream();
-    
+
     AVFrame*        get_frame();
     AVMediaType     get_decode_context_type();
     AVCodecContext* get_decode_context();
 
 #ifdef FFMPEG_TEST
-    int     flush();
+    virtual int     flush();
     std::function<int()>    output_frame_func;
 #endif
 
@@ -72,7 +73,8 @@ protected:
     AVStream        *stream     =   nullptr;
     AVFrame         *frame      =   nullptr;
 
-    int     frame_count =   0;
+    int     frame_count =   -1;
+
 
 private:
 
