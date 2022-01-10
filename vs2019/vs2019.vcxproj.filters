@@ -25,6 +25,9 @@
     <Filter Include="src\maker">
       <UniqueIdentifier>{a3afbc7b-d2c7-4fbc-b825-23cbd7351dae}</UniqueIdentifier>
     </Filter>
+    <Filter Include="IO">
+      <UniqueIdentifier>{45464b67-3143-4077-8a0e-5cdd4adccb97}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vs2019.cpp">
@@ -84,6 +87,9 @@
     <ClCompile Include="..\src\maker\sub_encode.cpp">
       <Filter>src\maker</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\IO\input_output.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -133,6 +139,9 @@
     </ClInclude>
     <ClInclude Include="..\src\maker\sub_encode.h">
       <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\IO\input_output.h">
+      <Filter>IO</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
