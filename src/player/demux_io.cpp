@@ -1,4 +1,6 @@
 #include "demux_io.h"
+#include "player.h"
+#include "../IO/input_output.h"
 
 
 extern "C" {
@@ -6,6 +8,10 @@ extern "C" {
 #include <libavformat/avformat.h>
 
 } // end extern "C"
+
+
+
+
 
 
 /*******************************************************************************
@@ -31,23 +37,6 @@ DemuxIO::~DemuxIO()
 
 
 
-int     read_data( void *opaque, uint8_t *buf, int buf_size )
-{
-    static FILE *fp = fopen( "D:\\code\\test.mkv", "rb");
-
-    int ret = fread( buf, 1, 4096, fp );
-
-    if( buf_size != 4096 )
-        printf( "read %d\n", buf_size );
-
-    return ret;
-}
-
-
-
-
-
-
 
 
 /*******************************************************************************
@@ -58,14 +47,13 @@ int     DemuxIO::open_input()
     fmt_ctx     =   avformat_alloc_context();    
     int  ret    =   0;
 
-
 	AVInputFormat*  input_fmt   =   nullptr;
 	uint8_t*        input_buf   =   (uint8_t*)av_malloc(4096);
-	AVIOContext*    io_ctx      =   avio_alloc_context( input_buf, 4096, 0, this, read_data, NULL, NULL );
+	AVIOContext*    io_ctx      =   avio_alloc_context( input_buf, 4096, 0, (void*)IO, io_read_data, nullptr, nullptr );
 
-    ret         =   av_probe_input_buffer( io_ctx, &input_fmt, "", nullptr, 0, 0 );
+    ret         =   av_probe_input_buffer( io_ctx, &input_fmt, nullptr, nullptr, 0, 0 );
 	fmt_ctx->pb =   io_ctx;
-    ret         =   avformat_open_input( &fmt_ctx, "", input_fmt, NULL );
+    ret         =   avformat_open_input( &fmt_ctx, nullptr, input_fmt, nullptr );
 
     if( ret < 0 )
     {
@@ -84,3 +72,14 @@ int     DemuxIO::open_input()
     return  SUCCESS;
 }
 
+
+
+
+
+/*******************************************************************************
+DemuxIO::set_IO()
+********************************************************************************/
+void    DemuxIO::set_IO( InputOutput* _io )
+{
+    IO  =   _io;
+}

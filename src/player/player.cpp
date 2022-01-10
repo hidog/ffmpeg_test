@@ -1,9 +1,12 @@
 #include "player.h"
 #include "tool.h"
 #include "demux_io.h"
+#include "../IO/input_output.h"
 
 #include <thread>
 #include <QPainter>
+
+
 
 extern "C" {
 
@@ -121,7 +124,14 @@ int     Player::init_demuxer()
     }
     else
     {
-        demuxer     =   new DemuxIO{};
+        demuxer     =   new DemuxIO;
+
+        IO          =   create_IO( setting.io_type );
+        IO->set( setting );
+        IO->init();
+        IO->open();
+
+        dynamic_cast<DemuxIO*>(demuxer)->set_IO(IO);
     }
 
     return  SUCCESS;
@@ -170,10 +180,31 @@ int     Player::init()
 
     // handle subtitle
     // 有遇到影片會在這邊卡很久, 或許可以考慮用multi-thread的方式做處理, 以後再說...
-    //init_subtitle(fmt_ctx);
+    init_subtitle(fmt_ctx);
 
     return SUCCESS;
 }
+
+
+
+
+
+
+
+
+
+/*******************************************************************************
+io_read_data
+********************************************************************************/
+int     io_read_data( void *opaque, uint8_t *buf, int buf_size )
+{
+    InputOutput*    io  =   (InputOutput*)opaque;
+    int     ret     =   io->read( buf, buf_size );
+    return  ret;
+}
+
+
+
 
 
 
@@ -185,6 +216,7 @@ Player::set_output_openCV_jpg_root()
 void    Player::set_output_jpg_root( std::string _root_path )
 {
     v_decoder.set_output_jpg_root(_root_path);
+    s_decoder.set_output_jpg_root(_root_path);
 }
 #endif
 
@@ -1185,6 +1217,12 @@ int     Player::end()
     delete demuxer;
     demuxer =   nullptr;
 
+    if( IO != nullptr )
+    {
+        delete IO;
+        IO  =   nullptr;
+    }
+
     return  SUCCESS;
 }
 
@@ -1270,9 +1308,9 @@ player_decode_example
 void    player_decode_example()
 {
     DecodeSetting   setting;
-    setting.io_type     =   IO_Type::DEFAULT;
-    setting.filename   =   "D:/input.avi";
-    setting.subname    =   "D:/input.mkv";
+    setting.io_type     =   IO_Type::FILE_IO;
+    setting.filename   =   "D:/code/test.mkv";     // 使用 D:\\code\\test.mkv 會出錯
+    setting.subname    =   "D:/code/test.mkv";   
 
 
     Player  player;  

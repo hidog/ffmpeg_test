@@ -12,6 +12,7 @@
 #include "video_decode.h"
 #include "sub_decode.h"
 #include "tool.h"
+#include "../IO/input_output.h"
 
 #include <QImage>
 
@@ -29,7 +30,7 @@ struct AVPacket;
 
 
 #ifdef FFMPEG_TEST
-//#define RENDER_SUBTITLE
+#define RENDER_SUBTITLE  // 是否要將字幕加進video frame內
 #endif
 
 
@@ -131,7 +132,13 @@ private:
 #endif
 
     DecodeSetting   setting;
+
+    InputOutput     *IO     =   nullptr;
 };
+
+
+
+int     io_read_data( void *opaque, uint8_t *buf, int buf_size );
 
 
 

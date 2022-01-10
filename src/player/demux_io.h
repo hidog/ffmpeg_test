@@ -4,6 +4,10 @@
 #include "demux.h"
 
 
+class InputOutput;
+
+
+
 
 class DemuxIO : public Demux 
 {
@@ -19,9 +23,12 @@ public:
 
 
     int     open_input() override;
-
+    void    set_IO( InputOutput* _io );
 
 private:
+
+    InputOutput     *IO     =   nullptr; // note: owener is player.
+
 };
 
 
