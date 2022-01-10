@@ -90,6 +90,9 @@
     <ClCompile Include="..\src\IO\input_output.cpp">
       <Filter>IO</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\IO\file_io.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -141,6 +144,9 @@
       <Filter>src\maker</Filter>
     </ClInclude>
     <ClInclude Include="..\src\IO\input_output.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\IO\file_io.h">
       <Filter>IO</Filter>
     </ClInclude>
   </ItemGroup>
