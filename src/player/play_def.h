@@ -7,6 +7,31 @@
 
 
 
+
+enum class IO_Type
+{
+    DEFAULT,
+    FILE_IO,
+    SRT_IO,
+};
+
+
+
+
+
+struct DecodeSetting
+{
+    IO_Type         io_type;
+    std::string     filename;
+    std::string     subname;           // •~±æ¶rπı¿…¶W
+};
+
+
+
+
+
+
+
 enum class SubSourceType
 {
     NONE,

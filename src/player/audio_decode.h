@@ -62,7 +62,7 @@ private:
     //AVCodecID   a_codec_id;
 
 #ifdef FFMPEG_TEST
-    std::string     output_pcm_path =   "J:\\test.pcm";
+    std::string     output_pcm_path =   "H:\\test.pcm";
 #endif
 
 };

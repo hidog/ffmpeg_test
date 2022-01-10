@@ -93,6 +93,9 @@
     <ClCompile Include="..\src\IO\file_io.cpp">
       <Filter>IO</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\player\demux_io.cpp">
+      <Filter>src\player</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -148,6 +151,9 @@
     </ClInclude>
     <ClInclude Include="..\src\IO\file_io.h">
       <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\player\demux_io.h">
+      <Filter>src\player</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

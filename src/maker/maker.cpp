@@ -426,12 +426,7 @@ void    Maker::work_without_subtitle()
 
             auto pkt    =   encoder->get_pkt();
             auto ctx_tb =   encoder->get_timebase();
-            av_packet_rescale_ts( pkt, ctx_tb, st_tb );
-
-            if( encoder == &v_encoder )
-                printf( "video pts = %lld\n", pkt->pts );
-            else
-                printf( "audio pts = %lld\n", pkt->pts );            
+            av_packet_rescale_ts( pkt, ctx_tb, st_tb );         
 
             muxer.write_frame( pkt );
             encoder->unref_pkt();
@@ -507,7 +502,7 @@ void    maker_encode_example()
     //setting.filename    =   "J:\\test2.avi"; 
     //setting.extension   =   "avi";
 
-    setting.has_subtitle    =   true;
+    setting.has_subtitle    =   false;
 
 
 
@@ -518,8 +513,8 @@ void    maker_encode_example()
     //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG2VIDEO;
 
-    v_setting.width     =   640;
-    v_setting.height    =   480;
+    v_setting.width     =   1920;
+    v_setting.height    =   1080;
 
     v_setting.time_base.num     =   1001;
     v_setting.time_base.den     =   24000;
@@ -533,12 +528,12 @@ void    maker_encode_example()
     //v_setting.max_b_frames  =   80;
 
 
-    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
-    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
+    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
+    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
     //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P12LE;
 
-    v_setting.src_width     =   640;
-    v_setting.src_height    =   480;
+    v_setting.src_width     =   1920;
+    v_setting.src_height    =   1080;
     //v_setting.src_pix_fmt   =   AV_PIX_FMT_BGRA;    // for QImage
     v_setting.src_pix_fmt   =   AV_PIX_FMT_BGR24;    // for openCV
 

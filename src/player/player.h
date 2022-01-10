@@ -53,13 +53,15 @@ public:
     int     flush();
     void    stop();
     void    seek( int value, int old_value );
+    void    set( DecodeSetting _setting );
+
 
     //
     bool    demux_need_wait();
-    void    set_input_file( std::string path );
     bool    is_set_input_file();
     int     decode( Decode *dc, AVPacket* pkt );
-    void    set_sub_file( std::string str );
+    //void    set_sub_file( std::string str );
+    int     init_demuxer();
 
     int     decode_video_with_nongraphic_subtitle( AVPacket* pkt );
     void    switch_subtitle( std::string path );
@@ -69,6 +71,7 @@ public:
 
     void    init_subtitle( AVFormatContext *fmt_ctx );
     void    handle_seek();    
+    void    clear_setting();    
 
     int64_t         get_duration_time();
     VideoData       overlap_subtitle_image();
@@ -98,13 +101,13 @@ private:
 
     static constexpr int   MAX_QUEUE_SIZE  =   50;
 
-    Demux           demuxer;
+    Demux*          demuxer     =   nullptr;
     VideoDecode     v_decoder;
     AudioDecode     a_decoder;
     SubDecode       s_decoder;
 
-    std::string     src_file;
-    std::string     sub_name;           // 外掛字幕檔名
+    //std::string     src_file;
+    //std::string     sub_name;           // 外掛字幕檔名
     std::string     new_subtitle_path;  // switch subtitle使用
 
     bool    switch_subtitle_flag    =   false;
@@ -127,6 +130,7 @@ private:
         *audio_decode_thr   =   nullptr;
 #endif
 
+    DecodeSetting   setting;
 };
 
 

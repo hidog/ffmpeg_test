@@ -1,11 +1,9 @@
 #include "player.h"
 #include "tool.h"
+#include "demux_io.h"
 
 #include <thread>
 #include <QPainter>
-
-
-
 
 extern "C" {
 
@@ -102,27 +100,64 @@ std::queue<VideoData>* get_video_queue()
 
 
 
+
+
+/*******************************************************************************
+Player::init_demuxer()
+********************************************************************************/
+int     Player::init_demuxer()
+{
+    if( demuxer != nullptr )
+        MYLOG( LOG::ERROR, "demuxer not null." );
+    if( setting.io_type == IO_Type::DEFAULT )
+    {
+        demuxer     =   new Demux{};
+        if( setting.filename.empty() == true )
+        {
+            MYLOG( LOG::ERROR, "src file is empty." );
+            return  ERROR;   
+        }
+        demuxer->set_input_file( setting.filename );
+    }
+    else
+    {
+        demuxer     =   new DemuxIO{};
+    }
+
+    return  SUCCESS;
+}
+
+
+
+
+
+
+
 /*******************************************************************************
 Player::init()
 ********************************************************************************/
 int     Player::init()
 {
-    if( src_file == "" )
+    int     ret{0};
+
+    // init demux
+    ret     =   init_demuxer();
+    if( ret != SUCCESS )
     {
-        MYLOG( LOG::ERROR, "src file not set." );
-        return  ERROR;
+        MYLOG( LOG::ERROR, "init demux fail." );
+        return  ret;
     }
 
+    //
     stop_flag   =   false;
     seek_flag   =   false;
 
-    int     ret     =   -1;
     AVFormatContext *fmt_ctx    =   nullptr;
 
     //
-    ret     =   demuxer.open_input( src_file );
-    ret     =   demuxer.init();
-    fmt_ctx =   demuxer.get_format_context();
+    ret     =   demuxer->open_input();
+    ret     =   demuxer->init();
+    fmt_ctx =   demuxer->get_format_context();
 
     //
     ret     =   v_decoder.open_codec_context( fmt_ctx );
@@ -135,7 +170,7 @@ int     Player::init()
 
     // handle subtitle
     // 有遇到影片會在這邊卡很久, 或許可以考慮用multi-thread的方式做處理, 以後再說...
-    init_subtitle(fmt_ctx);
+    //init_subtitle(fmt_ctx);
 
     return SUCCESS;
 }
@@ -188,15 +223,15 @@ void    Player::init_subtitle( AVFormatContext *fmt_ctx )
     if( s_decoder.exist_stream() == true )
     {
         exist_subtitle  =   true;
-        s_decoder.set_subfile( src_file );
+        s_decoder.set_subfile( setting.filename );
         s_decoder.set_sub_src_type( SubSourceType::EMBEDDED );
     }
     else
     {
-        if( sub_name.empty() == false )
+        if( setting.subname.empty() == false )
         {
             exist_subtitle  =   true;
-            s_decoder.set_subfile( sub_name );
+            s_decoder.set_subfile( setting.subname );
             s_decoder.set_sub_src_type( SubSourceType::FROM_FILE );
         }
         else
@@ -251,10 +286,10 @@ Player::Player()
 /*******************************************************************************
 Player::set_sub_file()
 ********************************************************************************/
-void Player::set_sub_file( std::string str )
+/*void Player::set_sub_file( std::string str )
 {
-    sub_name    =   str;
-}
+    subname    =   str;
+}*/
 
 
 
@@ -263,9 +298,9 @@ void Player::set_sub_file( std::string str )
 /*******************************************************************************
 Player::Player()
 ********************************************************************************/
-void    Player::set_input_file( std::string path )
+void    Player::set( DecodeSetting _setting )
 {
-    src_file    =   path;
+    setting     =   _setting;
 }
 
 
@@ -276,7 +311,7 @@ Player::is_set_input_file()
 ********************************************************************************/
 bool    Player::is_set_input_file()
 {
-    return  src_file.size() != 0;
+    return  setting.filename.empty();
 }
 
 
@@ -328,7 +363,9 @@ Player::get_duration_time
 ********************************************************************************/
 int64_t     Player::get_duration_time()
 {
-    return  demuxer.get_duration_time();
+    if( demuxer == nullptr )  
+        MYLOG( LOG::ERROR, "demuxer is null." );
+    return  demuxer->get_duration_time();
 }
 
 
@@ -387,6 +424,9 @@ frame   =   dc->get_frame();
 ********************************************************************************/
 void    Player::play()
 {
+    if( demuxer == nullptr )
+        MYLOG( LOG::ERROR, "demuxer is null." );
+
     int         count   =   0;
     int         ret     =   0;
     AVPacket*   pkt     =   nullptr;
@@ -396,14 +436,14 @@ void    Player::play()
     // read frames from the file 
     while( true ) 
     {
-        ret     =   demuxer.demux();
+        ret     =   demuxer->demux();
         if( ret < 0 )
         {
             printf("play end.\n");
             break;
         }
         
-        pkt     =   demuxer.get_packet();
+        pkt     =   demuxer->get_packet();
         if( v_decoder.find_index(pkt->stream_index) )
             dc  =   dynamic_cast<Decode*>(&v_decoder);        
         else if( a_decoder.find_index(pkt->stream_index) )
@@ -413,7 +453,7 @@ void    Player::play()
         else        
         {
             MYLOG( LOG::ERROR, "stream type not handle.");
-            demuxer.unref_packet();
+            demuxer->unref_packet();
             continue;
         }
 
@@ -443,7 +483,7 @@ void    Player::play()
                 }
             }
         }
-        demuxer.unref_packet();
+        demuxer->unref_packet();
     }
 
     // flush
@@ -767,7 +807,7 @@ void    Player::handle_seek()
     s_decoder.flush_for_seek();
 
     // run seek.
-    AVFormatContext*    fmt_ctx     =   demuxer.get_format_context();
+    AVFormatContext*    fmt_ctx     =   demuxer->get_format_context();
     avformat_flush( fmt_ctx );  // 看起來是走網路才需要做這個動作,但不確定
 
     int64_t     so  =   seek_old,
@@ -823,7 +863,7 @@ void    Player::play_QT()
         }
 
         //
-        ret     =   demuxer.demux();
+        ret     =   demuxer->demux();
         if( ret < 0 )
         {
             MYLOG( LOG::INFO, "demux finish.");
@@ -831,7 +871,7 @@ void    Player::play_QT()
         }
 
         //
-        pkt     =   demuxer.get_packet();
+        pkt     =   demuxer->get_packet();
         if( v_decoder.find_index( pkt->stream_index ) == true )
             dc  =   dynamic_cast<Decode*>(&v_decoder);
         else if( a_decoder.find_index( pkt->stream_index ) == true )
@@ -841,13 +881,13 @@ void    Player::play_QT()
         else
         {
             MYLOG( LOG::ERROR, "stream type not handle.");
-            demuxer.unref_packet();
+            demuxer->unref_packet();
             continue;
         }
 
         //
         decode( dc, pkt );       
-        demuxer.unref_packet();
+        demuxer->unref_packet();
     }
 
     //
@@ -1109,20 +1149,41 @@ int    Player::flush()
 
 
 
+
+/*******************************************************************************
+Player::end()
+********************************************************************************/
+void    Player::clear_setting()
+{
+    setting.filename.clear();
+    setting.subname.clear();
+}
+
+
+
+
+
 /*******************************************************************************
 Player::end()
 ********************************************************************************/
 int     Player::end()
 {
+    clear_setting();
+
     v_decoder.end();
     a_decoder.end();
     s_decoder.end();
-    demuxer.end();
-
-    sub_name.clear();
+    //subname.clear();
 
     stop_flag   =   false;
     seek_flag   =   false;
+
+    //
+    if( demuxer == nullptr )
+        MYLOG( LOG::ERROR, "demuxer is null." );
+    demuxer->end();
+    delete demuxer;
+    demuxer =   nullptr;
 
     return  SUCCESS;
 }
@@ -1208,11 +1269,15 @@ player_decode_example
 ********************************************************************************/
 void    player_decode_example()
 {
+    DecodeSetting   setting;
+    setting.io_type     =   IO_Type::DEFAULT;
+    setting.filename   =   "D:/input.avi";
+    setting.subname    =   "D:/input.mkv";
+
+
     Player  player;  
 
-    player.set_input_file("D:/input.avi");
-    //player.set_sub_file("D:/input.mkv");
-
+    player.set( setting );
     player.init();
 
     player.set_output_jpg_root( "H:\\jpg" );

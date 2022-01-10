@@ -79,6 +79,18 @@ int    Demux::init()
 
 
 
+
+/*******************************************************************************
+Demux::set_input_file()
+********************************************************************************/
+void    Demux::set_input_file( std::string fn )
+{
+    filename    =   fn;
+}
+
+
+
+
 /*******************************************************************************
 Demux::stream_info()
 ********************************************************************************/
@@ -140,17 +152,17 @@ int     Demux::end()
 /*******************************************************************************
 Demux::open_input()
 ********************************************************************************/
-int     Demux::open_input( std::string src_file )
+int     Demux::open_input()
 {
     fmt_ctx     =   avformat_alloc_context();    
     int  ret    =   0;
 
-    MYLOG( LOG::INFO, "load file %s", src_file.c_str() );
-    ret     =   avformat_open_input( &fmt_ctx, src_file.c_str(), NULL, NULL );
+    MYLOG( LOG::INFO, "load file %s", filename.c_str() );
+    ret     =   avformat_open_input( &fmt_ctx, filename.c_str(), NULL, NULL );
 
     if( ret < 0 )
     {
-        MYLOG( LOG::ERROR, "Could not open source file %s", src_file.c_str() );
+        MYLOG( LOG::ERROR, "Could not open source file %s", filename.c_str() );
         return  ERROR;
     }
 
@@ -163,10 +175,14 @@ int     Demux::open_input( std::string src_file )
     }
 
     // dump input information to stderr 
-    av_dump_format( fmt_ctx, 0, src_file.c_str(), 0 );
+    av_dump_format( fmt_ctx, 0, filename.c_str(), 0 );
 
     return  SUCCESS;
 }
+
+
+
+
 
 
 
