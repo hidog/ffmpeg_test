@@ -313,6 +313,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </ClCompile>
     <ClCompile Include="..\src\IO\file_io.cpp" />
     <ClCompile Include="..\src\IO\input_output.cpp" />
+    <ClCompile Include="..\src\IO\srt_io.cpp" />
     <ClCompile Include="..\src\maker\audio_encode.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
     </ClCompile>
@@ -342,6 +343,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </ClInclude>
     <ClInclude Include="..\src\IO\file_io.h" />
     <ClInclude Include="..\src\IO\input_output.h" />
+    <ClInclude Include="..\src\IO\srt_io.h" />
     <ClInclude Include="..\src\maker\audio_encode.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
     </ClInclude>
