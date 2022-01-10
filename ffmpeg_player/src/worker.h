@@ -43,6 +43,9 @@ private:
     bool    is_set_video    =   false;
     bool    is_play_end     =   true;
 
+    std::string     filename;
+    std::string     subname;
+
 };
 
 

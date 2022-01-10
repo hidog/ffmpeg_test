@@ -78,7 +78,13 @@ void    Worker::run()
     AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
     VideoWorker     *vw     =   dynamic_cast<MainWindow*>(parent())->get_video_worker();
    
+    DecodeSetting   setting;
+    setting.io_type     =   IO_Type::FILE_IO;
+    setting.filename    =   filename;
+    setting.subname     =   subname;
+
     //
+    player.set(setting);
     player.init();
     int     duration    =   static_cast<int>(player.get_duration_time());
     emit    duration_signal( duration );
@@ -179,13 +185,15 @@ void    Worker::set_src_file( std::string file )
 {
     QString     str;
 
-    player.set_input_file(file);
+    filename    =   file;
+    //player.set_input_file(file);
     auto list   =   get_subtitle_files(file);
 
     if( list.size() > 0 )
     {
-        str     =   list.at(0);
-        player.set_sub_file( str.toStdString() ); // 未來做成可以多重輸入
+        str         =   list.at(0);
+        //player.set_sub_file( str.toStdString() ); // 未來做成可以多重輸入
+        subname     =   str.toStdString();
 
         emit subtitle_list_signal(list);
     }
