@@ -79,9 +79,12 @@ void    Worker::run()
     VideoWorker     *vw     =   dynamic_cast<MainWindow*>(parent())->get_video_worker();
    
     DecodeSetting   setting;
-    setting.io_type     =   IO_Type::FILE_IO;
-    setting.filename    =   filename;
-    setting.subname     =   subname;
+    //setting.io_type     =   IO_Type::FILE_IO;
+    //setting.filename    =   filename;
+    //setting.subname     =   subname;
+    setting.io_type     =   IO_Type::SRT_IO;
+    setting.srt_port    =   "1234";
+
 
     //
     player.set(setting);
