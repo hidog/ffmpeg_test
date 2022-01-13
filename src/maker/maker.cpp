@@ -1,5 +1,6 @@
 #include "maker.h"
 #include "tool.h"
+#include "mux_io.h"
 
 
 extern "C" {
@@ -37,9 +38,10 @@ void Maker::init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEnc
 {
     setting     =   _setting;
 
-    muxer.init( setting );
+    muxer   =   new MuxIO;
+    muxer->init( setting );
 
-    bool    need_global_header  =   muxer.is_need_global_header();
+    bool    need_global_header  =   muxer->is_need_global_header();
 
     v_encoder.init( 0, v_setting, need_global_header );
     a_encoder.init( 1, a_setting, need_global_header );
@@ -51,7 +53,7 @@ void Maker::init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEnc
     auto a_ctx  =   a_encoder.get_ctx();
     auto s_ctx  =   s_encoder.get_ctx();
 
-    muxer.open( setting, v_ctx, a_ctx, s_ctx );
+    muxer->open( setting, v_ctx, a_ctx, s_ctx );
 }
 
 
@@ -68,7 +70,7 @@ void    Maker::work_with_subtitle()
     int     ret     =   0;
 
     s_encoder.load_all_subtitle();
-    muxer.write_header();
+    muxer->write_header();
 
     AVRational  v_time_base     =   v_encoder.get_timebase();
     AVRational  a_time_base     =   a_encoder.get_timebase();
@@ -97,7 +99,7 @@ void    Maker::work_with_subtitle()
             auto pkt        =   enc->get_pkt();
             auto ctx_tb     =   enc->get_timebase();
             av_packet_rescale_ts( pkt, ctx_tb, st_tb );
-            muxer.write_frame( pkt );
+            muxer->write_frame( pkt );
         } 
         enc->set_flush(true);
     };
@@ -119,7 +121,7 @@ void    Maker::work_with_subtitle()
             // 例如聲音比影像短, 導致 flush 階段的 audio frame pts 在 video frame 前面, 但寫入卻在後面.
             if( v_encoder.is_flush() == false )
             {
-                st_tb   =   muxer.get_video_stream_timebase();
+                st_tb   =   muxer->get_video_stream_timebase();
                 flush_func( &v_encoder );
             }
         }
@@ -127,7 +129,7 @@ void    Maker::work_with_subtitle()
         {
             if( a_encoder.is_flush() == false )
             {
-                st_tb   =   muxer.get_audio_stream_timebase();
+                st_tb   =   muxer->get_audio_stream_timebase();
                 flush_func( &a_encoder );  
             }
         }
@@ -213,16 +215,16 @@ void    Maker::work_with_subtitle()
         {
             encoder =   &v_encoder;
             frame   =   v_frame;
-            st_tb   =   muxer.get_video_stream_timebase();
+            st_tb   =   muxer->get_video_stream_timebase();
         }
         else if( order == EncodeOrder::AUDIO ) // audio
         {
             encoder =   &a_encoder;
             frame   =   a_frame;
-            st_tb   =   muxer.get_audio_stream_timebase();
+            st_tb   =   muxer->get_audio_stream_timebase();
         }
         else if( order == EncodeOrder::SUBTITLE ) // subtitle        
-            st_tb   =   muxer.get_sub_stream_timebase();
+            st_tb   =   muxer->get_sub_stream_timebase();
         else
             assert(0);
 
@@ -241,7 +243,7 @@ void    Maker::work_with_subtitle()
             pkt->dts         =   pkt->pts;
             s_encoder.set_last_pts( pkt->pts );
 
-            muxer.write_frame( pkt );
+            muxer->write_frame( pkt );
             // 實驗看看到底需不需要 unref.
             s_encoder.unref_subtitle();
             //s_encoder.unref_pkt();
@@ -264,7 +266,7 @@ void    Maker::work_with_subtitle()
                 ctx_tb =   encoder->get_timebase();
                 av_packet_rescale_ts( pkt, ctx_tb, st_tb );
 
-                muxer.write_frame( pkt );
+                muxer->write_frame( pkt );
                 encoder->unref_pkt();
             }  
             // update frame
@@ -282,23 +284,23 @@ void    Maker::work_with_subtitle()
     // flush subtitle    
     s_encoder.generate_flush_pkt();
     pkt     =   s_encoder.get_pkt();
-    muxer.write_frame( pkt );
+    muxer->write_frame( pkt );
     
     // flush
     if( v_encoder.is_flush() == false )
     {
-        st_tb   =   muxer.get_video_stream_timebase();
+        st_tb   =   muxer->get_video_stream_timebase();
         flush_func( &v_encoder );
     }
 
     if( a_encoder.is_flush() == false )
     {
-        st_tb   =   muxer.get_audio_stream_timebase();
+        st_tb   =   muxer->get_audio_stream_timebase();
         flush_func( &a_encoder );
     }
 
     //
-    muxer.write_end();
+    muxer->write_end();
 }
 
 
@@ -310,7 +312,7 @@ void    Maker::work_without_subtitle()
 {
     int ret;
 
-    muxer.write_header();
+    muxer->write_header();
 
     AVRational v_time_base  =   v_encoder.get_timebase();
     AVRational a_time_base  =   a_encoder.get_timebase();
@@ -338,7 +340,7 @@ void    Maker::work_without_subtitle()
             auto pkt        =   enc->get_pkt();
             auto ctx_tb     =   enc->get_timebase();
             av_packet_rescale_ts( pkt, ctx_tb, st_tb );
-            muxer.write_frame( pkt );
+            muxer->write_frame( pkt );
         } 
         enc->set_flush(true);
     };
@@ -356,7 +358,7 @@ void    Maker::work_without_subtitle()
             // 必須在這邊處理,等loop完再處理有機會造成stream flush的部分寫入時間錯誤.  (例如聲音比影像短)
             if( v_encoder.is_flush() == false )
             {
-                st_tb   =   muxer.get_video_stream_timebase();
+                st_tb   =   muxer->get_video_stream_timebase();
                 flush_func( &v_encoder );
             }
             result     =   1;
@@ -365,7 +367,7 @@ void    Maker::work_without_subtitle()
         {
             if( a_encoder.is_flush() == false )
             {
-                st_tb   =   muxer.get_audio_stream_timebase();
+                st_tb   =   muxer->get_audio_stream_timebase();
                 flush_func( &a_encoder );  
             }
             result     =   -1;
@@ -395,13 +397,13 @@ void    Maker::work_without_subtitle()
         {
             encoder =   &v_encoder;
             frame   =   v_frame;
-            st_tb   =   muxer.get_video_stream_timebase();
+            st_tb   =   muxer->get_video_stream_timebase();
         }
         else if( a_frame != nullptr ) // audio
         {
             encoder =   &a_encoder;
             frame   =   a_frame;
-            st_tb   =   muxer.get_audio_stream_timebase();
+            st_tb   =   muxer->get_audio_stream_timebase();
         }
         else
         {
@@ -428,7 +430,7 @@ void    Maker::work_without_subtitle()
             auto ctx_tb =   encoder->get_timebase();
             av_packet_rescale_ts( pkt, ctx_tb, st_tb );         
 
-            muxer.write_frame( pkt );
+            muxer->write_frame( pkt );
             encoder->unref_pkt();
         }  
 
@@ -442,19 +444,23 @@ void    Maker::work_without_subtitle()
     // flush
     if( v_encoder.is_flush() == false )
     {
-        st_tb   =   muxer.get_video_stream_timebase();
+        st_tb   =   muxer->get_video_stream_timebase();
         flush_func( &v_encoder );
     }
 
     if( a_encoder.is_flush() == false )
     {
-        st_tb   =   muxer.get_audio_stream_timebase();
+        st_tb   =   muxer->get_audio_stream_timebase();
         flush_func( &a_encoder );
     }
 
     //
-    muxer.write_end();
+    muxer->write_end();
 }
+
+
+
+
 
 
 /*******************************************************************************
@@ -481,7 +487,10 @@ void Maker::end()
     v_encoder.end();
     a_encoder.end();
     s_encoder.end();
-    muxer.end();
+
+    muxer->end();
+    delete muxer;
+    muxer   =   nullptr;
 }
 
 

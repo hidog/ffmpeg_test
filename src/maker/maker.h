@@ -35,7 +35,7 @@ public:
 
 private:
 
-    Mux     muxer;
+    Mux*    muxer  =   nullptr;
 
     AudioEncode     a_encoder;
     VideoEncode     v_encoder;

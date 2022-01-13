@@ -33,6 +33,9 @@ private:
     InputOutput     *IO     =   nullptr;
     DecodeSetting   setting;
 
+    static constexpr    int     FFMPEG_INPUT_BUFFER_SIZE    =   4096;
+	uint8_t     input_buf[FFMPEG_INPUT_BUFFER_SIZE];
+
 };
 
 

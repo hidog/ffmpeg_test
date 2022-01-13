@@ -61,6 +61,8 @@ DemuxIO::end()
 ********************************************************************************/
 int    DemuxIO::end()
 {
+    // need add release code.
+
     IO->close();
     Demux::end();
 
@@ -83,8 +85,7 @@ int     DemuxIO::open_input()
     int  ret    =   0;
 
 	AVInputFormat*  input_fmt   =   nullptr;
-	uint8_t*        input_buf   =   (uint8_t*)av_malloc(4096);
-	AVIOContext*    io_ctx      =   avio_alloc_context( input_buf, 4096, 0, (void*)IO, io_read_data, nullptr, nullptr );
+	AVIOContext*    io_ctx      =   avio_alloc_context( input_buf, FFMPEG_INPUT_BUFFER_SIZE, 0, (void*)IO, io_read_data, nullptr, nullptr );
 
     ret         =   av_probe_input_buffer( io_ctx, &input_fmt, nullptr, nullptr, 0, 0 );
 	fmt_ctx->pb =   io_ctx;

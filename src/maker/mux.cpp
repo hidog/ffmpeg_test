@@ -52,7 +52,7 @@ void Mux::end()
 /*******************************************************************************
 Mux::init()
 ********************************************************************************/
-void Mux::init( EncodeSetting setting )
+void    Mux::init( EncodeSetting setting )
 {
     int             ret;
     AVDictionary    *opt    =   nullptr;
@@ -92,8 +92,6 @@ void Mux::init( EncodeSetting setting )
             MYLOG( LOG::ERROR, "a_stream is nullptr." );
         s_stream->id    =   output_ctx->nb_streams - 1;
     }
-
-
 }
 
 
@@ -122,7 +120,7 @@ void    Mux::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext*
     //
     int     ret     =   0;
 
-    // after open
+    // after avcodec_open2
     ret     =   avcodec_parameters_from_context( v_stream->codecpar, v_ctx );
     assert( ret == 0 );
     ret     =   avcodec_parameters_from_context( a_stream->codecpar, a_ctx );

@@ -5,6 +5,9 @@
 #include "mux.h"
 
 
+struct AVIOContext;
+
+
 
 class MuxIO : public Mux
 {
@@ -19,8 +22,18 @@ public:
     MuxIO& operator = ( const MuxIO& ) = delete;
     MuxIO& operator = ( MuxIO&& ) = delete;
 
+    void    open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, AVCodecContext* s_ctx ) override;
+    void    init( EncodeSetting setting ) override;
+    void    write_end() override;
+    void    end() override;
+
+
 private:
 
+    static constexpr    int     FFMPEG_OUTPUT_BUFFER_SIZE    =   4096;
+	uint8_t     output_buf[FFMPEG_OUTPUT_BUFFER_SIZE];
+
+    AVIOContext*    io_ctx  =   nullptr;
 
 };
 
