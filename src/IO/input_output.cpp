@@ -53,11 +53,23 @@ InputOutput*    create_IO( IO_Type io_type, IO_Direction dir )
 
 
 /*******************************************************************************
-InputOutput::get_setting
+InputOutput::get_decode_setting
 ********************************************************************************/
-DecodeSetting&   InputOutput::get_setting()
+DecodeSetting&   InputOutput::get_decode_setting()
 {
-    return  setting;
+    return  decode_setting;
+}
+
+
+
+
+
+/*******************************************************************************
+InputOutput::get_encode_setting
+********************************************************************************/
+EncodeSetting&   InputOutput::get_encode_setting()
+{
+    return  encode_setting;
 }
 
 
@@ -77,9 +89,22 @@ IO_Direction    InputOutput::get_direction()
 
 
 /*******************************************************************************
-InputOutput::set
+InputOutput::set_decode
 ********************************************************************************/
-void    InputOutput::set( DecodeSetting _setting )
+void    InputOutput::set_decode( DecodeSetting _setting )
 {
-    setting     =   _setting;
+    decode_setting     =   _setting;
+}
+
+
+
+
+
+
+/*******************************************************************************
+InputOutput::set_encode
+********************************************************************************/
+void    InputOutput::set_encode( EncodeSetting _setting )
+{
+    encode_setting     =   _setting;
 }

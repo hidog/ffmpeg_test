@@ -22,7 +22,7 @@ DemuxIO::DemuxIO( DecodeSetting _st )
 {
     setting     =   _st;
     IO          =   create_IO( setting.io_type, IO_Direction::RECV );
-    IO->set( setting );
+    IO->set_decode( setting );
 }
 
 

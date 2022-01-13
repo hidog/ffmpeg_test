@@ -37,6 +37,8 @@ public:
     void    client_end();
 
     // use for server.
+    int     write( uint8_t *buf, int buf_size ) override;
+
     void    server_init();
     void    server_open();
 

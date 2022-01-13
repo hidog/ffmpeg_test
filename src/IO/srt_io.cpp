@@ -131,7 +131,7 @@ SrtIO::client_open()
 ********************************************************************************/
 void    SrtIO::client_open()
 {    
-    DecodeSetting&  setting     =   get_setting();
+    DecodeSetting&  setting     =   get_decode_setting();
 
     addrinfo    hints, *peer = nullptr;
 
@@ -371,6 +371,22 @@ int     SrtIO::read( uint8_t *buf, int buf_size )
 
     return  read_size;
 }
+
+
+
+
+
+
+/*******************************************************************************
+SrtIO::write()
+********************************************************************************/
+int     SrtIO::write( uint8_t *buf, int buf_size )
+{
+    assert(0);
+    return  0;
+}
+
+
 
 
 

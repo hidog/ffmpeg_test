@@ -1,5 +1,6 @@
 #include "mux_io.h"
 #include "tool.h"
+#include "maker.h"
 
 
 extern "C" {
@@ -35,18 +36,18 @@ MuxIO::~MuxIO()
 
 
 
-int     write_function( void *opaque, uint8_t *buffer, int size )
+
+/*******************************************************************************
+MuxIO::init_IO()
+********************************************************************************/
+void    MuxIO::init_IO( EncodeSetting setting )
 {
-    static FILE *fp = fopen( "H:\\output.mp4", "wb+" );
-
-    int ret = fwrite( buffer, 1, size, fp );
-    if( ret == 0 )
-        return EOF;
-
-    return  ret;
+    assert( setting.io_type != IO_Type::DEFAULT );  // defulat use for mux.
+    assert( IO == nullptr );
+    IO  =   create_IO( setting.io_type, IO_Direction::SEND );
+    IO->set_encode( setting );
+    IO->init();
 }
-
-
 
 
 
@@ -57,6 +58,9 @@ MuxIO::init()
 ********************************************************************************/
 void    MuxIO::init( EncodeSetting setting )
 {
+    init_IO( setting );
+
+    //
     int             ret;
     AVDictionary    *opt    =   nullptr;
 
@@ -108,6 +112,10 @@ void    MuxIO::end()
     avio_context_free( &io_ctx );
     io_ctx  =   nullptr;
 
+    IO->close();
+    delete IO;
+    IO  =   nullptr;
+
     Mux::end();
 }
 
@@ -135,9 +143,11 @@ MuxIO::open()
 ********************************************************************************/
 void    MuxIO::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, AVCodecContext* s_ctx )
 {
+    IO->open();
+
     int     ret     =   0;
 	
-    io_ctx  =   avio_alloc_context( output_buf, FFMPEG_OUTPUT_BUFFER_SIZE, 1, this, nullptr, write_function, nullptr );
+    io_ctx  =   avio_alloc_context( output_buf, FFMPEG_OUTPUT_BUFFER_SIZE, 1, (void*)IO, nullptr, io_write_data, nullptr );
     if( io_ctx == nullptr )
         MYLOG( LOG::ERROR, "io_ctx is null." );
     
@@ -145,12 +155,9 @@ void    MuxIO::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContex
     ret     =   av_dict_set( &(output_ctx->metadata), "service_name", "hidog test", 0 );
     if( ret < 0 )
         MYLOG( LOG::ERROR, "set service_name fail." );
-
     
     output_ctx->pb      =   io_ctx;
     output_ctx->flags   =   AVFMT_FLAG_CUSTOM_IO;
-	
-
 
     if( v_ctx == nullptr || a_ctx == nullptr )
         MYLOG( LOG::ERROR, "v ctx or a ctx is null" );
@@ -163,7 +170,6 @@ void    MuxIO::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContex
     a_stream->time_base     =   a_ctx->time_base;
     if( setting.has_subtitle == true )
         s_stream->time_base     =   s_ctx->time_base;
-
     
     // 
     ret     =   avcodec_parameters_from_context( v_stream->codecpar, v_ctx );

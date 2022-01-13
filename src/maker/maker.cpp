@@ -30,6 +30,20 @@ Maker::~Maker()
 
 
 
+/*******************************************************************************
+Maker::init_muxer()
+********************************************************************************/
+void    Maker::init_muxer()
+{
+    if( setting.io_type == IO_Type::DEFAULT )    
+        muxer   =   new Mux;    
+    else     
+        muxer   =   new MuxIO;
+    muxer->init( setting );
+}
+
+
+
 
 /*******************************************************************************
 Maker::init()
@@ -38,8 +52,7 @@ void Maker::init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEnc
 {
     setting     =   _setting;
 
-    muxer   =   new MuxIO;
-    muxer->init( setting );
+    init_muxer();
 
     bool    need_global_header  =   muxer->is_need_global_header();
 
@@ -502,14 +515,17 @@ maker_encode_example
 ********************************************************************************/
 void    maker_encode_example()
 {
-    EncodeSetting   setting;    
+    EncodeSetting   setting;
+    //setting.io_type =   IO_Type::DEFAULT;
+    setting.io_type =   IO_Type::FILE_IO;
+
     // rmvb 是 variable bitrate. 目前還無法使用
-    setting.filename    =   "H:\\output.mkv";
-    setting.extension   =   "matroska";
+    //setting.filename    =   "H:\\output.mkv";
+    //setting.extension   =   "matroska";
     //setting.filename    =   "H:\\output.mp4";
     //setting.extension   =   "mp4";
-    //setting.filename    =   "J:\\test2.avi"; 
-    //setting.extension   =   "avi";
+    setting.filename    =   "H:\\test.avi"; 
+    setting.extension   =   "avi";
 
     setting.has_subtitle    =   false;
 
@@ -576,4 +592,19 @@ void    maker_encode_example()
     maker.init( setting, v_setting, a_setting, s_setting );
     maker.work();
     maker.end();
+}
+
+
+
+
+
+
+/*******************************************************************************
+io_write_data
+********************************************************************************/
+int     io_write_data( void *opaque, uint8_t *buf, int buf_size )
+{
+    InputOutput*    io  =   (InputOutput*)opaque;
+    int     ret     =   io->write( buf, buf_size );
+    return  ret;
 }

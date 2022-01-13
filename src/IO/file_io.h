@@ -18,7 +18,8 @@ public:
 
     void    init() override;
     void    open() override;
-    int     read( uint8_t *buf, int buf_size ) override;
+    int     read( uint8_t *buffer, int size ) override;
+    int     write( uint8_t *buffer, int size ) override;
     void    close() override;
 
 

@@ -3,6 +3,7 @@
 
 
 #include "../player/play_def.h"
+#include "../maker/maker_def.h"
 
 
 class InputOutput
@@ -17,19 +18,23 @@ public:
     InputOutput& operator = ( const InputOutput& ) = delete;
     InputOutput& operator = ( InputOutput&& ) = delete;
 
-    void    set( DecodeSetting _setting );
+    void    set_decode( DecodeSetting _setting );
+    void    set_encode( EncodeSetting _setting );
 
     virtual void    init()  =   0;
     virtual void    open()  =   0;
     virtual int     read( uint8_t *buf, int buf_size ) =  0;
+    virtual int     write( uint8_t *buf, int buf_size ) =  0;
     virtual void    close() =   0;
 
 protected:
-    DecodeSetting&  get_setting();
+    DecodeSetting&  get_decode_setting();
+    EncodeSetting&  get_encode_setting();
     IO_Direction    get_direction();
 
 private:
-    DecodeSetting   setting;
+    DecodeSetting   decode_setting;
+    EncodeSetting   encode_setting;
     IO_Direction    direction;
 
 };

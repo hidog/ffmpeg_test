@@ -50,13 +50,34 @@ FileIO::open()
 ********************************************************************************/
 void    FileIO::open()
 {
-    DecodeSetting&  setting     =   get_setting();
-    std::string     filename    =   setting.filename;
+    IO_Direction    dir         =   get_direction();
 
-    MYLOG( LOG::INFO, "load file %s", filename.c_str() );
-    fp  =   fopen( filename.c_str(), "rb" );
-    if( fp == nullptr )
-        MYLOG( LOG::ERROR, "open file fail." );
+    if( dir == IO_Direction::RECV )
+    {
+        DecodeSetting&  setting     =   get_decode_setting();
+        std::string     filename    =   setting.filename;
+
+        MYLOG( LOG::INFO, "load file %s", filename.c_str() );
+        fp  =   fopen( filename.c_str(), "rb" );
+        if( fp == nullptr )
+            MYLOG( LOG::ERROR, "open file fail." );
+    }
+    else
+    {
+        EncodeSetting&  setting     =   get_encode_setting();
+        
+        switch( IO_Type::FILE_IO )
+        {
+        case IO_Type::FILE_IO:
+            assert( setting.filename.empty() == false );
+            fp  =   fopen( setting.filename.c_str(), "wb+" );
+            if( fp == nullptr )
+                MYLOG( LOG::ERROR, "open file fail." );
+            break;
+        default:
+            assert(0);
+        }
+    }
 }
 
 
@@ -66,7 +87,7 @@ void    FileIO::open()
 /*******************************************************************************
 FileIO::read()
 ********************************************************************************/
-int     FileIO::read( uint8_t *buf, int buf_size )
+int     FileIO::read( uint8_t *buffer, int size )
 {
     if( fp == nullptr )
         MYLOG( LOG::ERROR, "fp not open." );
@@ -74,7 +95,27 @@ int     FileIO::read( uint8_t *buf, int buf_size )
     if( feof(fp) != 0 )
         return  EOF;
 
-    int ret     =   fread( buf, 1, buf_size, fp );
+    int ret     =   fread( buffer, 1, size, fp );
 
     return ret;
 }
+
+
+
+
+
+/*******************************************************************************
+FileIO::write()
+********************************************************************************/
+int     FileIO::write( uint8_t *buf, int buf_size )
+{
+    if( fp == nullptr )
+        MYLOG( LOG::ERROR, "fp not open." );
+
+    int ret     =   fwrite( buf, 1, buf_size, fp );
+    return ret;
+}
+
+
+
+

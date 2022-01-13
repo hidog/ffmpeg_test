@@ -28,6 +28,8 @@ public:
     Maker& operator = ( Maker&& ) = delete;
 
     void    init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting, SubEncodeSetting s_setting );
+    void    init_muxer();
+
     void    work();
     void    work_with_subtitle();
     void    work_without_subtitle();
@@ -45,6 +47,10 @@ private:
 
 };
 
+
+
+
+int     io_write_data( void *opaque, uint8_t *buf, int buf_size );
 
 
 

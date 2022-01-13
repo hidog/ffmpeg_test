@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 #include <string>
-
+#include "../IO/io_def.h"
 
 
 extern "C" {
@@ -29,6 +29,7 @@ enum class EncodeOrder : uint8_t
 
 struct EncodeSetting
 {
+    IO_Type         io_type;
     std::string     filename;
     std::string     extension;
     bool            has_subtitle;

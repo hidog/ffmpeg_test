@@ -3,6 +3,7 @@
 
 
 #include "mux.h"
+#include "../IO/input_output.h"
 
 
 struct AVIOContext;
@@ -27,13 +28,15 @@ public:
     void    write_end() override;
     void    end() override;
 
+    void    init_IO( EncodeSetting setting );
 
 private:
 
     static constexpr    int     FFMPEG_OUTPUT_BUFFER_SIZE    =   4096;
-	uint8_t     output_buf[FFMPEG_OUTPUT_BUFFER_SIZE];
+    uint8_t     output_buf[FFMPEG_OUTPUT_BUFFER_SIZE];
 
     AVIOContext*    io_ctx  =   nullptr;
+    InputOutput*    IO      =   nullptr;
 
 };
 
