@@ -205,7 +205,7 @@ void    SrtIO::server_open()
     while (true)
     {
         handle = srt_accept(serv, (sockaddr*)&clientaddr, &addrlen);
-        if (SRT_INVALID_SOCK == handle)
+        if (SRT_INVALID_SOCK == handle)        
         {
             MYLOG( LOG::INFO, "accept fail." );
         }

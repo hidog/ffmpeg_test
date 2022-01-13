@@ -47,7 +47,7 @@ private:
     std::thread     *thr    =   nullptr;
 
     // use for client
-    constexpr static int    buf_size    =   2000;
+    constexpr static int    buf_size    =   3500;
     int     write_index =   0;
     int     read_index  =   0;
     RecvData    *rd =   nullptr;
