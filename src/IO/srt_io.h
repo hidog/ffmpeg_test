@@ -39,7 +39,7 @@ private:
 
     int write_index = 0;
     int read_index = 0;
-    RecvData rd[500];
+    RecvData rd[2000];
 };
 
 

@@ -8,6 +8,18 @@
 
 SrtIO::SrtIO()
     :   InputOutput()
+{}
+  
+
+
+
+SrtIO::~SrtIO()
+{}
+
+
+
+
+void    SrtIO::init()
 {
     static bool has_init = false;
 
@@ -43,10 +55,13 @@ SrtIO::SrtIO()
 
     write_index = 0;
     read_index = 0;
+}
 
 
 
-
+void    SrtIO::open()
+{
+    // start connect.
     srt_listen(serv, 1000);
 
     sockaddr_storage clientaddr;
@@ -75,28 +90,6 @@ SrtIO::SrtIO()
 
     thr =   new std::thread( &SrtIO::recv_handle, this );
 }
-  
-
-
-
-SrtIO::~SrtIO()
-{}
-
-
-
-
-void    SrtIO::init()
-{
-
-
-}
-
-
-
-void    SrtIO::open()
-{
-
-}
 
 
 
@@ -110,7 +103,7 @@ int     SrtIO::recv_handle()
 
     while(true)
     {
-        if( (write_index+1)%500 == read_index )
+        if( (write_index+1)%2000 == read_index )
         {
             MYLOG( LOG::WARN, "buffer full!!" );
             SLEEP_10MS;
@@ -118,7 +111,7 @@ int     SrtIO::recv_handle()
 
         res = srt_recvmsg( handle, rd[write_index].data, 1316 );
         rd[write_index].size = res;
-        write_index = (write_index+1)%500;
+        write_index = (write_index+1)%2000;
 
         //MYLOG( LOG::DEBUG, "recv size = %d", res );
 
@@ -126,6 +119,8 @@ int     SrtIO::recv_handle()
             break;
     }
 
+    srt_close(handle);
+    handle = -1;
     MYLOG( LOG::INFO, "end recv.");
     return  1;
 }
@@ -146,12 +141,16 @@ void    SrtIO::close()
 int     SrtIO::read( uint8_t *buf, int buf_size )
 {
     while( read_index == write_index )
+    {
+        if( handle == -1 )
+            return -1;
         SLEEP_10MS;
-
+    }
 
     memcpy( buf, rd[read_index].data, rd[read_index].size );
     int read_size = rd[read_index].size;
-    read_index = (read_index+1)%500;
+    read_index = (read_index+1)%2000;
+
     return  read_size;
 }
 
