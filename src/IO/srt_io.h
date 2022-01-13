@@ -26,24 +26,36 @@ public:
     void    init() override;
     void    open() override;
     void    close() override;
+
+    // use for client
     int     read( uint8_t *buf, int buf_size ) override;
 
-    int     recv_handle();
-    void    server_init();
     void    client_init();
+    void    client_open();
+    int     recv_handle();
+    int     next_index( int w );
+    void    client_end();
+
+    // use for server.
+    void    server_init();
+    void    server_open();
 
 private:
+    bool    is_end  =   false;
 
-    constexpr static int    buf_size    =   2000;
-
-    SRTSOCKET       serv    =   -1;
     SRTSOCKET       handle  =   -1;
-    std::thread     *thr;
+    std::thread     *thr    =   nullptr;
+
+    // use for client
+    constexpr static int    buf_size    =   2000;
+    int     write_index =   0;
+    int     read_index  =   0;
+    RecvData    *rd =   nullptr;
+
+    // use for server
+    SRTSOCKET       serv    =   -1;
 
 
-    int write_index = 0;
-    int read_index = 0;
-    RecvData rd[2000];
 };
 
 

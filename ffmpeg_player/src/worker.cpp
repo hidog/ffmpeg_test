@@ -83,6 +83,7 @@ void    Worker::run()
     //setting.filename    =   filename;
     //setting.subname     =   subname;
     setting.io_type     =   IO_Type::SRT_IO;
+    setting.srt_ip      =   "127.0.0.1";
     setting.srt_port    =   "1234";
 
 
