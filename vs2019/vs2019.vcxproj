@@ -320,6 +320,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClCompile Include="..\src\maker\encode.cpp" />
     <ClCompile Include="..\src\maker\maker.cpp" />
     <ClCompile Include="..\src\maker\mux.cpp" />
+    <ClCompile Include="..\src\maker\mux_io.cpp" />
     <ClCompile Include="..\src\maker\sub_encode.cpp" />
     <ClCompile Include="..\src\maker\video_encode.cpp" />
     <ClCompile Include="..\src\player\audio_decode.cpp" />
@@ -352,6 +353,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClInclude Include="..\src\maker\maker.h" />
     <ClInclude Include="..\src\maker\maker_def.h" />
     <ClInclude Include="..\src\maker\mux.h" />
+    <ClInclude Include="..\src\maker\mux_io.h" />
     <ClInclude Include="..\src\maker\sub_encode.h" />
     <ClInclude Include="..\src\maker\video_encode.h" />
     <ClInclude Include="..\src\player\audio_decode.h" />

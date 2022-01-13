@@ -99,6 +99,9 @@
     <ClCompile Include="..\src\IO\srt_io.cpp">
       <Filter>IO</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\maker\mux_io.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -163,6 +166,9 @@
     </ClInclude>
     <ClInclude Include="..\src\IO\io_def.h">
       <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\mux_io.h">
+      <Filter>src\maker</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
