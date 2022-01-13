@@ -3,9 +3,16 @@
 #include <srt.h>
 
 
-#undef ERROR
+#undef ERROR  // 為了避免跟某個 header 的define起衝突 
 
 
+
+
+
+
+/*******************************************************************************
+SrtIO::SrtIO()
+********************************************************************************/
 SrtIO::SrtIO()
     :   InputOutput()
 {}
@@ -13,17 +20,26 @@ SrtIO::SrtIO()
 
 
 
+
+
+/*******************************************************************************
+SrtIO::~SrtIO()
+********************************************************************************/
 SrtIO::~SrtIO()
 {}
 
 
 
 
-void    SrtIO::init()
-{
-    static bool has_init = false;
 
-    // multi-thread 的時候小心, 需要加 mutex lock, 或是用其他global static function 處理
+/*******************************************************************************
+SrtIO::server_init()
+********************************************************************************/
+void    SrtIO::server_init()
+{
+    static bool     has_init    =   false;
+
+    // multi-thread 的時候小心, 需要加 mutex lock, 或是用其他 global static function 處理
     if( has_init == false )
     {
         has_init    =   true;
@@ -31,27 +47,59 @@ void    SrtIO::init()
         srt_setloglevel(srt_logging::LogLevel::debug);
     }
 
+    //
     addrinfo    hints;
     addrinfo*   res;
 
+    int     ret =   0;
+
     memset( &hints, 0, sizeof(struct addrinfo) );
-    hints.ai_flags = AI_PASSIVE;
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags      =   AI_PASSIVE;
+    hints.ai_family     =   AF_INET;
+    hints.ai_socktype   =   SOCK_DGRAM;
 
-    if( 0 != getaddrinfo(NULL, "1234", &hints, &res) )    
-        MYLOG( LOG::ERROR, "getaddrinfo fail." );
-    
+    ret     =   getaddrinfo( NULL, "1234", &hints, &res );
+    if( 0 != ret )    
+        MYLOG( LOG::ERROR, "getaddrinfo fail." );    
 
-    serv = srt_create_socket();
+    //
+    serv    =   srt_create_socket();
+    if( serv == SRT_INVALID_SOCK )
+        MYLOG( LOG::ERROR, "create serv fail." );
 
-    SRT_TRANSTYPE live_mode = SRTT_LIVE;
+    SRT_TRANSTYPE   live_mode   =   SRTT_LIVE;
     srt_setsockopt( serv, 0, SRTO_TRANSTYPE, &live_mode, sizeof(live_mode) );
 
-    if( SRT_ERROR == srt_bind(serv, res->ai_addr, res->ai_addrlen) )
+    ret     =   srt_bind(serv, res->ai_addr, res->ai_addrlen);
+    if( SRT_ERROR == ret )
         MYLOG( LOG::ERROR, "bind fail." );
 
     freeaddrinfo(res);
+}
+
+
+
+
+
+/*******************************************************************************
+SrtIO::client_init()
+********************************************************************************/
+void    SrtIO::client_init()
+{
+
+}
+
+
+
+
+
+
+/*******************************************************************************
+SrtIO::init()
+********************************************************************************/
+void    SrtIO::init()
+{
+    client_init();
 
     write_index = 0;
     read_index = 0;
@@ -59,6 +107,13 @@ void    SrtIO::init()
 
 
 
+
+
+
+
+/*******************************************************************************
+SrtIO::open()
+********************************************************************************/
 void    SrtIO::open()
 {
     // start connect.
@@ -96,6 +151,9 @@ void    SrtIO::open()
 
 
 
+/*******************************************************************************
+SrtIO::recv_handle()
+********************************************************************************/
 int     SrtIO::recv_handle()
 {
     MYLOG( LOG::INFO, "start recv." );
@@ -128,6 +186,9 @@ int     SrtIO::recv_handle()
 
 
 
+/*******************************************************************************
+SrtIO::close()
+********************************************************************************/
 void    SrtIO::close()
 {
     thr->join();
@@ -138,6 +199,9 @@ void    SrtIO::close()
 
 
 
+/*******************************************************************************
+SrtIO::read()
+********************************************************************************/
 int     SrtIO::read( uint8_t *buf, int buf_size )
 {
     while( read_index == write_index )
@@ -157,4 +221,5 @@ int     SrtIO::read( uint8_t *buf, int buf_size )
 
 
 
-#define ERROR 0
+
+#define ERROR 0   // 參考 #undef 的註解

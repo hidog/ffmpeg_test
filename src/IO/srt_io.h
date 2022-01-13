@@ -11,8 +11,8 @@ typedef int SRTSOCKET;
 
 struct RecvData
 {
-    char data[1316];
-    int size;
+    char    data[1316];
+    int     size;
 };
 
 
@@ -26,14 +26,18 @@ public:
     void    init() override;
     void    open() override;
     void    close() override;
-
     int     read( uint8_t *buf, int buf_size ) override;
+
     int     recv_handle();
+    void    server_init();
+    void    client_init();
 
 private:
 
-    SRTSOCKET       serv;
-    SRTSOCKET       handle;
+    constexpr static int    buf_size    =   2000;
+
+    SRTSOCKET       serv    =   -1;
+    SRTSOCKET       handle  =   -1;
     std::thread     *thr;
 
 

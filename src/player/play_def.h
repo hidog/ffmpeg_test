@@ -4,15 +4,7 @@
 
 #include <stdint.h>
 #include <QImage>
-
-
-
-enum class IO_Type
-{
-    DEFAULT,
-    FILE_IO,
-    SRT_IO,
-};
+#include "../IO/io_def.h"
 
 
 
@@ -28,8 +20,6 @@ struct DecodeSetting
     std::string     srt_ip;
     std::string     srt_port;
 };
-
-
 
 
 

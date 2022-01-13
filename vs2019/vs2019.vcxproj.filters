@@ -161,5 +161,8 @@
     <ClInclude Include="..\src\IO\srt_io.h">
       <Filter>IO</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\IO\io_def.h">
+      <Filter>IO</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
