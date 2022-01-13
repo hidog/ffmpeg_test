@@ -9,7 +9,8 @@
 /*******************************************************************************
 InputOutput::InputOutput()
 ********************************************************************************/
-InputOutput::InputOutput()
+InputOutput::InputOutput( IO_Direction dir )
+    :   direction(dir)
 {}
 
 
@@ -28,17 +29,17 @@ InputOutput::~InputOutput()
 /*******************************************************************************
 create_IO
 ********************************************************************************/
-InputOutput*    create_IO( IO_Type io_type )
+InputOutput*    create_IO( IO_Type io_type, IO_Direction dir )
 {
     InputOutput     *ptr    =   nullptr;
 
     switch( io_type )
     {
     case IO_Type::FILE_IO :
-        ptr     =   new FileIO;
+        ptr     =   new FileIO{ dir };
         break;
     case IO_Type::SRT_IO:
-        ptr     =   new SrtIO;
+        ptr     =   new SrtIO{ dir };
         break;
     default:
         assert(0);
@@ -54,9 +55,21 @@ InputOutput*    create_IO( IO_Type io_type )
 /*******************************************************************************
 InputOutput::get_setting
 ********************************************************************************/
-DecodeSetting   InputOutput::get_setting()
+DecodeSetting&   InputOutput::get_setting()
 {
     return  setting;
+}
+
+
+
+
+
+/*******************************************************************************
+InputOutput::get_setting
+********************************************************************************/
+IO_Direction    InputOutput::get_direction()
+{
+    return  direction;
 }
 
 

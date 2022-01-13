@@ -20,7 +20,7 @@ struct RecvData
 class SrtIO : public InputOutput
 {
 public:
-    SrtIO();
+    SrtIO( IO_Direction dir );
     ~SrtIO();
 
     void    init() override;

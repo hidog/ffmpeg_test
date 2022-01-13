@@ -7,7 +7,7 @@
 class FileIO : public InputOutput
 {
 public:
-    FileIO();
+    FileIO( IO_Direction dir );
     ~FileIO();
 
     FileIO( const FileIO& ) = delete;

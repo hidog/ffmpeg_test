@@ -8,7 +8,7 @@
 class InputOutput
 {
 public:
-    InputOutput();
+    InputOutput( IO_Direction dir );
     virtual ~InputOutput();
 
     InputOutput( const InputOutput& ) = delete;
@@ -25,19 +25,19 @@ public:
     virtual void    close() =   0;
 
 protected:
-    DecodeSetting   get_setting();
+    DecodeSetting&  get_setting();
+    IO_Direction    get_direction();
 
 private:
-
     DecodeSetting   setting;
-
+    IO_Direction    direction;
 
 };
 
 
 
 
-InputOutput*    create_IO( IO_Type io_type );
+InputOutput*    create_IO( IO_Type io_type, IO_Direction dir );
 
 
 
