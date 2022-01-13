@@ -68,6 +68,40 @@ QStringList Worker::get_subtitle_files( std::string filename )
 
 
 
+
+/*******************************************************************************
+Worker::set_type()
+********************************************************************************/
+void    Worker::set_type( WorkType _t )
+{
+    wtype    =   _t;
+}
+
+
+
+
+
+/*******************************************************************************
+Worker::set_ip()
+********************************************************************************/
+void    Worker::set_ip( std::string _ip )
+{
+    ip  =   _ip;
+}
+
+
+
+/*******************************************************************************
+Worker::set_type()
+********************************************************************************/
+void    Worker::set_port( std::string _port )
+{
+    port    =   _port;
+}
+
+
+
+
 /*******************************************************************************
 Worker::run()
 ********************************************************************************/
@@ -78,10 +112,22 @@ void    Worker::run()
     AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
     VideoWorker     *vw     =   dynamic_cast<MainWindow*>(parent())->get_video_worker();
    
-    DecodeSetting   setting;
-    setting.io_type     =   IO_Type::FILE_IO;
-    setting.filename    =   filename;
-    setting.subname     =   subname;
+    DecodeSetting   setting;    
+    switch( wtype )
+    {
+    case WorkType::DEFAULT :
+        setting.io_type     =   IO_Type::FILE_IO;
+        setting.filename    =   filename;
+        setting.subname     =   subname;
+        break;
+    case WorkType::SRT :
+        setting.io_type     =   IO_Type::SRT_IO;
+        setting.srt_ip      =   ip;
+        setting.srt_port    =   port;
+        break;
+    default:
+        assert(0);
+    }
 
     //
     player.set(setting);

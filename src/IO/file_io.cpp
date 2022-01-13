@@ -6,8 +6,8 @@
 /*******************************************************************************
 FileIO::FileIO()
 ********************************************************************************/
-FileIO::FileIO()
-    :   InputOutput()
+FileIO::FileIO( IO_Direction dir )
+    :   InputOutput(dir)
 {}
 
 
@@ -50,7 +50,8 @@ FileIO::open()
 ********************************************************************************/
 void    FileIO::open()
 {
-    std::string     filename    =   get_setting().filename;
+    DecodeSetting&  setting     =   get_setting();
+    std::string     filename    =   setting.filename;
 
     MYLOG( LOG::INFO, "load file %s", filename.c_str() );
     fp  =   fopen( filename.c_str(), "rb" );

@@ -163,8 +163,8 @@ int     Player::init()
     AVFormatContext *fmt_ctx    =   nullptr;
 
     //
-    ret     =   demuxer->open_input();
     ret     =   demuxer->init();
+    ret     =   demuxer->open_input();
     fmt_ctx =   demuxer->get_format_context();
 
     //
@@ -872,6 +872,8 @@ void    Player::play_QT()
     //
     while( stop_flag == false ) 
     {
+        //printf( "v %d, a %d\n", video_queue.size(), audio_queue.size() );
+
         // NOTE: seek事件觸發的時候, queue 資料會暴增.
         while( demux_need_wait() == true )
         {
@@ -1300,10 +1302,10 @@ player_decode_example
 void    player_decode_example()
 {
     DecodeSetting   setting;
-    setting.io_type     =   IO_Type::FILE_IO;
-    setting.filename   =   "D:/code/test.mkv";     // 使用 D:\\code\\test.mkv 會出錯
-    setting.subname    =   "D:/code/test.mkv";   
-
+    setting.io_type     =   IO_Type::SRT_IO;
+    //setting.filename   =   "D:/code/test.mkv";     // 使用 D:\\code\\test.mkv 會出錯
+    //setting.subname    =   "D:/code/test.mkv";   
+    setting.srt_port    =   "1234";
 
     Player  player;  
 

@@ -6,6 +6,15 @@
 #include "player/player.h"
 
 
+enum class WorkType
+{
+    DEFAULT     =   0,          // load from file.
+    SRT,
+};
+
+
+
+
 class Worker : public QThread
 {
     Q_OBJECT
@@ -21,6 +30,9 @@ public:
     bool    is_set_src_file();
     void    finish_set_video();
     bool&   get_play_end_state();
+    void    set_type( WorkType _t );
+    void    set_ip( std::string _ip );
+    void    set_port( std::string _port );
 
     QStringList get_subtitle_files( std::string filename );
 
@@ -39,12 +51,17 @@ signals:
 
 private:
 
+    WorkType    wtype    =   WorkType::DEFAULT;
+
     Player  player;
     bool    is_set_video    =   false;
     bool    is_play_end     =   true;
 
     std::string     filename;
     std::string     subname;
+
+    std::string     ip;
+    std::string     port;
 
 };
 
