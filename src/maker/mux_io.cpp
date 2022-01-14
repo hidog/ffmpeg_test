@@ -65,7 +65,8 @@ void    MuxIO::init( EncodeSetting setting )
     AVDictionary    *opt    =   nullptr;
 
     // alloc output.
-    avformat_alloc_output_context2( &output_ctx, NULL, setting.extension.c_str(), nullptr );
+    //avformat_alloc_output_context2( &output_ctx, NULL, setting.extension.c_str(), nullptr );
+    avformat_alloc_output_context2( &output_ctx, NULL, "mpegts", nullptr );
     if( output_ctx == nullptr ) 
         MYLOG( LOG::ERROR, "output_ctx = nullptr" );
 

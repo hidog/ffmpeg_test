@@ -96,6 +96,9 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
     //av_dict_copy(&opt, opt_arg, 0);
     //ret     =   avcodec_open2( ctx, codec, &opt );
 
+    if( ctx->codec_id == AV_CODEC_ID_H264 )
+        av_opt_set( ctx->priv_data, "x264-params", "sliced-threads=4", 0);   // ±±¨îencode thread
+
     ret     =   avcodec_open2( ctx, codec, nullptr );
     if( ret < 0 ) 
         MYLOG( LOG::ERROR, "open fail" );

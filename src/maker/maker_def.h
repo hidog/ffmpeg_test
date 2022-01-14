@@ -33,6 +33,8 @@ struct EncodeSetting
     std::string     filename;
     std::string     extension;
     bool            has_subtitle;
+    std::string     srt_ip;     // 保留欄位 目前srt encode是server side.
+    std::string     srt_port;
 };
 
 

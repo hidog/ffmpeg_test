@@ -47,6 +47,8 @@ void    SrtIO::server_init()
         srt_setloglevel(srt_logging::LogLevel::debug);
     }
 
+    EncodeSetting&  setting     =   get_encode_setting();
+
     //
     addrinfo    hints;
     addrinfo*   res;
@@ -58,7 +60,7 @@ void    SrtIO::server_init()
     hints.ai_family     =   AF_INET;
     hints.ai_socktype   =   SOCK_DGRAM;
 
-    ret     =   getaddrinfo( NULL, "1234", &hints, &res );
+    ret     =   getaddrinfo( NULL, setting.srt_port.c_str(), &hints, &res );
     if( 0 != ret )    
         MYLOG( LOG::ERROR, "getaddrinfo fail." );    
 
@@ -117,7 +119,9 @@ void    SrtIO::init()
         rd  =   new RecvData[buf_size];
     }
     else
+    {
         server_init();
+    }
 }
 
 
@@ -180,9 +184,8 @@ void    SrtIO::client_open()
     assert( thr == nullptr );
     thr     =   new std::thread( &SrtIO::recv_handle, this );
 
-        //srt_close(fhandle);
-        //break;    
-
+    //srt_close(fhandle);
+    //break;
 }
 
 
@@ -222,7 +225,7 @@ void    SrtIO::server_open()
     int64_t maxbw = 0; 
     srt_setsockopt( handle, 0, SRTO_MAXBW, &maxbw, sizeof maxbw );
 
-    thr =   new std::thread( &SrtIO::recv_handle, this );
+    //thr =   new std::thread( &SrtIO::recv_handle, this );
 }
 
 
@@ -382,8 +385,32 @@ SrtIO::write()
 ********************************************************************************/
 int     SrtIO::write( uint8_t *buf, int buf_size )
 {
-    assert(0);
-    return  0;
+    //MYLOG( LOG::DEBUG, "buf size = %d", buf_size );
+
+    int     ret         =   0;
+    int     send_size   =   0;
+    int     remain      =   buf_size;
+
+    while(true)
+    {
+        if( remain > 1316 )
+        {
+            ret     =   srt_send( handle, (const char*)(buf + send_size), 1316 );
+            if( ret != 1316 )
+                MYLOG( LOG::ERROR, "ret = %d", ret );
+            send_size   +=  1316;
+            remain      -=  1316;
+        }
+        else
+        {
+            ret     =   srt_send( handle, (const char*)(buf + send_size), remain );
+            if( ret != remain )
+                MYLOG( LOG::ERROR, "ret = %d", ret );
+            break;
+        }
+    }
+    
+    return  ret;
 }
 
 
