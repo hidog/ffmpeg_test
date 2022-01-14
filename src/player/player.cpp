@@ -139,6 +139,38 @@ int     Player::init_demuxer()
 
 
 
+#ifndef FFMPEG_TEST
+/*******************************************************************************
+Player::get_media_info()
+********************************************************************************/
+MediaInfo   Player::get_media_info()
+{
+    MediaInfo   info;
+    AVStream*   stream  =   nullptr;
+
+    // video
+    info.width      =   v_decoder.get_video_width();
+    info.height     =   v_decoder.get_video_height();
+    info.pix_fmt    =   v_decoder.get_pix_fmt();
+    
+    stream  =   v_decoder.get_stream();
+    if( stream != nullptr )
+    {
+        info.time_num   =   stream->avg_frame_rate.den;
+        info.time_den   =   stream->avg_frame_rate.num;
+    }
+    else
+        MYLOG( LOG::ERROR, "stream is nullptr" );
+
+    // audio
+    info.sample_rate    =   a_decoder.get_audio_sample_rate();
+
+    return  info;
+}
+#endif
+
+
+
 
 
 /*******************************************************************************

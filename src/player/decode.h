@@ -53,6 +53,7 @@ public:
     AVFrame*        get_frame();
     AVMediaType     get_decode_context_type();
     AVCodecContext* get_decode_context();
+    AVStream*       get_stream();
 
 #ifdef FFMPEG_TEST
     virtual int     flush();

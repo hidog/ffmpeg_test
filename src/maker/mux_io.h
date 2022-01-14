@@ -26,6 +26,7 @@ public:
     void    open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, AVCodecContext* s_ctx ) override;
     void    init( EncodeSetting setting ) override;
     void    write_end() override;
+    bool    is_connect() override;
     void    end() override;
 
     void    init_IO( EncodeSetting setting );

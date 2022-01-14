@@ -94,6 +94,20 @@ void    Maker::init( EncodeSetting* _setting, VideoEncodeSetting* v_setting, Aud
 
 
 
+/*******************************************************************************
+Maker::is_connect()
+********************************************************************************/
+bool    Maker::is_connect()
+{
+    if( muxer == nullptr ) // not init yet.
+        return  false;
+
+    bool    flag    =   muxer->is_connect();
+    return  flag;
+}
+
+
+
 
 
 
@@ -537,85 +551,38 @@ void Maker::end()
 /*******************************************************************************
 output_by_io
 ********************************************************************************/
-void    output_by_io()
+void    output_by_io( MediaInfo media_info, std::string _port, Maker& maker )
 {
     EncodeSetting   setting;
-    //setting.io_type =   IO_Type::DEFAULT;
-    //setting.io_type =   IO_Type::FILE_IO;
-    setting.io_type =   IO_Type::SRT_IO;
-
-
-    // rmvb 是 variable bitrate. 目前還無法使用
-    //setting.filename    =   "H:\\output.mkv";
-    //setting.extension   =   "matroska";
-    //setting.filename    =   "H:\\output.mp4";
-    //setting.extension   =   "mp4";
-    //setting.filename    =   "H:\\test.avi"; 
-    //setting.extension   =   "avi";
-    setting.srt_port    =   "1234";
-
+    setting.io_type         =   IO_Type::SRT_IO;    
+    setting.srt_port        =   _port;
     setting.has_subtitle    =   false;
 
-
-
     VideoEncodeSetting  v_setting;
-    v_setting.load_jpg_root_path    =   "J:\\jpg";
     //v_setting.code_id   =   AV_CODEC_ID_H264;
     v_setting.code_id   =   AV_CODEC_ID_H265;
-    //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
-    //v_setting.code_id   =   AV_CODEC_ID_MPEG2VIDEO;
 
-    v_setting.width     =   1280;
-    v_setting.height    =   720;
+    v_setting.width     =   media_info.width;
+    v_setting.height    =   media_info.height;
+    v_setting.pix_fmt   =   static_cast<AVPixelFormat>(media_info.pix_fmt);
 
-    v_setting.time_base.num     =   1001;
-    v_setting.time_base.den     =   24000;
+    v_setting.time_base.num     =   media_info.time_num;
+    v_setting.time_base.den     =   media_info.time_den;
 
-    /*
-        b frame not support on rm
-    */
-    //v_setting.gop_size      =   30;
-    //v_setting.max_b_frames  =   15; 
-    v_setting.gop_size      =   10;
-    v_setting.max_b_frames  =   0;
+    v_setting.gop_size      =   12;
+    v_setting.max_b_frames  =   3;
 
-
-    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
-    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
-    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P12LE;
-
-    v_setting.src_width     =   1280;
-    v_setting.src_height    =   720;
-    //v_setting.src_pix_fmt   =   AV_PIX_FMT_BGRA;    // for QImage
-    v_setting.src_pix_fmt   =   AV_PIX_FMT_BGR24;    // for openCV
-
+    v_setting.src_width     =   media_info.width;
+    v_setting.src_height    =   media_info.height;
+    v_setting.src_pix_fmt   =   static_cast<AVPixelFormat>(media_info.pix_fmt);
 
     AudioEncodeSetting  a_setting;
-    a_setting.load_pcm_path     =   "J:\\test.pcm";
-    //a_setting.code_id     =   AV_CODEC_ID_MP3;
-    a_setting.code_id       =   AV_CODEC_ID_AAC;
-    //a_setting.code_id       =   AV_CODEC_ID_AC3;
-    //a_setting.code_id     =   AV_CODEC_ID_MP2;
-    //a_setting.code_id       =   AV_CODEC_ID_VORBIS;
-    //a_setting.code_id       =   AV_CODEC_ID_FLAC;
-
-    //a_setting.bit_rate          =   320000;
+    a_setting.code_id           =   AV_CODEC_ID_AAC;
     a_setting.bit_rate          =   128000;
-    a_setting.sample_rate       =   48000;
+    a_setting.sample_rate       =   media_info.sample_rate;
     a_setting.channel_layout    =   3; // AV_CH_LAYOUT_STEREO = 3;
 
-
-
-
     SubEncodeSetting   s_setting;
-    s_setting.code_id       =   AV_CODEC_ID_ASS;
-    //s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
-    //s_setting.code_id       =   AV_CODEC_ID_MOV_TEXT;
-    s_setting.subtitle_file =   "J:\\test.ssa";
-    s_setting.subtitle_ext  =   "ssa";
-
-
-    Maker   maker;
 
     maker.init( &setting, &v_setting, &a_setting, &s_setting );
     maker.work();

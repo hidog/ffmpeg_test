@@ -96,6 +96,8 @@ public:
 
     void    set_output_jpg_root( std::string _root_path );
     void    set_output_audio_pcm_path( std::string _path );
+#else
+    MediaInfo   get_media_info();   // use for output.
 #endif
 
 private:

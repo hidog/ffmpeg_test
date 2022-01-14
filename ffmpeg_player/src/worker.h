@@ -3,8 +3,10 @@
 
 
 #include <QThread>
-#include "player/player.h"
 #include <thread>
+#include "player/player.h"
+#include "maker/maker.h"
+
 
 
 
@@ -28,6 +30,7 @@ public:
     
     void    run() override;   
 
+    void    play_init();
     void    play();
     void    set_src_file( std::string file );
     bool    is_set_src_file();
@@ -39,7 +42,7 @@ public:
     
     // use for output    
     void    set_output( bool enable, std::string _port );
-    void    output();
+    void    output( MediaInfo media_info );
 
     QStringList     get_subtitle_files( std::string filename );
 
@@ -73,8 +76,8 @@ private:
     // use for output. 
     std::thread*    output_thr  =   nullptr;  // 方便測試, 先這樣寫. 日後重構
     bool            is_output   =   false;
-    bool            is_connect  =   false;
 
+    Maker   maker;
 };
 
 

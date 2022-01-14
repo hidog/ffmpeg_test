@@ -2,11 +2,10 @@
 #define MAKER_H
 
 
-//#include "mux.h"
+
 #include "tool.h"
-//#include "audio_encode.h"
-//#include "video_encode.h"
-//#include "sub_encode.h"
+#include "../player/play_def.h"
+
 
 
 class Mux;
@@ -26,7 +25,7 @@ struct SubEncodeSetting;
 
 
 
-class   Maker
+class DLL_API Maker
 {
 public:
 
@@ -47,6 +46,8 @@ public:
     void    work_without_subtitle();
     void    end();
 
+    bool    is_connect();
+
 private:
 
     Mux*    muxer  =   nullptr;
@@ -61,8 +62,8 @@ private:
 
 
 
-DLL_API void    output_by_io();
-int     io_write_data( void *opaque, uint8_t *buf, int buf_size );
+DLL_API void    output_by_io( MediaInfo media_info, std::string _port, Maker& maker );
+DLL_API int     io_write_data( void *opaque, uint8_t *buf, int buf_size );
 
 
 #ifdef FFMPEG_TEST

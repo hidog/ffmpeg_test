@@ -59,7 +59,6 @@ protected:
 private:
     
     AVPacket        *pkt        =   nullptr;
-
     std::string     filename;
 
 #ifdef USE_MT

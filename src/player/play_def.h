@@ -10,6 +10,22 @@
 
 
 
+struct MediaInfo
+{
+    // video
+    int     width;
+    int     height;
+    int     time_num;
+    int     time_den;
+    int     pix_fmt;
+
+    // audio
+    int     sample_rate;
+};
+
+
+
+
 struct DecodeSetting
 {
     IO_Type         io_type;

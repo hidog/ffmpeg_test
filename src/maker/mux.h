@@ -38,7 +38,8 @@ public:
     virtual void    init( EncodeSetting setting );
     virtual void    open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, AVCodecContext* s_ctx );
     virtual void    write_end();
-    virtual void    end();    
+    virtual void    end();
+    virtual bool    is_connect();
 
     
     bool    is_need_global_header();

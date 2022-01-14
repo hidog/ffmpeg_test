@@ -121,21 +121,19 @@ void    Worker::set_port( std::string _port )
 
 
 
+
+
+
 /*******************************************************************************
-Worker::play()
+Worker::play_init()
 ********************************************************************************/
-void    Worker::play()
+void    Worker::play_init()
 {
-    VideoDecodeSetting    vs;
-    AudioDecodeSetting    as;
-    AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
-    VideoWorker     *vw     =   dynamic_cast<MainWindow*>(parent())->get_video_worker();
-   
     DecodeSetting   setting;    
     switch( wtype )
     {
     case WorkType::DEFAULT :
-        setting.io_type     =   IO_Type::FILE_IO;
+        setting.io_type     =   IO_Type::DEFAULT;
         setting.filename    =   filename;
         setting.subname     =   subname;
         break;
@@ -151,6 +149,7 @@ void    Worker::play()
     //
     player.set(setting);
     player.init();
+
     int     duration    =   static_cast<int>(player.get_duration_time());
     emit    duration_signal( duration );
 
@@ -159,6 +158,24 @@ void    Worker::play()
         auto    list    =   player.get_embedded_subtitle_list();
         emit embedded_sublist_signal(list);
     }
+}
+
+
+
+
+
+
+
+
+/*******************************************************************************
+Worker::play()
+********************************************************************************/
+void    Worker::play()
+{
+    VideoDecodeSetting    vs;
+    AudioDecodeSetting    as;
+    AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
+    VideoWorker     *vw     =   dynamic_cast<MainWindow*>(parent())->get_video_worker();
     
     // send video setting to UI
     is_set_video    =   false;
@@ -205,10 +222,10 @@ void    Worker::play()
 /*******************************************************************************
 Worker::output()
 ********************************************************************************/
-void    Worker::output()
+void    Worker::output( MediaInfo media_info )
 {
     MYLOG( LOG::INFO, "enable output." );
-    output_by_io();
+    output_by_io( media_info, port, maker );
 }
 
 
@@ -221,19 +238,25 @@ Worker::run()
 ********************************************************************************/
 void    Worker::run()  
 {
-    if( is_output == true )
+    play_init(); // 為了取得 file 資訊, 將 play init 拆開來    
+
+    // note: wtype = default 代表從檔案讀取
+    // 目前暫不支援從 live stream output.
+    if( is_output == true && wtype == WorkType::DEFAULT )
     {
+        MediaInfo   media_info  =   player.get_media_info();
+
         if( output_thr != nullptr )
             MYLOG( LOG::ERROR, "output_thr not null." );
-        output_thr  =   new std::thread( &Worker::output, this );
+        output_thr  =   new std::thread( &Worker::output, this, media_info );
 
-        while( is_connect == false )
+        while( maker.is_connect() == false )
             SLEEP_10MS;
     }
 
     play();
 
-    if( output_thr != nullptr )
+    if( output_thr != nullptr && wtype == WorkType::DEFAULT )
     {
         output_thr->join();
         delete  output_thr;

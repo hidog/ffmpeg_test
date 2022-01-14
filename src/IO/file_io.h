@@ -21,7 +21,7 @@ public:
     int     read( uint8_t *buffer, int size ) override;
     int     write( uint8_t *buffer, int size ) override;
     void    close() override;
-
+    bool    is_connect() override;
 
 private:
 
