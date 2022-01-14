@@ -1,6 +1,7 @@
 #include "mux_io.h"
 #include "tool.h"
 #include "maker.h"
+#include "../IO/srt_io.h"
 
 
 extern "C" {
@@ -32,6 +33,24 @@ MuxIO::~MuxIO()
 
 
 
+
+
+
+
+/*******************************************************************************
+MuxIO::MuxIO()
+********************************************************************************/
+bool    MuxIO::io_need_wait()
+{
+    SrtIO*  srt_io  =   dynamic_cast<SrtIO*>(IO);
+    if( srt_io == nullptr )
+    {
+        MYLOG( LOG::ERROR, "srt io is null." );
+        return  false;
+    }
+
+    return  srt_io->need_wait();
+}
 
 
 

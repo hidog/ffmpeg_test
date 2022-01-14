@@ -44,6 +44,7 @@ public:
     void    work();
     void    work_with_subtitle();
     void    work_without_subtitle();
+    void    work_live_stream();
     void    end();
 
     bool    is_connect();

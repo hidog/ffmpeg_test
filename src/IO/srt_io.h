@@ -42,6 +42,7 @@ public:
 
     void    server_init();
     void    server_open();
+    bool    need_wait();
 
 private:
     bool    is_end  =   false;

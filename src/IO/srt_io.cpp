@@ -83,6 +83,28 @@ void    SrtIO::server_init()
 
 
 
+/*******************************************************************************
+SrtIO::need_wait()
+********************************************************************************/
+bool    SrtIO::need_wait()
+{
+    int32_t     send_buf_size   =   0;
+    int32_t     data_in_buf     =   0;
+    int         len     =   0;
+
+    srt_getsockopt( handle, 0, SRTO_SNDBUF,  &send_buf_size, &len );
+    srt_getsockopt( handle, 0, SRTO_SNDDATA, &data_in_buf, &len );
+    
+    if( data_in_buf > 3*send_buf_size/4 )
+        MYLOG( LOG::WARN, "data_in_buf = %d, 3*send_buf_size/4 = %d\n", data_in_buf, 3*send_buf_size/4 );
+
+    return  data_in_buf > 3*send_buf_size/4;
+}
+
+
+
+
+
 
 /*******************************************************************************
 SrtIO::is_connect()

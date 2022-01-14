@@ -6,6 +6,8 @@
 #include "video_encode.h"
 #include "sub_encode.h"
 
+#include <thread>
+
 
 extern "C" {
 
@@ -354,6 +356,175 @@ void    Maker::work_with_subtitle()
 
 
 
+
+
+
+/*******************************************************************************
+Maker::work_live_stream()
+********************************************************************************/
+void    Maker::work_live_stream()
+{
+    int ret;
+
+    muxer->write_header();
+
+    AVRational v_time_base  =   v_encoder->get_timebase();
+    AVRational a_time_base  =   a_encoder->get_timebase();
+
+    //
+    AVFrame *v_frame    =   v_encoder->get_frame(); 
+    AVFrame *a_frame    =   a_encoder->get_frame();    
+    AVFrame *frame      =   nullptr;
+    Encode  *encoder    =   nullptr;
+
+    AVRational st_tb;
+
+    // flush function.
+    auto flush_func = [&] ( Encode *enc ) 
+    {
+        ret     =   enc->flush();  
+        while( ret >= 0 ) 
+        {
+            ret     =   enc->recv_frame();
+            if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
+                break;
+            else if( ret < 0 )
+                MYLOG( LOG::ERROR, "recv fail." );
+
+            auto pkt        =   enc->get_pkt();
+            auto ctx_tb     =   enc->get_timebase();
+            av_packet_rescale_ts( pkt, ctx_tb, st_tb );
+            muxer->write_frame( pkt );
+        } 
+        enc->set_flush(true);
+    };
+
+    // determine stream pts function
+    auto order_pts_func = [&] () -> int
+    {
+        int     result  =   0;
+        int64_t v_pts, a_pts;
+
+        // 理論上不用考慮兩個都是 nullptr 的 case,在 loop 控制就排除這件事情了.
+        if( v_frame == nullptr ) 
+        {
+            // flush video.
+            // 必須在這邊處理,等loop完再處理有機會造成stream flush的部分寫入時間錯誤.  (例如聲音比影像短)
+            if( v_encoder->is_flush() == false )
+            {
+                st_tb   =   muxer->get_video_stream_timebase();
+                flush_func( v_encoder );
+            }
+            result     =   1;
+        }
+        else if( a_frame == nullptr )
+        {
+            if( a_encoder->is_flush() == false )
+            {
+                st_tb   =   muxer->get_audio_stream_timebase();
+                flush_func( a_encoder );  
+            }
+            result     =   -1;
+        }
+        else
+        {
+            // 原本想用 INT64_MAX, 但會造成 overflow.
+            v_pts   =   v_frame->pts;
+            a_pts   =   a_frame->pts;
+            result  =   av_compare_ts( v_pts, v_time_base, a_pts, a_time_base );
+        }
+
+        return  result;
+    };
+
+
+    // 休息一下再來思考這邊怎麼改寫, 希望寫得好看一點
+    while( v_frame != nullptr || a_frame != nullptr )
+    {        
+        assert( v_frame != nullptr || a_frame != nullptr );
+
+        //
+        ret     =   order_pts_func();
+
+        //
+        if( ret <= 0 && v_frame != nullptr ) // video
+        {
+            encoder =   v_encoder;
+            frame   =   v_frame;
+            st_tb   =   muxer->get_video_stream_timebase();
+        }
+        else if( a_frame != nullptr ) // audio
+        {
+            encoder =   a_encoder;
+            frame   =   a_frame;
+            st_tb   =   muxer->get_audio_stream_timebase();
+        }
+        else
+        {
+            MYLOG( LOG::WARN, "both not");
+            break;
+        }
+
+        assert( frame != nullptr );
+
+        //
+        ret     =   encoder->send_frame();
+        if( ret < 0 ) 
+            MYLOG( LOG::ERROR, "send fail." );
+
+        while( ret >= 0 ) 
+        {
+            ret     =   encoder->recv_frame();
+            if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
+                break;
+            else if( ret < 0 )
+                MYLOG( LOG::ERROR, "recv fail." );
+
+            auto pkt    =   encoder->get_pkt();
+            auto ctx_tb =   encoder->get_timebase();
+            av_packet_rescale_ts( pkt, ctx_tb, st_tb );
+
+            MuxIO*  mux_io  =   dynamic_cast<MuxIO*>(muxer);
+            if( mux_io == nullptr )            
+                MYLOG( LOG::ERROR, "mux_io is null." );
+
+            while( mux_io->io_need_wait() == true )          
+                SLEEP_1MS;
+
+            muxer->write_frame( pkt );
+            encoder->unref_pkt();
+        }  
+
+        // update frame
+        if( encoder == v_encoder ) // 理想是用 enum 處理, 這邊先偷懶, 有空修
+            v_frame     =   encoder->get_frame();
+        else
+            a_frame     =   encoder->get_frame();
+    }
+    
+    // flush
+    if( v_encoder->is_flush() == false )
+    {
+        st_tb   =   muxer->get_video_stream_timebase();
+        flush_func( v_encoder );
+    }
+
+    if( a_encoder->is_flush() == false )
+    {
+        st_tb   =   muxer->get_audio_stream_timebase();
+        flush_func( a_encoder );
+    }
+
+    //
+    muxer->write_end();
+}
+
+
+
+
+
+
+
 /*******************************************************************************
 Maker::work_without_subtitle()
 ********************************************************************************/
@@ -599,23 +770,20 @@ maker_encode_example
 void    maker_encode_example()
 {
     EncodeSetting   setting;
-    setting.io_type =   IO_Type::DEFAULT;
+    //setting.io_type =   IO_Type::DEFAULT;
     //setting.io_type =   IO_Type::FILE_IO;
-    //setting.io_type =   IO_Type::SRT_IO;
+    setting.io_type =   IO_Type::SRT_IO;
 
 
     // rmvb 是 variable bitrate. 目前還無法使用
-    setting.filename    =   "J:\\output.mkv";
-    setting.extension   =   "matroska";
+    //setting.filename    =   "J:\\output.mkv";
+    //setting.extension   =   "matroska";
     //setting.filename    =   "H:\\output.mp4";
     //setting.extension   =   "mp4";
     //setting.filename    =   "H:\\test.avi"; 
     //setting.extension   =   "avi";
-    //setting.srt_port    =   "1234";
-
-    setting.has_subtitle    =   true;
-
-
+    setting.srt_port        =   "1234";
+    setting.has_subtitle    =   false;
 
     VideoEncodeSetting  v_setting;
     v_setting.load_jpg_root_path    =   "J:\\jpg";
@@ -633,10 +801,10 @@ void    maker_encode_example()
     /*
         b frame not support on rm
     */
-    v_setting.gop_size      =   30;
-    v_setting.max_b_frames  =   15; 
-    //v_setting.gop_size      =   10;
-    //v_setting.max_b_frames  =   0;
+    //v_setting.gop_size      =   30;
+    //v_setting.max_b_frames  =   15;
+    v_setting.gop_size      =   10;
+    v_setting.max_b_frames  =   0;
 
 
     v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
@@ -677,7 +845,8 @@ void    maker_encode_example()
     Maker   maker;
 
     maker.init( &setting, &v_setting, &a_setting, &s_setting );
-    maker.work();
+    //maker.work();
+    maker.work_live_stream();
     maker.end();
 }
 

@@ -30,6 +30,7 @@ public:
     void    end() override;
 
     void    init_IO( EncodeSetting setting );
+    bool    io_need_wait();
 
 private:
 
