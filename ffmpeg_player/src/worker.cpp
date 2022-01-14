@@ -6,6 +6,7 @@
 #include "audio_worker.h"
 #include "video_worker.h"
 #include "mainwindow.h"
+#include "maker/maker.h"
 
 
 
@@ -69,6 +70,22 @@ QStringList Worker::get_subtitle_files( std::string filename )
 
 
 
+
+/*******************************************************************************
+Worker::set_output()
+********************************************************************************/
+void    Worker::set_output( bool enable, std::string _port )
+{
+    is_output   =   enable;
+    port        =   _port.empty() == false ? _port : "1234";
+}
+
+
+
+
+
+
+
 /*******************************************************************************
 Worker::set_type()
 ********************************************************************************/
@@ -102,10 +119,12 @@ void    Worker::set_port( std::string _port )
 
 
 
+
+
 /*******************************************************************************
-Worker::run()
+Worker::play()
 ********************************************************************************/
-void    Worker::run()  
+void    Worker::play()
 {
     VideoDecodeSetting    vs;
     AudioDecodeSetting    as;
@@ -180,6 +199,51 @@ void    Worker::run()
 
 
 
+
+
+
+/*******************************************************************************
+Worker::output()
+********************************************************************************/
+void    Worker::output()
+{
+    MYLOG( LOG::INFO, "enable output." );
+    output_by_io();
+}
+
+
+
+
+
+
+/*******************************************************************************
+Worker::run()
+********************************************************************************/
+void    Worker::run()  
+{
+    if( is_output == true )
+    {
+        if( output_thr != nullptr )
+            MYLOG( LOG::ERROR, "output_thr not null." );
+        output_thr  =   new std::thread( &Worker::output, this );
+
+        while( is_connect == false )
+            SLEEP_10MS;
+    }
+
+    play();
+
+    if( output_thr != nullptr )
+    {
+        output_thr->join();
+        delete  output_thr;
+        output_thr  =   nullptr;
+    }
+}
+
+
+
+
 /*******************************************************************************
 Worker::stop_slot()
 ********************************************************************************/
@@ -216,8 +280,6 @@ void    Worker::finish_set_video()
 {
     is_set_video    =   true;
 }
-
-
 
 
 

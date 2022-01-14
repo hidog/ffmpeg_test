@@ -247,7 +247,11 @@ MainWindow::play_slot()
 ********************************************************************************/
 void MainWindow::play_slot()
 {
+    std::string     port        =   ui->portLEdit->text().toStdString();
+    bool            is_output   =   ui->outputCBox->checkState() == Qt::Checked;
+
     worker->set_type( WorkType::DEFAULT );
+    worker->set_output( is_output, port );
 
     ui->subCBox->clear();
 

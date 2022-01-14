@@ -217,7 +217,7 @@
    <widget class="QLabel" name="timeLabel">
     <property name="geometry">
      <rect>
-      <x>1400</x>
+      <x>1310</x>
       <y>20</y>
       <width>91</width>
       <height>31</height>
@@ -296,7 +296,7 @@
    <widget class="QPushButton" name="connectButton">
     <property name="geometry">
      <rect>
-      <x>1210</x>
+      <x>1200</x>
       <y>20</y>
       <width>81</width>
       <height>31</height>
@@ -304,6 +304,19 @@
     </property>
     <property name="text">
      <string>Connect</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="outputCBox">
+    <property name="geometry">
+     <rect>
+      <x>1430</x>
+      <y>30</y>
+      <width>75</width>
+      <height>18</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>output</string>
     </property>
    </widget>
   </widget>

@@ -4,6 +4,8 @@
 
 #include <QThread>
 #include "player/player.h"
+#include <thread>
+
 
 
 enum class WorkType
@@ -24,8 +26,9 @@ public:
     Worker( QObject *parent );
     ~Worker();
     
-    void    run() override;
-    
+    void    run() override;   
+
+    void    play();
     void    set_src_file( std::string file );
     bool    is_set_src_file();
     void    finish_set_video();
@@ -33,8 +36,12 @@ public:
     void    set_type( WorkType _t );
     void    set_ip( std::string _ip );
     void    set_port( std::string _port );
+    
+    // use for output    
+    void    set_output( bool enable, std::string _port );
+    void    output();
 
-    QStringList get_subtitle_files( std::string filename );
+    QStringList     get_subtitle_files( std::string filename );
 
 public slots:
 
@@ -62,6 +69,11 @@ private:
 
     std::string     ip;
     std::string     port;
+
+    // use for output. 
+    std::thread*    output_thr  =   nullptr;  // 方便測試, 先這樣寫. 日後重構
+    bool            is_output   =   false;
+    bool            is_connect  =   false;
 
 };
 
