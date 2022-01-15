@@ -20,7 +20,9 @@ struct MediaInfo
     int     pix_fmt;
 
     // audio
+    int     channel_layout;
     int     sample_rate;
+    int     sample_fmt;
 };
 
 

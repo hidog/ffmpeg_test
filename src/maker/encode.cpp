@@ -100,12 +100,6 @@ void    Encode::end()
         pkt     =   nullptr;
     }
 
-    if( sws_ctx != nullptr )
-    {
-        sws_freeContext( sws_ctx );
-        sws_ctx     =   nullptr;
-    }
-
     flush_state    =   false;
     codec   =   nullptr;
 }

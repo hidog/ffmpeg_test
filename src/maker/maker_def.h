@@ -66,6 +66,7 @@ struct AudioEncodeSetting
     int64_t     bit_rate;
     int         sample_rate;
     uint64_t    channel_layout;
+    int         sample_fmt;    
 
     std::string     load_pcm_path;
 };

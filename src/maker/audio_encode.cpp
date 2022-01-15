@@ -207,14 +207,14 @@ void    AudioEncode::end()
 {
     Encode::end();
 
-    av_frame_free( &frame );
+    /*av_frame_free( &frame );
     frame   =   nullptr;
 
     av_packet_free( &pkt );
     pkt     =   nullptr;
 
     avcodec_free_context( &ctx );
-    ctx     =   nullptr;
+    ctx     =   nullptr;*/
 
     swr_free( &swr_ctx );
     swr_ctx     =   nullptr;
@@ -326,9 +326,11 @@ void    AudioEncode::init_swr( AudioEncodeSetting setting )
         MYLOG( LOG::ERROR, "swr ctx is null." );
 
     // 輸入預設值, 未來再改成動態決定參數
-    av_opt_set_int        ( swr_ctx, "in_channel_count",   2,                   0 );
-    av_opt_set_int        ( swr_ctx, "in_sample_rate",     48000,               0 );
-    av_opt_set_sample_fmt ( swr_ctx, "in_sample_fmt",      AV_SAMPLE_FMT_S16,   0 );
+    AVSampleFormat  sample_fmt  =   static_cast<AVSampleFormat>(setting.sample_fmt);
+
+    av_opt_set_int        ( swr_ctx, "in_channel_count",   setting.channel_layout, 0 );
+    av_opt_set_int        ( swr_ctx, "in_sample_rate",     setting.sample_rate,    0 );
+    av_opt_set_sample_fmt ( swr_ctx, "in_sample_fmt",      sample_fmt,             0 );
     
     av_opt_set_int        ( swr_ctx, "out_channel_count",  ctx->channels,       0 );
     av_opt_set_int        ( swr_ctx, "out_sample_rate",    ctx->sample_rate,    0 );
@@ -627,7 +629,7 @@ AVFrame*    AudioEncode::get_frame_from_pcm_file()
         MYLOG( LOG::ERROR, "frame not writeable." );   
 
     ret         =   fread( pcm[0], 1, pcm_size, fp );  // 概念上可以想像成 fread( pcm[0], sizeof(int16_t), channels * frame->nb_samples, fp );
-    sp_count    =   ret / ctx->channels / bytes_per_sample;  
+    sp_count    =   ret / ctx->channels / bytes_per_sample;
 
     if( ret == 0 && feof(fp) != 0 )
         return nullptr; // end of file.
@@ -639,6 +641,7 @@ AVFrame*    AudioEncode::get_frame_from_pcm_file()
     if( ret < 0 ) 
         MYLOG( LOG::ERROR, "convert fail." );
 
+    // 這邊應該有bug, 需要研究.
     frame->pts  +=  sp_count;
     frame_count++;
 

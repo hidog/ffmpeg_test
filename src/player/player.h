@@ -56,7 +56,6 @@ public:
     void    seek( int value, int old_value );
     void    set( DecodeSetting _setting );
 
-
     //
     bool    demux_need_wait();
     bool    is_set_input_file();
@@ -100,6 +99,15 @@ public:
     MediaInfo   get_media_info();   // use for output.
 #endif
 
+    //
+    void    init_live_stream();
+    void    end_live_stream();
+    void    play_live_stream();
+    void    output_live_stream( Decode* dc );
+
+    AVFrame*    get_new_v_frame();
+    AVFrame*    get_new_a_frame();
+
 private:
 
     static constexpr int   MAX_QUEUE_SIZE  =   50;
@@ -121,7 +129,6 @@ private:
     int     seek_value  =   0;
     bool    seek_flag   =   false;
 
-
 #ifdef USE_MT
     bool    v_thr_start     =   false,
         a_thr_start     =   false;
@@ -135,8 +142,11 @@ private:
 
     DecodeSetting   setting;
 
-    //InputOutput     *IO     =   nullptr;
+    // use for live stream.
+    bool        is_live_stream      =   false;
+    int64_t     audio_pts_count     =   0;
 };
+
 
 
 

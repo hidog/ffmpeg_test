@@ -199,7 +199,10 @@ void    Worker::play()
 #ifdef USE_MT
     player.play_QT_multi_thread();
 #else
-    player.play_QT();
+    if( is_output == true )
+        player.play_live_stream();
+    else
+        player.play_QT();
 #endif
     player.end();
     is_play_end     =   true;

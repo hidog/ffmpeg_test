@@ -751,12 +751,13 @@ void    output_by_io( MediaInfo media_info, std::string _port, Maker& maker )
     a_setting.code_id           =   AV_CODEC_ID_AAC;
     a_setting.bit_rate          =   128000;
     a_setting.sample_rate       =   media_info.sample_rate;
-    a_setting.channel_layout    =   3; // AV_CH_LAYOUT_STEREO = 3;
+    a_setting.channel_layout    =   media_info.channel_layout;
+    a_setting.sample_fmt        =   media_info.sample_fmt;
 
     SubEncodeSetting   s_setting;
 
     maker.init( &setting, &v_setting, &a_setting, &s_setting );
-    maker.work();
+    maker.work_live_stream();
     maker.end();
 }
 
@@ -830,8 +831,7 @@ void    maker_encode_example()
     a_setting.bit_rate          =   128000;
     a_setting.sample_rate       =   48000;
     a_setting.channel_layout    =   3; // AV_CH_LAYOUT_STEREO = 3;
-
-
+    a_setting.sample_fmt        =   static_cast<int>(AV_SAMPLE_FMT_S16);
 
 
     SubEncodeSetting   s_setting;

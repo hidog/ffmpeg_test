@@ -279,7 +279,7 @@ void    VideoEncode::work_test()
 
         QImage img( str );
 
-        ret = av_frame_make_writable(frame);
+        ret     =   av_frame_make_writable(frame);
         if( ret < 0 )
             assert(0);
 
@@ -346,6 +346,12 @@ void    VideoEncode::end()
     video_linesize[2]   =   0;
     video_linesize[3]   =   0;
     video_bufsize       =   0;
+
+    if( sws_ctx != nullptr )
+    {
+        sws_freeContext( sws_ctx );
+        sws_ctx     =   nullptr;
+    }
 }
 
 
@@ -461,7 +467,7 @@ AVFrame*    VideoEncode::get_fram_from_file_openCV()
     sws_scale( sws_ctx, data, linesize, 0, img.rows, video_data, video_linesize );
     av_image_copy( frame->data, frame->linesize, (const uint8_t**)video_data, video_linesize, ctx->pix_fmt, ctx->width, ctx->height );
 
-    frame->pts = frame_count;
+    frame->pts  =   frame_count;
     frame_count++;
 
     return frame;

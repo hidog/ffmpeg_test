@@ -64,7 +64,7 @@ protected:
     AVPacket        *pkt    =   nullptr;
     AVFrame         *frame  =   nullptr;
 
-    SwsContext      *sws_ctx    =   nullptr;
+    //SwsContext      *sws_ctx    =   nullptr;
 
     int     frame_count     =   0;
     int     stream_index    =   -1;

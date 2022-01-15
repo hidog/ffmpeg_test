@@ -244,7 +244,7 @@ int SubDecode::init_sws_ctx( SubData sd )
 /*******************************************************************************
 SubDecode::render_subtitle()
 ********************************************************************************/
-int SubDecode::render_subtitle()
+int     SubDecode::render_subtitle()
 {
     sub_image   =   QImage( video_width, video_height, QImage::Format_RGB888 );
 

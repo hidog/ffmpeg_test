@@ -14,6 +14,7 @@
 
 
 struct AVFrame;
+struct SwsContext;
 enum AVCodecID;
 
 
@@ -51,6 +52,8 @@ public:
     void    encode_test();
 
 private:
+    SwsContext      *sws_ctx    =   nullptr;    
+    
     uint8_t*    video_data[4]       =   { nullptr };
     int         video_linesize[4]   =   { 0 };
     int         video_bufsize       =   0;

@@ -201,14 +201,37 @@ void    AudioDecode::output_audio_frame_info()
 
 
 /*******************************************************************************
+AudioDecode::get_audio_nb_sample()
+********************************************************************************/
+int     AudioDecode::get_audio_nb_sample()
+{
+    return  dec_ctx->frame_size;
+}
+
+
+
+
+
+/*******************************************************************************
 AudioDecode::get_audio_channel()
 ********************************************************************************/
 int     AudioDecode::get_audio_channel()
 {
-    return  stream->codecpar->channels;
+    return  dec_ctx->channels;
+    //return  stream->codecpar->channels;
 }
 
 
+
+
+
+/*******************************************************************************
+AudioDecode::get_audio_channel_layout()
+********************************************************************************/
+int     AudioDecode::get_audio_channel_layout()
+{
+    return  dec_ctx->channel_layout;
+}
 
 
 
@@ -217,11 +240,20 @@ AudioDecode::get_audio_sample_rate()
 ********************************************************************************/
 int     AudioDecode::get_audio_sample_rate()
 {
-    return  stream->codecpar->sample_rate;
+    //return  stream->codecpar->sample_rate;
+    return  dec_ctx->sample_rate;
 }
 
 
 
+/*******************************************************************************
+AudioDecode::get_audio_sample_format()
+********************************************************************************/
+int     AudioDecode::get_audio_sample_format()
+{
+    //return  stream->codecpar->format;
+    return  static_cast<int>(dec_ctx->sample_fmt);
+}
 
 
 
