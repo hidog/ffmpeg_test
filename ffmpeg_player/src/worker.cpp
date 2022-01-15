@@ -249,6 +249,9 @@ void    Worker::run()
     {
         MediaInfo   media_info  =   player.get_media_info();
 
+        player.add_audio_frame_cb   =   std::bind( &add_audio_frame, std::placeholders::_1 );
+        player.add_video_frame_cb   =   std::bind( &add_video_frame, std::placeholders::_1 );
+
         if( output_thr != nullptr )
             MYLOG( LOG::ERROR, "output_thr not null." );
         output_thr  =   new std::thread( &Worker::output, this, media_info );

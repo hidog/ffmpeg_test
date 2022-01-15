@@ -17,11 +17,16 @@ struct EncodeSetting;
 struct VideoEncodeSetting;
 struct AudioEncodeSetting;
 struct SubEncodeSetting;
+struct AVFrame;
 
-/*
-    未來如果要做 subtitle encode 的話
-    do_subtitle_out, avcodec_encode_subtitle, 用這兩個關鍵字去搜尋
-*/
+
+// push frame to queue, and use for encode.
+DLL_API void    add_audio_frame( AVFrame* af );
+DLL_API void    add_video_frame( AVFrame* vf );
+
+DLL_API AVFrame*    get_audio_frame();
+DLL_API AVFrame*    get_video_frame();
+
 
 
 

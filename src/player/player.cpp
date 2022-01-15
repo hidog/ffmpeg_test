@@ -1236,7 +1236,8 @@ void    Player::output_live_stream( Decode* dc )
 
         v_frame->pts =   dc->get_frame_count();
         
-        printf( "video frame pts = %lld\n", v_frame->pts );
+        add_video_frame_cb(v_frame);
+        //printf( "video frame pts = %lld\n", v_frame->pts );
     }
     else if( dc->get_decode_context_type() == AVMEDIA_TYPE_AUDIO )
     {      
@@ -1253,7 +1254,9 @@ void    Player::output_live_stream( Decode* dc )
         av_frame_copy( a_frame, frame );
 
         a_frame->pts    =   audio_pts_count * dc->get_frame_count();
-        printf( "audio frame pts = %lld\n", a_frame->pts );
+
+        add_audio_frame_cb( a_frame);
+        //printf( "audio frame pts = %lld\n", a_frame->pts );
 
     }
     else

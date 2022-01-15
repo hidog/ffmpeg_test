@@ -98,8 +98,8 @@ public:
 #else
     MediaInfo   get_media_info();   // use for output.
 #endif
-
-    //
+     
+    // use for live steeam
     void    init_live_stream();
     void    end_live_stream();
     void    play_live_stream();
@@ -107,6 +107,9 @@ public:
 
     AVFrame*    get_new_v_frame();
     AVFrame*    get_new_a_frame();
+
+    std::function< void(AVFrame*) >     add_audio_frame_cb;
+    std::function< void(AVFrame*) >     add_video_frame_cb;
 
 private:
 

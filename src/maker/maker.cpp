@@ -7,6 +7,7 @@
 #include "sub_encode.h"
 
 #include <thread>
+#include <mutex>
 
 
 extern "C" {
@@ -14,6 +15,89 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 
 } // end extern "C"
+
+
+
+static std::queue<AVFrame*>     aframe_queue;
+static std::queue<AVFrame*>     vframe_queue;
+
+static std::mutex   af_mtx;
+static std::mutex   vf_mtx;
+
+
+
+
+
+/*******************************************************************************
+add_audio_frame
+********************************************************************************/
+void    add_audio_frame( AVFrame* af )
+{
+    const std::lock_guard<std::mutex> lock(af_mtx);
+    aframe_queue.emplace(af);
+}
+
+
+
+/*******************************************************************************
+add_video_frame
+********************************************************************************/
+void    add_video_frame( AVFrame* vf )
+{
+    const std::lock_guard<std::mutex> lock(vf_mtx);
+    vframe_queue.emplace(vf);
+}
+
+
+
+/*******************************************************************************
+get_audio_frame
+********************************************************************************/
+AVFrame*    get_audio_frame()
+{
+    const std::lock_guard<std::mutex> lock(af_mtx);
+
+    if( aframe_queue.empty() == true )
+    {
+        // note: 目前設計, 是讀取檔案後輸出 live stream.
+        // 因此理論上 encode 效率會輸給 decode, queue 為空代表結束
+        // 但實際上有可能不是這樣, 需要的時候再修改
+        MYLOG( LOG::INFO, "aframe_queue is empty" );
+        return  nullptr;
+    }
+
+    AVFrame*    af  =   aframe_queue.front();
+    aframe_queue.pop();
+
+    return  af;
+}
+
+
+
+
+
+/*******************************************************************************
+get_video_frame
+*******************************************************************************/
+AVFrame*    get_video_frame()
+{
+    const std::lock_guard<std::mutex> lock(vf_mtx);
+
+    if( vframe_queue.empty() == true )
+    {
+        // note: 目前設計, 是讀取檔案後輸出 live stream.
+        // 因此理論上 encode 效率會輸給 decode, queue 為空代表結束
+        // 但實際上有可能不是這樣, 需要的時候再修改
+        MYLOG( LOG::INFO, "vframe_queue is empty" );
+        return  nullptr;
+    }
+
+    AVFrame*    vf  =   vframe_queue.front();
+    vframe_queue.pop();
+
+    return  vf;
+}
+
 
 
 
