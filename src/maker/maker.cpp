@@ -65,13 +65,16 @@ AVFrame*    get_audio_frame()
         return  nullptr;
     }*/
 
-    while( aframe_queue.empty() == true );
+    while( aframe_queue.empty() == true )
+        SLEEP_1MS;
 
-    const std::lock_guard<std::mutex> lock(af_mtx);
 
-
+    af_mtx.lock();
     AVFrame*    af  =   aframe_queue.front();
     aframe_queue.pop();
+    af_mtx.unlock();
+
+    //printf("get a frame %d\n", af->data[0][100] );
 
     return  af;
 }
@@ -95,13 +98,16 @@ AVFrame*    get_video_frame()
         return  nullptr;
     }*/
 
-    while( vframe_queue.empty() == true );
+    while( vframe_queue.empty() == true )
+        SLEEP_1MS;
 
-    const std::lock_guard<std::mutex> lock(vf_mtx);
 
 
+    vf_mtx.lock();
     AVFrame*    vf  =   vframe_queue.front();
     vframe_queue.pop();
+    vf_mtx.unlock();
+
 
     return  vf;
 }

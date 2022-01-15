@@ -153,6 +153,8 @@ int     Encode::send_frame()
         return  ERROR;
     }
 
+    //printf("send frame %d\n", frame->data[0][100] );
+
     int ret =   avcodec_send_frame( ctx, frame );
     return  ret;
 }
@@ -187,6 +189,8 @@ Encode::set_frame()
 ********************************************************************************/
 void    Encode::set_frame( AVFrame* _f )
 {
+    //av_frame_copy( frame, _f );
+    //av_frame_free( &_f );
     frame   =   _f;
 }
 

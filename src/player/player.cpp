@@ -1213,9 +1213,7 @@ AVFrame*    Player::get_new_a_frame()
 }
 
 
-extern "C" {
-#include <libswresample/swresample.h>
-}
+
 
 
 /*******************************************************************************
@@ -1272,6 +1270,8 @@ void    Player::output_live_stream( Decode* dc )
         AVSampleFormat fmt = static_cast<AVSampleFormat>(a_decoder.get_audio_sample_format());
         //av_samples_copy( a_frame->data, frame->data, 0, 0, frame->nb_samples, frame->channels, fmt );
         av_frame_copy( a_frame, frame );
+
+        //printf("a frame = %d\n", a_frame->data[0][100] );
 
 
         /*int ret     =   swr_convert( tmp_swr_ctx,

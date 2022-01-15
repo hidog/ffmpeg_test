@@ -270,7 +270,10 @@ if( get_decode_context_type() == AVMEDIA_TYPE_VIDEO )
 ********************************************************************************/
 AVMediaType     Decode::get_decode_context_type()
 {
-    return  dec_ctx->codec->type;
+    if( dec_ctx == nullptr )
+        return  AVMEDIA_TYPE_SUBTITLE;
+    else
+        return  dec_ctx->codec->type;
 }
 
 
