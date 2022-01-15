@@ -1586,10 +1586,12 @@ player_decode_example
 void    player_decode_example()
 {
     DecodeSetting   setting;
-    setting.io_type     =   IO_Type::SRT_IO;
-    //setting.filename   =   "D:/code/test.mkv";     // 使用 D:\\code\\test.mkv 會出錯
-    //setting.subname    =   "D:/code/test.mkv";   
-    setting.srt_port    =   "1234";
+    setting.io_type     =   IO_Type::DEFAULT;
+    //setting.io_type     =   IO_Type::SRT_IO;
+    //setting.filename   =   "D:/test.mkv";     // 使用 D:\\code\\test.mkv 會出錯
+    setting.filename    =   "D:/test2.mp4";
+    //setting.subname    =   "D:/code/test.ass";   
+    //setting.srt_port    =   "1234";
 
     Player  player;  
 

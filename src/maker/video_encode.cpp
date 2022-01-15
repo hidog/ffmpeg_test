@@ -79,7 +79,7 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
     ctx->pix_fmt        =   setting.pix_fmt;
     
     // ┏把计ゼ秨场砞竚,ぇσ璶ぃ璶秨
-    ctx->me_subpel_quality  =   10;
+    //ctx->me_subpel_quality  =   10;
     if( codec->id == AV_CODEC_ID_H264 || codec->id == AV_CODEC_ID_H265 )
         av_opt_set( ctx->priv_data, "preset", "medium", 0);
 
@@ -96,8 +96,8 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
     //av_dict_copy(&opt, opt_arg, 0);
     //ret     =   avcodec_open2( ctx, codec, &opt );
 
-    if( ctx->codec_id == AV_CODEC_ID_H264 )
-        av_opt_set( ctx->priv_data, "x264-params", "sliced-threads=10", 0);   // 北encode thread
+    //if( ctx->codec_id == AV_CODEC_ID_H264 )
+      //  av_opt_set( ctx->priv_data, "x264-params", "sliced-threads=10", 0);   // 北encode thread
 
     ret     =   avcodec_open2( ctx, codec, nullptr );
     if( ret < 0 ) 

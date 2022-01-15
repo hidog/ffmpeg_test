@@ -613,11 +613,10 @@ AudioEncode::get_frame_from_pcm_file()
 ********************************************************************************/
 AVFrame*    AudioEncode::get_frame_from_pcm_file()
 {
-    static int   bytes_per_sample    =   av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
-    AVCodecID code_id   =   ctx->codec_id; 
-
-    int     ret;
-    int     sp_count    =   0;
+    static int  bytes_per_sample   =   av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+    static int  sp_count  =   pcm_size / ctx->channels / bytes_per_sample;
+    AVCodecID   code_id   =   ctx->codec_id; 
+    int         ret;
 
     static FILE *fp     =   fopen( load_pcm_path.c_str(), "rb" );    
 
@@ -630,20 +629,19 @@ AVFrame*    AudioEncode::get_frame_from_pcm_file()
         MYLOG( LOG::ERROR, "frame not writeable." );   
 
     ret         =   fread( pcm[0], 1, pcm_size, fp );  // 概念上可以想像成 fread( pcm[0], sizeof(int16_t), channels * frame->nb_samples, fp );
-    sp_count    =   ret / ctx->channels / bytes_per_sample;
 
     if( ret == 0 && feof(fp) != 0 )
         return nullptr; // end of file.
 
-    if( ret < pcm_size )    
+    if( ret < pcm_size )
         memset( pcm[0] + ret, 0, pcm_size - ret );
 
     ret     =   swr_convert( swr_ctx, frame->data, frame->nb_samples, (const uint8_t **)pcm, frame->nb_samples );
     if( ret < 0 ) 
         MYLOG( LOG::ERROR, "convert fail." );
 
-    // 這邊應該有bug, 需要研究.
-    frame->pts  +=  sp_count;
+    //
+    frame->pts  =  frame_count * sp_count;
     frame_count++;
 
     return  frame;

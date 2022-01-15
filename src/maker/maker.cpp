@@ -932,25 +932,25 @@ maker_encode_example
 void    maker_encode_example()
 {
     EncodeSetting   setting;
-    //setting.io_type =   IO_Type::DEFAULT;
+    setting.io_type =   IO_Type::DEFAULT;
     //setting.io_type =   IO_Type::FILE_IO;
-    setting.io_type =   IO_Type::SRT_IO;
+    //setting.io_type =   IO_Type::SRT_IO;
 
 
     // rmvb 是 variable bitrate. 目前還無法使用
     //setting.filename    =   "J:\\output.mkv";
     //setting.extension   =   "matroska";
-    //setting.filename    =   "H:\\output.mp4";
-    //setting.extension   =   "mp4";
+    setting.filename    =   "H:\\output.mp4";
+    setting.extension   =   "mp4";
     //setting.filename    =   "H:\\test.avi"; 
     //setting.extension   =   "avi";
-    setting.srt_port        =   "1234";
+    //setting.srt_port        =   "1234";
     setting.has_subtitle    =   false;
 
     VideoEncodeSetting  v_setting;
     v_setting.load_jpg_root_path    =   "J:\\jpg";
-    //v_setting.code_id   =   AV_CODEC_ID_H264;
-    v_setting.code_id   =   AV_CODEC_ID_H265;
+    v_setting.code_id   =   AV_CODEC_ID_H264;
+    //v_setting.code_id   =   AV_CODEC_ID_H265;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG2VIDEO;
 
@@ -963,10 +963,10 @@ void    maker_encode_example()
     /*
         b frame not support on rm
     */
-    //v_setting.gop_size      =   30;
-    //v_setting.max_b_frames  =   15;
-    v_setting.gop_size      =   10;
-    v_setting.max_b_frames  =   0;
+    v_setting.gop_size      =   30;
+    v_setting.max_b_frames  =   15;
+    //v_setting.gop_size      =   10;
+    //v_setting.max_b_frames  =   0;
 
 
     v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
@@ -981,8 +981,8 @@ void    maker_encode_example()
 
     AudioEncodeSetting  a_setting;
     a_setting.load_pcm_path     =   "J:\\test.pcm";
-    //a_setting.code_id     =   AV_CODEC_ID_MP3;
-    a_setting.code_id       =   AV_CODEC_ID_AAC;
+    a_setting.code_id     =   AV_CODEC_ID_MP3;
+    //a_setting.code_id       =   AV_CODEC_ID_AAC;
     //a_setting.code_id       =   AV_CODEC_ID_AC3;
     //a_setting.code_id     =   AV_CODEC_ID_MP2;
     //a_setting.code_id       =   AV_CODEC_ID_VORBIS;
