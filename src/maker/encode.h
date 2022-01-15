@@ -40,7 +40,7 @@ public:
     bool    is_flush();
     void    set_flush( bool flag );
     int     flush();
-
+    void    set_frame( AVFrame* _f );
 
     virtual void    end();
 

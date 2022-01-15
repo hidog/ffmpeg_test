@@ -327,8 +327,9 @@ void    AudioEncode::init_swr( AudioEncodeSetting setting )
 
     // 輸入預設值, 未來再改成動態決定參數
     AVSampleFormat  sample_fmt  =   static_cast<AVSampleFormat>(setting.sample_fmt);
+    int     channel     =   av_get_channel_layout_nb_channels( setting.channel_layout );
 
-    av_opt_set_int        ( swr_ctx, "in_channel_count",   setting.channel_layout, 0 );
+    av_opt_set_int        ( swr_ctx, "in_channel_count",   channel,                0 );
     av_opt_set_int        ( swr_ctx, "in_sample_rate",     setting.sample_rate,    0 );
     av_opt_set_sample_fmt ( swr_ctx, "in_sample_fmt",      sample_fmt,             0 );
     

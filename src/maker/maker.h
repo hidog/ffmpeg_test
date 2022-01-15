@@ -54,6 +54,11 @@ public:
 
     bool    is_connect();
 
+    // use for live stream
+    void    release_encode_video_frame( AVFrame *vf );
+    void    release_encode_audio_frame( AVFrame *af );
+
+
 private:
 
     Mux*    muxer  =   nullptr;

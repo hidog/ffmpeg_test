@@ -77,6 +77,8 @@ MuxIO::is_connect()
 ********************************************************************************/
 bool    MuxIO::is_connect()
 {
+    if( IO == nullptr )
+        return  false;
     return  IO->is_connect();
 }
 

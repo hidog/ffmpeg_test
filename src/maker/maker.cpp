@@ -55,16 +55,20 @@ get_audio_frame
 ********************************************************************************/
 AVFrame*    get_audio_frame()
 {
-    const std::lock_guard<std::mutex> lock(af_mtx);
 
-    if( aframe_queue.empty() == true )
+    /*if( aframe_queue.empty() == true )
     {
         // note: 目前設計, 是讀取檔案後輸出 live stream.
         // 因此理論上 encode 效率會輸給 decode, queue 為空代表結束
         // 但實際上有可能不是這樣, 需要的時候再修改
         MYLOG( LOG::INFO, "aframe_queue is empty" );
         return  nullptr;
-    }
+    }*/
+
+    while( aframe_queue.empty() == true );
+
+    const std::lock_guard<std::mutex> lock(af_mtx);
+
 
     AVFrame*    af  =   aframe_queue.front();
     aframe_queue.pop();
@@ -81,16 +85,20 @@ get_video_frame
 *******************************************************************************/
 AVFrame*    get_video_frame()
 {
-    const std::lock_guard<std::mutex> lock(vf_mtx);
 
-    if( vframe_queue.empty() == true )
+    /*if( vframe_queue.empty() == true )
     {
         // note: 目前設計, 是讀取檔案後輸出 live stream.
         // 因此理論上 encode 效率會輸給 decode, queue 為空代表結束
         // 但實際上有可能不是這樣, 需要的時候再修改
         MYLOG( LOG::INFO, "vframe_queue is empty" );
         return  nullptr;
-    }
+    }*/
+
+    while( vframe_queue.empty() == true );
+
+    const std::lock_guard<std::mutex> lock(vf_mtx);
+
 
     AVFrame*    vf  =   vframe_queue.front();
     vframe_queue.pop();
@@ -448,7 +456,13 @@ Maker::work_live_stream()
 ********************************************************************************/
 void    Maker::work_live_stream()
 {
-    int ret;
+    // wait for data to start.
+    while( aframe_queue.size() < 10 || vframe_queue.size() < 10 )    
+    //while( aframe_queue.size() < 10 )
+        SLEEP_10MS;    
+
+    //
+    int     ret;
 
     muxer->write_header();
 
@@ -456,9 +470,16 @@ void    Maker::work_live_stream()
     AVRational a_time_base  =   a_encoder->get_timebase();
 
     //
-    AVFrame *v_frame    =   v_encoder->get_frame(); 
-    AVFrame *a_frame    =   a_encoder->get_frame();    
-    AVFrame *frame      =   nullptr;
+    AVFrame *v_frame    =   get_video_frame();
+    v_encoder->set_frame( v_frame );
+    //AVFrame *v_frame    =   v_encoder->get_frame();
+
+
+    AVFrame *a_frame    =   get_audio_frame();  
+    a_encoder->set_frame( a_frame );
+    //AVFrame *a_frame = a_encoder->get_frame();
+
+    //AVFrame *frame      =   nullptr;
     Encode  *encoder    =   nullptr;
 
     AVRational st_tb;
@@ -534,13 +555,13 @@ void    Maker::work_live_stream()
         if( ret <= 0 && v_frame != nullptr ) // video
         {
             encoder =   v_encoder;
-            frame   =   v_frame;
+            //frame   =   v_frame;
             st_tb   =   muxer->get_video_stream_timebase();
         }
         else if( a_frame != nullptr ) // audio
         {
             encoder =   a_encoder;
-            frame   =   a_frame;
+            //frame   =   a_frame;
             st_tb   =   muxer->get_audio_stream_timebase();
         }
         else
@@ -549,7 +570,7 @@ void    Maker::work_live_stream()
             break;
         }
 
-        assert( frame != nullptr );
+        //assert( frame != nullptr );
 
         //
         ret     =   encoder->send_frame();
@@ -581,9 +602,19 @@ void    Maker::work_live_stream()
 
         // update frame
         if( encoder == v_encoder ) // 理想是用 enum 處理, 這邊先偷懶, 有空修
-            v_frame     =   encoder->get_frame();
+        {
+            release_encode_video_frame( v_frame );
+            v_frame     =   get_video_frame();
+            encoder->set_frame( v_frame );
+            //v_frame = v_encoder->get_frame();
+        }
         else
-            a_frame     =   encoder->get_frame();
+        {
+            release_encode_audio_frame( a_frame );
+            a_frame     =   get_audio_frame();
+            encoder->set_frame( a_frame );
+            //a_frame = a_encoder->get_frame();
+        }
     }
     
     // flush
@@ -606,6 +637,24 @@ void    Maker::work_live_stream()
 
 
 
+/*******************************************************************************
+Maker::release_encode_video_frame()
+********************************************************************************/
+void    Maker::release_encode_video_frame( AVFrame *vf )
+{
+    av_frame_free( &vf );
+}
+
+
+
+
+/*******************************************************************************
+Maker::release_encode_audio_frame()
+********************************************************************************/
+void    Maker::release_encode_audio_frame( AVFrame *af )
+{
+    av_frame_free( &af );
+}
 
 
 
@@ -814,8 +863,8 @@ void    output_by_io( MediaInfo media_info, std::string _port, Maker& maker )
     setting.has_subtitle    =   false;
 
     VideoEncodeSetting  v_setting;
-    //v_setting.code_id   =   AV_CODEC_ID_H264;
-    v_setting.code_id   =   AV_CODEC_ID_H265;
+    v_setting.code_id   =   AV_CODEC_ID_H264;
+    //v_setting.code_id   =   AV_CODEC_ID_H265;
 
     v_setting.width     =   media_info.width;
     v_setting.height    =   media_info.height;
@@ -824,19 +873,41 @@ void    output_by_io( MediaInfo media_info, std::string _port, Maker& maker )
     v_setting.time_base.num     =   media_info.time_num;
     v_setting.time_base.den     =   media_info.time_den;
 
-    v_setting.gop_size      =   12;
-    v_setting.max_b_frames  =   3;
+    v_setting.gop_size      =   15;
+    v_setting.max_b_frames  =   5;
 
     v_setting.src_width     =   media_info.width;
     v_setting.src_height    =   media_info.height;
     v_setting.src_pix_fmt   =   static_cast<AVPixelFormat>(media_info.pix_fmt);
 
+
+    /*v_setting.width     =   1280;
+    v_setting.height    =   720;
+    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P; 
+    v_setting.time_base.num     =   1001; 
+    v_setting.time_base.den     =   24000;
+
+    v_setting.gop_size      =   12;
+    v_setting.max_b_frames  =   0;
+
+    v_setting.src_width     =   1280;
+    v_setting.src_height    =   720; 
+    v_setting.src_pix_fmt   =   AV_PIX_FMT_BGR24;
+    
+    v_setting.load_jpg_root_path    =   "J:\\jpg";*/
+
+
     AudioEncodeSetting  a_setting;
     a_setting.code_id           =   AV_CODEC_ID_AAC;
-    a_setting.bit_rate          =   128000;
+    a_setting.bit_rate          =   320000;
     a_setting.sample_rate       =   media_info.sample_rate;
     a_setting.channel_layout    =   media_info.channel_layout;
     a_setting.sample_fmt        =   media_info.sample_fmt;
+    /*a_setting.sample_rate       =   48000;
+    a_setting.channel_layout    =   3;
+    a_setting.sample_fmt        =   AV_SAMPLE_FMT_S16;
+    a_setting.load_pcm_path     =   "J:\\test.pcm";*/
+  
 
     SubEncodeSetting   s_setting;
 
@@ -917,7 +988,6 @@ void    maker_encode_example()
     a_setting.channel_layout    =   3; // AV_CH_LAYOUT_STEREO = 3;
     a_setting.sample_fmt        =   static_cast<int>(AV_SAMPLE_FMT_S16);
 
-
     SubEncodeSetting   s_setting;
     s_setting.code_id       =   AV_CODEC_ID_ASS;
     //s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
@@ -929,8 +999,8 @@ void    maker_encode_example()
     Maker   maker;
 
     maker.init( &setting, &v_setting, &a_setting, &s_setting );
-    //maker.work();
-    maker.work_live_stream();
+    maker.work();
+    //maker.work_live_stream();
     maker.end();
 }
 

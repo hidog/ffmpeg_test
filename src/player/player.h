@@ -113,7 +113,9 @@ public:
 
 private:
 
-    static constexpr int   MAX_QUEUE_SIZE  =   50;
+    //static constexpr int   MAX_QUEUE_SIZE  =   50;
+    static constexpr int   MAX_QUEUE_SIZE  =   10;
+
 
     Demux*          demuxer     =   nullptr;
     VideoDecode     v_decoder;
