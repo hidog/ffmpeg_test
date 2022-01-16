@@ -39,7 +39,8 @@ Encode::init()
 void    Encode::init( int st_idx, AVCodecID code_id )
 {
     stream_index    =   st_idx;
-    flush_state    =   false;
+    flush_state     =   false;
+    eof_flag        =   false;
 
     // init frame
     if( frame != nullptr )
@@ -100,9 +101,22 @@ void    Encode::end()
         pkt     =   nullptr;
     }
 
-    flush_state    =   false;
-    codec   =   nullptr;
+    flush_state =   false;
+    eof_flag    =   false;
+    codec       =   nullptr;
 }
+
+
+
+
+/*******************************************************************************
+Encode::end_of_file()
+********************************************************************************/
+bool    Encode::end_of_file()
+{
+    return  eof_flag;
+}
+
 
 
 
@@ -306,14 +320,14 @@ operator <=
 ********************************************************************************/
 bool    operator <= ( Encode& a, Encode& b )
 {
-    if( a.is_empty() == true && b.is_empty() == true )
+    if( a.end_of_file() == true && b.end_of_file() == true )
     {
-        MYLOG( LOG::ERROR, "both empty." );
+        MYLOG( LOG::ERROR, "both eof." );
         return  true;
     }
-    else if( a.is_empty() == true )
+    else if( a.end_of_file() == true )
         return  false;
-    else if( b.is_empty() == true )
+    else if( b.end_of_file() == true )
         return  true;
 
     int64_t     a_pts   =   a.get_pts();
@@ -419,4 +433,20 @@ bool    operator <= ( Encode& a, Encode& b )
 
     return  order;
 #endif
+}
+
+
+
+
+
+
+
+/*******************************************************************************
+Encode::get_frame()
+********************************************************************************/
+AVFrame*    Encode::get_frame()
+{
+    if( frame == nullptr )
+        MYLOG( LOG::WARN, "frame is null" );
+    return  frame;
 }

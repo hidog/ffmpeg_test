@@ -529,7 +529,7 @@ Maker::work_without_subtitle()
 ********************************************************************************/
 void    Maker::work_without_subtitle()
 {
-    int ret;
+    int     ret     =   0;
 
     muxer->write_header();
 
@@ -539,49 +539,29 @@ void    Maker::work_without_subtitle()
     //
     AVFrame *v_frame    =   v_encoder.get_frame(); 
     AVFrame *a_frame    =   a_encoder.get_frame();    
-    AVFrame *frame      =   nullptr;
     Encode  *encoder    =   nullptr;
 
     AVRational st_tb;
 
+
     // 休息一下再來思考這邊怎麼改寫, 希望寫得好看一點
-    while( v_frame != nullptr || a_frame != nullptr )
+    while( v_encoder.end_of_file() == false || a_encoder.end_of_file() )
     {        
-        assert( v_frame != nullptr || a_frame != nullptr );
-
         //
-        //ret     =   order_pts_func();
-        if( v_encoder <= a_encoder )
-            ret =   0;
-        else
-            ret =   1;
-
-        //
-        if( ret <= 0 && v_frame != nullptr ) // video
-        {
-            encoder =   &v_encoder;
-            frame   =   v_frame;
-            st_tb   =   muxer->get_video_stream_timebase();
-        }
-        else if( a_frame != nullptr ) // audio
-        {
-            encoder =   &a_encoder;
-            frame   =   a_frame;
-            st_tb   =   muxer->get_audio_stream_timebase();
-        }
-        else
-        {
-            MYLOG( LOG::WARN, "both not");
-            break;
-        }
-
-        assert( frame != nullptr );
+        if( v_encoder <= a_encoder )        
+            encoder =   &v_encoder;        
+        else        
+            encoder =   &a_encoder;        
 
         //
         ret     =   encoder->send_frame();
-        if( ret < 0 ) 
+        if( ret < 0 )
+        {
             MYLOG( LOG::ERROR, "send fail." );
+            break;
+        }
 
+        //
         while( ret >= 0 ) 
         {
             ret     =   encoder->recv_frame();

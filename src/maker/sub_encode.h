@@ -66,8 +66,9 @@ public:
 
     void        unref_pkt() override;
     int64_t     get_pts() override;
-    AVFrame*    get_frame() override;
     bool        is_empty() override;
+
+    void next_frame() override {}  // 未來再來修改這塊
 
 
     AVRational  get_src_stream_timebase();

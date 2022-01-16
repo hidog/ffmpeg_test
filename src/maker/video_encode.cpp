@@ -368,10 +368,10 @@ VideoEncode::get_frame()
 
 這邊需要擴充, 以及考慮使用讀取檔案處理一些參數的 init
 ********************************************************************************/
-AVFrame*    VideoEncode::get_frame()
+void    VideoEncode::next_frame()
 {
-    //return  get_fram_from_file_QT();
-    return  get_fram_from_file_openCV();
+    // get_fram_from_file_QT();
+    get_fram_from_file_openCV();
 }
 
 
@@ -380,10 +380,8 @@ AVFrame*    VideoEncode::get_frame()
 
 /*******************************************************************************
 VideoEncode::get_fram_from_file_QT()
-
-這邊需要擴充, 以及考慮使用讀取檔案處理一些參數的 init
 ********************************************************************************/
-AVFrame*    VideoEncode::get_fram_from_file_QT()
+void    VideoEncode::get_fram_from_file_QT()
 {
     char str[1000];
     int ret;
@@ -393,7 +391,10 @@ AVFrame*    VideoEncode::get_fram_from_file_QT()
 
     QImage  img;
     if( img.load( str ) == false )
-        return  nullptr;    
+    {
+        eof_flag    =   true;
+        return;
+    }
 
     ret =   av_frame_make_writable( frame );
     if( ret < 0 )
@@ -421,8 +422,6 @@ AVFrame*    VideoEncode::get_fram_from_file_QT()
 
     frame->pts = frame_count;
     frame_count++;
-
-    return frame;
 }
 
 
@@ -434,7 +433,7 @@ VideoEncode::get_fram_from_file_openCV()
 
 這邊需要擴充, 以及考慮使用讀取檔案處理一些參數的 init
 ********************************************************************************/
-AVFrame*    VideoEncode::get_fram_from_file_openCV()
+void    VideoEncode::get_fram_from_file_openCV()
 {
     char str[1000];
     int ret;
@@ -445,10 +444,9 @@ AVFrame*    VideoEncode::get_fram_from_file_openCV()
 
     cv::Mat img =   cv::imread( str, cv::IMREAD_COLOR );
     if( img.empty() == true )
-    //if( frame_count > 300 )
     {
-        frame   =   nullptr;
-        return  nullptr;
+        eof_flag    =   true;
+        return;
     }
 
     ret     =   av_frame_make_writable( frame );
@@ -464,6 +462,4 @@ AVFrame*    VideoEncode::get_fram_from_file_openCV()
 
     frame->pts  =   frame_count;
     frame_count++;
-
-    return frame;
 }

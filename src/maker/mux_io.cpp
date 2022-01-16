@@ -95,7 +95,6 @@ void    MuxIO::init( EncodeSetting setting )
     init_IO( setting );
 
     //
-    int             ret;
     AVDictionary    *opt    =   nullptr;
 
     // alloc output.

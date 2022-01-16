@@ -38,12 +38,11 @@ public:
     void    list_frame_rate( AVCodecID code_id );
     void    list_pix_fmt( AVCodecID code_id );
 
-
+    void        next_frame() override;
     int64_t     get_pts() override;
-    AVFrame*    get_frame() override;
 
-    AVFrame*    get_fram_from_file_QT();
-    AVFrame*    get_fram_from_file_openCV();
+    void    get_fram_from_file_QT();
+    void    get_fram_from_file_openCV();
 
     // for test. run without mux.
     // 目前不能動, 需要修復.

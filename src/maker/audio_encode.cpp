@@ -517,20 +517,23 @@ AudioEncode::get_frame_from_file_test()
 
 測試用程式, 會從檔案讀取 pcm data.
 ********************************************************************************/
-AVFrame*    AudioEncode::get_frame_from_file_test()
+void    AudioEncode::get_frame_from_file_test()
 {
     AVCodecID code_id   =   ctx->codec_id; 
 
     int     ret;
     int     sp_count    =   0;
 
-    static FILE *fp = fopen( "J:\\test.pcm", "rb" );
+    static FILE *fp     =   fopen( "J:\\test.pcm", "rb" );
 
     //
     if( feof(fp) != 0 )
-        return nullptr;
+    {
+        eof_flag    =   true;
+        return;
+    }
 
-    ret = av_frame_make_writable(frame);
+    ret     =   av_frame_make_writable(frame);
     if( ret < 0 )
         MYLOG( LOG::ERROR, "frame not writeable." );
 
@@ -539,7 +542,7 @@ AVFrame*    AudioEncode::get_frame_from_file_test()
 
     for( i = 0; i < frame->nb_samples; i++ )
     {
-        ret = fread( intens, 2, sizeof(int16_t), fp );
+        ret     =   fread( intens, 2, sizeof(int16_t), fp );
         if( ret == 0 )
             break;
         
@@ -564,7 +567,10 @@ AVFrame*    AudioEncode::get_frame_from_file_test()
     // note: 在 fread 後再用 feof 跟 i 做判斷
     // 不然有機會 feof 判斷還有資料, 但 fread 讀到的是檔案結尾.
     if( i == 0 && feof(fp) != 0 )
-        return nullptr;
+    {
+        eof_flag    =   true;
+        return;
+    }
 
     sp_count    =   i;
 
@@ -599,8 +605,6 @@ AVFrame*    AudioEncode::get_frame_from_file_test()
     // 考慮效能, 沒用 frame->pts = frame->nb_samples * frame_count; 的寫法
     frame->pts  +=  sp_count; //frame->nb_samples;  
     frame_count++;
-
-    return frame;
 }
 
 
@@ -611,36 +615,34 @@ AVFrame*    AudioEncode::get_frame_from_file_test()
 /*******************************************************************************
 AudioEncode::get_frame_from_pcm_file()
 ********************************************************************************/
-AVFrame*    AudioEncode::get_frame_from_pcm_file()
+void    AudioEncode::get_frame_from_pcm_file()
 {
     static int  bytes_per_sample   =   av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
     static int  sp_count  =   pcm_size / ctx->channels / bytes_per_sample;
     AVCodecID   code_id   =   ctx->codec_id; 
-    int         ret;
+    int     ret;
 
     static FILE *fp     =   fopen( load_pcm_path.c_str(), "rb" );    
-
-    /*if( frame_count > 300 )
-    {
-        frame   =   nullptr;
-        return  nullptr;
-    }*/
 
     //
     if( feof(fp) != 0 )
     {
-        frame   =   nullptr;
-        return  nullptr;
+        eof_flag    =   true;
+        return;
     }
 
-    ret     =   av_frame_make_writable(frame);
+    ret =   av_frame_make_writable(frame);
     if( ret < 0 )
         MYLOG( LOG::ERROR, "frame not writeable." );   
 
-    ret         =   fread( pcm[0], 1, pcm_size, fp );  // 概念上可以想像成 fread( pcm[0], sizeof(int16_t), channels * frame->nb_samples, fp );
+    ret =   fread( pcm[0], 1, pcm_size, fp );  // 概念上可以想像成 fread( pcm[0], sizeof(int16_t), channels * frame->nb_samples, fp );
 
     if( ret == 0 && feof(fp) != 0 )
-        return nullptr; // end of file.
+    {
+        eof_flag    =   true;
+        MYLOG( LOG::WARN, "should not run here." );
+        return; // end of file.
+    }
 
     if( ret < pcm_size )
         memset( pcm[0] + ret, 0, pcm_size - ret );
@@ -652,9 +654,9 @@ AVFrame*    AudioEncode::get_frame_from_pcm_file()
     //
     frame->pts  =  frame_count * sp_count;
     frame_count++;
-
-    return  frame;
 }
+
+
 
 
 
@@ -664,14 +666,12 @@ AVFrame*    AudioEncode::get_frame_from_pcm_file()
 
 
 /*******************************************************************************
-AudioEncode::get_frame()
+AudioEncode::next_frame()
 ********************************************************************************/
-AVFrame*    AudioEncode::get_frame()
+void    AudioEncode::next_frame()
 {
-    return  get_frame_from_pcm_file();
-    //return  get_frame_from_file_test();
+    get_frame_from_pcm_file();
+    //get_frame_from_file_test();
 }
-
-
 
 

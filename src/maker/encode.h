@@ -35,7 +35,8 @@ public:
     Encode& operator = ( const Encode& ) = delete;
     Encode& operator = ( Encode&& ) = delete;
 
-    void    init( int st_idx, AVCodecID code_id ); 
+    void    init( int st_idx, AVCodecID code_id );
+    bool    end_of_file();
 
     bool    is_flush();
     void    set_flush( bool flag );
@@ -52,6 +53,9 @@ public:
 
     AVCodecContext*     get_ctx();
     AVRational          get_timebase();
+    AVFrame*            get_frame();
+
+
 
     virtual int     send_frame();
     virtual int     recv_frame();
@@ -59,7 +63,7 @@ public:
     virtual bool    is_empty();
 
     virtual int64_t     get_pts() = 0;
-    virtual AVFrame*    get_frame() = 0;
+    virtual void        next_frame() = 0;
 
 protected:
 
@@ -75,7 +79,8 @@ protected:
     int     frame_count     =   0;
     int     stream_index    =   -1;
 
-    bool    flush_state    =   false;
+    bool    flush_state     =   false;
+    bool    eof_flag        =   false;
 
 };
 

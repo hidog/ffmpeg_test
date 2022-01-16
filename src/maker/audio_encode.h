@@ -49,10 +49,10 @@ public:
     void    list_channel_layout( AVCodecID code_id );
 
     int64_t     get_pts() override;
-    AVFrame*    get_frame() override;
+    void        next_frame() override;
 
-    AVFrame*    get_frame_from_pcm_file();
-    AVFrame*    get_frame_from_file_test();
+    void        get_frame_from_pcm_file();
+    void        get_frame_from_file_test();
 
     // for test, run without mux.
     // 目前不能動, 需要修改.
