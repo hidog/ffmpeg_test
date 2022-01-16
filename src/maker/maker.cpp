@@ -75,17 +75,6 @@ void    Maker::init( EncodeSetting _setting, VideoEncodeSetting v_setting, Audio
     auto s_ctx  =   s_encoder.get_ctx();
 
     muxer->open( setting, v_ctx, a_ctx, s_ctx );
-
-    AVRational  stb;
-    stb     =   muxer->get_video_stream_timebase();
-    v_encoder.set_stream_time_base(stb);
-    stb     =   muxer->get_audio_stream_timebase();
-    a_encoder.set_stream_time_base(stb);
-    if( setting.has_subtitle == true )
-    {
-        stb     =   muxer->get_sub_stream_timebase();
-        s_encoder.set_stream_time_base(stb);
-    }
 }
 
 
@@ -539,7 +528,6 @@ void    Maker::work_without_subtitle()
     int     ret     =   0;
     Encode* encoder =   nullptr;
 
-    muxer->write_header();
     v_encoder.next_frame(); 
     a_encoder.next_frame();    
 
@@ -609,6 +597,20 @@ Maker::work()
 ********************************************************************************/
 void Maker::work()
 {
+    muxer->write_header();
+
+    // note: stream_time_base 會在 write header 後改變值, 所以需要再 write header 後做設置.
+    AVRational  stb;
+    stb     =   muxer->get_video_stream_timebase();
+    v_encoder.set_stream_time_base(stb);
+    stb     =   muxer->get_audio_stream_timebase();
+    a_encoder.set_stream_time_base(stb);
+    if( setting.has_subtitle == true )
+    {
+        stb     =   muxer->get_sub_stream_timebase();
+        s_encoder.set_stream_time_base(stb);
+    }
+
     if( setting.has_subtitle == true )
         work_with_subtitle();
     else
