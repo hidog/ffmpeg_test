@@ -12,20 +12,16 @@ class Mux;
 class AudioEncode;
 class VideoEncode;
 class SubEncode;
+class Encode;
 
 struct EncodeSetting;
 struct VideoEncodeSetting;
 struct AudioEncodeSetting;
 struct SubEncodeSetting;
 struct AVFrame;
+struct AVRational;
 
 
-// push frame to queue, and use for encode.
-DLL_API void    add_audio_frame( AVFrame* af );
-DLL_API void    add_video_frame( AVFrame* vf );
-
-DLL_API AVFrame*    get_audio_frame();
-DLL_API AVFrame*    get_video_frame();
 
 
 
@@ -49,14 +45,14 @@ public:
     void    work();
     void    work_with_subtitle();
     void    work_without_subtitle();
-    void    work_live_stream();
     void    end();
 
     bool    is_connect();
+    void    flush_encoder( Encode* enc, AVRational* st_tb );
 
-    // use for live stream
-    void    release_encode_video_frame( AVFrame *vf );
-    void    release_encode_audio_frame( AVFrame *af );
+    //EncodeOrder order_pts_func();
+    void order_pts_func();
+
 
 
 private:
@@ -74,7 +70,6 @@ private:
 
 
 DLL_API void    output_by_io( MediaInfo media_info, std::string _port, Maker& maker );
-DLL_API int     io_write_data( void *opaque, uint8_t *buf, int buf_size );
 
 
 #ifdef FFMPEG_TEST

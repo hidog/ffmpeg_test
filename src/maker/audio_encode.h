@@ -50,7 +50,6 @@ public:
 
     int64_t     get_pts() override;
     AVFrame*    get_frame() override;
-    int         send_frame() override;
 
     AVFrame*    get_frame_from_pcm_file();
     AVFrame*    get_frame_from_file_test();

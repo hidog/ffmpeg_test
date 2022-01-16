@@ -229,16 +229,6 @@ void    VideoEncode::encode_test()
 
 
 
-/*******************************************************************************
-VideoEncode::send_frame()
-********************************************************************************/
-int     VideoEncode::send_frame()
-{
-    //MYLOG( LOG::DEBUG, "pict type = %c\n", av_get_picture_type_char(frame->pict_type) );
-    int ret =  Encode::send_frame();
-    return  ret;
-}
-
 
 
 
@@ -364,7 +354,8 @@ VideoEncode::get_pts()
 ********************************************************************************/
 int64_t     VideoEncode::get_pts()
 {
-    return  frame_count;
+    assert( frame != nullptr );
+    return  frame->pts;
 }
 
 
@@ -454,7 +445,11 @@ AVFrame*    VideoEncode::get_fram_from_file_openCV()
 
     cv::Mat img =   cv::imread( str, cv::IMREAD_COLOR );
     if( img.empty() == true )
-        return  nullptr;    
+    //if( frame_count > 300 )
+    {
+        frame   =   nullptr;
+        return  nullptr;
+    }
 
     ret     =   av_frame_make_writable( frame );
     if( ret < 0 )

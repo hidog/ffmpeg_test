@@ -281,6 +281,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\ffmpeg_example\muxing.cpp" />
     <ClCompile Include="..\ffmpeg_example\remuxing.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_cmd|x64'">true</ExcludedFromBuild>
@@ -319,6 +320,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </ClCompile>
     <ClCompile Include="..\src\maker\encode.cpp" />
     <ClCompile Include="..\src\maker\maker.cpp" />
+    <ClCompile Include="..\src\maker\maker_io.cpp" />
     <ClCompile Include="..\src\maker\mux.cpp" />
     <ClCompile Include="..\src\maker\mux_io.cpp" />
     <ClCompile Include="..\src\maker\sub_encode.cpp" />
@@ -328,6 +330,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClCompile Include="..\src\player\demux.cpp" />
     <ClCompile Include="..\src\player\demux_io.cpp" />
     <ClCompile Include="..\src\player\player.cpp" />
+    <ClCompile Include="..\src\player\player_io.cpp" />
     <ClCompile Include="..\src\player\sub_decode.cpp" />
     <ClCompile Include="..\src\player\video_decode.cpp" />
     <ClCompile Include="..\src\tool.cpp" />
@@ -339,6 +342,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\ffmpeg_example\muxing.h" />
     <ClInclude Include="..\ffmpeg_example\resampling_audio.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
     </ClInclude>
@@ -352,6 +356,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClInclude Include="..\src\maker\encode.h" />
     <ClInclude Include="..\src\maker\maker.h" />
     <ClInclude Include="..\src\maker\maker_def.h" />
+    <ClInclude Include="..\src\maker\maker_io.h" />
     <ClInclude Include="..\src\maker\mux.h" />
     <ClInclude Include="..\src\maker\mux_io.h" />
     <ClInclude Include="..\src\maker\sub_encode.h" />
@@ -361,6 +366,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClInclude Include="..\src\player\demux.h" />
     <ClInclude Include="..\src\player\demux_io.h" />
     <ClInclude Include="..\src\player\player.h" />
+    <ClInclude Include="..\src\player\player_io.h" />
     <ClInclude Include="..\src\player\play_def.h" />
     <ClInclude Include="..\src\player\sub_decode.h" />
     <ClInclude Include="..\src\player\video_decode.h" />

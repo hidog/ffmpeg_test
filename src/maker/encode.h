@@ -53,6 +53,7 @@ public:
     virtual int     send_frame();
     virtual int     recv_frame();
     virtual void    unref_pkt();
+    virtual bool    is_empty();
 
     virtual int64_t     get_pts() = 0;
     virtual AVFrame*    get_frame() = 0;
@@ -72,6 +73,11 @@ protected:
     bool    flush_state    =   false;
 
 };
+
+
+// 用來做 pts 比較, 決定誰先進去 mux.
+bool    operator <= ( Encode& a, Encode& b );
+
 
 
 

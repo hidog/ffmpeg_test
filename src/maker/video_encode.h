@@ -41,7 +41,6 @@ public:
 
     int64_t     get_pts() override;
     AVFrame*    get_frame() override;
-    int         send_frame() override;
 
     AVFrame*    get_fram_from_file_QT();
     AVFrame*    get_fram_from_file_openCV();

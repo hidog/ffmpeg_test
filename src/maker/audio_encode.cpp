@@ -286,7 +286,7 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
     frame->format           =   ctx->sample_fmt;
     frame->channel_layout   =   ctx->channel_layout;
     frame->sample_rate      =   ctx->sample_rate;
-    frame->pts              =   -frame->nb_samples;  // 一個取巧的做法, 參考取得 frame 的code, 確保第一個 frame 的 pts 是 0
+    frame->pts              =   0; // -frame->nb_samples;  // 一個取巧的做法, 參考取得 frame 的code, 確保第一個 frame 的 pts 是 0
     
     // allocate the data buffers
     ret     =   av_frame_get_buffer( frame, 0 );
@@ -620,9 +620,18 @@ AVFrame*    AudioEncode::get_frame_from_pcm_file()
 
     static FILE *fp     =   fopen( load_pcm_path.c_str(), "rb" );    
 
+    /*if( frame_count > 300 )
+    {
+        frame   =   nullptr;
+        return  nullptr;
+    }*/
+
     //
     if( feof(fp) != 0 )
+    {
+        frame   =   nullptr;
         return  nullptr;
+    }
 
     ret     =   av_frame_make_writable(frame);
     if( ret < 0 )
@@ -662,20 +671,6 @@ AVFrame*    AudioEncode::get_frame()
     return  get_frame_from_pcm_file();
     //return  get_frame_from_file_test();
 }
-
-
-
-
-/*******************************************************************************
-AudioEncode::send_frame()
-********************************************************************************/
-int     AudioEncode::send_frame() 
-{
-    static int samples_count    =   0;
-    int     ret     =   Encode::send_frame();
-    return  ret;
-}
-
 
 
 

@@ -182,7 +182,7 @@ void    MuxIO::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContex
 
     int     ret     =   0;
 	
-    io_ctx  =   avio_alloc_context( output_buf, FFMPEG_OUTPUT_BUFFER_SIZE, 1, (void*)IO, nullptr, io_write_data, nullptr );
+    //io_ctx  =   avio_alloc_context( output_buf, FFMPEG_OUTPUT_BUFFER_SIZE, 1, (void*)IO, nullptr, io_write_data, nullptr );
     if( io_ctx == nullptr )
         MYLOG( LOG::ERROR, "io_ctx is null." );
     
