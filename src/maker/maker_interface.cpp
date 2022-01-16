@@ -93,7 +93,7 @@ void    maker_encode_example()
 
     Maker   maker;
 
-    maker.init( &setting, &v_setting, &a_setting, &s_setting );
+    maker.init( setting, v_setting, a_setting, s_setting );
     maker.work();
     //maker.work_live_stream();
     maker.end();

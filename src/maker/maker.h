@@ -5,15 +5,20 @@
 
 #include "tool.h"
 #include "maker_interface.h"
+#include "audio_encode.h"
+#include "video_encode.h"
+#include "sub_encode.h"
+
 #include "../player/play_def.h"
 
 
 
 class Mux;
-class AudioEncode;
+
+/*class AudioEncode;
 class VideoEncode;
 class SubEncode;
-class Encode;
+class Encode;*/
 
 struct EncodeSetting;
 struct VideoEncodeSetting;
@@ -40,7 +45,7 @@ public:
     Maker& operator = ( const Maker& ) = delete;
     Maker& operator = ( Maker&& ) = delete;
 
-    void    init( EncodeSetting* _setting, VideoEncodeSetting* v_setting, AudioEncodeSetting* a_setting, SubEncodeSetting* s_setting );
+    void    init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting, SubEncodeSetting s_setting );
     void    init_muxer();
 
     void    work() override;
@@ -60,11 +65,11 @@ private:
 
     Mux*    muxer  =   nullptr;
 
-    AudioEncode*    a_encoder   =   nullptr;
-    VideoEncode*    v_encoder   =   nullptr;
-    SubEncode*      s_encoder   =   nullptr;
+    AudioEncode     a_encoder;
+    VideoEncode     v_encoder;
+    SubEncode       s_encoder;
 
-    EncodeSetting*  setting     =   nullptr;
+    EncodeSetting   setting;
 
 };
 
