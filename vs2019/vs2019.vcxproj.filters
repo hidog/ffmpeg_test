@@ -108,9 +108,6 @@
     <ClCompile Include="..\src\maker\maker_io.cpp">
       <Filter>src\maker</Filter>
     </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\muxing.cpp">
-      <Filter>ffmpeg_example</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -184,9 +181,6 @@
     </ClInclude>
     <ClInclude Include="..\src\maker\maker_io.h">
       <Filter>src\maker</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\muxing.h">
-      <Filter>ffmpeg_example</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
