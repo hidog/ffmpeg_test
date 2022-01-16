@@ -444,6 +444,7 @@ void    VideoEncode::get_fram_from_file_openCV()
 
     cv::Mat img =   cv::imread( str, cv::IMREAD_COLOR );
     if( img.empty() == true )
+    //if( frame_count > 300 )
     {
         eof_flag    =   true;
         return;

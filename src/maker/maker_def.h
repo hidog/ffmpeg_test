@@ -22,19 +22,6 @@ constexpr int   default_subtitle_stream_index   =   2;
 
 
 
-
-// 目前只會處理一個 v/a/s, 所以用列舉即可
-// 如果需要處理多個 a/s, 要改成回傳 stream index 之類.
-enum class EncodeOrder : uint8_t 
-{
-    DEFAULT,
-    VIDEO,
-    AUDIO,
-    SUBTITLE
-};
-
-
-
 struct EncodeSetting
 {
     IO_Type         io_type;

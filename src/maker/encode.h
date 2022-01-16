@@ -40,26 +40,35 @@ public:
 
     bool    is_flush();
     void    set_flush( bool flag );
-    int     flush();
     void    set_frame( AVFrame* _f );
 
     void        set_stream_time_base( AVRational _stb );
     AVRational  get_stream_time_base();
 
+    virtual int     flush();
+
+
     virtual void    end();
 
+    virtual void encode_timestamp();
     AVPacket*   get_pkt();
+
     AVCodec*    get_codec();
 
     AVCodecContext*     get_ctx();
     AVRational          get_timebase();
     AVFrame*            get_frame();
 
+    // 用來比較 encoder 進去 mux 的先後順序用.
+    // video/audio 跟 subtitle 的參數不同.
+    virtual AVRational  get_compare_timebase();
 
+
+    virtual void unref_data();
 
     virtual int     send_frame();
     virtual int     recv_frame();
-    virtual void    unref_pkt();
+    //virtual void    unref_pkt();
     virtual bool    is_empty();
 
     virtual int64_t     get_pts() = 0;

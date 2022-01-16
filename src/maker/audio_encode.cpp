@@ -626,6 +626,7 @@ void    AudioEncode::get_frame_from_pcm_file()
 
     //
     if( feof(fp) != 0 )
+    //if( frame_count > 300 )
     {
         eof_flag    =   true;
         return;

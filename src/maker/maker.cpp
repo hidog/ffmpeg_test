@@ -214,8 +214,6 @@ void    Maker::flush_encoder( Encode* enc )
 {
     assert( enc != nullptr );
 
-    auto    stb     =   enc->get_stream_time_base();
-    auto    ctx_tb  =   enc->get_timebase();    
     int     ret     =   enc->flush();
 
     while( ret >= 0 ) 
@@ -229,10 +227,10 @@ void    Maker::flush_encoder( Encode* enc )
             break;
         }
     
+        enc->encode_timestamp();
         auto pkt        =   enc->get_pkt();
-        av_packet_rescale_ts( pkt, ctx_tb, stb );
         muxer->write_frame( pkt );
-        enc->unref_pkt();
+        enc->unref_data();
     } 
 
     enc->set_flush(true);
@@ -249,192 +247,87 @@ void    Maker::work_with_subtitle()
 {
     int     ret     =   0;
 
-    s_encoder.load_all_subtitle();
-    muxer->write_header();
-
-    AVRational  v_time_base     =   v_encoder.get_timebase();
-    AVRational  a_time_base     =   a_encoder.get_timebase();
-    AVRational  s_time_base     =   s_encoder.get_src_stream_timebase();
-
     //
-    AVFrame*    v_frame    =   v_encoder.get_frame(); 
-    AVFrame*    a_frame    =   a_encoder.get_frame();    
-    AVFrame*    frame      =   nullptr;
+    s_encoder.load_all_subtitle();
+    v_encoder.next_frame();
+    a_encoder.next_frame();
     Encode*     encoder    =   nullptr;
 
-    AVRational st_tb;
+    int cc = 0;
 
-    // flush function.
-#if 0
-    auto flush_func = [&] ( Encode *enc ) 
-    {
-        ret     =   enc->flush();  
-        while( ret >= 0 ) 
-        {
-            ret     =   enc->recv_frame();
-            if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
-                break;
-            else if( ret < 0 )
-                MYLOG( LOG::ERROR, "recv fail." );
-
-            auto pkt        =   enc->get_pkt();
-            auto ctx_tb     =   enc->get_timebase();
-            av_packet_rescale_ts( pkt, ctx_tb, st_tb );
-            muxer->write_frame( pkt );
-        } 
-        enc->set_flush(true);
-    };
-#endif
-
-    // determine stream pts function
-    // EncodeOrder, 因為目前只處理一組 v/a/s, 所以用列舉
-    // 要處理多組 a/s, 就必須回傳 stream index 之類.
-#if 0
-    auto order_pts_func = [&, this] () -> EncodeOrder
-    {
-        int         ret     =   0;
-        int64_t     v_pts, a_pts, s_pts;
-        EncodeOrder order;
-
-        // 理論上不用考慮兩個都是 nullptr 的 case,在 loop 控制就排除這件事情了.
-        if( v_frame == nullptr ) 
-        {
-            // flush video.
-            // 必須在這邊處理,等 loop 完再處理有機會造成 stream flush 的部分寫入時間錯誤.  
-            // 例如聲音比影像短, 導致 flush 階段的 audio frame pts 在 video frame 前面, 但寫入卻在後面.
-            if( v_encoder->is_flush() == false )
-            {
-                st_tb   =   muxer->get_video_stream_timebase();
-                flush_func( v_encoder );
-            }
-        }
-        else if( a_frame == nullptr )
-        {
-            if( a_encoder->is_flush() == false )
-            {
-                st_tb   =   muxer->get_audio_stream_timebase();
-                flush_func( a_encoder );  
-            }
-        }
-
-        // note: 如果需要支援多 audio/subtitle, 這邊需要重新設計
-        if( v_frame == nullptr && a_frame == nullptr )
-            order   =   EncodeOrder::SUBTITLE;
-        else if( v_frame == nullptr && s_encoder->get_queue_size() == 0 )
-            order   =   EncodeOrder::AUDIO;
-        else if( a_frame == nullptr && s_encoder->get_queue_size() == 0 )
-            order   =   EncodeOrder::VIDEO;
-        else if( s_encoder->get_queue_size() == 0 )
-        {
-            v_pts   =   v_frame->pts;
-            a_pts   =   a_frame->pts;
-            ret     =   av_compare_ts( v_pts, v_time_base, a_pts, a_time_base );
-            if( ret <= 0 )
-                order   =   EncodeOrder::VIDEO;
-            else
-                order   =   EncodeOrder::AUDIO;
-        }
-        else if( v_frame == nullptr )
-        {
-            a_pts   =   a_frame->pts;
-            s_pts   =   s_encoder->get_pts();
-            ret     =   av_compare_ts( a_pts, a_time_base, s_pts, s_time_base );
-            if( ret <= 0 )
-                order   =   EncodeOrder::AUDIO;
-            else
-                order   =   EncodeOrder::SUBTITLE;
-        }
-        else if( a_frame == nullptr )
-        {
-            v_pts   =   v_frame->pts;
-            s_pts   =   s_encoder->get_pts();
-            ret     =   av_compare_ts( v_pts, v_time_base, s_pts, s_time_base );
-            if( ret <= 0 )
-                order   =   EncodeOrder::VIDEO;
-            else
-                order   =   EncodeOrder::SUBTITLE;
-        }
-        else
-        {
-            // 原本想用 INT64_MAX, 但會造成 overflow.
-            v_pts   =   v_frame->pts;
-            a_pts   =   a_frame->pts;
-            s_pts   =   s_encoder->get_pts();
-            ret     =   av_compare_ts( v_pts, v_time_base, a_pts, a_time_base );
-            if( ret <= 0 )
-            {
-                ret     =   av_compare_ts( v_pts, v_time_base, s_pts, s_time_base );
-                if( ret <= 0 )
-                    order   =   EncodeOrder::VIDEO;
-                else
-                    order   =   EncodeOrder::SUBTITLE;
-            }
-            else
-            {
-                ret     =   av_compare_ts( a_pts, a_time_base, s_pts, s_time_base );
-                if( ret <= 0 )
-                    order   =   EncodeOrder::AUDIO;
-                else
-                    order   =   EncodeOrder::SUBTITLE;
-            }
-        }
-
-        return  order;
-    };
-#endif
-
-    // 休息一下再來思考這邊怎麼改寫, 希望寫得好看一點
-    EncodeOrder     order;
-    AVPacket*       pkt =   nullptr;
-    AVRational      ctx_tb;
-    while( v_frame != nullptr || a_frame != nullptr || s_encoder.get_queue_size() > 0 )
-    {        
-        assert( v_frame != nullptr || a_frame != nullptr || s_encoder.get_queue_size() > 0 );
-
+    //
+    while( v_encoder.end_of_file() == false || a_encoder.end_of_file() == false || s_encoder.end_of_file() == false )
+    {       
         //
-        //order   =   order_pts_func();
         if( v_encoder <= a_encoder )
         {
             if( v_encoder <= s_encoder )
-                order   =   EncodeOrder::VIDEO;
+                encoder     =   &v_encoder;
             else 
-                order   =   EncodeOrder::SUBTITLE;
+                encoder     =   &s_encoder;
         }
         else
         {
             if( a_encoder <= s_encoder )
-                order   =   EncodeOrder::AUDIO;
+                encoder     =   &a_encoder;
             else
-                order   =   EncodeOrder::SUBTITLE;
+                encoder     =   &s_encoder;
         }
 
+        // send
+        ret     =   encoder->send_frame();
+        if( ret < 0 )
+        {
+            MYLOG( LOG::ERROR, "send fail." );
+            break;
+        }
+
+
+
+#if 1
+        // recv
+        while( ret >= 0 ) 
+        {
+            ret     =   encoder->recv_frame();
+            if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
+                break;
+            else if( ret < 0 )
+            {
+                MYLOG( LOG::ERROR, "recv fail." );
+                break;
+            }
+
+            encoder->encode_timestamp();
+            auto pkt    =   encoder->get_pkt();
+            //av_packet_rescale_ts( pkt, ctx_tb, stb );
+            muxer->write_frame( pkt );
+            encoder->unref_data();
+        }  
+
+        // update frame
+        encoder->next_frame();
+
+        /* 
+            note: 理論上不用判斷 encoder->is_flush() == false, 
+            因為 flush 後, 會處理另一個 stream, 所以無法跑進已經 flush 過的stream.
+            保險起見加一個檢查
+        */
+        if( encoder->end_of_file() == true && encoder->is_flush() == false )
+            flush_encoder( encoder );
+#endif
+
+#if 0
         //
-        if( order == EncodeOrder::VIDEO ) // video
+        //if( order == EncodeOrder::SUBTITLE )
+        if( encoder == &s_encoder )
         {
-            encoder =   &v_encoder;
-            frame   =   v_frame;
-            st_tb   =   muxer->get_video_stream_timebase();
-        }
-        else if( order == EncodeOrder::AUDIO ) // audio
-        {
-            encoder =   &a_encoder;
-            frame   =   a_frame;
-            st_tb   =   muxer->get_audio_stream_timebase();
-        }
-        else if( order == EncodeOrder::SUBTITLE ) // subtitle        
-            st_tb   =   muxer->get_sub_stream_timebase();
-        else
-            assert(0);
 
-        //
-        if( order == EncodeOrder::SUBTITLE )
-        {
-            s_encoder.encode_subtitle();
-
-            pkt     =   s_encoder.get_pkt();
-            ctx_tb  =   s_encoder.get_timebase();
+            auto pkt     =   s_encoder.get_pkt();
+            auto ctx_tb  =   s_encoder.get_timebase();
             int64_t     subtitle_pts    =   s_encoder.get_subtitle_pts();
             int64_t     duration        =   s_encoder.get_duration();
+
+            auto st_tb = s_encoder.get_stream_time_base();
 
             pkt->pts         =   av_rescale_q( subtitle_pts, AVRational{1,AV_TIME_BASE}, st_tb );
             pkt->duration    =   av_rescale_q( duration, ctx_tb, st_tb );
@@ -484,29 +377,26 @@ void    Maker::work_with_subtitle()
                 flush_encoder( &a_encoder );
             }
         }
+#endif
     }
 
     //
     if( s_encoder.get_queue_size() > 0 )
-        MYLOG( LOG::ERROR, "subtitie queue is not empty." );
+        MYLOG( LOG::WARN, "subtitie queue is not empty." );
+    if( s_encoder.is_flush() == false )
+        MYLOG( LOG::WARN, "subtitie not flush." );
 
     // flush subtitle    
-    s_encoder.generate_flush_pkt();
-    pkt     =   s_encoder.get_pkt();
-    muxer->write_frame( pkt );
+    /*s_encoder.generate_flush_pkt();
+    auto pkt     =   s_encoder.get_pkt();
+    muxer->write_frame( pkt );*/
     
     // flush
     if( v_encoder.is_flush() == false )
-    {
-        st_tb   =   muxer->get_video_stream_timebase();
         flush_encoder( &v_encoder );
-    }
 
     if( a_encoder.is_flush() == false )
-    {
-        st_tb   =   muxer->get_audio_stream_timebase();
         flush_encoder( &a_encoder );
-    }
 
     //
     muxer->write_end();
@@ -562,15 +452,22 @@ void    Maker::work_without_subtitle()
                 break;
             }
 
+            encoder->encode_timestamp();
             auto pkt    =   encoder->get_pkt();
-            av_packet_rescale_ts( pkt, ctx_tb, stb );
+            //av_packet_rescale_ts( pkt, ctx_tb, stb );
             muxer->write_frame( pkt );
-            encoder->unref_pkt();
+            encoder->unref_data();
         }  
 
         // update frame
         encoder->next_frame();
-        if( encoder->end_of_file() == true )
+
+        /* 
+            note: 理論上不用判斷 encoder->is_flush() == false, 
+            因為 flush 後, 會處理另一個 stream, 所以無法跑進已經 flush 過的stream.
+            保險起見加一個檢查
+        */
+        if( encoder->end_of_file() == true && encoder->is_flush() == false )
             flush_encoder( encoder );
     }
     

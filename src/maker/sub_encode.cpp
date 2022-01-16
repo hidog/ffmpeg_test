@@ -110,6 +110,16 @@ void    SubEncode::end()
 
 
 
+/*******************************************************************************
+SubEncode::send_frame()
+********************************************************************************/
+int     SubEncode::send_frame()
+{
+    return encode_subtitle();
+}
+
+
+
 
 /*******************************************************************************
 SubEncode::get_queue_size()
@@ -363,21 +373,42 @@ int64_t     SubEncode::get_duration()
 
 
 
+/*******************************************************************************
+SubEncode::recv_frame()
+********************************************************************************/
+int     SubEncode::recv_frame()
+{
+    /* 
+        note: 理論上純文字字幕不像 video 那樣 send 一次, recv 多次.
+        如果需要 recv 多次, 會需要改掉這邊的設計.
+    */    
+    if( got_sub > 0 )
+    {
+        got_sub     =   AVERROR(EAGAIN);
+        return  1;
+    }
+    else
+        return  got_sub;
+}
+
+
+
 
 
 /*******************************************************************************
 SubEncode::encode_subtitle()
 ********************************************************************************/
-void    SubEncode::encode_subtitle()
+int     SubEncode::encode_subtitle()
 {
     if( sub_queue.empty() == true )
-        MYLOG( LOG::ERROR, "queue is empty." );
+    {
+        MYLOG( LOG::WARN, "queue is empty." );
+        return  ERROR;
+    }
 
-    int     ret     =   0, 
-            got_sub =   0;
-
+    int     ret     =   0;
     *sub_pkt    =   sub_queue.top();
-    sub_queue.pop();
+    //sub_queue.pop();
 
     if( sub_pkt->size == 0 )
         MYLOG( LOG::ERROR, "sub pkt size is 0" );
@@ -387,7 +418,10 @@ void    SubEncode::encode_subtitle()
     ret     =   avcodec_decode_subtitle2( dec, &sub, &got_sub, sub_pkt ); 
     av_packet_unref( sub_pkt );
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "decode fail." );    
+    {
+        MYLOG( LOG::ERROR, "decode fail." );
+        return  ERROR;
+    }
 
     //MYLOG( LOG::DEBUG, "decode subtitle = %s", subtitle->rects[0]->ass );
     if( got_sub > 0 )
@@ -399,7 +433,72 @@ void    SubEncode::encode_subtitle()
         pkt->data           =   sub_buf;
         pkt->size           =   sub_buf_size;
         pkt->stream_index   =   stream_index;
+
+        return  HAVE_FRAME;
     }
+    else
+        return  SUCCESS;
+}
+
+
+
+
+
+
+/*******************************************************************************
+SubEncode::next_frame()
+********************************************************************************/
+void SubEncode::next_frame()  
+{
+    assert( sub_queue.empty() == false );
+    sub_queue.pop();
+    if( sub_queue.empty() == true )
+        eof_flag    =   true;
+} 
+
+
+
+
+
+
+/*******************************************************************************
+SubEncode::encode_timestamp()
+
+
+
+            pkt     =   s_encoder.get_pkt();
+            ctx_tb  =   s_encoder.get_timebase();
+            int64_t     subtitle_pts    =   s_encoder.get_subtitle_pts();
+            int64_t     duration        =   s_encoder.get_duration();
+
+            pkt->pts         =   av_rescale_q( subtitle_pts, AVRational{1,AV_TIME_BASE}, st_tb );
+            pkt->duration    =   av_rescale_q( duration, ctx_tb, st_tb );
+            pkt->dts         =   pkt->pts;
+            s_encoder.set_last_pts( pkt->pts );
+
+            muxer->write_frame( pkt );
+            // 實驗看看到底需不需要 unref.
+            s_encoder.unref_subtitle();
+            //s_encoder.unref_pkt();
+
+********************************************************************************/
+void    SubEncode::encode_timestamp()
+{
+    if( pkt == nullptr )
+        MYLOG( LOG::ERROR, "pkt is null." );
+
+    //pkt     =   s_encoder.get_pkt();
+    auto ctx_tb  =   get_timebase();
+    int64_t     subtitle_pts    =   get_subtitle_pts();
+    int64_t     duration        =   get_duration();
+    
+    auto stb = get_stream_time_base();
+
+    pkt->pts         =   av_rescale_q( subtitle_pts, AVRational{1,AV_TIME_BASE}, stb );
+    pkt->duration    =   av_rescale_q( duration, ctx_tb, stb );
+    pkt->dts         =   pkt->pts;
+    
+    set_last_pts( pkt->pts );
 }
 
 
@@ -418,9 +517,31 @@ void    SubEncode::set_last_pts( int64_t _pts )
 
 
 /*******************************************************************************
-SubEncode::generate_flush_pkt()
+SubEncode::set_last_pts()
 ********************************************************************************/
-int     SubEncode::generate_flush_pkt()
+AVRational  SubEncode::get_compare_timebase()
+{
+    return  get_src_stream_timebase();
+}
+
+
+
+/*******************************************************************************
+SubEncode::unref_data()
+********************************************************************************/
+void SubEncode::unref_data()
+{
+    unref_subtitle();
+    //av_free( pkt->data );
+    //Encode::unref_data();
+}
+
+
+
+/*******************************************************************************
+SubEncode::flush()
+********************************************************************************/
+int     SubEncode::flush()
 {
     pkt->data   =   nullptr;
     pkt->size   =   0;
@@ -448,14 +569,6 @@ void    SubEncode::unref_subtitle()
 
 
 
-/*******************************************************************************
-SubEncode::unref_pkt()
-********************************************************************************/
-void    SubEncode::unref_pkt()
-{
-    av_free( pkt->data );
-    Encode::unref_pkt();
-}
 
 
 

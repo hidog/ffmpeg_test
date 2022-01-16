@@ -27,14 +27,14 @@ void    maker_encode_example()
 
 
     // rmvb 是 variable bitrate. 目前還無法使用
-    //setting.filename    =   "H:\\output.mkv";
-    //setting.extension   =   "matroska";
-    setting.filename    =   "H:\\output.mp4";
-    setting.extension   =   "mp4";
+    setting.filename    =   "H:\\output.mkv";
+    setting.extension   =   "matroska";
+    //setting.filename    =   "H:\\output.mp4";
+    //setting.extension   =   "mp4";
     //setting.filename    =   "H:\\test.avi"; 
     //setting.extension   =   "avi";
     //setting.srt_port        =   "1234";
-    setting.has_subtitle    =   false;
+    setting.has_subtitle    =   true;
 
     VideoEncodeSetting  v_setting;
     v_setting.load_jpg_root_path    =   "J:\\jpg";
