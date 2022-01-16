@@ -64,10 +64,10 @@ void    Maker::init( EncodeSetting _setting, VideoEncodeSetting v_setting, Audio
 
     bool    need_global_header  =   muxer->is_need_global_header();
 
-    v_encoder.init( 0, v_setting, need_global_header );
-    a_encoder.init( 1, a_setting, need_global_header );
+    v_encoder.init( default_video_stream_index, v_setting, need_global_header );
+    a_encoder.init( default_audio_stream_index, a_setting, need_global_header );
     if( setting.has_subtitle == true )
-        s_encoder.init( 2, s_setting, need_global_header );
+        s_encoder.init( default_subtitle_stream_index, s_setting, need_global_header );
 
     //
     auto v_ctx  =   v_encoder.get_ctx();
@@ -221,24 +221,31 @@ void Maker::order_pts_func()
 /*******************************************************************************
 Maker::flush_encoder()
 ********************************************************************************/
-void    Maker::flush_encoder( Encode* enc, AVRational* st_tb )
+void    Maker::flush_encoder( Encode* enc )
 {
-    assert( enc != nullptr && st_tb != nullptr );
+    assert( enc != nullptr );
 
-    int ret     =   enc->flush();  
+    auto    stb     =   enc->get_stream_time_base();
+    auto    ctx_tb  =   enc->get_timebase();    
+    int     ret     =   enc->flush();
+
     while( ret >= 0 ) 
     {
         ret     =   enc->recv_frame();
         if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
             break;
         else if( ret < 0 )
+        {
             MYLOG( LOG::ERROR, "recv fail." );
+            break;
+        }
     
         auto pkt        =   enc->get_pkt();
-        auto ctx_tb     =   enc->get_timebase();
-        av_packet_rescale_ts( pkt, ctx_tb, *st_tb );
+        av_packet_rescale_ts( pkt, ctx_tb, stb );
         muxer->write_frame( pkt );
+        enc->unref_pkt();
     } 
+
     enc->set_flush(true);
 }
 
@@ -480,12 +487,12 @@ void    Maker::work_with_subtitle()
             if( v_frame == nullptr && v_encoder.is_flush() == false )
             {
                 st_tb   =   muxer->get_video_stream_timebase();
-                flush_encoder( &v_encoder, &st_tb );
+                flush_encoder( &v_encoder );
             }
             if( a_frame == nullptr && a_encoder.is_flush() == false )
             {
                 st_tb   =   muxer->get_audio_stream_timebase();
-                flush_encoder( &a_encoder, &st_tb );
+                flush_encoder( &a_encoder );
             }
         }
     }
@@ -503,13 +510,13 @@ void    Maker::work_with_subtitle()
     if( v_encoder.is_flush() == false )
     {
         st_tb   =   muxer->get_video_stream_timebase();
-        flush_encoder( &v_encoder, &st_tb );
+        flush_encoder( &v_encoder );
     }
 
     if( a_encoder.is_flush() == false )
     {
         st_tb   =   muxer->get_audio_stream_timebase();
-        flush_encoder( &a_encoder, &st_tb );
+        flush_encoder( &a_encoder );
     }
 
     //
@@ -530,30 +537,22 @@ Maker::work_without_subtitle()
 void    Maker::work_without_subtitle()
 {
     int     ret     =   0;
+    Encode* encoder =   nullptr;
 
     muxer->write_header();
-
-    AVRational v_time_base  =   v_encoder.get_timebase();
-    AVRational a_time_base  =   a_encoder.get_timebase();
+    v_encoder.next_frame(); 
+    a_encoder.next_frame();    
 
     //
-    AVFrame *v_frame    =   v_encoder.get_frame(); 
-    AVFrame *a_frame    =   a_encoder.get_frame();    
-    Encode  *encoder    =   nullptr;
-
-    AVRational st_tb;
-
-
-    // 休息一下再來思考這邊怎麼改寫, 希望寫得好看一點
-    while( v_encoder.end_of_file() == false || a_encoder.end_of_file() )
+    while( v_encoder.end_of_file() == false || a_encoder.end_of_file() == false )
     {        
-        //
+        // 用 pts 決定進去 mux 的順序
         if( v_encoder <= a_encoder )        
             encoder =   &v_encoder;        
         else        
             encoder =   &a_encoder;        
 
-        //
+        // send
         ret     =   encoder->send_frame();
         if( ret < 0 )
         {
@@ -561,54 +560,40 @@ void    Maker::work_without_subtitle()
             break;
         }
 
-        //
+        // recv
+        auto ctx_tb =   encoder->get_timebase();
+        auto stb    =   encoder->get_stream_time_base();
         while( ret >= 0 ) 
         {
             ret     =   encoder->recv_frame();
             if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
                 break;
             else if( ret < 0 )
+            {
                 MYLOG( LOG::ERROR, "recv fail." );
+                break;
+            }
 
             auto pkt    =   encoder->get_pkt();
-            auto ctx_tb =   encoder->get_timebase();
-            av_packet_rescale_ts( pkt, ctx_tb, st_tb );         
-
+            av_packet_rescale_ts( pkt, ctx_tb, stb );
             muxer->write_frame( pkt );
             encoder->unref_pkt();
         }  
 
         // update frame
-        if( encoder == &v_encoder ) // 理想是用 enum 處理, 這邊先偷懶, 有空修
-            v_frame     =   encoder->get_frame();
-        else
-            a_frame     =   encoder->get_frame();
-
-        if( v_frame == nullptr && v_encoder.is_flush() == false )
-        {
-            st_tb   =   muxer->get_video_stream_timebase();
-            flush_encoder( &v_encoder, &st_tb );
-        }
-        if( a_frame == nullptr && a_encoder.is_flush() == false )
-        {
-            st_tb   =   muxer->get_audio_stream_timebase();
-            flush_encoder( &a_encoder, &st_tb );
-        }
-
+        encoder->next_frame();
+        if( encoder->end_of_file() == true )
+            flush_encoder( encoder );
     }
     
-    // flush
+    // flush. 
+    // note: 理論上已經在 loop 內 flush 完畢.
+    if( v_encoder.is_flush() == false || a_encoder.is_flush() == false )
+        MYLOG( LOG::WARN, "not flush in loop." );
     if( v_encoder.is_flush() == false )
-    {
-        st_tb   =   muxer->get_video_stream_timebase();
-        flush_encoder( &v_encoder, &st_tb );
-    }
-
+        flush_encoder( &v_encoder );
     if( a_encoder.is_flush() == false )
-    {
-        st_tb   =   muxer->get_audio_stream_timebase();
-        flush_encoder( &a_encoder, &st_tb );
-    }
+        flush_encoder( &a_encoder );
 
     //
     muxer->write_end();

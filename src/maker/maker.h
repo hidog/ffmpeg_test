@@ -54,7 +54,7 @@ public:
 
     void    work_with_subtitle();
     void    work_without_subtitle();
-    void    flush_encoder( Encode* enc, AVRational* st_tb );
+    void    flush_encoder( Encode* enc );
 
     //EncodeOrder order_pts_func();
     void order_pts_func();

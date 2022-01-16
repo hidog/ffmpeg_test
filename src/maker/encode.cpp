@@ -238,6 +238,8 @@ Encode::get_pkt()
 ********************************************************************************/
 AVPacket*   Encode::get_pkt()
 {
+    if( pkt == nullptr )
+        MYLOG( LOG::WARN, "pkt is null." );
     return  pkt;   
 }
 
