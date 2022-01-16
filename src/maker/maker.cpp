@@ -93,6 +93,17 @@ void    Maker::init( EncodeSetting* _setting, VideoEncodeSetting* v_setting, Aud
     auto s_ctx  =   s_encoder->get_ctx();
 
     muxer->open( *setting, v_ctx, a_ctx, s_ctx );
+
+    AVRational  stb;
+    stb     =   muxer->get_video_stream_timebase();
+    v_encoder->set_stream_time_base(stb);
+    stb     =   muxer->get_audio_stream_timebase();
+    a_encoder->set_stream_time_base(stb);
+    if( setting->has_subtitle == true )
+    {
+        stb     =   muxer->get_sub_stream_timebase();
+        s_encoder->set_stream_time_base(stb);
+    }
 }
 
 
@@ -551,69 +562,6 @@ void    Maker::work_without_subtitle()
 
     AVRational st_tb;
 
-    // flush function.
-#if 0
-    auto flush_func = [&] ( Encode *enc ) 
-    {
-        ret     =   enc->flush();  
-        while( ret >= 0 ) 
-        {
-            ret     =   enc->recv_frame();
-            if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
-                break;
-            else if( ret < 0 )
-                MYLOG( LOG::ERROR, "recv fail." );
-
-            auto pkt        =   enc->get_pkt();
-            auto ctx_tb     =   enc->get_timebase();
-            av_packet_rescale_ts( pkt, ctx_tb, st_tb );
-            muxer->write_frame( pkt );
-        } 
-        enc->set_flush(true);
-    };
-#endif
-
-#if 0
-    // determine stream pts function
-    auto order_pts_func = [&] () -> int
-    {
-        int     result  =   0;
-        int64_t v_pts, a_pts;
-
-        // 理論上不用考慮兩個都是 nullptr 的 case,在 loop 控制就排除這件事情了.
-        if( v_frame == nullptr ) 
-        {
-            // flush video.
-            // 必須在這邊處理,等loop完再處理有機會造成stream flush的部分寫入時間錯誤.  (例如聲音比影像短)
-            if( v_encoder->is_flush() == false )
-            {
-                st_tb   =   muxer->get_video_stream_timebase();
-                flush_func( v_encoder );
-            }
-            result     =   1;
-        }
-        else if( a_frame == nullptr )
-        {
-            if( a_encoder->is_flush() == false )
-            {
-                st_tb   =   muxer->get_audio_stream_timebase();
-                flush_func( a_encoder );  
-            }
-            result     =   -1;
-        }
-        else
-        {
-            // 原本想用 INT64_MAX, 但會造成 overflow.
-            v_pts   =   v_frame->pts;
-            a_pts   =   a_frame->pts;
-            result  =   av_compare_ts( v_pts, v_time_base, a_pts, a_time_base );
-        }
-
-        return  result;
-    };
-#endif
-
-
     // 休息一下再來思考這邊怎麼改寫, 希望寫得好看一點
     while( v_frame != nullptr || a_frame != nullptr )
     {        
@@ -808,95 +756,6 @@ void    output_by_io( MediaInfo media_info, std::string _port, Maker& maker )
     //maker.work_live_stream();
     maker.end();
 }
-
-
-
-
-
-/*******************************************************************************
-maker_encode_example
-********************************************************************************/
-void    maker_encode_example()
-{
-    EncodeSetting   setting;
-    setting.io_type =   IO_Type::DEFAULT;
-    //setting.io_type =   IO_Type::FILE_IO;
-    //setting.io_type =   IO_Type::SRT_IO;
-
-
-    // rmvb 是 variable bitrate. 目前還無法使用
-    //setting.filename    =   "H:\\output.mkv";
-    //setting.extension   =   "matroska";
-    setting.filename    =   "H:\\output.mp4";
-    setting.extension   =   "mp4";
-    //setting.filename    =   "H:\\test.avi"; 
-    //setting.extension   =   "avi";
-    //setting.srt_port        =   "1234";
-    setting.has_subtitle    =   false;
-
-    VideoEncodeSetting  v_setting;
-    v_setting.load_jpg_root_path    =   "J:\\jpg";
-    v_setting.code_id   =   AV_CODEC_ID_H264;
-    //v_setting.code_id   =   AV_CODEC_ID_H265;
-    //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
-    //v_setting.code_id   =   AV_CODEC_ID_MPEG2VIDEO;
-
-    v_setting.width     =   1280;
-    v_setting.height    =   720;
-
-    v_setting.time_base.num     =   1001;
-    v_setting.time_base.den     =   24000;
-
-    /*
-        b frame not support on rm
-    */
-    v_setting.gop_size      =   30;
-    v_setting.max_b_frames  =   15;
-    //v_setting.gop_size      =   10;
-    //v_setting.max_b_frames  =   0;
-
-
-    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
-    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
-    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P12LE;
-
-    v_setting.src_width     =   1280;
-    v_setting.src_height    =   720;
-    //v_setting.src_pix_fmt   =   AV_PIX_FMT_BGRA;    // for QImage
-    v_setting.src_pix_fmt   =   AV_PIX_FMT_BGR24;    // for openCV
-
-
-    AudioEncodeSetting  a_setting;
-    a_setting.load_pcm_path     =   "J:\\test.pcm";
-    a_setting.code_id     =   AV_CODEC_ID_MP3;
-    //a_setting.code_id       =   AV_CODEC_ID_AAC;
-    //a_setting.code_id       =   AV_CODEC_ID_AC3;
-    //a_setting.code_id     =   AV_CODEC_ID_MP2;
-    //a_setting.code_id       =   AV_CODEC_ID_VORBIS;
-    //a_setting.code_id       =   AV_CODEC_ID_FLAC;
-
-    //a_setting.bit_rate          =   320000;
-    a_setting.bit_rate          =   128000;
-    a_setting.sample_rate       =   48000;
-    a_setting.channel_layout    =   3; // AV_CH_LAYOUT_STEREO = 3;
-    a_setting.sample_fmt        =   static_cast<int>(AV_SAMPLE_FMT_S16);
-
-    SubEncodeSetting   s_setting;
-    s_setting.code_id       =   AV_CODEC_ID_ASS;
-    //s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
-    //s_setting.code_id       =   AV_CODEC_ID_MOV_TEXT;
-    s_setting.subtitle_file =   "J:\\test.ass";
-    s_setting.subtitle_ext  =   "ass";
-
-
-    Maker   maker;
-
-    maker.init( &setting, &v_setting, &a_setting, &s_setting );
-    maker.work();
-    //maker.work_live_stream();
-    maker.end();
-}
-
 
 
 

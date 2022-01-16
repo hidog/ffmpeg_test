@@ -120,16 +120,13 @@ mysubs.ass
 
 
 
-#include "maker/maker.h"
+#include "maker/maker_interface.h"
 
 
-#include "../ffmpeg_example/muxing.h"
 
 
 int main()
 {
-    //muxing();
-
     maker_encode_example();
 
     //player_decode_example();

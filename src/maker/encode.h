@@ -42,6 +42,9 @@ public:
     int     flush();
     void    set_frame( AVFrame* _f );
 
+    void        set_stream_time_base( AVRational _stb );
+    AVRational  get_stream_time_base();
+
     virtual void    end();
 
     AVPacket*   get_pkt();
@@ -59,6 +62,8 @@ public:
     virtual AVFrame*    get_frame() = 0;
 
 protected:
+
+    AVRational      stream_time_base { 0, 0 };
 
     AVCodec         *codec  =   nullptr;
     AVCodecContext  *ctx    =   nullptr;

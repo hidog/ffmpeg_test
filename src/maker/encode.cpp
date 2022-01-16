@@ -108,6 +108,28 @@ void    Encode::end()
 
 
 
+/*******************************************************************************
+Encode::set_stream_time_base()
+********************************************************************************/
+void    Encode::set_stream_time_base( AVRational _stb )
+{
+    stream_time_base    =   _stb;
+}
+
+
+
+    
+/*******************************************************************************
+Encode::get_stream_time_base()
+********************************************************************************/
+AVRational  Encode::get_stream_time_base()
+{
+    if( stream_time_base.num == 0 && stream_time_base.den == 0 )
+        MYLOG( LOG::ERROR, "need set stream time base" );
+    return  stream_time_base;
+}
+
+
 
 
 /*******************************************************************************

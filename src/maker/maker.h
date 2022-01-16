@@ -4,6 +4,7 @@
 
 
 #include "tool.h"
+#include "maker_interface.h"
 #include "../player/play_def.h"
 
 
@@ -26,7 +27,7 @@ struct AVRational;
 
 
 
-class DLL_API Maker
+class Maker : public MakerInterface
 {
 public:
 
@@ -42,12 +43,12 @@ public:
     void    init( EncodeSetting* _setting, VideoEncodeSetting* v_setting, AudioEncodeSetting* a_setting, SubEncodeSetting* s_setting );
     void    init_muxer();
 
-    void    work();
+    void    work() override;
+    void    end() override;
+    bool    is_connect() override;
+
     void    work_with_subtitle();
     void    work_without_subtitle();
-    void    end();
-
-    bool    is_connect();
     void    flush_encoder( Encode* enc, AVRational* st_tb );
 
     //EncodeOrder order_pts_func();
