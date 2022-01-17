@@ -26,6 +26,7 @@ public:
     void    init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting );
     void    init_IO();
 
+    bool    is_connect() override;
 
 
     // use for live stream

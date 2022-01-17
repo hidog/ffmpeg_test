@@ -29,6 +29,26 @@ VideoEncodeIO::~VideoEncodeIO()
 
 
 
+/*******************************************************************************
+VideoEncodeIO::next_frame()
+********************************************************************************/
+void        VideoEncodeIO::next_frame()
+{
+    frame   =   encode::get_video_frame();
+}
+
+
+
+
+/*******************************************************************************
+VideoEncodeIO::next_frame()
+********************************************************************************/
+void VideoEncodeIO::unref_data()
+{
+    av_frame_free( &frame );
+    Encode::unref_data();
+}
+
 
 
 
@@ -47,13 +67,17 @@ void  VideoEncodeIO::init( int st_idx, VideoEncodeSetting setting, bool need_glo
     init_base( setting, need_global_header );
 
     // ┏把计ゼ秨场砞竚,ぇσ璶ぃ璶秨    
-    ctx->bit_rate   =   8000000;
+    ctx->bit_rate   =   3000000;
     
-    if( codec->id == AV_CODEC_ID_H264 || codec->id == AV_CODEC_ID_H265 )
-        av_opt_set( ctx->priv_data, "preset", "ultrafast", 0);
+    assert( codec->id == AV_CODEC_ID_H264 || codec->id == AV_CODEC_ID_H265 );
+    
+    av_opt_set( ctx->priv_data, "preset", "ultrafast", 0);
+    av_opt_set( ctx->priv_data, "tune", "zerolatency", 0);
 
-    if( ctx->codec_id == AV_CODEC_ID_H264 )
-        av_opt_set( ctx->priv_data, "x264-params", "sliced-threads=10", 0);   // 北encode thread
+    //if( ctx->codec_id == AV_CODEC_ID_H264 )
+      //  av_opt_set( ctx->priv_data, "x264-params", "sliced-threads=10", 0);   // 北encode thread
+
+    ctx->thread_count   =   10;
 
     //
     int     ret     =   avcodec_open2( ctx, codec, nullptr );

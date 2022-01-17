@@ -21,7 +21,8 @@ create_maker_io
 ********************************************************************************/
 MakerInterface*     create_maker_io()
 {
-    return  new MakerIO;
+    MakerInterface*     ptr     =   new MakerIO;
+    return  ptr;
 }
 
 
@@ -124,7 +125,7 @@ output_by_io
 void    output_by_io( MediaInfo media_info, std::string _port, MakerInterface* maker )
 {
     MakerIO*    maker_io    =   dynamic_cast<MakerIO*>(maker);
-    if( maker_io == nullptr );
+    if( maker_io == nullptr )
     {
         MYLOG( LOG::ERROR, "maker io convert fail." );
         return;
@@ -146,8 +147,8 @@ void    output_by_io( MediaInfo media_info, std::string _port, MakerInterface* m
     v_setting.time_base.num     =   media_info.time_num;
     v_setting.time_base.den     =   media_info.time_den;
 
-    v_setting.gop_size      =   15;
-    v_setting.max_b_frames  =   5;
+    v_setting.gop_size      =   5;
+    v_setting.max_b_frames  =   0;
 
     v_setting.src_width     =   media_info.width;
     v_setting.src_height    =   media_info.height;

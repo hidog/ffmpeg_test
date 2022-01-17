@@ -44,6 +44,19 @@ void    MakerIO::release_encode_video_frame( AVFrame *vf )
 
 
 /*******************************************************************************
+MakerIO::is_connect()
+********************************************************************************/
+bool    MakerIO::is_connect()
+{
+    if( IO == nullptr )
+        return  false;
+    bool    flag    =   IO->is_connect();
+    return  flag;
+}
+
+
+
+/*******************************************************************************
 Maker::release_encode_audio_frame()
 ********************************************************************************/
 void    MakerIO::release_encode_audio_frame( AVFrame *af )

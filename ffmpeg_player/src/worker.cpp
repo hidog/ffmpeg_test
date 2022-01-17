@@ -18,6 +18,8 @@ Worker::Worker( QObject *parent )
 {
     // note: 目前只支援 stream output. 有需要的話再增加錄影用的介面.
     maker   =   create_maker_io();
+    if( maker == nullptr )
+        MYLOG( LOG::ERROR, "create maker fail." );
 }
 
 

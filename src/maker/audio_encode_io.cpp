@@ -35,6 +35,30 @@ AudioEncodeIO::~AudioEncodeIO()
 
 
 /*******************************************************************************
+AudioEncodeIO::next_frame()
+********************************************************************************/
+void        AudioEncodeIO::next_frame()
+{
+    frame   =   encode::get_audio_frame();
+}
+
+
+
+
+/*******************************************************************************
+AudioEncodeIO::next_frame()
+********************************************************************************/
+void AudioEncodeIO::unref_data()
+{
+    av_frame_free( &frame );
+    Encode::unref_data();
+}
+
+
+
+
+
+/*******************************************************************************
 AudioEncodeIO::init()
 ********************************************************************************/
 void    AudioEncodeIO::init( int st_idx, AudioEncodeSetting setting, bool need_global_header )

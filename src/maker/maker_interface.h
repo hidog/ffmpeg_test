@@ -9,9 +9,16 @@
 class DLL_API MakerInterface
 {
 public:
+    MakerInterface() {}
+    virtual ~MakerInterface() {}
+
     virtual void    work()          =   0;
     virtual void    end()           =   0;
     virtual bool    is_connect()    =   0;
+
+
+    int a = 0;
+
 };
 
 

@@ -13,6 +13,11 @@ public:
     void init( int st_idx, VideoEncodeSetting setting, bool need_global_header ) override;
 
 
+    void        next_frame() override;
+    void unref_data() override;
+
+
+
 private:
 };
 

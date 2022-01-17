@@ -25,6 +25,7 @@ extern "C" {
 Maker::Maker()
 ********************************************************************************/
 Maker::Maker()
+    :   MakerInterface()
 {}
 
 
@@ -78,11 +79,8 @@ Maker::is_connect()
 ********************************************************************************/
 bool    Maker::is_connect()
 {
-    if( muxer == nullptr ) // not init yet.
-        return  false;
-
-    bool    flag    =   muxer->is_connect();
-    return  flag;
+    MYLOG( LOG::ERROR, "should not run into this code." );
+    return  true;
 }
 
 
