@@ -70,9 +70,6 @@ protected:
 
 
 
-DLL_API void    output_by_io( MediaInfo media_info, std::string _port, Maker& maker );
-
-
 #ifdef FFMPEG_TEST
 void    maker_encode_example();
 #endif

@@ -131,8 +131,6 @@ void    Maker::work_with_subtitle()
     a_encoder.next_frame();
     Encode*     encoder    =   nullptr;
 
-    int cc = 0;
-
     //
     while( v_encoder.end_of_file() == false || a_encoder.end_of_file() == false || s_encoder.end_of_file() == false )
     {       

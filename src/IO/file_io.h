@@ -22,6 +22,7 @@ public:
     int     write( uint8_t *buffer, int size ) override;
     void    close() override;
     bool    is_connect() override;
+    bool    is_stop() override;
 
 private:
 

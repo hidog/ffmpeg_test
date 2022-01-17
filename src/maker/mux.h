@@ -26,7 +26,7 @@ class Mux
 public:
 
     Mux();
-    ~Mux();
+    virtual ~Mux();
 
     Mux( const Mux& ) = delete;
     Mux( Mux&& ) = delete;

@@ -29,29 +29,14 @@ MuxIO::MuxIO()
 MuxIO::MuxIO()
 ********************************************************************************/
 MuxIO::~MuxIO()
-{}
-
-
-
-
-
-
-#if 0
-/*******************************************************************************
-MuxIO::MuxIO()
-********************************************************************************/
-bool    MuxIO::io_need_wait()
 {
-    SrtIO*  srt_io  =   dynamic_cast<SrtIO*>(IO);
-    if( srt_io == nullptr )
-    {
-        MYLOG( LOG::ERROR, "srt io is null." );
-        return  false;
-    }
-
-    return  srt_io->need_wait();
+    end();
 }
-#endif
+
+
+
+
+
 
 
 
@@ -62,17 +47,12 @@ MuxIO::init()
 void    MuxIO::init( EncodeSetting setting )
 {
     assert( output_buf == nullptr );
-    output_buf  =   (uint8_t*)av_malloc(FFMPEG_OUTPUT_BUFFER_SIZE); //  new uint8_t[FFMPEG_OUTPUT_BUFFER_SIZE];
-
-    //
-    AVDictionary    *opt    =   nullptr;
+    output_buf  =   (uint8_t*)av_malloc(FFMPEG_OUTPUT_BUFFER_SIZE);
 
     // alloc output.
     avformat_alloc_output_context2( &output_ctx, NULL, "mpegts", nullptr );
     if( output_ctx == nullptr ) 
         MYLOG( LOG::ERROR, "output_ctx = nullptr" );
-
-    output_ctx->start_time;
 
     // 
     MYLOG( LOG::INFO, "default video codec is %s", avcodec_get_name(output_ctx->oformat->video_codec) );
@@ -102,15 +82,17 @@ MuxIO::end()
 ********************************************************************************/
 void    MuxIO::end()
 {
-    av_free( output_buf );
-    output_buf = nullptr;
+    if( output_buf != nullptr )
+    {
+        av_free( output_buf );
+        output_buf  =   nullptr;
+    }
 
-    avio_context_free( &io_ctx );
-    io_ctx  =   nullptr;
-
-    /*IO->close();
-    delete IO;
-    IO  =   nullptr;*/
+    if( io_ctx != nullptr )
+    {
+        avio_context_free( &io_ctx );
+        io_ctx  =   nullptr;
+    }
 
     Mux::end();
 }
@@ -125,6 +107,8 @@ MuxIO::write_end()
 void    MuxIO::write_end()
 {
     av_write_trailer(output_ctx);
+    if( 0 == ( output_ctx->oformat->flags & AVFMT_NOFILE) )
+        avio_closep( &output_ctx->pb );
 }
 
 
@@ -135,12 +119,13 @@ void    MuxIO::write_end()
 /*******************************************************************************
 io_write_data
 ********************************************************************************/
-int     io_write_data( void *opaque, uint8_t *buf, int buf_size )
+int     io_write_data( void *opaque, uint8_t *buffer, int size )
 {
     InputOutput*    io  =   (InputOutput*)opaque;
-    int     ret     =   io->write( buf, buf_size );
+    int     ret     =   io->write( buffer, size );
     return  ret;
 }
+
 
 
 

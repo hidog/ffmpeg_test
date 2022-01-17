@@ -29,20 +29,17 @@ public:
     void    write_end() override;
     void    end() override;
 
-    //bool    io_need_wait();
-
 private:
 
     static constexpr    int     FFMPEG_OUTPUT_BUFFER_SIZE    =   4096;
-    uint8_t     *output_buf =   nullptr;
-
-    AVIOContext*    io_ctx  =   nullptr;
+    uint8_t         *output_buf     =   nullptr;
+    AVIOContext     *io_ctx         =   nullptr;
 
 };
 
 
 
-int     io_write_data( void *opaque, uint8_t *buf, int buf_size );
+int     io_write_data( void *opaque, uint8_t *buffer, int size );
 
 
 

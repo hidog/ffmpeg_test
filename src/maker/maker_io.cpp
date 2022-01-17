@@ -24,19 +24,27 @@ MakerIO::MakerIO()
 MakerIO::~MakerIO()
 ********************************************************************************/
 MakerIO::~MakerIO()
-{}
+{
+    end();
+}
 
 
 
 
 /*******************************************************************************
-Maker::release_encode_video_frame()
+MakerIO::end()
 ********************************************************************************/
-void    MakerIO::release_encode_video_frame( AVFrame *vf )
+void    MakerIO::end()
 {
-#if 0
-    av_frame_free( &vf );
-#endif
+    if( IO != nullptr )
+    {
+        while( IO->is_stop() == false )
+            SLEEP_10MS;
+        delete IO;
+        IO  =   nullptr;
+    }
+
+    Maker::end();
 }
 
 
@@ -55,17 +63,6 @@ bool    MakerIO::is_connect()
 
 
 
-/*******************************************************************************
-Maker::release_encode_audio_frame()
-********************************************************************************/
-void    MakerIO::release_encode_audio_frame( AVFrame *af )
-{
-#if 0
-    av_frame_free( &af );
-#endif
-}
-
-
 
 
 
@@ -78,8 +75,7 @@ void    MakerIO::work()
 {
     // wait for data to start.
     while( encode::audio_need_wait() == true || encode::video_need_wait() == true )
-        SLEEP_10MS;    
-
+        SLEEP_10MS;
     
     muxer->write_header();
 
@@ -139,7 +135,7 @@ void    MakerIO::init( EncodeSetting _setting, VideoEncodeSetting v_setting, Aud
 
     IO->open();
     
-    MuxIO* muxer_io = dynamic_cast<MuxIO*>(muxer);
+    MuxIO*  muxer_io    =   dynamic_cast<MuxIO*>(muxer);
     if( muxer_io == nullptr )
         MYLOG( LOG::ERROR, "convert mux to mux_io fail." );
 
