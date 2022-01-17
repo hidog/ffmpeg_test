@@ -85,6 +85,9 @@ int     DemuxIO::open_input()
     int  ret    =   0;
 
 	AVInputFormat*  input_fmt   =   nullptr;
+	
+    input_buf   =   (uint8_t*)av_malloc(FFMPEG_INPUT_BUFFER_SIZE);
+
 	AVIOContext*    io_ctx      =   avio_alloc_context( input_buf, FFMPEG_INPUT_BUFFER_SIZE, 0, (void*)IO, io_read_data, nullptr, nullptr );
 
     ret         =   av_probe_input_buffer( io_ctx, &input_fmt, nullptr, nullptr, 0, 0 );
