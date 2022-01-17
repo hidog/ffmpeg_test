@@ -526,6 +526,7 @@ void    Player::play()
             s_decoder.decode_subtitle( pkt );
 #ifdef RENDER_SUBTITLE
         // 尚未處理 graphic subtitle. 以後有需要再新增.
+        // note: 通常一個檔案只會有一個video stream,就不處理多個video stream的狀況了.
         else if( s_decoder.exist_stream() == true && dc == &v_decoder )
             play_decode_video_subtitle( pkt );
 #endif
@@ -541,7 +542,7 @@ void    Player::play()
                     if( ret <= 0 )
                         break;
 
-                    if( dc->output_frame_func != nullptr )
+                    if( dc->output_frame_func != nullptr && pkt->stream_index == dc->current_index() )
                         dc->output_frame_func();
                     dc->unref_frame();
                 }
@@ -1598,8 +1599,8 @@ void    player_decode_example()
     player.set( setting );
     player.init();
 
-    player.set_output_jpg_root( "H:\\jpg" );
-    player.set_output_audio_pcm_path( "H:\\test.pcm" );
+    player.set_output_jpg_root( "J:\\jpg" );
+    player.set_output_audio_pcm_path( "J:\\test.pcm" );
 
     player.play();
     player.end();
