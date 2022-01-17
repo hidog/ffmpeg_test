@@ -27,6 +27,7 @@ public:
     void    open() override;
     void    close() override;
     bool    is_connect() override;
+    bool    is_stop() override;
 
     // use for client
     int     read( uint8_t *buf, int buf_size ) override;

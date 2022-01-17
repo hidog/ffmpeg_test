@@ -4,38 +4,40 @@
 
 
 #include "tool.h"
+#include "maker_interface.h"
+#include "audio_encode.h"
+#include "video_encode.h"
+#include "sub_encode.h"
+
 #include "../player/play_def.h"
 
 
 
 class Mux;
-class AudioEncode;
+
+/*class AudioEncode;
 class VideoEncode;
 class SubEncode;
+class Encode;*/
 
 struct EncodeSetting;
 struct VideoEncodeSetting;
 struct AudioEncodeSetting;
 struct SubEncodeSetting;
 struct AVFrame;
-
-
-// push frame to queue, and use for encode.
-DLL_API void    add_audio_frame( AVFrame* af );
-DLL_API void    add_video_frame( AVFrame* vf );
-
-DLL_API AVFrame*    get_audio_frame();
-DLL_API AVFrame*    get_video_frame();
+struct AVRational;
 
 
 
 
-class DLL_API Maker
+
+
+class Maker : public MakerInterface
 {
 public:
 
     Maker();
-    ~Maker();
+    virtual ~Maker();
 
     Maker( const Maker& ) = delete;
     Maker( Maker&& ) = delete;
@@ -43,33 +45,29 @@ public:
     Maker& operator = ( const Maker& ) = delete;
     Maker& operator = ( Maker&& ) = delete;
 
-    void    init( EncodeSetting* _setting, VideoEncodeSetting* v_setting, AudioEncodeSetting* a_setting, SubEncodeSetting* s_setting );
-    void    init_muxer();
+    void    init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting, SubEncodeSetting s_setting );
 
-    void    work();
+    void    work() override;
+    void    end() override;
+    bool    is_connect() override;
+
     void    work_with_subtitle();
     void    work_without_subtitle();
-    void    work_live_stream();
-    void    end();
+    void    flush_encoder( Encode* enc );
 
-    bool    is_connect();
 
-private:
+protected:
 
     Mux*    muxer  =   nullptr;
 
-    AudioEncode*    a_encoder   =   nullptr;
-    VideoEncode*    v_encoder   =   nullptr;
-    SubEncode*      s_encoder   =   nullptr;
+    AudioEncode     a_encoder;
+    VideoEncode     v_encoder;
+    SubEncode       s_encoder;
 
-    EncodeSetting*  setting     =   nullptr;
+    EncodeSetting   setting;
 
 };
 
-
-
-DLL_API void    output_by_io( MediaInfo media_info, std::string _port, Maker& maker );
-DLL_API int     io_write_data( void *opaque, uint8_t *buf, int buf_size );
 
 
 #ifdef FFMPEG_TEST

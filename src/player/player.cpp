@@ -1197,6 +1197,7 @@ AVFrame*    Player::get_new_a_frame()
     a_frame->nb_samples       =     a_decoder.get_audio_nb_sample();
     a_frame->format           =     a_decoder.get_audio_sample_format();
     a_frame->channel_layout   =     a_decoder.get_audio_channel_layout();
+    a_frame->channels         =     a_decoder.get_audio_channel();
     a_frame->sample_rate      =     a_decoder.get_audio_sample_rate();
 
     //
@@ -1215,7 +1216,6 @@ AVFrame*    Player::get_new_a_frame()
 
 
 
-
 /*******************************************************************************
 Player::output_live_stream()
 ********************************************************************************/
@@ -1228,6 +1228,7 @@ void    Player::output_live_stream( Decode* dc )
     if( dc->get_decode_context_type() == AVMEDIA_TYPE_VIDEO ||
         dc->get_decode_context_type() == AVMEDIA_TYPE_SUBTITLE )
     {
+
         v_frame     =   get_new_v_frame();
         frame       =   dc->get_frame();
 
@@ -1240,7 +1241,22 @@ void    Player::output_live_stream( Decode* dc )
         //printf( "video frame pts = %lld\n", v_frame->pts );
     }
     else if( dc->get_decode_context_type() == AVMEDIA_TYPE_AUDIO )
-    {      
+    {   
+#if 0
+        static bool aaaflag = false;
+        static SwrContext* tmp_swr_ctx = nullptr;
+        if( aaaflag == false )
+        {
+            aaaflag = true;
+            tmp_swr_ctx     =   swr_alloc_set_opts( tmp_swr_ctx,
+                                                      3, AV_SAMPLE_FMT_FLTP, 48000,  // output
+                                                      3, AV_SAMPLE_FMT_FLTP, 48000,         // input 
+                                                      NULL, NULL );
+            swr_init(tmp_swr_ctx);
+        }
+#endif
+
+
         a_frame     =   get_new_a_frame();
         frame       =   dc->get_frame();
 
@@ -1251,7 +1267,17 @@ void    Player::output_live_stream( Decode* dc )
         // AudioEncode::init_swr
         // 會需要用到 pcm_size 這個參數
 
+        AVSampleFormat fmt = static_cast<AVSampleFormat>(a_decoder.get_audio_sample_format());
+        //av_samples_copy( a_frame->data, frame->data, 0, 0, frame->nb_samples, frame->channels, fmt );
         av_frame_copy( a_frame, frame );
+
+        //printf("a frame = %d\n", a_frame->data[0][100] );
+
+
+        /*int ret     =   swr_convert( tmp_swr_ctx,
+                                     a_frame->data, a_frame->nb_samples,                              //輸出 
+                                     (const uint8_t**)frame->data, frame->nb_samples );    //輸入*/
+
 
         a_frame->pts    =   audio_pts_count * dc->get_frame_count();
 
@@ -1560,10 +1586,12 @@ player_decode_example
 void    player_decode_example()
 {
     DecodeSetting   setting;
-    setting.io_type     =   IO_Type::SRT_IO;
-    //setting.filename   =   "D:/code/test.mkv";     // 使用 D:\\code\\test.mkv 會出錯
-    //setting.subname    =   "D:/code/test.mkv";   
-    setting.srt_port    =   "1234";
+    setting.io_type     =   IO_Type::DEFAULT;
+    //setting.io_type     =   IO_Type::SRT_IO;
+    //setting.filename   =   "D:/test.mkv";     // 使用 D:\\code\\test.mkv 會出錯
+    setting.filename    =   "D:/test2.mp4";
+    //setting.subname    =   "D:/code/test.ass";   
+    //setting.srt_port    =   "1234";
 
     Player  player;  
 

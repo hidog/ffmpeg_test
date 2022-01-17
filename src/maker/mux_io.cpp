@@ -29,56 +29,12 @@ MuxIO::MuxIO()
 MuxIO::MuxIO()
 ********************************************************************************/
 MuxIO::~MuxIO()
-{}
-
-
-
-
-
-
-
-/*******************************************************************************
-MuxIO::MuxIO()
-********************************************************************************/
-bool    MuxIO::io_need_wait()
 {
-    SrtIO*  srt_io  =   dynamic_cast<SrtIO*>(IO);
-    if( srt_io == nullptr )
-    {
-        MYLOG( LOG::ERROR, "srt io is null." );
-        return  false;
-    }
-
-    return  srt_io->need_wait();
+    end();
 }
 
 
 
-
-
-/*******************************************************************************
-MuxIO::init_IO()
-********************************************************************************/
-void    MuxIO::init_IO( EncodeSetting setting )
-{
-    assert( setting.io_type != IO_Type::DEFAULT );  // defulat use for mux.
-    assert( IO == nullptr );
-    IO  =   create_IO( setting.io_type, IO_Direction::SEND );
-    IO->set_encode( setting );
-    IO->init();
-}
-
-
-
-
-
-/*******************************************************************************
-MuxIO::is_connect()
-********************************************************************************/
-bool    MuxIO::is_connect()
-{
-    return  IO->is_connect();
-}
 
 
 
@@ -90,24 +46,17 @@ MuxIO::init()
 ********************************************************************************/
 void    MuxIO::init( EncodeSetting setting )
 {
-    init_IO( setting );
-
-    //
-    int             ret;
-    AVDictionary    *opt    =   nullptr;
+    assert( output_buf == nullptr );
+    output_buf  =   (uint8_t*)av_malloc(FFMPEG_OUTPUT_BUFFER_SIZE);
 
     // alloc output.
-    //avformat_alloc_output_context2( &output_ctx, NULL, setting.extension.c_str(), nullptr );
     avformat_alloc_output_context2( &output_ctx, NULL, "mpegts", nullptr );
     if( output_ctx == nullptr ) 
         MYLOG( LOG::ERROR, "output_ctx = nullptr" );
 
-    output_ctx->start_time;
-
     // 
     MYLOG( LOG::INFO, "default video codec is %s", avcodec_get_name(output_ctx->oformat->video_codec) );
     MYLOG( LOG::INFO, "default audio codec is %s", avcodec_get_name(output_ctx->oformat->audio_codec) );
-    MYLOG( LOG::INFO, "default subtitle codec is %s", avcodec_get_name(output_ctx->oformat->subtitle_codec) );
 
     // add stream
     // video
@@ -121,15 +70,6 @@ void    MuxIO::init( EncodeSetting setting )
     if( a_stream == nullptr )
         MYLOG( LOG::ERROR, "a_stream is nullptr." );
     a_stream->id    =   output_ctx->nb_streams - 1;
-
-    // subtitle
-    if( setting.has_subtitle == true )
-    {
-        s_stream    =   avformat_new_stream( output_ctx, nullptr );
-        if( s_stream == nullptr )
-            MYLOG( LOG::ERROR, "a_stream is nullptr." );
-        s_stream->id    =   output_ctx->nb_streams - 1;
-    }
 }
 
 
@@ -142,12 +82,17 @@ MuxIO::end()
 ********************************************************************************/
 void    MuxIO::end()
 {
-    avio_context_free( &io_ctx );
-    io_ctx  =   nullptr;
+    if( output_buf != nullptr )
+    {
+        av_free( output_buf );
+        output_buf  =   nullptr;
+    }
 
-    IO->close();
-    delete IO;
-    IO  =   nullptr;
+    if( io_ctx != nullptr )
+    {
+        avio_context_free( &io_ctx );
+        io_ctx  =   nullptr;
+    }
 
     Mux::end();
 }
@@ -162,6 +107,23 @@ MuxIO::write_end()
 void    MuxIO::write_end()
 {
     av_write_trailer(output_ctx);
+    if( 0 == ( output_ctx->oformat->flags & AVFMT_NOFILE) )
+        avio_closep( &output_ctx->pb );
+}
+
+
+
+
+
+
+/*******************************************************************************
+io_write_data
+********************************************************************************/
+int     io_write_data( void *opaque, uint8_t *buffer, int size )
+{
+    InputOutput*    io  =   (InputOutput*)opaque;
+    int     ret     =   io->write( buffer, size );
+    return  ret;
 }
 
 
@@ -174,10 +136,8 @@ void    MuxIO::write_end()
 /*******************************************************************************
 MuxIO::open()
 ********************************************************************************/
-void    MuxIO::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, AVCodecContext* s_ctx )
+void    MuxIO::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, InputOutput *IO )
 {
-    IO->open();
-
     int     ret     =   0;
 	
     io_ctx  =   avio_alloc_context( output_buf, FFMPEG_OUTPUT_BUFFER_SIZE, 1, (void*)IO, nullptr, io_write_data, nullptr );
@@ -195,25 +155,15 @@ void    MuxIO::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContex
     if( v_ctx == nullptr || a_ctx == nullptr )
         MYLOG( LOG::ERROR, "v ctx or a ctx is null" );
 
-    if( setting.has_subtitle == true && s_ctx == nullptr )
-        MYLOG( LOG::ERROR, "subtitle ctx is null." );   
-
     // copy time base.
     v_stream->time_base     =   v_ctx->time_base;   // 在某個操作後這邊的 value 會變.
     a_stream->time_base     =   a_ctx->time_base;
-    if( setting.has_subtitle == true )
-        s_stream->time_base     =   s_ctx->time_base;
     
     // 
     ret     =   avcodec_parameters_from_context( v_stream->codecpar, v_ctx );
     assert( ret == 0 );
     ret     =   avcodec_parameters_from_context( a_stream->codecpar, a_ctx );
     assert( ret == 0 );
-    if( setting.has_subtitle == true )
-    {
-        ret     =   avcodec_parameters_from_context( s_stream->codecpar, s_ctx );
-        assert( ret == 0 );
-    }
 }
 
 

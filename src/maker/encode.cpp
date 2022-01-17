@@ -39,16 +39,18 @@ Encode::init()
 void    Encode::init( int st_idx, AVCodecID code_id )
 {
     stream_index    =   st_idx;
-    flush_state    =   false;
+    flush_state     =   false;
+    eof_flag        =   false;
 
+#ifdef FFMPEG_TEST
     // init frame
     if( frame != nullptr )
         av_frame_free( &frame );
-
     frame   =   av_frame_alloc();
     if( frame == nullptr ) 
         MYLOG( LOG::ERROR, "frame alloc fail." );
     frame->pts  =   0;
+#endif    
 
     // init pkt
     if( pkt != nullptr )    
@@ -100,10 +102,21 @@ void    Encode::end()
         pkt     =   nullptr;
     }
 
-    flush_state    =   false;
-    codec   =   nullptr;
+    flush_state =   false;
+    eof_flag    =   false;
+    codec       =   nullptr;
 }
 
+
+
+
+/*******************************************************************************
+Encode::end_of_file()
+********************************************************************************/
+bool    Encode::end_of_file()
+{
+    return  eof_flag;
+}
 
 
 
@@ -111,13 +124,57 @@ void    Encode::end()
 
 
 /*******************************************************************************
+Encode::set_stream_time_base()
+********************************************************************************/
+void    Encode::set_stream_time_base( AVRational _stb )
+{
+    stream_time_base    =   _stb;
+}
+
+
+
+
+/*******************************************************************************
+Encode::set_stream_time_base()
+********************************************************************************/
+AVRational  Encode::get_compare_timebase()
+{
+    return  get_timebase();
+}
+
+
+    
+/*******************************************************************************
+Encode::get_stream_time_base()
+********************************************************************************/
+AVRational  Encode::get_stream_time_base()
+{
+    if( stream_time_base.num == 0 && stream_time_base.den == 0 )
+        MYLOG( LOG::ERROR, "need set stream time base" );
+    return  stream_time_base;
+}
+
+
+
+#if 0
+/*******************************************************************************
 Encode::unref_pkt()
 ********************************************************************************/
 void    Encode::unref_pkt()
 {
     av_packet_unref(pkt);
 }
+#endif
 
+
+
+/*******************************************************************************
+Encode::unref_data()
+********************************************************************************/
+void Encode::unref_data()
+{
+    av_packet_unref(pkt);
+}
 
 
 
@@ -153,6 +210,8 @@ int     Encode::send_frame()
         return  ERROR;
     }
 
+    //printf("send frame %d\n", frame->data[0][100] );
+
     int ret =   avcodec_send_frame( ctx, frame );
     return  ret;
 }
@@ -182,12 +241,42 @@ int     Encode::recv_frame()
 
 
 
+/*******************************************************************************
+Encode::set_frame()
+********************************************************************************/
+void    Encode::set_frame( AVFrame* _f )
+{
+    //av_frame_copy( frame, _f );
+    //av_frame_free( &_f );
+    frame   =   _f;
+}
+
+
+
+
+/*******************************************************************************
+Encode::encode_timestamp()
+********************************************************************************/
+void Encode::encode_timestamp()
+{
+    if( pkt == nullptr )
+        MYLOG( LOG::WARN, "pkt is null." );
+    auto ctx_tb =   get_timebase();
+    auto stb    =   get_stream_time_base();
+    av_packet_rescale_ts( pkt, ctx_tb, stb );
+}
+
+
+
+
 
 /*******************************************************************************
 Encode::get_pkt()
 ********************************************************************************/
 AVPacket*   Encode::get_pkt()
 {
+    if( pkt == nullptr )
+        MYLOG( LOG::WARN, "pkt is null." );
     return  pkt;   
 }
 
@@ -242,4 +331,69 @@ int     Encode::flush()
 
     int ret =   avcodec_send_frame( ctx, nullptr );
     return  ret;
+}
+
+
+
+
+/*******************************************************************************
+Encode::is_empty()
+
+判斷 encoder 已經沒資料
+********************************************************************************/
+bool    Encode::is_empty()
+{
+    if( frame == nullptr )
+        return  true;
+    else
+        return  false;
+}
+
+
+
+
+/*******************************************************************************
+operator <=
+
+用來決定誰先進去mux
+********************************************************************************/
+bool    operator <= ( Encode& a, Encode& b )
+{
+    if( a.end_of_file() == true && b.end_of_file() == true )
+    {
+        //MYLOG( LOG::ERROR, "both eof." );
+        return  true;
+    }
+    else if( a.end_of_file() == true )
+        return  false;
+    else if( b.end_of_file() == true )
+        return  true;
+
+    int64_t     a_pts   =   a.get_pts();
+    int64_t     b_pts   =   b.get_pts();
+
+    AVRational  a_tb    =   a.get_compare_timebase();
+    AVRational  b_tb    =   b.get_compare_timebase();
+
+    int     ret     =   av_compare_ts( a_pts, a_tb, b_pts, b_tb );
+    if( ret <= 0 )
+        return  true;
+    else
+        return  false;
+}
+
+
+
+
+
+
+
+/*******************************************************************************
+Encode::get_frame()
+********************************************************************************/
+AVFrame*    Encode::get_frame()
+{
+    if( frame == nullptr )
+        MYLOG( LOG::WARN, "frame is null" );
+    return  frame;
 }

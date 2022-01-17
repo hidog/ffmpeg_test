@@ -27,7 +27,9 @@ Mux::Mux()
 Mux::Mux()
 ********************************************************************************/
 Mux::~Mux()
-{}
+{
+    end();
+}
 
 
 
@@ -76,13 +78,10 @@ void    Mux::init( EncodeSetting setting )
     if( output_ctx == nullptr ) 
         MYLOG( LOG::ERROR, "output_ctx = nullptr" );
 
-    output_ctx->start_time;
-
     // 
     MYLOG( LOG::INFO, "default video codec is %s", avcodec_get_name(output_ctx->oformat->video_codec) );
     MYLOG( LOG::INFO, "default audio codec is %s", avcodec_get_name(output_ctx->oformat->audio_codec) );
     MYLOG( LOG::INFO, "default subtitle codec is %s", avcodec_get_name(output_ctx->oformat->subtitle_codec) );
-
 
     // add stream
     // video
@@ -205,7 +204,7 @@ void    Mux::write_frame( AVPacket* pkt )
 /*******************************************************************************
 Mux::write_end()
 ********************************************************************************/
-void Mux::write_end()
+void    Mux::write_end()
 {
     av_write_trailer(output_ctx);
 

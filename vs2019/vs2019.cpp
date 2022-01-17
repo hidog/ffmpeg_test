@@ -120,15 +120,13 @@ mysubs.ass
 
 
 
-#include "maker/maker.h"
-
+#include "maker/maker_interface.h"
 
 
 
 
 int main()
 {
-
     maker_encode_example();
 
     //player_decode_example();
