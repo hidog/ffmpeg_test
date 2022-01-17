@@ -318,6 +318,9 @@
     <property name="text">
      <string>output</string>
     </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">

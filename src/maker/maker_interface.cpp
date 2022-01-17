@@ -123,6 +123,13 @@ output_by_io
 ********************************************************************************/
 void    output_by_io( MediaInfo media_info, std::string _port, MakerInterface* maker )
 {
+    MakerIO*    maker_io    =   dynamic_cast<MakerIO*>(maker);
+    if( maker_io == nullptr );
+    {
+        MYLOG( LOG::ERROR, "maker io convert fail." );
+        return;
+    }
+
     EncodeSetting   setting;
     setting.io_type         =   IO_Type::SRT_IO;    
     setting.srt_port        =   _port;
@@ -146,40 +153,16 @@ void    output_by_io( MediaInfo media_info, std::string _port, MakerInterface* m
     v_setting.src_height    =   media_info.height;
     v_setting.src_pix_fmt   =   static_cast<AVPixelFormat>(media_info.pix_fmt);
 
-
-    /*v_setting.width     =   1280;
-    v_setting.height    =   720;
-    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P; 
-    v_setting.time_base.num     =   1001; 
-    v_setting.time_base.den     =   24000;
-
-    v_setting.gop_size      =   12;
-    v_setting.max_b_frames  =   0;
-
-    v_setting.src_width     =   1280;
-    v_setting.src_height    =   720; 
-    v_setting.src_pix_fmt   =   AV_PIX_FMT_BGR24;
-    
-    v_setting.load_jpg_root_path    =   "J:\\jpg";*/
-
-
     AudioEncodeSetting  a_setting;
     a_setting.code_id           =   AV_CODEC_ID_AAC;
-    a_setting.bit_rate          =   320000;
+    a_setting.bit_rate          =   128000;
     a_setting.sample_rate       =   media_info.sample_rate;
     a_setting.channel_layout    =   media_info.channel_layout;
-    a_setting.sample_fmt        =   media_info.sample_fmt;
-    /*a_setting.sample_rate       =   48000;
-    a_setting.channel_layout    =   3;
-    a_setting.sample_fmt        =   AV_SAMPLE_FMT_S16;
-    a_setting.load_pcm_path     =   "J:\\test.pcm";*/
-  
+    a_setting.sample_fmt        =   media_info.sample_fmt;  
 
-    SubEncodeSetting   s_setting;
-
-    //maker->init( setting, v_setting, a_setting, s_setting );
-    //maker->work_live_stream();
-    maker->end();
+    maker_io->init( setting, v_setting, a_setting );
+    maker_io->work();
+    maker_io->end();
 }
 
 

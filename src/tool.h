@@ -91,11 +91,16 @@ struct AVFrame;
 // NOTE: 如果要支援 multi-encode, 需要改寫一個 manager.
 namespace encode {
 
+constexpr int   ENCODE_WAIT_SIZE    =   3;
+
 DLL_API void    add_audio_frame( AVFrame* af );
 DLL_API void    add_video_frame( AVFrame* vf );
 
 DLL_API AVFrame*    get_audio_frame();
 DLL_API AVFrame*    get_video_frame();
+
+DLL_API bool    audio_need_wait();
+DLL_API bool    video_need_wait();
 
 } // end namespace encode
 

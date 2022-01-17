@@ -9,12 +9,25 @@ class MakerIO : public Maker
 {
 public:
 
+    MakerIO();
+    ~MakerIO();
+
+    MakerIO( const MakerIO& ) = delete;
+    MakerIO( MakerIO&& ) = delete;
+
+    MakerIO& operator = ( const MakerIO& ) = delete;
+    MakerIO& operator = ( MakerIO&& ) = delete;
+
+
+    void    init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting );
+
+
     // use for live stream
     void    release_encode_video_frame( AVFrame *vf );
     void    release_encode_audio_frame( AVFrame *af );
 
 
-    void    work_live_stream();  // this will rename work()
+    void    work();  // this will rename work()
 
 
 private:

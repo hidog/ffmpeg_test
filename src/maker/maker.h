@@ -37,7 +37,7 @@ class Maker : public MakerInterface
 public:
 
     Maker();
-    ~Maker();
+    virtual ~Maker();
 
     Maker( const Maker& ) = delete;
     Maker( Maker&& ) = delete;
@@ -56,12 +56,8 @@ public:
     void    work_without_subtitle();
     void    flush_encoder( Encode* enc );
 
-    //EncodeOrder order_pts_func();
-    void order_pts_func();
 
-
-
-private:
+protected:
 
     Mux*    muxer  =   nullptr;
 
