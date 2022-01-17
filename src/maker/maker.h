@@ -38,7 +38,8 @@ public:
 
 
 protected:
-
+    
+    // note: 未來有時間再看要不要移到 private, 並且增加 protected interface
     Mux*    muxer  =   nullptr;
 
     AudioEncode     a_encoder;
