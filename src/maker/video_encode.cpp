@@ -1,12 +1,10 @@
 #include "video_encode.h"
 #include "tool.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
+#ifdef FFMPEG_TEST
 #include <QImage>
 #include <opencv2/opencv.hpp>
+#endif
 
 extern "C" {
 
@@ -102,7 +100,7 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
         ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
     // 測試一下是否有效果
-    ctx->thread_count   =   10;
+    //ctx->thread_count   =   1;
 
     // open codec.
     //AVDictionary *opt_arg = nullptr;

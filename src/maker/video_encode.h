@@ -5,15 +5,11 @@
 #include "encode.h"
 #include "maker_def.h"
 
-#include <stdint.h>
-
 
 
 // https://www.itread01.com/content/1550140412.html
 
 
-
-struct AVFrame;
 struct SwsContext;
 enum AVCodecID;
 

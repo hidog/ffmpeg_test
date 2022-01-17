@@ -1,9 +1,8 @@
 #ifndef AUDIO_ENCODE_H
 #define AUDIO_ENCODE_H
 
-#include <stdio.h>
-#include <stdint.h>
 
+#include <stdint.h>
 #include "encode.h"
 #include "maker_def.h"
 
@@ -23,7 +22,6 @@ enum AVCodecID;
 enum AVSampleFormat;
 
 struct AVCodec;
-struct AVFrame;
 struct SwrContext;
 
 

@@ -16,9 +16,6 @@ public:
     virtual void    end()           =   0;
     virtual bool    is_connect()    =   0;
 
-
-    int a = 0;
-
 };
 
 

@@ -1,7 +1,6 @@
 #ifndef MUX_IO_H
 #define MUX_IO_H
 
-
 #include "mux.h"
 #include "../IO/input_output.h"
 
