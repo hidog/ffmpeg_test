@@ -27,6 +27,7 @@ public:
     void    init_IO();
 
 
+
     // use for live stream
     void    release_encode_video_frame( AVFrame *vf );
     void    release_encode_audio_frame( AVFrame *af );

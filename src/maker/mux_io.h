@@ -23,7 +23,8 @@ public:
     MuxIO& operator = ( const MuxIO& ) = delete;
     MuxIO& operator = ( MuxIO&& ) = delete;
 
-    void    open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, AVCodecContext* s_ctx ) override;
+    void    open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, InputOutput* IO );
+
     void    init( EncodeSetting setting ) override;
     void    write_end() override;
     void    end() override;
@@ -33,11 +34,16 @@ public:
 private:
 
     static constexpr    int     FFMPEG_OUTPUT_BUFFER_SIZE    =   4096;
-    uint8_t     output_buf[FFMPEG_OUTPUT_BUFFER_SIZE];
+    uint8_t     *output_buf =   nullptr;
 
     AVIOContext*    io_ctx  =   nullptr;
 
 };
+
+
+
+int     io_write_data( void *opaque, uint8_t *buf, int buf_size );
+
 
 
 

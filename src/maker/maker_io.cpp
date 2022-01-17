@@ -57,24 +57,6 @@ void    MakerIO::release_encode_audio_frame( AVFrame *af )
 
 
 
-/*******************************************************************************
-io_write_data
-********************************************************************************/
-int     io_write_data( void *opaque, uint8_t *buf, int buf_size )
-{
-    return  1;
-
-#if 0
-    InputOutput*    io  =   (InputOutput*)opaque;
-    int     ret     =   io->write( buf, buf_size );
-    return  ret;
-#endif
-}
-
-
-
-
-
 
 
 /*******************************************************************************
@@ -146,8 +128,16 @@ void    MakerIO::init( EncodeSetting _setting, VideoEncodeSetting v_setting, Aud
     auto v_ctx  =   v_encoder->get_ctx();
     auto a_ctx  =   a_encoder->get_ctx();
 
+    IO->open();
+    
+    MuxIO* muxer_io = dynamic_cast<MuxIO*>(muxer);
+    if( muxer_io == nullptr )
+        MYLOG( LOG::ERROR, "convert mux to mux_io fail." );
 
-    //muxer->open( setting, v_ctx, a_ctx, s_ctx );
+    muxer_io->open( setting, v_ctx, a_ctx, IO );
 }
+
+
+
 
 

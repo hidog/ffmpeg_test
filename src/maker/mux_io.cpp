@@ -61,6 +61,9 @@ MuxIO::init()
 ********************************************************************************/
 void    MuxIO::init( EncodeSetting setting )
 {
+    assert( output_buf == nullptr );
+    output_buf  =   new uint8_t[FFMPEG_OUTPUT_BUFFER_SIZE];
+
     //
     AVDictionary    *opt    =   nullptr;
 
@@ -99,6 +102,9 @@ MuxIO::end()
 ********************************************************************************/
 void    MuxIO::end()
 {
+    delete [] output_buf;
+    output_buf = nullptr;
+
     avio_context_free( &io_ctx );
     io_ctx  =   nullptr;
 
@@ -126,18 +132,30 @@ void    MuxIO::write_end()
 
 
 
+/*******************************************************************************
+io_write_data
+********************************************************************************/
+int     io_write_data( void *opaque, uint8_t *buf, int buf_size )
+{
+    InputOutput*    io  =   (InputOutput*)opaque;
+    int     ret     =   io->write( buf, buf_size );
+    return  ret;
+}
+
+
+
+
+
 
 
 /*******************************************************************************
 MuxIO::open()
 ********************************************************************************/
-void    MuxIO::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, AVCodecContext* s_ctx )
+void    MuxIO::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, InputOutput *IO )
 {
-    //IO->open();
-
     int     ret     =   0;
 	
-    //io_ctx  =   avio_alloc_context( output_buf, FFMPEG_OUTPUT_BUFFER_SIZE, 1, (void*)IO, nullptr, io_write_data, nullptr );
+    io_ctx  =   avio_alloc_context( output_buf, FFMPEG_OUTPUT_BUFFER_SIZE, 1, (void*)IO, nullptr, io_write_data, nullptr );
     if( io_ctx == nullptr )
         MYLOG( LOG::ERROR, "io_ctx is null." );
     
@@ -152,25 +170,15 @@ void    MuxIO::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContex
     if( v_ctx == nullptr || a_ctx == nullptr )
         MYLOG( LOG::ERROR, "v ctx or a ctx is null" );
 
-    if( setting.has_subtitle == true && s_ctx == nullptr )
-        MYLOG( LOG::ERROR, "subtitle ctx is null." );   
-
     // copy time base.
     v_stream->time_base     =   v_ctx->time_base;   // 在某個操作後這邊的 value 會變.
     a_stream->time_base     =   a_ctx->time_base;
-    if( setting.has_subtitle == true )
-        s_stream->time_base     =   s_ctx->time_base;
     
     // 
     ret     =   avcodec_parameters_from_context( v_stream->codecpar, v_ctx );
     assert( ret == 0 );
     ret     =   avcodec_parameters_from_context( a_stream->codecpar, a_ctx );
     assert( ret == 0 );
-    if( setting.has_subtitle == true )
-    {
-        ret     =   avcodec_parameters_from_context( s_stream->codecpar, s_ctx );
-        assert( ret == 0 );
-    }
 }
 
 
