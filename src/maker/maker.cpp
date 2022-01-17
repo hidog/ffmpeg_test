@@ -1,20 +1,8 @@
 #include "maker.h"
 #include "tool.h"
-#include "mux_io.h"
-
-#include "audio_encode.h"
-#include "video_encode.h"
-#include "sub_encode.h"
-
-#include <thread>
-#include <mutex>
+#include "mux.h"
 
 
-extern "C" {
-
-#include <libavcodec/avcodec.h>
-
-} // end extern "C"
 
 
 

@@ -2,32 +2,13 @@
 #define MAKER_H
 
 
-
-#include "tool.h"
 #include "maker_interface.h"
 #include "audio_encode.h"
 #include "video_encode.h"
 #include "sub_encode.h"
 
-#include "../player/play_def.h"
-
-
 
 class Mux;
-
-/*class AudioEncode;
-class VideoEncode;
-class SubEncode;
-class Encode;*/
-
-struct EncodeSetting;
-struct VideoEncodeSetting;
-struct AudioEncodeSetting;
-struct SubEncodeSetting;
-struct AVFrame;
-struct AVRational;
-
-
 
 
 

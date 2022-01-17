@@ -9,7 +9,6 @@
 
 extern "C" {
 
-#include <libavcodec/packet.h>
 #include <libavcodec/avcodec.h>
 
 } // extern "C"
@@ -76,9 +75,9 @@ public:
 private:
 
     // ¥Î¨ÓÅª¨ú subtitle file.
-    AVFormatContext*    fmt_ctx     =   nullptr;
-    AVCodecContext*     dec         =   nullptr;
-    AVStream*           sub_stream  =   nullptr;
+    AVFormatContext     *fmt_ctx     =   nullptr;
+    AVCodecContext      *dec         =   nullptr;
+    AVStream            *sub_stream  =   nullptr;
 
     int     sub_idx     =   -1;
     int     got_sub     =   -1;
