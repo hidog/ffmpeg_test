@@ -35,7 +35,7 @@ public:
     Encode& operator = ( const Encode& ) = delete;
     Encode& operator = ( Encode&& ) = delete;
 
-    void    init( int st_idx, AVCodecID code_id, bool alloc_frame );
+    void    init( int st_idx, AVCodecID code_id );
     bool    end_of_file();
 
     bool    is_flush();

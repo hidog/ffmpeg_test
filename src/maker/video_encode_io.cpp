@@ -40,25 +40,12 @@ void        VideoEncodeIO::next_frame()
 
 
 
-/*******************************************************************************
-VideoEncodeIO::next_frame()
-********************************************************************************/
-void VideoEncodeIO::unref_data()
-{
-    av_frame_free( &frame );
-    Encode::unref_data();
-}
-
-
-
 
 
 /*******************************************************************************
 VideoEncodeIO::init
 
-https://trac.ffmpeg.org/wiki/Encode/H.265
-ultrafast, superfast, veryfast, faster, fast, 
-medium, slow, slower, veryslow, and placebo
+
 ********************************************************************************/
 void  VideoEncodeIO::init( int st_idx, VideoEncodeSetting setting, bool need_global_header )
 {

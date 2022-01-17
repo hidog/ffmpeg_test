@@ -43,12 +43,39 @@ VideoEncode::~VideoEncode()
 
 
 /*******************************************************************************
-VideoEncode::init_base()
+VideoEncode::init()
 
 https://www.itread01.com/content/1549629205.html
+
+https://trac.ffmpeg.org/wiki/Encode/H.265
+ultrafast, superfast, veryfast, faster, fast, 
+medium, slow, slower, veryslow, and placebo
 ********************************************************************************/
-void    VideoEncode::init_base( VideoEncodeSetting setting, bool need_global_header )
+void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_global_header )
 {
+#ifdef FFMPEG_TEST
+    load_jpg_root_path  =   setting.load_jpg_root_path;
+#endif
+
+    Encode::init( st_idx, setting.code_id );
+
+    // ┏把计ゼ秨场砞竚,ぇσ璶ぃ璶秨    
+#ifdef FFMPEG_TEST
+    ctx->bit_rate   =   3000000;
+#else
+    ctx->bit_rate   =   8000000;
+#endif
+
+    if( codec->id == AV_CODEC_ID_H264 || codec->id == AV_CODEC_ID_H265 )
+    {
+#ifdef FFMPEG
+        av_opt_set( ctx->priv_data, "preset", "veryslow",    0 );
+#else
+        av_opt_set( ctx->priv_data, "preset", "ultrafast",   0 );
+        av_opt_set( ctx->priv_data, "tune",   "zerolatency", 0 );
+#endif
+    }
+
     src_width   =   setting.src_width;
     src_height  =   setting.src_height;
 
@@ -56,6 +83,7 @@ void    VideoEncode::init_base( VideoEncodeSetting setting, bool need_global_hea
 
     ctx->width      =   setting.width;
     ctx->height     =   setting.height;
+    ctx->pix_fmt    =   setting.pix_fmt;
 
     ctx->time_base  =   setting.time_base; 
     ctx->framerate.num  =   setting.time_base.den; 
@@ -63,8 +91,6 @@ void    VideoEncode::init_base( VideoEncodeSetting setting, bool need_global_hea
 
     ctx->gop_size       =   setting.gop_size;
     ctx->max_b_frames   =   setting.max_b_frames;
-
-    ctx->pix_fmt        =   setting.pix_fmt;
     
     if( ctx->codec_id == AV_CODEC_ID_MPEG1VIDEO )
         ctx->mb_decision    =   FF_MB_DECISION_RD;
@@ -72,40 +98,21 @@ void    VideoEncode::init_base( VideoEncodeSetting setting, bool need_global_hea
     // need before avcodec_open2
     if( need_global_header == true )
         ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-}
 
-
-
-
-
-/*******************************************************************************
-VideoEncode::init()
-
-https://www.itread01.com/content/1549629205.html
-********************************************************************************/
-void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_global_header )
-{
-    load_jpg_root_path  =   setting.load_jpg_root_path;    
-    Encode::init( st_idx, setting.code_id, true );
-
-    // ┏把计ゼ秨场砞竚,ぇσ璶ぃ璶秨    
-    ctx->bit_rate   =   3000000;    
-
-    if( codec->id == AV_CODEC_ID_H264 || codec->id == AV_CODEC_ID_H265 )
-        av_opt_set( ctx->priv_data, "preset", "medium", 0);
-
-    init_base( setting, need_global_header );
+    // 代刚琌Τ狦
+    ctx->thread_count   =   10;
 
     // open codec.
     //AVDictionary *opt_arg = nullptr;
     //AVDictionary *opt = NULL;
     //av_dict_copy(&opt, opt_arg, 0);
-    //ret     =   avcodec_open2( ctx, codec, &opt );
-    
+    //ret     =   avcodec_open2( ctx, codec, &opt );   
+
     int     ret     =   avcodec_open2( ctx, codec, nullptr );
     if( ret < 0 ) 
         MYLOG( LOG::ERROR, "open fail" );
 
+#ifdef FFMPEG_TEST
     // frame setting
     frame->format   =   ctx->pix_fmt;
     frame->width    =   ctx->width;
@@ -117,6 +124,7 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
 
     //
     init_sws( setting );
+#endif
 }
 
 
@@ -149,6 +157,7 @@ void    VideoEncode::list_pix_fmt( AVCodecID code_id )
 
 
 
+
 /*******************************************************************************
 VideoEncode::list_frame_rate()
 h264, h265 单⊿戈.
@@ -177,8 +186,23 @@ void    VideoEncode::list_frame_rate( AVCodecID code_id )
 
 
 
+/*******************************************************************************
+VideoEncode::next_frame()
+********************************************************************************/
+void    VideoEncode::unref_data()
+{
+#ifdef FFMPEG_TEST
+    Encode::unref_data();
+#else
+    av_frame_free( &frame );
+    Encode::unref_data();
+#endif
+}
 
 
+
+
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 VideoEncode::init_sws()
 ********************************************************************************/
@@ -191,13 +215,13 @@ void    VideoEncode::init_sws( VideoEncodeSetting setting )
                                     ctx->width,        ctx->height,        ctx->pix_fmt,           // dst
                                     SWS_BICUBIC, NULL, NULL, NULL );
 }
+#endif
 
 
 
 
 
-
-
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 VideoEncode::encode_test()
 
@@ -228,6 +252,7 @@ void    VideoEncode::encode_test()
         av_packet_unref(pkt);
     }
 }
+#endif
 
 
 
@@ -237,9 +262,7 @@ void    VideoEncode::encode_test()
 
 
 
-
-
-
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 VideoEncode::work_test()
 
@@ -313,6 +336,8 @@ void    VideoEncode::work_test()
       //  fwrite( endcode, 1, sizeof(endcode), output );
 
 }
+#endif
+
 
 
 
@@ -325,6 +350,10 @@ void    VideoEncode::end()
 {
     Encode::end();
 
+    src_width   =   0;
+    src_height  =   0;
+
+#ifdef FFMPEG_TEST
     if( video_data[0] != nullptr )
     {
         av_free( video_data[0] );
@@ -345,6 +374,7 @@ void    VideoEncode::end()
         sws_freeContext( sws_ctx );
         sws_ctx     =   nullptr;
     }
+#endif
 }
 
 
@@ -373,14 +403,20 @@ VideoEncode::get_frame()
 ********************************************************************************/
 void    VideoEncode::next_frame()
 {
+#ifdef FFMPEG_TEST
     // get_fram_from_file_QT();
     get_fram_from_file_openCV();
+#else
+    frame   =   encode::get_video_frame();
+#endif
 }
 
 
 
 
 
+
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 VideoEncode::get_fram_from_file_QT()
 ********************************************************************************/
@@ -426,11 +462,14 @@ void    VideoEncode::get_fram_from_file_QT()
     frame->pts = frame_count;
     frame_count++;
 }
+#endif
 
 
 
 
 
+
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 VideoEncode::get_fram_from_file_openCV()
 
@@ -467,3 +506,4 @@ void    VideoEncode::get_fram_from_file_openCV()
     frame->pts  =   frame_count;
     frame_count++;
 }
+#endif

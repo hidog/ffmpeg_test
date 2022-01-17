@@ -63,6 +63,9 @@ int    DemuxIO::end()
 {
     // need add release code.
 
+    av_free(input_buf);
+    input_buf = nullptr;
+
     IO->close();
     Demux::end();
 

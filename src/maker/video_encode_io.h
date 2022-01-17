@@ -14,7 +14,6 @@ public:
 
 
     void        next_frame() override;
-    void unref_data() override;
 
 
 

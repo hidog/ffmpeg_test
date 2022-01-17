@@ -62,7 +62,7 @@ MuxIO::init()
 void    MuxIO::init( EncodeSetting setting )
 {
     assert( output_buf == nullptr );
-    output_buf  =   new uint8_t[FFMPEG_OUTPUT_BUFFER_SIZE];
+    output_buf  =   (uint8_t*)av_malloc(FFMPEG_OUTPUT_BUFFER_SIZE); //  new uint8_t[FFMPEG_OUTPUT_BUFFER_SIZE];
 
     //
     AVDictionary    *opt    =   nullptr;
@@ -102,7 +102,7 @@ MuxIO::end()
 ********************************************************************************/
 void    MuxIO::end()
 {
-    delete [] output_buf;
+    av_free( output_buf );
     output_buf = nullptr;
 
     avio_context_free( &io_ctx );

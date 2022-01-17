@@ -36,22 +36,22 @@ Encode::~Encode()
 /*******************************************************************************
 Encode::init()
 ********************************************************************************/
-void    Encode::init( int st_idx, AVCodecID code_id, bool alloc_frame )
+void    Encode::init( int st_idx, AVCodecID code_id )
 {
     stream_index    =   st_idx;
     flush_state     =   false;
     eof_flag        =   false;
 
+#ifdef FFMPEG_TEST
     // init frame
-    if( alloc_frame == true )
-    {
-        if( frame != nullptr )
-            av_frame_free( &frame );
-        frame   =   av_frame_alloc();
-        if( frame == nullptr ) 
-            MYLOG( LOG::ERROR, "frame alloc fail." );
-        frame->pts  =   0;
-    }
+    if( frame != nullptr )
+        av_frame_free( &frame );
+    frame   =   av_frame_alloc();
+    if( frame == nullptr ) 
+        MYLOG( LOG::ERROR, "frame alloc fail." );
+    frame->pts  =   0;
+#endif
+    
 
     // init pkt
     if( pkt != nullptr )    
