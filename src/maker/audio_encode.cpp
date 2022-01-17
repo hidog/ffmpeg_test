@@ -679,6 +679,8 @@ void    AudioEncode::next_frame()
     //get_frame_from_file_test();
 #else
     frame   =   encode::get_audio_frame();
+    if( frame == nullptr )
+        eof_flag    =   true;
 #endif
 }
 

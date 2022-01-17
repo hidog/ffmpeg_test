@@ -37,6 +37,7 @@ void    MakerIO::end()
 {
     if( IO != nullptr )
     {
+        IO->close();
         while( IO->is_stop() == false )
             SLEEP_10MS;
         delete IO;
@@ -45,6 +46,8 @@ void    MakerIO::end()
 
     Maker::end();
 }
+
+
 
 
 

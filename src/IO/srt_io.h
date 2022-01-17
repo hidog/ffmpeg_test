@@ -29,6 +29,8 @@ public:
     bool    is_connect() override;
     bool    is_stop() override;
 
+    bool    need_wait();
+
     // use for client
     int     read( uint8_t *buf, int buf_size ) override;
 
@@ -43,7 +45,8 @@ public:
 
     void    server_init();
     void    server_open();
-    bool    need_wait();
+    void    server_end();
+
 
 private:
     bool    is_end  =   false;

@@ -9,11 +9,25 @@
 // note: 以後如果需要 multi-encode, 需要寫一個 manager.
 namespace encode {
 
+bool    is_finish   =   false;
+
 std::queue<AVFrame*>     aframe_queue;
 std::queue<AVFrame*>     vframe_queue;
 
 std::mutex   af_mtx;
 std::mutex   vf_mtx;
+
+
+
+
+
+/*******************************************************************************
+set_is_finish
+********************************************************************************/
+void    set_is_finish( bool flag )
+{
+    is_finish   =   flag;
+}
 
 
 
@@ -62,8 +76,11 @@ get_audio_frame
 ********************************************************************************/
 AVFrame*    get_audio_frame()
 {
-    while( aframe_queue.empty() == true )
+    while( aframe_queue.empty() == true && is_finish == false )
         SLEEP_1MS;
+
+    if( aframe_queue.empty() == true && is_finish == true )
+        return  nullptr;
 
     AVFrame*    af  =   aframe_queue.front();
 
@@ -81,8 +98,11 @@ get_video_frame
 *******************************************************************************/
 AVFrame*    get_video_frame()
 {
-    while( vframe_queue.empty() == true )
+    while( vframe_queue.empty() == true && is_finish == false )
         SLEEP_1MS;
+
+    if( vframe_queue.empty() == true && is_finish == true )
+        return  nullptr;
 
     AVFrame*    vf  =   vframe_queue.front();
 
