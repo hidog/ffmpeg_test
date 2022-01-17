@@ -36,7 +36,10 @@ AudioEncode::AudioEncode()
 AudioEncode::~AudioEncode()
 ********************************************************************************/
 AudioEncode::~AudioEncode()
-{}
+{
+    end();
+}
+
 
 
 
@@ -48,8 +51,8 @@ AudioEncode::list_sample_format()
 ********************************************************************************/
 void    AudioEncode::list_sample_format( AVCodecID code_id )
 {
-    AVCodec*                codec   =   avcodec_find_encoder(code_id);
-    const AVSampleFormat*   p_fmt   =   codec->sample_fmts;
+    AVCodec                 *codec   =   avcodec_find_encoder(code_id);
+    const AVSampleFormat    *p_fmt   =   codec->sample_fmts;
 
     while( *p_fmt != AV_SAMPLE_FMT_NONE )
     {
@@ -207,34 +210,40 @@ void    AudioEncode::end()
 {
     Encode::end();
 
-    /*av_frame_free( &frame );
-    frame   =   nullptr;
-
-    av_packet_free( &pkt );
-    pkt     =   nullptr;
-
-    avcodec_free_context( &ctx );
-    ctx     =   nullptr;*/
-
-    swr_free( &swr_ctx );
-    swr_ctx     =   nullptr;
+#ifdef FFMPEG_TEST
+    if( swr_ctx != nullptr )
+    {
+        swr_free( &swr_ctx );
+        swr_ctx     =   nullptr;
+    }
 
     // S16 packed, pcm[1] 未使用.
-    delete [] pcm[0]; 
-    pcm[0]  =   nullptr;
+    if( pcm[0] != nullptr )
+    {
+        delete [] pcm[0]; 
+        pcm[0]  =   nullptr;
+    }
+#endif
 }
+
 
 
 
 /*******************************************************************************
 AudioEncode::init()
 ********************************************************************************/
-void    AudioEncode::init_base( AudioEncodeSetting setting, bool need_global_header )
+void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_global_header )
 {
+#ifdef FFMPEG_TEST
+    load_pcm_path   =   setting.load_pcm_path;
+#endif
+
+    Encode::init( st_idx, setting.code_id );
+
+    //
     AVCodecID   code_id     =   setting.code_id;
 
     // some codec need set bit rate.
-    // 驗證一下這件事情. 部分 codec 會自動產生預設 bit rate.
     if( code_id != AV_CODEC_ID_FLAC )
         ctx->bit_rate   =   setting.bit_rate;
 
@@ -258,17 +267,6 @@ void    AudioEncode::init_base( AudioEncodeSetting setting, bool need_global_hea
 
     if( need_global_header == true )
         ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-}
-
-
-/*******************************************************************************
-AudioEncode::init()
-********************************************************************************/
-void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_global_header )
-{
-    load_pcm_path   =   setting.load_pcm_path;
-    Encode::init( st_idx, setting.code_id, true );
-    init_base( setting, need_global_header );
 
     // open ctx.1
     //AVDictionary *opt_arg = nullptr;
@@ -284,6 +282,7 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
     if( ctx->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE )
         MYLOG( LOG::WARN, "need set to 10000" );
 
+#ifdef FFMPEG_TEST
     // set param to frame.
     frame->nb_samples       =   ctx->frame_size;
     frame->format           =   ctx->sample_fmt;
@@ -298,13 +297,14 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
 
     //
     init_swr(setting);
+#endif
 }
 
 
 
 
 
-
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 AudioEncode::init_swr()
 ********************************************************************************/
@@ -354,12 +354,12 @@ void    AudioEncode::init_swr( AudioEncodeSetting setting )
     if( pcm[0] == nullptr )
         MYLOG( LOG::ERROR, "pcm init fail." );
 }
+#endif
 
 
 
 
-
-
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 AudioEncode::encode()
 
@@ -390,14 +390,14 @@ void    AudioEncode::encode_test()
         av_packet_unref(pkt);
     }
 }
+#endif
 
 
 
 
 
 
-
-
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 AudioEncode::adts_gen()
 
@@ -423,10 +423,13 @@ char* AudioEncode::adts_head( int packetlen )
 
     return packet;
 }
+#endif
 
 
 
 
+
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 AudioEncode::work_test()
 
@@ -487,7 +490,6 @@ void     AudioEncode::work_test()
         encode( frame, code_id );
     }
 
-
     // flush
     encode( NULL, code_id );
 
@@ -495,6 +497,7 @@ void     AudioEncode::work_test()
     fclose(fp);
 #endif
 }
+#endif
 
 
 
@@ -508,13 +511,14 @@ int64_t     AudioEncode::get_pts()
 {
     if( frame == nullptr )
         MYLOG( LOG::ERROR, "frame is null." );
-
     return  frame->pts;
 }
 
 
 
 
+
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 AudioEncode::get_frame_from_file_test()
 
@@ -609,12 +613,14 @@ void    AudioEncode::get_frame_from_file_test()
     frame->pts  +=  sp_count; //frame->nb_samples;  
     frame_count++;
 }
+#endif
 
 
 
 
 
 
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 AudioEncode::get_frame_from_pcm_file()
 ********************************************************************************/
@@ -659,7 +665,7 @@ void    AudioEncode::get_frame_from_pcm_file()
     frame->pts  =  frame_count * sp_count;
     frame_count++;
 }
-
+#endif
 
 
 
@@ -674,8 +680,26 @@ AudioEncode::next_frame()
 ********************************************************************************/
 void    AudioEncode::next_frame()
 {
+#ifdef FFMPEG_TEST
     get_frame_from_pcm_file();
     //get_frame_from_file_test();
+#else
+    frame   =   encode::get_audio_frame();
+#endif
 }
 
+
+
+
+
+/*******************************************************************************
+AudioEncode::unref_data()
+********************************************************************************/
+void    AudioEncode::unref_data()
+{
+#ifndef FFMPEG_TEST
+    av_frame_free( &frame );
+#endif
+    Encode::unref_data();
+}
 

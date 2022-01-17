@@ -32,7 +32,7 @@ class AudioEncode : public Encode
 {
 public:
     AudioEncode();
-    virtual ~AudioEncode();
+    ~AudioEncode();
 
     AudioEncode( const AudioEncode& ) = delete;
     AudioEncode( AudioEncode&& ) = delete;
@@ -44,7 +44,6 @@ public:
 
 
     void    end() override;
-    void    init_swr( AudioEncodeSetting setting );
 
     void    list_sample_format( AVCodecID code_id );
     void    list_sample_rate( AVCodecID code_id );
@@ -52,17 +51,19 @@ public:
 
     int64_t     get_pts() override;
     void        next_frame() override;
+    void        unref_data() override;
 
-    void        get_frame_from_pcm_file();
-    void        get_frame_from_file_test();
 
-    // for test, run without mux.
+#ifdef FFMPEG_TEST
+    void    init_swr( AudioEncodeSetting setting );
+    void    get_frame_from_pcm_file();
+    void    get_frame_from_file_test();
+
     // 目前不能動, 需要修改.
     void    encode_test();
     void    work_test();
+#endif
 
-protected:
-    void    init_base( AudioEncodeSetting setting, bool need_global_header );
 
 private:
 
@@ -70,9 +71,10 @@ private:
     int     select_sample_rate( AVCodec *codec );
     int     select_channel_layout( AVCodec *codec );
 
+#ifdef FFMPEG_TEST
     char*   adts_head( int packetlen );
 
-    SwrContext*     swr_ctx     =   nullptr;
+    SwrContext  *swr_ctx    =   nullptr;
 
     /*
         可以使用 av_samples_alloc_array_and_samples 取得資料
@@ -83,6 +85,7 @@ private:
     int         pcm_size    =   0;
 
     std::string     load_pcm_path   =   "J:\\test.pcm";
+#endif
 };
 
 

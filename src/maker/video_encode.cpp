@@ -189,16 +189,14 @@ void    VideoEncode::list_frame_rate( AVCodecID code_id )
 
 
 /*******************************************************************************
-VideoEncode::next_frame()
+VideoEncode::unref_data()
 ********************************************************************************/
 void    VideoEncode::unref_data()
 {
-#ifdef FFMPEG_TEST
-    Encode::unref_data();
-#else
+#ifndef FFMPEG_TEST
     av_frame_free( &frame );
-    Encode::unref_data();
 #endif
+    Encode::unref_data();
 }
 
 
