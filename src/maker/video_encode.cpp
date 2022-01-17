@@ -406,6 +406,8 @@ void    VideoEncode::next_frame()
     get_fram_from_file_openCV();
 #else
     frame   =   encode::get_video_frame();
+    if( frame == nullptr )
+        eof_flag    =   true;
 #endif
 }
 

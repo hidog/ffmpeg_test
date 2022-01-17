@@ -256,8 +256,8 @@ void    SrtIO::server_open()
 
     while (true)
     {
-        handle = srt_accept(serv, (sockaddr*)&clientaddr, &addrlen);
-        if (SRT_INVALID_SOCK == handle)        
+        handle  =   srt_accept(serv, (sockaddr*)&clientaddr, &addrlen);
+        if (SRT_INVALID_SOCK == handle)
         {
             MYLOG( LOG::INFO, "accept fail." );
         }
@@ -365,8 +365,8 @@ void    SrtIO::close()
 
     if( dir == IO_Direction::RECV )
         client_end();
-    //else
-      //  server_end();
+    else
+        server_end();
 }
 
 
@@ -392,6 +392,35 @@ void    SrtIO::client_end()
     rd  =   nullptr;
 }
 
+
+
+
+
+
+/*******************************************************************************
+SrtIO::server_end()
+********************************************************************************/
+void    SrtIO::server_end()
+{
+    int32_t     data_in_buf    =   0;
+    int         len;
+
+    // flush
+    while(true)
+    {
+        srt_getsockopt( handle, 0, SRTO_SNDDATA, &data_in_buf, &len );
+        if( data_in_buf == 0 )
+            break;        
+        //MYLOG( LOG::DEBUG, "data_in_buf = %d", data_in_buf );
+    }
+
+    MYLOG( LOG::INFO, "server end." );
+
+
+    srt_close(handle);  // note: call srt_close, it will not send data in buffer.
+    srt_close(serv);
+    srt_cleanup();
+}
 
 
 
@@ -432,19 +461,19 @@ int     SrtIO::read( uint8_t *buf, int buf_size )
 /*******************************************************************************
 SrtIO::write()
 ********************************************************************************/
-int     SrtIO::write( uint8_t *buf, int buf_size )
+int     SrtIO::write( uint8_t *buffer, int size )
 {
     //MYLOG( LOG::DEBUG, "buf size = %d", buf_size );
 
     int     ret         =   0;
     int     send_size   =   0;
-    int     remain      =   buf_size;
+    int     remain      =   size;
 
     while(true)
     {
         if( remain > 1316 )
         {
-            ret     =   srt_send( handle, (const char*)(buf + send_size), 1316 );
+            ret     =   srt_send( handle, (const char*)(buffer + send_size), 1316 );
             if( ret != 1316 )
                 MYLOG( LOG::ERROR, "ret = %d", ret );
             send_size   +=  1316;
@@ -452,7 +481,7 @@ int     SrtIO::write( uint8_t *buf, int buf_size )
         }
         else
         {
-            ret     =   srt_send( handle, (const char*)(buf + send_size), remain );
+            ret     =   srt_send( handle, (const char*)(buffer + send_size), remain );
             if( ret != remain )
                 MYLOG( LOG::ERROR, "ret = %d", ret );
             break;

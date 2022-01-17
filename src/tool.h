@@ -93,6 +93,8 @@ namespace encode {
 
 constexpr int   ENCODE_WAIT_SIZE    =   5;
 
+DLL_API void    set_is_finish( bool flag );
+
 DLL_API void    add_audio_frame( AVFrame* af );
 DLL_API void    add_video_frame( AVFrame* vf );
 

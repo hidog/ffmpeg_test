@@ -253,6 +253,8 @@ void    Worker::run()
     // 目前暫不支援從 live stream output.
     if( is_output == true && wtype == WorkType::DEFAULT )
     {
+        encode::set_is_finish(false);
+
         MediaInfo   media_info  =   player.get_media_info();
 
         player.add_audio_frame_cb   =   std::bind( &encode::add_audio_frame, std::placeholders::_1 );
@@ -270,6 +272,8 @@ void    Worker::run()
 
     if( output_thr != nullptr && wtype == WorkType::DEFAULT )
     {
+        encode::set_is_finish(true);
+
         output_thr->join();
         delete  output_thr;
         output_thr  =   nullptr;
