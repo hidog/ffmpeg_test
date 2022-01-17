@@ -102,7 +102,7 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
         ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
     // 測試一下是否有效果
-    ctx->thread_count   =   10;
+    //ctx->thread_count   =   10;
 
     // open codec.
     //AVDictionary *opt_arg = nullptr;

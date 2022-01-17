@@ -41,7 +41,7 @@ void    maker_encode_example()
 
 
     // rmvb 是 variable bitrate. 目前還無法使用
-    setting.filename    =   "H:\\output.mkv";
+    setting.filename    =   "E:\\output.mkv";
     setting.extension   =   "matroska";
     //setting.filename    =   "H:\\output.mp4";
     //setting.extension   =   "mp4";
@@ -51,7 +51,7 @@ void    maker_encode_example()
     setting.has_subtitle    =   true;
 
     VideoEncodeSetting  v_setting;
-    v_setting.load_jpg_root_path    =   "J:\\jpg";
+    v_setting.load_jpg_root_path    =   "E:\\jpg";
     v_setting.code_id   =   AV_CODEC_ID_H264;
     //v_setting.code_id   =   AV_CODEC_ID_H265;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
@@ -83,7 +83,7 @@ void    maker_encode_example()
 
 
     AudioEncodeSetting  a_setting;
-    a_setting.load_pcm_path     =   "J:\\test.pcm";
+    a_setting.load_pcm_path     =   "E:\\test.pcm";
     a_setting.code_id     =   AV_CODEC_ID_MP3;
     //a_setting.code_id       =   AV_CODEC_ID_AAC;
     //a_setting.code_id       =   AV_CODEC_ID_AC3;
@@ -101,7 +101,7 @@ void    maker_encode_example()
     s_setting.code_id       =   AV_CODEC_ID_ASS;
     //s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
     //s_setting.code_id       =   AV_CODEC_ID_MOV_TEXT;
-    s_setting.subtitle_file =   "J:\\test.ass";
+    s_setting.subtitle_file =   "E:\\test.ass";
     s_setting.subtitle_ext  =   "ass";
 
 
