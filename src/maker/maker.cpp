@@ -58,21 +58,25 @@ Maker::init()
 ********************************************************************************/
 void    Maker::init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting, SubEncodeSetting s_setting )
 {
+    a_encoder   =   new AudioEncode;
+    v_encoder   =   new VideoEncode;
+    s_encoder   =   new SubEncode;
+
     setting     =   _setting;
 
     init_muxer();
 
     bool    need_global_header  =   muxer->is_need_global_header();
 
-    v_encoder.init( default_video_stream_index, v_setting, need_global_header );
-    a_encoder.init( default_audio_stream_index, a_setting, need_global_header );
+    v_encoder->init( default_video_stream_index, v_setting, need_global_header );
+    a_encoder->init( default_audio_stream_index, a_setting, need_global_header );
     if( setting.has_subtitle == true )
-        s_encoder.init( default_subtitle_stream_index, s_setting, need_global_header );
+        s_encoder->init( default_subtitle_stream_index, s_setting, need_global_header );
 
     //
-    auto v_ctx  =   v_encoder.get_ctx();
-    auto a_ctx  =   a_encoder.get_ctx();
-    auto s_ctx  =   s_encoder.get_ctx();
+    auto v_ctx  =   v_encoder->get_ctx();
+    auto a_ctx  =   a_encoder->get_ctx();
+    auto s_ctx  =   s_encoder->get_ctx();
 
     muxer->open( setting, v_ctx, a_ctx, s_ctx );
 }
@@ -140,30 +144,30 @@ void    Maker::work_with_subtitle()
     int     ret     =   0;
 
     //
-    s_encoder.load_all_subtitle();
-    v_encoder.next_frame();
-    a_encoder.next_frame();
+    s_encoder->load_all_subtitle();
+    v_encoder->next_frame();
+    a_encoder->next_frame();
     Encode*     encoder    =   nullptr;
 
     int cc = 0;
 
     //
-    while( v_encoder.end_of_file() == false || a_encoder.end_of_file() == false || s_encoder.end_of_file() == false )
+    while( v_encoder->end_of_file() == false || a_encoder->end_of_file() == false || s_encoder->end_of_file() == false )
     {       
         //
-        if( v_encoder <= a_encoder )
+        if( *v_encoder <= *a_encoder )
         {
-            if( v_encoder <= s_encoder )
-                encoder     =   &v_encoder;
+            if( *v_encoder <= *s_encoder )
+                encoder     =   v_encoder;
             else 
-                encoder     =   &s_encoder;
+                encoder     =   s_encoder;
         }
         else
         {
-            if( a_encoder <= s_encoder )
-                encoder     =   &a_encoder;
+            if( *a_encoder <= *s_encoder )
+                encoder     =   a_encoder;
             else
-                encoder     =   &s_encoder;
+                encoder     =   s_encoder;
         }
 
         // send
@@ -273,9 +277,9 @@ void    Maker::work_with_subtitle()
     }
 
     //
-    if( s_encoder.get_queue_size() > 0 )
+    if( s_encoder->get_queue_size() > 0 )
         MYLOG( LOG::WARN, "subtitie queue is not empty." );
-    if( s_encoder.is_flush() == false )
+    if( s_encoder->is_flush() == false )
         MYLOG( LOG::WARN, "subtitie not flush." );
 
     // flush subtitle    
@@ -284,11 +288,11 @@ void    Maker::work_with_subtitle()
     muxer->write_frame( pkt );*/
     
     // flush
-    if( v_encoder.is_flush() == false )
-        flush_encoder( &v_encoder );
+    if( v_encoder->is_flush() == false )
+        flush_encoder( v_encoder );
 
-    if( a_encoder.is_flush() == false )
-        flush_encoder( &a_encoder );
+    if( a_encoder->is_flush() == false )
+        flush_encoder( a_encoder );
 
     //
     muxer->write_end();
@@ -310,17 +314,17 @@ void    Maker::work_without_subtitle()
     int     ret     =   0;
     Encode* encoder =   nullptr;
 
-    v_encoder.next_frame(); 
-    a_encoder.next_frame();    
+    v_encoder->next_frame(); 
+    a_encoder->next_frame();    
 
     //
-    while( v_encoder.end_of_file() == false || a_encoder.end_of_file() == false )
+    while( v_encoder->end_of_file() == false || a_encoder->end_of_file() == false )
     {        
         // 用 pts 決定進去 mux 的順序
-        if( v_encoder <= a_encoder )        
-            encoder =   &v_encoder;        
+        if( *v_encoder <= *a_encoder )        
+            encoder =   v_encoder;        
         else        
-            encoder =   &a_encoder;        
+            encoder =   a_encoder;        
 
         // send
         ret     =   encoder->send_frame();
@@ -365,12 +369,12 @@ void    Maker::work_without_subtitle()
     
     // flush. 
     // note: 理論上已經在 loop 內 flush 完畢.
-    if( v_encoder.is_flush() == false || a_encoder.is_flush() == false )
+    if( v_encoder->is_flush() == false || a_encoder->is_flush() == false )
         MYLOG( LOG::WARN, "not flush in loop." );
-    if( v_encoder.is_flush() == false )
-        flush_encoder( &v_encoder );
-    if( a_encoder.is_flush() == false )
-        flush_encoder( &a_encoder );
+    if( v_encoder->is_flush() == false )
+        flush_encoder( v_encoder );
+    if( a_encoder->is_flush() == false )
+        flush_encoder( a_encoder );
 
     //
     muxer->write_end();
@@ -391,13 +395,13 @@ void Maker::work()
     // note: stream_time_base 會在 write header 後改變值, 所以需要再 write header 後做設置.
     AVRational  stb;
     stb     =   muxer->get_video_stream_timebase();
-    v_encoder.set_stream_time_base(stb);
+    v_encoder->set_stream_time_base(stb);
     stb     =   muxer->get_audio_stream_timebase();
-    a_encoder.set_stream_time_base(stb);
+    a_encoder->set_stream_time_base(stb);
     if( setting.has_subtitle == true )
     {
         stb     =   muxer->get_sub_stream_timebase();
-        s_encoder.set_stream_time_base(stb);
+        s_encoder->set_stream_time_base(stb);
     }
 
     if( setting.has_subtitle == true )
@@ -416,9 +420,17 @@ Maker::end()
 ********************************************************************************/
 void Maker::end()
 {
-    v_encoder.end();
-    a_encoder.end();
-    s_encoder.end();
+    v_encoder->end();
+    delete v_encoder;
+    v_encoder   =   nullptr;
+
+    a_encoder->end();
+    delete a_encoder;
+    a_encoder   =   nullptr;
+
+    s_encoder->end();
+    delete s_encoder;
+    s_encoder   =   nullptr;
 
     muxer->end();
     delete muxer;

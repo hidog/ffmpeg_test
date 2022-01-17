@@ -32,7 +32,7 @@ class AudioEncode : public Encode
 {
 public:
     AudioEncode();
-    ~AudioEncode();
+    virtual ~AudioEncode();
 
     AudioEncode( const AudioEncode& ) = delete;
     AudioEncode( AudioEncode&& ) = delete;

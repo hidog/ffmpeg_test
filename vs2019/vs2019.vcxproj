@@ -317,6 +317,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClCompile Include="..\src\maker\audio_encode.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\src\maker\audio_encode_io.cpp" />
     <ClCompile Include="..\src\maker\encode.cpp" />
     <ClCompile Include="..\src\maker\maker.cpp" />
     <ClCompile Include="..\src\maker\maker_interface.cpp" />
@@ -325,6 +326,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClCompile Include="..\src\maker\mux_io.cpp" />
     <ClCompile Include="..\src\maker\sub_encode.cpp" />
     <ClCompile Include="..\src\maker\video_encode.cpp" />
+    <ClCompile Include="..\src\maker\video_encode_io.cpp" />
     <ClCompile Include="..\src\player\audio_decode.cpp" />
     <ClCompile Include="..\src\player\decode.cpp" />
     <ClCompile Include="..\src\player\demux.cpp" />
@@ -352,6 +354,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClInclude Include="..\src\maker\audio_encode.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\src\maker\audio_encode_io.h" />
     <ClInclude Include="..\src\maker\encode.h" />
     <ClInclude Include="..\src\maker\maker.h" />
     <ClInclude Include="..\src\maker\maker_def.h" />
@@ -361,6 +364,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClInclude Include="..\src\maker\mux_io.h" />
     <ClInclude Include="..\src\maker\sub_encode.h" />
     <ClInclude Include="..\src\maker\video_encode.h" />
+    <ClInclude Include="..\src\maker\video_encode_io.h" />
     <ClInclude Include="..\src\player\audio_decode.h" />
     <ClInclude Include="..\src\player\decode.h" />
     <ClInclude Include="..\src\player\demux.h" />
