@@ -441,6 +441,9 @@ void    SubEncode::encode_timestamp()
     if( pkt == nullptr )
         MYLOG( LOG::ERROR, "pkt is null." );
 
+    if( pkt->size == 0 )  // flush pkt.
+        return;
+
     AVRational  ctx_tb          =   get_timebase();
     AVRational  stb             =   get_stream_time_base();
     int64_t     subtitle_pts    =   get_subtitle_pts();
@@ -493,6 +496,8 @@ SubEncode::flush()
 ********************************************************************************/
 int     SubEncode::flush()
 {
+    got_sub     =   1;
+
     pkt->data   =   nullptr;
     pkt->size   =   0;
     pkt->pts    =   last_pts;
