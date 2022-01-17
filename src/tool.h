@@ -23,13 +23,12 @@ constexpr int HAVE_FRAME = 1; // 需要用 1 來判斷是否還有 frame.
 
 
 
-
 enum class LOG
 {
     DEBUG = 0,
     INFO,
     WARN,
-    ERROR
+    ERROR,
 };
 
 
@@ -60,6 +59,52 @@ enum class LOG
 #else
 #define DLL_API __declspec(dllimport)
 #endif
+
+
+
+
+
+
+
+struct MediaInfo
+{
+    // video
+    int     width;
+    int     height;
+    int     time_num;
+    int     time_den;
+    int     pix_fmt;
+
+    // audio
+    int     channel_layout;
+    int     sample_rate;
+    int     sample_fmt;
+};
+
+
+
+
+struct AVFrame;
+
+
+// push frame to queue, and use for encode.
+// NOTE: 如果要支援 multi-encode, 需要改寫一個 manager.
+namespace encode {
+
+constexpr int   ENCODE_WAIT_SIZE    =   5;
+
+DLL_API void    add_audio_frame( AVFrame* af );
+DLL_API void    add_video_frame( AVFrame* vf );
+
+DLL_API AVFrame*    get_audio_frame();
+DLL_API AVFrame*    get_video_frame();
+
+DLL_API bool    audio_need_wait();
+DLL_API bool    video_need_wait();
+
+} // end namespace encode
+
+
 
 
 #endif

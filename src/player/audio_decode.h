@@ -34,8 +34,11 @@ public:
     int     init() override;
     int     end() override;
 
+    int     get_audio_nb_sample();
     int     get_audio_channel();
+    int     get_audio_channel_layout();
     int     get_audio_sample_rate();
+    int     get_audio_sample_format();
 
     void        output_audio_frame_info();    
     AudioData   output_audio_data();
@@ -45,7 +48,6 @@ public:
     int     output_pcm();
     void    set_output_audio_pcm_path( std::string _path );
 #endif
-
 
     int     audio_info(); // 目前無作用 未來考慮移除
 
@@ -62,7 +64,7 @@ private:
     //AVCodecID   a_codec_id;
 
 #ifdef FFMPEG_TEST
-    std::string     output_pcm_path =   "J:\\test.pcm";
+    std::string     output_pcm_path =   "H:\\test.pcm";
 #endif
 
 };

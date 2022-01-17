@@ -26,7 +26,7 @@ class Mux
 public:
 
     Mux();
-    ~Mux();
+    virtual ~Mux();
 
     Mux( const Mux& ) = delete;
     Mux( Mux&& ) = delete;
@@ -34,21 +34,24 @@ public:
     Mux& operator = ( const Mux& ) = delete;
     Mux& operator = ( Mux&& ) = delete;
 
-    void    init( EncodeSetting setting );
-    void    end();
+
     void    open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, AVCodecContext* s_ctx );
 
-    bool    is_need_global_header();
 
+    virtual void    init( EncodeSetting setting );
+    virtual void    write_end();
+    virtual void    end();
+    virtual bool    is_connect();
+    
+    bool    is_need_global_header();
     void    write_header();
     void    write_frame( AVPacket* pkt );
-    void    write_end();
 
     AVRational  get_video_stream_timebase();
     AVRational  get_audio_stream_timebase();
     AVRational  get_sub_stream_timebase();
 
-private:
+protected:
 
     AVFormatContext     *output_ctx     =   nullptr;
 
@@ -57,6 +60,8 @@ private:
     AVStream    *s_stream   =   nullptr;
 
 };
+
+
 
 
 

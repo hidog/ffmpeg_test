@@ -12,6 +12,7 @@
 #include "video_decode.h"
 #include "sub_decode.h"
 #include "tool.h"
+//#include "../IO/input_output.h"
 
 #include <QImage>
 
@@ -29,7 +30,7 @@ struct AVPacket;
 
 
 #ifdef FFMPEG_TEST
-//#define RENDER_SUBTITLE
+//#define RENDER_SUBTITLE  // 是否要將字幕加進video frame內
 #endif
 
 
@@ -53,13 +54,14 @@ public:
     int     flush();
     void    stop();
     void    seek( int value, int old_value );
+    void    set( DecodeSetting _setting );
 
     //
     bool    demux_need_wait();
-    void    set_input_file( std::string path );
     bool    is_set_input_file();
     int     decode( Decode *dc, AVPacket* pkt );
-    void    set_sub_file( std::string str );
+    //void    set_sub_file( std::string str );
+    int     init_demuxer();
 
     int     decode_video_with_nongraphic_subtitle( AVPacket* pkt );
     void    switch_subtitle( std::string path );
@@ -69,6 +71,7 @@ public:
 
     void    init_subtitle( AVFormatContext *fmt_ctx );
     void    handle_seek();    
+    void    clear_setting();    
 
     int64_t         get_duration_time();
     VideoData       overlap_subtitle_image();
@@ -92,19 +95,35 @@ public:
 
     void    set_output_jpg_root( std::string _root_path );
     void    set_output_audio_pcm_path( std::string _path );
+#else
+    MediaInfo   get_media_info();   // use for output.
 #endif
+     
+    // use for live steeam
+    void    init_live_stream();
+    void    end_live_stream();
+    void    play_live_stream();
+    void    output_live_stream( Decode* dc );
+
+    AVFrame*    get_new_v_frame();
+    AVFrame*    get_new_a_frame();
+
+    std::function< void(AVFrame*) >     add_audio_frame_cb;
+    std::function< void(AVFrame*) >     add_video_frame_cb;
 
 private:
 
     static constexpr int   MAX_QUEUE_SIZE  =   50;
+    //static constexpr int   MAX_QUEUE_SIZE  =   10;
 
-    Demux           demuxer;
+
+    Demux*          demuxer     =   nullptr;
     VideoDecode     v_decoder;
     AudioDecode     a_decoder;
     SubDecode       s_decoder;
 
-    std::string     src_file;
-    std::string     sub_name;           // 外掛字幕檔名
+    //std::string     src_file;
+    //std::string     sub_name;           // 外掛字幕檔名
     std::string     new_subtitle_path;  // switch subtitle使用
 
     bool    switch_subtitle_flag    =   false;
@@ -114,7 +133,6 @@ private:
     int     seek_old    =   0;
     int     seek_value  =   0;
     bool    seek_flag   =   false;
-
 
 #ifdef USE_MT
     bool    v_thr_start     =   false,
@@ -127,7 +145,17 @@ private:
         *audio_decode_thr   =   nullptr;
 #endif
 
+    DecodeSetting   setting;
+
+    // use for live stream.
+    bool        is_live_stream      =   false;
+    int64_t     audio_pts_count     =   0;
 };
+
+
+
+
+int     io_read_data( void *opaque, uint8_t *buf, int buf_size );
 
 
 

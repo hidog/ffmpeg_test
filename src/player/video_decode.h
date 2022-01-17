@@ -65,7 +65,7 @@ private:
     int      height  =   0;
 
 #ifdef FFMPEG_TEST
-    std::string     output_jpg_root_path    =   "J:\\jpg";
+    std::string     output_jpg_root_path    =   "H:\\jpg";
 #endif
 
 /*

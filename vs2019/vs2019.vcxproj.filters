@@ -25,6 +25,9 @@
     <Filter Include="src\maker">
       <UniqueIdentifier>{a3afbc7b-d2c7-4fbc-b825-23cbd7351dae}</UniqueIdentifier>
     </Filter>
+    <Filter Include="IO">
+      <UniqueIdentifier>{45464b67-3143-4077-8a0e-5cdd4adccb97}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vs2019.cpp">
@@ -84,6 +87,30 @@
     <ClCompile Include="..\src\maker\sub_encode.cpp">
       <Filter>src\maker</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\IO\input_output.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\IO\file_io.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\player\demux_io.cpp">
+      <Filter>src\player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\IO\srt_io.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maker\mux_io.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\player\player_io.cpp">
+      <Filter>src\player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maker\maker_io.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maker\maker_interface.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -132,6 +159,33 @@
       <Filter>ffmpeg_example</Filter>
     </ClInclude>
     <ClInclude Include="..\src\maker\sub_encode.h">
+      <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\IO\input_output.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\IO\file_io.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\player\demux_io.h">
+      <Filter>src\player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\IO\srt_io.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\IO\io_def.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\mux_io.h">
+      <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\player\player_io.h">
+      <Filter>src\player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\maker_io.h">
+      <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\maker_interface.h">
       <Filter>src\maker</Filter>
     </ClInclude>
   </ItemGroup>

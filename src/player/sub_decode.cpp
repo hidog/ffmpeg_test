@@ -78,6 +78,8 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     ss << "subtitles='" << filename_param << "':stream_index=" << sub_index;
     
     out_param    =   ss.str();
+    //out_param    =   "subtitles='\\D\\:/code/test.mkv':stream_index=0";
+
     
     MYLOG( LOG::INFO, "out = %s", out_param.c_str() );
 
@@ -242,7 +244,7 @@ int SubDecode::init_sws_ctx( SubData sd )
 /*******************************************************************************
 SubDecode::render_subtitle()
 ********************************************************************************/
-int SubDecode::render_subtitle()
+int     SubDecode::render_subtitle()
 {
     sub_image   =   QImage( video_width, video_height, QImage::Format_RGB888 );
 
@@ -820,14 +822,34 @@ SubDecode::output_jpg_by_QT()
 ********************************************************************************/
 int    SubDecode::output_jpg_by_QT()
 {
-    char str[1000];
-    sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
-    MYLOG( LOG::DEBUG, "save jpg %s", str );
+    char    str[1000];
+    sprintf( str, "%s\\%d.jpg", output_jpg_root_path.c_str(), frame_count );
+
+    if( frame_count % 100 == 0 )
+        MYLOG( LOG::DEBUG, "save jpg %s", str );
+
     sub_image.save(str);
 
     return  0;
 }
 #endif
+
+
+
+
+
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoDecode::set_output_jpg_root()
+********************************************************************************/
+void    SubDecode::set_output_jpg_root( std::string _root_path )
+{
+    output_jpg_root_path    =   _root_path;
+}
+#endif
+
 
 
 

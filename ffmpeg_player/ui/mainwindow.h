@@ -58,6 +58,7 @@ public slots:
 
     void    duration_slot( int du );
     void    update_seekbar_slot( int sec );
+    void    start_connect_slot();
 
 private: 
     Ui::MainWindow *ui;

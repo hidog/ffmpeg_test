@@ -24,7 +24,7 @@ class DLL_API Demux
 {
 public:
     Demux();
-    ~Demux();
+    virtual ~Demux();
 
     Demux( const Demux& ) = delete;
     Demux( Demux&& ) = delete;
@@ -33,12 +33,9 @@ public:
     Demux& operator = ( Demux&& ) = delete;
 
     //
-    int     init();
     int     demux();
-    int     end();    
-    
-    int     open_input( std::string src_file );
-    int     stream_info();    
+    int     stream_info();
+    void    set_input_file( std::string fn );
     
     AVPacket*   get_packet();
     void        unref_packet();
@@ -46,16 +43,23 @@ public:
 
     AVFormatContext*    get_format_context();
 
+    virtual int     open_input();
+    virtual int     init();
+    virtual int     end();
+
+
 #ifdef USE_MT
     std::pair<int,AVPacket*>    demux_multi_thread();
     void    collect_packet( AVPacket *_pkt );
 #endif
 
+protected:
+    AVFormatContext *fmt_ctx    =   nullptr;
 
 private:
     
-    AVFormatContext *fmt_ctx    =   nullptr;
     AVPacket        *pkt        =   nullptr;
+    std::string     filename;
 
 #ifdef USE_MT
     static constexpr int   pkt_size    =   500;
