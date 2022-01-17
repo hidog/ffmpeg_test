@@ -26,11 +26,9 @@ public:
     void    open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, AVCodecContext* s_ctx ) override;
     void    init( EncodeSetting setting ) override;
     void    write_end() override;
-    bool    is_connect() override;
     void    end() override;
 
-    void    init_IO( EncodeSetting setting );
-    bool    io_need_wait();
+    //bool    io_need_wait();
 
 private:
 
@@ -38,7 +36,6 @@ private:
     uint8_t     output_buf[FFMPEG_OUTPUT_BUFFER_SIZE];
 
     AVIOContext*    io_ctx  =   nullptr;
-    InputOutput*    IO      =   nullptr;
 
 };
 

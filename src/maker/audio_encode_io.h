@@ -11,6 +11,9 @@ public:
     AudioEncodeIO();
     ~AudioEncodeIO();
 
+    void    init( int st_idx, AudioEncodeSetting setting, bool need_global_header ) override;
+
+
 private:
 
 

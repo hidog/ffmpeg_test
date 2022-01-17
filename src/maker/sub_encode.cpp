@@ -138,7 +138,7 @@ SubEncode::init()
 void    SubEncode::init( int st_idx, SubEncodeSetting setting, bool need_global_header )
 {
     // note: 一些資料 subtitle encode 用不到, 但方便程式撰寫, 還是初始化那些資料.
-    Encode::init( st_idx, setting.code_id );
+    Encode::init( st_idx, setting.code_id, false );
 
     int ret =   0;
 

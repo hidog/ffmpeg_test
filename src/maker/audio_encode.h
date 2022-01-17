@@ -40,7 +40,9 @@ public:
     AudioEncode& operator = ( const AudioEncode& ) = delete;
     AudioEncode& operator = ( const AudioEncode&& ) = delete;
 
-    void    init( int st_idx, AudioEncodeSetting setting, bool need_global_header );
+    virtual void    init( int st_idx, AudioEncodeSetting setting, bool need_global_header );
+
+
     void    end() override;
     void    init_swr( AudioEncodeSetting setting );
 
@@ -58,6 +60,9 @@ public:
     // 目前不能動, 需要修改.
     void    encode_test();
     void    work_test();
+
+protected:
+    void    init_base( AudioEncodeSetting setting, bool need_global_header );
 
 private:
 

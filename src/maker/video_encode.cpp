@@ -42,29 +42,17 @@ VideoEncode::~VideoEncode()
 
 
 
-
 /*******************************************************************************
-VideoEncode::init()
+VideoEncode::init_base()
 
 https://www.itread01.com/content/1549629205.html
 ********************************************************************************/
-void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_global_header )
+void    VideoEncode::init_base( VideoEncodeSetting setting, bool need_global_header )
 {
-    load_jpg_root_path  =   setting.load_jpg_root_path;
-
     src_width   =   setting.src_width;
     src_height  =   setting.src_height;
 
-    //
-    Encode::init( st_idx, setting.code_id );
-
-    int     ret     =   0;
-
-    //
-    ctx->bit_rate   =   3000000;
-    /*ret = av_opt_set_int( ctx->priv_data, "crf", 50, 0 );   // 癚阶琌璶ノ AVDictionary  open 砞竚, Τ╯
-    if( ret < 0 )
-        MYLOG( LOG::ERROR, "error");*/
+    //ctx->me_subpel_quality  =   10;
 
     ctx->width      =   setting.width;
     ctx->height     =   setting.height;
@@ -78,28 +66,43 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
 
     ctx->pix_fmt        =   setting.pix_fmt;
     
-    // ┏把计ゼ秨场砞竚,ぇσ璶ぃ璶秨
-    //ctx->me_subpel_quality  =   10;
-    if( codec->id == AV_CODEC_ID_H264 || codec->id == AV_CODEC_ID_H265 )
-        av_opt_set( ctx->priv_data, "preset", "medium", 0);
-
     if( ctx->codec_id == AV_CODEC_ID_MPEG1VIDEO )
         ctx->mb_decision    =   FF_MB_DECISION_RD;
 
     // need before avcodec_open2
     if( need_global_header == true )
         ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+}
+
+
+
+
+
+/*******************************************************************************
+VideoEncode::init()
+
+https://www.itread01.com/content/1549629205.html
+********************************************************************************/
+void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_global_header )
+{
+    load_jpg_root_path  =   setting.load_jpg_root_path;    
+    Encode::init( st_idx, setting.code_id, true );
+
+    // ┏把计ゼ秨场砞竚,ぇσ璶ぃ璶秨    
+    ctx->bit_rate   =   3000000;    
+
+    if( codec->id == AV_CODEC_ID_H264 || codec->id == AV_CODEC_ID_H265 )
+        av_opt_set( ctx->priv_data, "preset", "medium", 0);
+
+    init_base( setting, need_global_header );
 
     // open codec.
     //AVDictionary *opt_arg = nullptr;
     //AVDictionary *opt = NULL;
     //av_dict_copy(&opt, opt_arg, 0);
     //ret     =   avcodec_open2( ctx, codec, &opt );
-
-    //if( ctx->codec_id == AV_CODEC_ID_H264 )
-      //  av_opt_set( ctx->priv_data, "x264-params", "sliced-threads=10", 0);   // 北encode thread
-
-    ret     =   avcodec_open2( ctx, codec, nullptr );
+    
+    int     ret     =   avcodec_open2( ctx, codec, nullptr );
     if( ret < 0 ) 
         MYLOG( LOG::ERROR, "open fail" );
 

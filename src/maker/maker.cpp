@@ -38,20 +38,6 @@ Maker::~Maker()
 
 
 
-/*******************************************************************************
-Maker::init_muxer()
-********************************************************************************/
-void    Maker::init_muxer()
-{
-    if( setting.io_type == IO_Type::DEFAULT )    
-        muxer   =   new Mux;    
-    else     
-        muxer   =   new MuxIO;
-    muxer->init( setting );
-}
-
-
-
 
 /*******************************************************************************
 Maker::init()
@@ -64,8 +50,11 @@ void    Maker::init( EncodeSetting _setting, VideoEncodeSetting v_setting, Audio
 
     setting     =   _setting;
 
-    init_muxer();
+    //
+    muxer   =   new Mux;
+    muxer->init( setting );
 
+    //
     bool    need_global_header  =   muxer->is_need_global_header();
 
     v_encoder->init( default_video_stream_index, v_setting, need_global_header );

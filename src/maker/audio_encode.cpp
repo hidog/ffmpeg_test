@@ -226,24 +226,16 @@ void    AudioEncode::end()
 
 
 
-
-
-
 /*******************************************************************************
 AudioEncode::init()
 ********************************************************************************/
-void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_global_header )
+void    AudioEncode::init_base( AudioEncodeSetting setting, bool need_global_header )
 {
     AVCodecID   code_id     =   setting.code_id;
-    int         ret         =   0;
-
-    Encode::init( st_idx, code_id );    
-
-    load_pcm_path   =   setting.load_pcm_path;
 
     // some codec need set bit rate.
     // 驗證一下這件事情. 部分 codec 會自動產生預設 bit rate.
-    if( setting.code_id != AV_CODEC_ID_FLAC )
+    if( code_id != AV_CODEC_ID_FLAC )
         ctx->bit_rate   =   setting.bit_rate;
 
     // format可更改,但支援度跟codec有關.
@@ -266,6 +258,17 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
 
     if( need_global_header == true )
         ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+}
+
+
+/*******************************************************************************
+AudioEncode::init()
+********************************************************************************/
+void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_global_header )
+{
+    load_pcm_path   =   setting.load_pcm_path;
+    Encode::init( st_idx, setting.code_id, true );
+    init_base( setting, need_global_header );
 
     // open ctx.1
     //AVDictionary *opt_arg = nullptr;
@@ -273,7 +276,7 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
     //av_dict_copy(&opt, opt_arg, 0);
     //ret     =   avcodec_open2( ctx, codec, &opt );
 
-    ret     =   avcodec_open2( ctx, codec, nullptr );
+    int     ret     =   avcodec_open2( ctx, codec, nullptr );
     if( ret < 0 ) 
         MYLOG( LOG::ERROR, "open fail." );
 

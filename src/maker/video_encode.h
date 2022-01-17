@@ -31,7 +31,8 @@ public:
     VideoEncode& operator = ( const VideoEncode& ) = delete;
     VideoEncode& operator = ( VideoEncode&& ) = delete;
 
-    void    init( int st_idx, VideoEncodeSetting setting, bool need_global_header );
+    virtual void    init( int st_idx, VideoEncodeSetting setting, bool need_global_header );
+
     void    end();
     void    init_sws( VideoEncodeSetting setting );
 
@@ -49,7 +50,10 @@ public:
     void    work_test();
     void    encode_test();
 
-private:
+
+protected:
+    void    init_base( VideoEncodeSetting setting, bool need_global_header );
+
     SwsContext      *sws_ctx    =   nullptr;    
     
     uint8_t*    video_data[4]       =   { nullptr };

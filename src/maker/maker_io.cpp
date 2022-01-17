@@ -1,7 +1,9 @@
 #include "maker_io.h"
 
-#include "mux.h"
+#include "mux_io.h"
 #include "tool.h"
+#include "audio_encode_io.h"
+#include "video_encode_io.h"
 
 #include <thread>
 
@@ -104,6 +106,20 @@ void    MakerIO::work()
 
 
 
+/*******************************************************************************
+MakerIO::init_IO()
+********************************************************************************/
+void    MakerIO::init_IO()
+{
+    assert( setting.io_type != IO_Type::DEFAULT );  // defulat use for mux.
+    assert( IO == nullptr );
+    IO  =   create_IO( setting.io_type, IO_Direction::SEND );
+    IO->set_encode( setting );
+    IO->init();
+}
+
+
+
 
 
 /*******************************************************************************
@@ -111,9 +127,15 @@ MakerIO::init()
 ********************************************************************************/
 void    MakerIO::init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting )
 {
-    setting =   _setting;
+    a_encoder   =   new AudioEncodeIO;
+    v_encoder   =   new VideoEncodeIO;
 
-    init_muxer();
+    setting =   _setting;
+    init_IO();  // need call after set setting.
+
+    //
+    muxer   =   new MuxIO;
+    muxer->init( setting );
 
     bool    need_global_header  =   muxer->is_need_global_header();
 

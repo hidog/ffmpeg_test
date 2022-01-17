@@ -5,6 +5,10 @@
 #include "maker.h"
 
 
+class InputOutput;
+
+
+
 class MakerIO : public Maker
 {
 public:
@@ -20,6 +24,7 @@ public:
 
 
     void    init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting );
+    void    init_IO();
 
 
     // use for live stream
@@ -31,6 +36,11 @@ public:
 
 
 private:
+
+
+    InputOutput*    IO      =   nullptr;
+
+
 };
 
 

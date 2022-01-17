@@ -46,7 +46,6 @@ public:
     Maker& operator = ( Maker&& ) = delete;
 
     void    init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting, SubEncodeSetting s_setting );
-    void    init_muxer();
 
     void    work() override;
     void    end() override;

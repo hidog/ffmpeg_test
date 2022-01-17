@@ -36,20 +36,22 @@ Encode::~Encode()
 /*******************************************************************************
 Encode::init()
 ********************************************************************************/
-void    Encode::init( int st_idx, AVCodecID code_id )
+void    Encode::init( int st_idx, AVCodecID code_id, bool alloc_frame )
 {
     stream_index    =   st_idx;
     flush_state     =   false;
     eof_flag        =   false;
 
     // init frame
-    if( frame != nullptr )
-        av_frame_free( &frame );
-
-    frame   =   av_frame_alloc();
-    if( frame == nullptr ) 
-        MYLOG( LOG::ERROR, "frame alloc fail." );
-    frame->pts  =   0;
+    if( alloc_frame == true )
+    {
+        if( frame != nullptr )
+            av_frame_free( &frame );
+        frame   =   av_frame_alloc();
+        if( frame == nullptr ) 
+            MYLOG( LOG::ERROR, "frame alloc fail." );
+        frame->pts  =   0;
+    }
 
     // init pkt
     if( pkt != nullptr )    
