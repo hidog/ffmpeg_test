@@ -50,8 +50,7 @@ void    Encode::init( int st_idx, AVCodecID code_id )
     if( frame == nullptr ) 
         MYLOG( LOG::ERROR, "frame alloc fail." );
     frame->pts  =   0;
-#endif
-    
+#endif    
 
     // init pkt
     if( pkt != nullptr )    

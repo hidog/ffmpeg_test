@@ -28,7 +28,9 @@ SubEncode::SubEncode()
 SubEncode::~SubEncode()
 ********************************************************************************/
 SubEncode::~SubEncode()
-{}
+{
+    end();
+}
 
 
 
@@ -44,7 +46,7 @@ void    SubEncode::copy_sub_header()
     if( dec->subtitle_header != nullptr )
     {
         // if not set header, open subtitle enc will fail.
-        ctx->subtitle_header        =   (uint8_t*)av_mallocz( dec->subtitle_header_size + 1 );   // 沒查到 + 1 的理由. 也有沒+1的. 都可執行
+        ctx->subtitle_header        =   (uint8_t*)av_mallocz( dec->subtitle_header_size );   // 沒查到 + 1 的理由. 也有沒+1的. 都可執行
         memcpy( ctx->subtitle_header, dec->subtitle_header, dec->subtitle_header_size );
         ctx->subtitle_header_size   =   dec->subtitle_header_size;    
         //MYLOG( LOG::INFO, "subtitle header = \n%s", ctx->subtitle_header );    
@@ -66,12 +68,7 @@ void    SubEncode::end()
         sub_queue.pop();
     }
 
-    if( dec != nullptr )
-    {
-        avcodec_free_context( &dec );
-        dec     =   nullptr;
-    }
-
+    got_sub     =   -1;
     sub_stream  =   nullptr;
     sub_idx     =   -1;
     last_pts    =   0;
@@ -91,7 +88,7 @@ void    SubEncode::end()
     // note: header是自己額外allocate出來的,所以要在Encode::end之前釋放
     if( ctx != nullptr )
     {
-        if( ctx->subtitle_header    !=  nullptr )        
+        if( ctx->subtitle_header != nullptr )        
             av_free( ctx->subtitle_header );
         ctx->subtitle_header    =   nullptr;
     }
@@ -99,6 +96,12 @@ void    SubEncode::end()
     Encode::end();
 
     // close subtitle input
+    if( dec != nullptr )
+    {
+        avcodec_free_context( &dec );
+        dec     =   nullptr;
+    }
+
     if( fmt_ctx != nullptr )
     {
         avformat_close_input( &fmt_ctx );
@@ -138,11 +141,12 @@ SubEncode::init()
 void    SubEncode::init( int st_idx, SubEncodeSetting setting, bool need_global_header )
 {
     // note: 一些資料 subtitle encode 用不到, 但方便程式撰寫, 還是初始化那些資料.
-    Encode::init( st_idx, setting.code_id, false );
+    Encode::init( st_idx, setting.code_id );
 
-    int ret =   0;
+    int     ret =   0;
 
     //
+    got_sub     =   -1;
     last_pts    =   0;
     sub_pkt     =   av_packet_alloc();
     if( sub_pkt == nullptr )
@@ -155,19 +159,14 @@ void    SubEncode::init( int st_idx, SubEncodeSetting setting, bool need_global_
             MYLOG( LOG::ERROR, "sub_buf is null." );
     }
 
-
     // open subtitle file.    
     ret     =   open_subtitle_source( setting.subtitle_file );
     if( ret == ERROR )
         MYLOG( LOG::ERROR, "open subtitle source fail." );
 
-    // ost->st->time_base = c->time_base;
-    //
-    ctx->pkt_timebase   =   AVRational{ 1, 1000 };   // 研究一下這邊該怎麼設置. 有程式碼說不影響結果, 實驗看看.
-    //ctx->pkt_timebase   =   AVRational{ 1, AV_TIME_BASE };
+    // 需設置
+    ctx->pkt_timebase   =   AVRational{ 1, 1000 }; 
     ctx->time_base      =   AVRational{ 1, 1000 };   
-    //ctx->time_base      =   AVRational{ 1, 1 };
-
 
     copy_sub_header();
 
@@ -175,16 +174,9 @@ void    SubEncode::init( int st_idx, SubEncodeSetting setting, bool need_global_
     if( need_global_header == true )
         ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
-    // open codec.
-    //AVDictionary *opt_arg = nullptr;
-    //AVDictionary *opt = NULL;
-    //av_dict_copy(&opt, opt_arg, 0);
-    //ret     =   avcodec_open2( ctx, codec, &opt );
-
     ret     =   avcodec_open2( ctx, codec, nullptr );
     if( ret < 0 ) 
         MYLOG( LOG::ERROR, "open fail" );
-
 }
 
 
@@ -203,15 +195,6 @@ AVRational  SubEncode::get_src_stream_timebase()
 
 
 
-
-
-/*******************************************************************************
-SubEncode::is_empty()
-********************************************************************************/
-bool    SubEncode::is_empty()
-{
-    return  sub_queue.size() == 0;
-}
 
 
 
@@ -317,16 +300,6 @@ int     SubEncode::open_subtitle_source( std::string src_sub_file )
 
     //
     dec->pkt_timebase   =   sub_stream->time_base;
-
-    // AV_TIME_BASE
-    //uint8_t *subtitle_header;
-    //int subtitle_header_size;
-    //c->pkt_timebase = AVRational{ 1, 1000 }; // 看敘述這邊不影響結果, 驗證一下結合影片的時候是否需要修改
-    ////c->pkt_timebase = AVRational{ 1, AV_TIME_BASE }; // 看敘述這邊不影響結果, 驗證一下結合影片的時候是否需要修改
-    //c->time_base = AVRational{ 1, 1000 };
-    //ost->st->time_base = c->time_base;
-
-
     ret     =   avcodec_open2( dec, src_codec, nullptr );
     if( ret < 0 )
     {
@@ -448,7 +421,7 @@ int     SubEncode::encode_subtitle()
 /*******************************************************************************
 SubEncode::next_frame()
 ********************************************************************************/
-void SubEncode::next_frame()  
+void    SubEncode::next_frame()  
 {
     assert( sub_queue.empty() == false );
     sub_queue.pop();
@@ -463,41 +436,21 @@ void SubEncode::next_frame()
 
 /*******************************************************************************
 SubEncode::encode_timestamp()
-
-
-
-            pkt     =   s_encoder.get_pkt();
-            ctx_tb  =   s_encoder.get_timebase();
-            int64_t     subtitle_pts    =   s_encoder.get_subtitle_pts();
-            int64_t     duration        =   s_encoder.get_duration();
-
-            pkt->pts         =   av_rescale_q( subtitle_pts, AVRational{1,AV_TIME_BASE}, st_tb );
-            pkt->duration    =   av_rescale_q( duration, ctx_tb, st_tb );
-            pkt->dts         =   pkt->pts;
-            s_encoder.set_last_pts( pkt->pts );
-
-            muxer->write_frame( pkt );
-            // 實驗看看到底需不需要 unref.
-            s_encoder.unref_subtitle();
-            //s_encoder.unref_pkt();
-
 ********************************************************************************/
 void    SubEncode::encode_timestamp()
 {
     if( pkt == nullptr )
         MYLOG( LOG::ERROR, "pkt is null." );
 
-    //pkt     =   s_encoder.get_pkt();
-    auto ctx_tb  =   get_timebase();
+    AVRational  ctx_tb          =   get_timebase();
+    AVRational  stb             =   get_stream_time_base();
     int64_t     subtitle_pts    =   get_subtitle_pts();
-    int64_t     duration        =   get_duration();
-    
-    auto stb = get_stream_time_base();
+    int64_t     duration        =   get_duration();    
 
     pkt->pts         =   av_rescale_q( subtitle_pts, AVRational{1,AV_TIME_BASE}, stb );
     pkt->duration    =   av_rescale_q( duration, ctx_tb, stb );
     pkt->dts         =   pkt->pts;
-    
+
     set_last_pts( pkt->pts );
 }
 
@@ -532,8 +485,6 @@ SubEncode::unref_data()
 void SubEncode::unref_data()
 {
     unref_subtitle();
-    //av_free( pkt->data );
-    //Encode::unref_data();
 }
 
 

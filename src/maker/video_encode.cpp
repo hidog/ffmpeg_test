@@ -36,7 +36,9 @@ VideoEncode::VideoEncode()
 VideoEncode::~VideoEncode()
 ********************************************************************************/
 VideoEncode::~VideoEncode()
-{}
+{
+    end();
+}
 
 
 

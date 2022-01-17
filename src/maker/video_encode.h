@@ -53,7 +53,7 @@ public:
 #endif
 
 
-protected:
+private:
 
     int     src_width   =   0;
     int     src_height  =   0;
