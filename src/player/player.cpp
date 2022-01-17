@@ -1393,6 +1393,9 @@ int    Player::flush()
         ret =   s_decoder.render_subtitle();
         if( ret < 0 )
             MYLOG( LOG::ERROR, "flush render fail." );
+
+        if( is_live_stream == true )
+            output_live_stream( &s_decoder );
         
         vd.frame         =   s_decoder.get_subtitle_image();
         vd.index         =   v_decoder.get_frame_count();
@@ -1426,7 +1429,12 @@ int    Player::flush()
                     vdata   =   flush_with_nongraphic_subtitle();                
             }
             else
+            {
+                if( is_live_stream == true )
+                    output_live_stream( &v_decoder );
+
                 vdata   =   v_decoder.output_video_data();
+            }
 
             // flush 階段本來想處理 subtitle, 但會跳錯誤, 還沒找到解決的做法. 目前只處理graphic subtitle的部分
             v_mtx.lock();
@@ -1447,6 +1455,9 @@ int    Player::flush()
             ret     =   a_decoder.recv_frame(-1);
             if( ret <= 0 )
                 break;
+
+            if( is_live_stream == true )
+                output_live_stream( &a_decoder );
 
             adata   =   a_decoder.output_audio_data();
 
