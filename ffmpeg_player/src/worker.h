@@ -5,7 +5,7 @@
 #include <QThread>
 #include <thread>
 #include "player/player.h"
-#include "maker/maker.h"
+#include "maker/maker_interface.h"
 
 
 
@@ -77,7 +77,8 @@ private:
     std::thread*    output_thr  =   nullptr;  // 方便測試, 先這樣寫. 日後重構
     bool            is_output   =   false;
 
-    Maker   maker;
+    // use for encode and output.
+    MakerInterface*     maker   =   nullptr;
 };
 
 

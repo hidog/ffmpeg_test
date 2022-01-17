@@ -10,23 +10,6 @@
 
 
 
-struct MediaInfo
-{
-    // video
-    int     width;
-    int     height;
-    int     time_num;
-    int     time_den;
-    int     pix_fmt;
-
-    // audio
-    int     channel_layout;
-    int     sample_rate;
-    int     sample_fmt;
-};
-
-
-
 
 struct DecodeSetting
 {

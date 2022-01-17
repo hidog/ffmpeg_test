@@ -6,8 +6,7 @@
 #include "audio_worker.h"
 #include "video_worker.h"
 #include "mainwindow.h"
-#include "maker/maker.h"
-
+#include "tool.h"
 
 
 
@@ -16,7 +15,10 @@ Worker::Worker()
 ********************************************************************************/
 Worker::Worker( QObject *parent )
     :   QThread(parent)
-{}
+{
+    // note: 目前只支援 stream output. 有需要的話再增加錄影用的介面.
+    maker   =   create_maker_io();
+}
 
 
 
@@ -25,7 +27,9 @@ Worker::Worker( QObject *parent )
 Worker::~Worker()
 ********************************************************************************/
 Worker::~Worker()
-{}
+{
+    delete  maker;
+}
 
 
 
@@ -249,14 +253,14 @@ void    Worker::run()
     {
         MediaInfo   media_info  =   player.get_media_info();
 
-        player.add_audio_frame_cb   =   std::bind( &add_audio_frame, std::placeholders::_1 );
-        player.add_video_frame_cb   =   std::bind( &add_video_frame, std::placeholders::_1 );
+        player.add_audio_frame_cb   =   std::bind( &encode::add_audio_frame, std::placeholders::_1 );
+        player.add_video_frame_cb   =   std::bind( &encode::add_video_frame, std::placeholders::_1 );
 
         if( output_thr != nullptr )
             MYLOG( LOG::ERROR, "output_thr not null." );
         output_thr  =   new std::thread( &Worker::output, this, media_info );
 
-        while( maker.is_connect() == false )
+        while( maker->is_connect() == false )
             SLEEP_10MS;
     }
 
