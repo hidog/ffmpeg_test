@@ -2,32 +2,13 @@
 #define MAKER_H
 
 
-
-#include "tool.h"
 #include "maker_interface.h"
 #include "audio_encode.h"
 #include "video_encode.h"
 #include "sub_encode.h"
 
-#include "../player/play_def.h"
-
-
 
 class Mux;
-
-/*class AudioEncode;
-class VideoEncode;
-class SubEncode;
-class Encode;*/
-
-struct EncodeSetting;
-struct VideoEncodeSetting;
-struct AudioEncodeSetting;
-struct SubEncodeSetting;
-struct AVFrame;
-struct AVRational;
-
-
 
 
 
@@ -57,7 +38,8 @@ public:
 
 
 protected:
-
+    
+    // note: 未來有時間再看要不要移到 private, 並且增加 protected interface
     Mux*    muxer  =   nullptr;
 
     AudioEncode     a_encoder;

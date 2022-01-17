@@ -30,7 +30,7 @@ public:
     bool    is_connect() override;
 
 private:
-    InputOutput*    IO      =   nullptr;
+    InputOutput     *IO     =   nullptr;
 
 };
 

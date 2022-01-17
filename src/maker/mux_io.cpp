@@ -1,12 +1,10 @@
 #include "mux_io.h"
+
 #include "tool.h"
-#include "maker.h"
-#include "../IO/srt_io.h"
 
 
 extern "C" {
 
-#include <libavformat/avio.h>
 #include <libavformat/avformat.h>
 
 } // end extern "C"

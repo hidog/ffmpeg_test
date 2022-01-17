@@ -16,7 +16,6 @@ struct AVCodec;
 struct AVCodecContext;
 struct AVPacket;
 struct AVFrame;
-struct SwsContext;
 
 enum AVCodecID;
 
@@ -44,14 +43,7 @@ public:
     void        set_stream_time_base( AVRational _stb );
     AVRational  get_stream_time_base();
 
-    virtual int     flush();
-
-
-    virtual void    end();
-
-    virtual void encode_timestamp();
     AVPacket*   get_pkt();
-
     AVCodec*    get_codec();
 
     AVCodecContext*     get_ctx();
@@ -62,9 +54,11 @@ public:
     // video/audio 跟 subtitle 的參數不同.
     virtual AVRational  get_compare_timebase();
 
+    virtual int     flush();
+    virtual void    end();
+    virtual void    encode_timestamp();
 
-    virtual void unref_data();
-
+    virtual void    unref_data();
     virtual int     send_frame();
     virtual int     recv_frame();
     //virtual void    unref_pkt();
@@ -75,14 +69,13 @@ public:
 
 protected:
 
+    // note: 未來有時間再看要不要移到 private, 並且增加 protected interface
     AVRational      stream_time_base { 0, 0 };
 
     AVCodec         *codec  =   nullptr;
     AVCodecContext  *ctx    =   nullptr;
     AVPacket        *pkt    =   nullptr;
     AVFrame         *frame  =   nullptr;
-
-    //SwsContext      *sws_ctx    =   nullptr;
 
     int     frame_count     =   0;
     int     stream_index    =   -1;

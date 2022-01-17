@@ -1,18 +1,12 @@
 #include "audio_encode.h"
 
-#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include "tool.h"
 
 
 extern "C" {
 
 #include <libavcodec/avcodec.h>
-#include <libavutil/channel_layout.h>
-#include <libavutil/common.h>
-#include <libavutil/frame.h>
-#include <libavutil/samplefmt.h>
 #include <libswresample/swresample.h>
 #include <libavutil/opt.h>
 
