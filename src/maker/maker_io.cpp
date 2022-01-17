@@ -2,8 +2,7 @@
 
 #include "mux_io.h"
 #include "tool.h"
-#include "audio_encode_io.h"
-#include "video_encode_io.h"
+
 
 #include <thread>
 
@@ -87,9 +86,9 @@ void    MakerIO::work()
     // note: stream_time_base 會在 write header 後改變值, 所以需要再 write header 後做設置.
     AVRational  stb;
     stb     =   muxer->get_video_stream_timebase();
-    v_encoder->set_stream_time_base(stb);
+    v_encoder.set_stream_time_base(stb);
     stb     =   muxer->get_audio_stream_timebase();
-    a_encoder->set_stream_time_base(stb);
+    a_encoder.set_stream_time_base(stb);
 
     Maker::work_without_subtitle();
 }
@@ -122,9 +121,6 @@ MakerIO::init()
 ********************************************************************************/
 void    MakerIO::init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting )
 {
-    a_encoder   =   new AudioEncodeIO;
-    v_encoder   =   new VideoEncodeIO;
-
     setting =   _setting;
     init_IO();  // need call after set setting.
 
@@ -134,12 +130,12 @@ void    MakerIO::init( EncodeSetting _setting, VideoEncodeSetting v_setting, Aud
 
     bool    need_global_header  =   muxer->is_need_global_header();
 
-    v_encoder->init( default_video_stream_index, v_setting, need_global_header );
-    a_encoder->init( default_audio_stream_index, a_setting, need_global_header );
+    v_encoder.init( default_video_stream_index, v_setting, need_global_header );
+    a_encoder.init( default_audio_stream_index, a_setting, need_global_header );
 
     //
-    auto v_ctx  =   v_encoder->get_ctx();
-    auto a_ctx  =   a_encoder->get_ctx();
+    auto v_ctx  =   v_encoder.get_ctx();
+    auto a_ctx  =   a_encoder.get_ctx();
 
     IO->open();
     

@@ -60,9 +60,9 @@ protected:
 
     Mux*    muxer  =   nullptr;
 
-    AudioEncode*    a_encoder   =   nullptr;
-    VideoEncode*    v_encoder   =   nullptr;
-    SubEncode*      s_encoder   =   nullptr;
+    AudioEncode     a_encoder;
+    VideoEncode     v_encoder;
+    SubEncode       s_encoder;
 
     EncodeSetting   setting;
 

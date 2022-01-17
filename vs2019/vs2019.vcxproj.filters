@@ -111,12 +111,6 @@
     <ClCompile Include="..\src\maker\maker_interface.cpp">
       <Filter>src\maker</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\maker\audio_encode_io.cpp">
-      <Filter>src\maker</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\maker\video_encode_io.cpp">
-      <Filter>src\maker</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -192,12 +186,6 @@
       <Filter>src\maker</Filter>
     </ClInclude>
     <ClInclude Include="..\src\maker\maker_interface.h">
-      <Filter>src\maker</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\maker\video_encode_io.h">
-      <Filter>src\maker</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\maker\audio_encode_io.h">
       <Filter>src\maker</Filter>
     </ClInclude>
   </ItemGroup>

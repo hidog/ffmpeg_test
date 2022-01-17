@@ -37,7 +37,6 @@ public:
 
     void    init( int st_idx, AVCodecID code_id );
     bool    end_of_file();
-
     bool    is_flush();
     void    set_flush( bool flag );
     void    set_frame( AVFrame* _f );
