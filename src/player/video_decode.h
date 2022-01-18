@@ -38,6 +38,8 @@ public:
     int     render_nongraphic_subtitle();
     int     overlap_subtitle_image();
 
+    QImage  get_video_image();
+
     
     int     get_video_width();
     int     get_video_height();
@@ -62,6 +64,8 @@ public:
 #endif
 
 private:
+
+    int64_t     frame_pts   =   0;
 
     AVMediaType     type;
     AVPixelFormat   pix_fmt;

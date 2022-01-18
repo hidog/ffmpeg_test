@@ -128,7 +128,7 @@ int     Player::init()
     // 有遇到影片會在這邊卡很久, 或許可以考慮用multi-thread的方式做處理, 以後再說...
     init_subtitle(fmt_ctx);
 
-#ifdef RENDER_SUBTITLE
+#if defined(RENDER_SUBTITLE) || !defined(FFMPEG_TEST)
     // 若有 subtitle, 設置進去 video decoder.
     if( s_decoder.exist_stream() == true )
         v_decoder.set_subtitle_decoder( &s_decoder );
@@ -873,7 +873,7 @@ Player::decode
 int     Player::decode( Decode *dc, AVPacket* pkt )
 {
     // switch subtitle track
-    // 寫在這邊是為了方便未來跟multi-thread decode結合.
+    // 寫在這邊是為了方便未來跟 multi-thread decode 結合.
     if( switch_subtitle_flag == true )
     {
         switch_subtitle_flag    =   false;
@@ -885,8 +885,9 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
             MYLOG( LOG::ERROR, "no subtitle.");
     }
 
-    int     ret     =   0;
+    int ret =   0;
 
+#if 0
     // 必須對 subtitle 進行decode, 不然 filter 會出錯
     if( s_decoder.find_index( pkt->stream_index ) == true )
     {
@@ -902,24 +903,40 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
         decode_video_with_nongraphic_subtitle(pkt);
         return  SUCCESS;
     }
+#endif
 
     // handle video and audio
     VideoData   vdata;
     AudioData   adata;
 
-    ret     =   dc->send_packet(pkt);
+    ret =   dc->send_packet(pkt);
     if( ret >= 0 )
     {
         while(true)
         {
             ret     =   dc->recv_frame(pkt->stream_index);
-
             if( ret <= 0 )
                 break;
 
             //if( is_live_stream == true )
               //  output_live_stream( dc );
 
+            if( pkt->stream_index == v_decoder.current_index() )
+            {
+                vdata   =   v_decoder.output_video_data();
+                decode::add_video_data(vdata);                
+            }
+            else if( pkt->stream_index == a_decoder.current_index() )
+            {
+                adata   =   a_decoder.output_audio_data();
+                decode::add_audio_data(adata);
+            }
+            else
+            {
+                MYLOG( LOG::ERROR, "undefined behavier." );
+            }
+
+#if 0
             if( pkt->stream_index == v_decoder.current_index() )
             {
                 if( s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == true )
@@ -933,8 +950,8 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
                 //a_decoder.output_audio_frame_info();
                 adata   =   a_decoder.output_audio_data();
                 decode::add_audio_data(adata);
-            }     
-
+            }
+#endif
             dc->unref_frame();
         }
     }
@@ -1063,6 +1080,25 @@ int    Player::flush()
     // 需要考慮 graphic 的 case
     s_decoder.flush_all_stream();       
 
+
+
+#if 0
+            if( pkt->stream_index == v_decoder.current_index() )
+            {
+                vdata   =   v_decoder.output_video_data();
+                decode::add_video_data(vdata);                
+            }
+            else if( pkt->stream_index == a_decoder.current_index() )
+            {
+                adata   =   a_decoder.output_audio_data();
+                decode::add_audio_data(adata);
+            }
+            else
+            {
+                MYLOG( LOG::ERROR, "undefined behavier." );
+            }
+#endif
+
     // flush video
     ret     =   v_decoder.send_packet(nullptr);
     if( ret >= 0 )
@@ -1073,6 +1109,9 @@ int    Player::flush()
             if( ret <= 0 )
                 break;
 
+            vdata   =   v_decoder.output_video_data();
+            decode::add_video_data(vdata);    
+#if 0
             if( s_decoder.exist_stream() == true )
             {
                 if( s_decoder.is_graphic_subtitle() == true )
@@ -1090,10 +1129,11 @@ int    Player::flush()
 
             // flush 階段本來想處理 subtitle, 但會跳錯誤, 還沒找到解決的做法. 目前只處理graphic subtitle的部分
             decode::add_video_data(vdata);
+#endif
             v_decoder.unref_frame();  
         }
     }
-    v_decoder.flush_all_stream();
+    v_decoder.flush_all_stream();  // 理論上只有一個 video stream, 這邊不影響
 
     // flush audio
     ret     =   a_decoder.send_packet(nullptr);
@@ -1113,7 +1153,7 @@ int    Player::flush()
             a_decoder.unref_frame();
         }
     }
-    a_decoder.flush_all_stream();
+    a_decoder.flush_all_stream();  // 多音軌的時候,清除其他音軌的資料
 
     return 0;
 }

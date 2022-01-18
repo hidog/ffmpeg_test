@@ -256,6 +256,24 @@ void    VideoDecode::generate_overlay_image()
 
 
 /*******************************************************************************
+VideoDecode::get_video_image()
+********************************************************************************/
+QImage      VideoDecode::get_video_image()
+{
+    QImage  image { width, height, QImage::Format_RGB888 };
+
+    //av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
+    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, video_dst_data, video_dst_linesize );
+    memcpy( image.bits(), video_dst_data[0], video_dst_bufsize );
+
+    return  image;
+}
+
+
+
+
+
+/*******************************************************************************
 VideoDecode::output_video_data()
 
 某些影片不能直接複製到QImage的記憶體,需要先複製到ffmpeg create的video_dst_data.
@@ -263,13 +281,18 @@ VideoDecode::output_video_data()
 VideoData   VideoDecode::output_video_data()
 {
     VideoData   vd;
-
-    assert(0);
-
-    //
     vd.index        =   frame_count;
-    //vd.frame        =   get_video_image();
     vd.timestamp    =   get_timestamp();
+
+    if( sub_dec == nullptr )        
+        vd.frame        =   get_video_image();
+    else
+    {
+        if( sub_dec->is_graphic_subtitle() == false )        
+            vd.frame    =   sub_dec->get_subtitle_image();        
+        else
+            vd.frame    =   overlay_image;
+    }
 
     return  vd;
 }
@@ -310,10 +333,10 @@ VideoDecode::get_timestamp()
 ********************************************************************************/
 int64_t     VideoDecode::get_timestamp()
 {
-    if( frame->best_effort_timestamp == AV_NOPTS_VALUE )
+    if( frame_pts == AV_NOPTS_VALUE )
         return  0;
 
-    double  dpts    =   av_q2d(stream->time_base) * frame->best_effort_timestamp;
+    double  dpts    =   av_q2d(stream->time_base) * frame_pts;
     int64_t ts      =   dpts * 1000;  // ms
     return  ts;
 }
@@ -503,16 +526,14 @@ int     VideoDecode::recv_frame( int index )
     // exist frame.
     if( ret > 0 )
     {
+        frame_pts   =   frame->best_effort_timestamp;
+
         if( sub_dec != nullptr )
         {
             if( sub_dec->is_graphic_subtitle() == true )
                 ret     =   overlap_subtitle_image();
             else
                 ret     =   render_nongraphic_subtitle();
-        }
-        else
-        {
-            frame->pts  =   frame->best_effort_timestamp; 
         }
     }
 
