@@ -4,6 +4,8 @@
 #include <cassert>
 #include <QImage>
 
+#include "player/play_def.h"
+
 //#define USE_MT
 
 
@@ -107,6 +109,23 @@ DLL_API bool    video_need_wait();
 } // end namespace encode
 
 
+namespace decode {
 
+DLL_API void    add_audio_data( AudioData a_data );
+DLL_API void    add_video_data( VideoData v_data );
+
+DLL_API AudioData    get_audio_data();
+DLL_API VideoData    get_video_data();
+
+DLL_API void    clear_audio_queue();
+DLL_API void    clear_video_queue();
+
+DLL_API int     get_audio_size();
+DLL_API int     get_video_size();
+
+DLL_API bool&   get_v_seek_lock(); 
+DLL_API bool&   get_a_seek_lock(); 
+
+} // end namespace decode
 
 #endif
