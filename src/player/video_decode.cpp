@@ -141,6 +141,7 @@ void    VideoDecode::set_subtitle_decoder( SubDecode* sd )
 
     sub_dec     =   sd;
 
+#ifdef FFMPEG_TEST
     if( output_frame_func != nullptr )
         output_frame_func   =   nullptr;
 
@@ -148,6 +149,7 @@ void    VideoDecode::set_subtitle_decoder( SubDecode* sd )
         output_frame_func   =   std::bind( &SubDecode::output_jpg_by_QT, sub_dec );
     else
         output_frame_func   =   std::bind( &VideoDecode::output_overlay_by_QT, this );
+#endif
 }
 
 
