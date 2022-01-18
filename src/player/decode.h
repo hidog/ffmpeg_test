@@ -39,11 +39,13 @@ public:
     virtual void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) = 0;
     virtual int     open_codec_context( AVFormatContext *fmt_ctx ) = 0;
     virtual bool    exist_stream();
-    virtual int     recv_frame( int index );
     virtual void    flush_for_seek();
     virtual void    flush_all_stream();
 
-    int     send_packet( const AVPacket *pkt );
+    virtual int     send_packet( AVPacket *pkt );
+    virtual int     recv_frame( int index );
+
+
     void    unref_frame();
     int     get_frame_count();
     bool    find_index( int index );

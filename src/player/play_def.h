@@ -20,6 +20,7 @@ struct DecodeSetting
 
     std::string     srt_ip;
     std::string     srt_port;
+
 };
 
 

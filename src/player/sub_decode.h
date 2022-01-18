@@ -37,6 +37,10 @@ public:
     int     init() override;
     int     end() override;
     
+    int     send_packet( AVPacket *pkt ) override;
+    int     recv_frame( int index ) override;
+
+
     int     open_codec_context( AVFormatContext *fmt_ctx ) override;
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
     bool    exist_stream() override;

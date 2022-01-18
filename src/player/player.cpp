@@ -128,6 +128,10 @@ int     Player::init()
     // 有遇到影片會在這邊卡很久, 或許可以考慮用multi-thread的方式做處理, 以後再說...
     init_subtitle(fmt_ctx);
 
+    // 若有 subtitle, 設置進去 video decoder.
+    if( s_decoder.exist_stream() == true )
+        v_decoder.set_subtitle_decoder( &s_decoder );
+
     return SUCCESS;
 }
 
@@ -415,17 +419,17 @@ void    Player::play()
     while( true ) 
     {
         ret     =   demuxer->demux();
-        if( ret < 0 )
-        {
-            printf("play end.\n");
-            break;
-        }
+        if( ret < 0 )        
+            break;        
         
         pkt     =   demuxer->get_packet();
+        // video
         if( v_decoder.find_index(pkt->stream_index) )
             dc  =   dynamic_cast<Decode*>(&v_decoder);        
+        // audio
         else if( a_decoder.find_index(pkt->stream_index) )
             dc  =   dynamic_cast<Decode*>(&a_decoder);
+        // subtitle
         else if( s_decoder.find_index( pkt->stream_index ) == true )
             dc  =   dynamic_cast<Decode*>(&s_decoder);
         else        
@@ -435,6 +439,26 @@ void    Player::play()
             continue;
         }
 
+        // send
+        ret =   dc->send_packet(pkt);
+        if( ret >= 0 )
+        {
+            // recv
+            while(true)
+            {
+                ret =   dc->recv_frame(pkt->stream_index);
+                if( ret <= 0 )
+                    break;
+            
+                if( dc->output_frame_func != nullptr && pkt->stream_index == dc->current_index() )
+                    dc->output_frame_func();
+                dc->unref_frame();
+            }
+            
+        }
+        demuxer->unref_packet();
+
+#if 0
         //
         if( dc == &s_decoder )
             s_decoder.decode_subtitle( pkt );
@@ -463,7 +487,15 @@ void    Player::play()
             }
         }
         demuxer->unref_packet();
+#endif
+
     }
+
+
+
+    MYLOG( LOG::INFO, "play main loop end. it will flush.");
+
+
 
     // flush
     if( s_decoder.exist_stream() == true )
@@ -1256,8 +1288,7 @@ void    player_decode_example()
     DecodeSetting   setting;
     setting.io_type     =   IO_Type::DEFAULT;
     //setting.io_type     =   IO_Type::SRT_IO;
-    //setting.filename   =   "D:/test.mkv";     // 使用 D:\\code\\test.mkv 會出錯
-    setting.filename    =   "D:/test2.mp4";
+    setting.filename   =   "D:/test.mkv";     // 使用 D:\\code\\test.mkv 會出錯
     //setting.subname    =   "D:/code/test.ass";   
     //setting.srt_port    =   "1234";
 

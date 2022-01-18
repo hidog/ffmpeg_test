@@ -4,6 +4,7 @@
 
 #include <QImage>
 #include <opencv2/opencv.hpp>
+#include "sub_decode.h"
 
 
 extern "C" {
@@ -114,6 +115,10 @@ int     VideoDecode::init()
     //
     Decode::init();
 
+    // 理論上可以在這之前就設置好 sub_dec, 但目前規劃是 init 後再設置 sub_dec.
+    if( sub_dec != nullptr )
+        MYLOG( LOG::ERROR, "sub_dec not null." );
+
     return  SUCCESS;
 }
 
@@ -122,6 +127,22 @@ int     VideoDecode::init()
 
 
 
+/*******************************************************************************
+VideoDecode::set_subtitle_decoder()
+********************************************************************************/
+void    VideoDecode::set_subtitle_decoder( SubDecode* sd )
+{
+    if( sd == nullptr )
+        MYLOG( LOG::ERROR, "sd is null." );
+    if( sub_dec != nullptr )
+        MYLOG( LOG::ERROR, "sub_dec is not null." );
+
+    sub_dec     =   sd;
+
+    if( output_frame_func != nullptr )    
+        output_frame_func   =   nullptr;
+    output_frame_func   =   std::bind( &SubDecode::output_jpg_by_QT, sub_dec );
+}
 
 
 /*******************************************************************************
@@ -191,6 +212,8 @@ int     VideoDecode::end()
     pix_fmt =   AV_PIX_FMT_NONE;
     width   =   0;
     height  =   0;
+
+    sub_dec =   nullptr; // 非 owner, 不能刪除記憶體
 
     Decode::end();
     return  SUCCESS;
@@ -406,9 +429,35 @@ VideoDecode::recv_frame()
 ********************************************************************************/
 int     VideoDecode::recv_frame( int index )
 {
-    int     ret     =   Decode::recv_frame(index);
-    if( ret >= 0 )
-        frame->pts  =   frame->best_effort_timestamp; 
+    int         ret         =   Decode::recv_frame(index);
+    AVFrame*    v_frame     =   nullptr;
+    
+    // exist frame.
+    if( ret > 0 )
+    {
+        if( sub_dec != nullptr )
+        {
+            v_frame =   this->get_frame();
+            ret     =   sub_dec->send_video_frame( v_frame );
+            if( ret < 0 )
+                MYLOG( LOG::ERROR, "send video to subtitle fail." );
+
+            ret     =   sub_dec->render_subtitle();
+            if( ret < 0 )
+                MYLOG( LOG::ERROR, "render subtitle fail." );
+
+#ifdef _DEBUG
+            // 理論上一次只有一張, 保險起見加檢查.
+            if( sub_dec->render_subtitle() > 0 )
+                MYLOG( LOG::ERROR, "multi subtitle frame." );
+#endif
+
+        }
+        else
+        {
+            frame->pts  =   frame->best_effort_timestamp; 
+        }
+    }
 
     return  ret;
 /*

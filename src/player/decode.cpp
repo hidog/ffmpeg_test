@@ -221,7 +221,7 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
 /*******************************************************************************
 Decode::send_packet()
 ********************************************************************************/
-int     Decode::send_packet( const AVPacket *pkt )
+int     Decode::send_packet( AVPacket *pkt )
 {
     int     index   =   pkt == nullptr ? cs_index : pkt->stream_index;
 
@@ -352,7 +352,7 @@ int     Decode::recv_frame( int index )
         // those two return values are special and mean there is no output
         // frame available, but there were no errors during decoding
         if( ret == AVERROR_EOF || ret == AVERROR(EAGAIN) )
-            return 0;
+            return  0;
 
         auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
         MYLOG( LOG::ERROR, "Error during decoding (%s)", str );

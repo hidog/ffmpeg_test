@@ -3,6 +3,32 @@
 #include "player/player.h"
 
 
+
+
+#include "maker/maker_interface.h"
+
+
+
+
+int main()
+{
+    //maker_encode_example();
+
+    player_decode_example();
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
 /*
 https://github.com/leandromoreira/ffmpeg-libav-tutorial     教學
 https://kkc.github.io/2019/01/12/ffmpeg-libav-decode-note/
@@ -125,24 +151,3 @@ MarginV=10,
 Encoding=0'" 
 mysubs.ass
 */
-
-
-
-#include "maker/maker_interface.h"
-
-
-
-
-int main()
-{
-    maker_encode_example();
-
-    //player_decode_example();
-
-    return 0;
-}
-
-
-
-
-

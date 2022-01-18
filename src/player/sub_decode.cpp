@@ -104,6 +104,32 @@ void    SubDecode::set_filter_args( std::string args )
 
 
 /*******************************************************************************
+SubDecode::send_packet
+********************************************************************************/
+int     SubDecode::send_packet( AVPacket *pkt )
+{
+    int ret =   decode_subtitle( pkt );
+    return  ret;
+}
+
+
+
+
+/*******************************************************************************
+SubDecode::recv_frame
+
+subtitle 跟 video, audio 不同, recv 固定無資料.
+********************************************************************************/
+int     SubDecode::recv_frame( int index )
+{
+    return  0;
+}
+
+
+
+
+
+/*******************************************************************************
 SubDecode::output_decode_info()
 ********************************************************************************/
 void    SubDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
@@ -829,7 +855,6 @@ int    SubDecode::output_jpg_by_QT()
         MYLOG( LOG::DEBUG, "save jpg %s", str );
 
     sub_image.save(str);
-
     return  0;
 }
 #endif
