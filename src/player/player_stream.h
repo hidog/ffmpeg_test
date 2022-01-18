@@ -1,17 +1,23 @@
-#ifndef PLAYER_IO_H
-#define PLAYER_IO_H
+#ifndef PLAYER_STREAM_H
+#define PLAYER_STREAM_H
 
 #include "player.h"
 
-#if 0
+
 
 
 // 用來輸出 frame 到 maker, 再 encode 後輸出 stream.
-class PlayerIO : public Player
+class PlayerStream : public Player
 {
 public:
-    PlayerIO();
-    ~PlayerIO();
+    PlayerStream();
+    ~PlayerStream();
+
+    PlayerStream( const PlayerStream& ) = delete;
+    PlayerStream( PlayerStream&& ) = delete;
+
+    PlayerStream& operator = ( const PlayerStream& ) = delete;
+    PlayerStream& operator = ( PlayerStream&& ) = delete;
 
     // use for live steeam
     void    init_live_stream();
@@ -26,9 +32,10 @@ public:
     std::function< void(AVFrame*) >     add_video_frame_cb;
 
 private:
+
 };
 
 
-#endif
+
 
 #endif

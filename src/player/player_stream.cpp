@@ -2,12 +2,39 @@
 
 
 
-#if 0
+
+
+
+
 
 /*******************************************************************************
-Player::init_live_stream()
+PlayerStream::PlayerStream()
 ********************************************************************************/
-void    Player::init_live_stream()
+PlayerStream::PlayerStream()
+    :   Player()
+{}
+
+
+
+
+
+
+
+/*******************************************************************************
+PlayerStream::~PlayerStream()
+********************************************************************************/
+PlayerStream::~PlayerStream()
+{}
+
+
+
+
+
+
+/*******************************************************************************
+PlayerStream::init_live_stream()
+********************************************************************************/
+void    PlayerStream::init_live_stream()
 {
     is_live_stream      =   true;
 
@@ -30,9 +57,9 @@ void    Player::init_live_stream()
 
 
 /*******************************************************************************
-Player::end_live_stream()
+PlayerStream::end_live_stream()
 ********************************************************************************/
-void    Player::end_live_stream()
+void    PlayerStream::end_live_stream()
 {
     is_live_stream  =   false; 
 }
@@ -43,9 +70,9 @@ void    Player::end_live_stream()
 
 
 /*******************************************************************************
-Player::play_live_stream()
+PlayerStream::play_live_stream()
 ********************************************************************************/
-void    Player::play_live_stream()
+void    PlayerStream::play_live_stream()
 {
     init_live_stream();  // 偷懶的寫法 以後再修
 
@@ -111,9 +138,9 @@ void    Player::play_live_stream()
 
 
 /*******************************************************************************
-Player::output_live_stream()
+PlayerStream::output_live_stream()
 ********************************************************************************/
-void    Player::output_live_stream( Decode* dc )
+void    PlayerStream::output_live_stream( Decode* dc )
 {
     AVFrame*    frame   =   nullptr;
     AVFrame*    v_frame =   nullptr;
@@ -189,7 +216,7 @@ void    Player::output_live_stream( Decode* dc )
 
 
 /*******************************************************************************
-Player::get_new_v_frame()
+PlayerStream::get_new_v_frame()
 ********************************************************************************/
 AVFrame*    Player::get_new_v_frame()
 {
@@ -226,7 +253,7 @@ AVFrame*    Player::get_new_v_frame()
 
     
 /*******************************************************************************
-Player::get_new_a_frame()
+PlayerStream::get_new_a_frame()
 ********************************************************************************/
 AVFrame*    Player::get_new_a_frame()
 {
@@ -264,6 +291,3 @@ AVFrame*    Player::get_new_a_frame()
 
 
 
-
-
-#endif
