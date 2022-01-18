@@ -32,6 +32,8 @@ public:
     
     int     init() override;
     int     end() override;
+    void    unref_frame() override;
+
     
     int     get_video_width();
     int     get_video_height();

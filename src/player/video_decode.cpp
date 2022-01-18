@@ -448,10 +448,9 @@ int     VideoDecode::recv_frame( int index )
 
 #ifdef _DEBUG
             // 理論上一次只有一張, 保險起見加檢查.
-            if( sub_dec->render_subtitle() > 0 )
+            if( sub_dec->resend_to_filter() > 0 )
                 MYLOG( LOG::ERROR, "multi subtitle frame." );
 #endif
-
         }
         else
         {
@@ -464,6 +463,23 @@ int     VideoDecode::recv_frame( int index )
     某個測試影片, 少了這個處理, 造成無法顯示字幕
 */
 }
+
+
+
+
+
+
+
+/*******************************************************************************
+VideoDecode::unref_frame()
+********************************************************************************/
+void    VideoDecode::unref_frame()
+{
+    if( sub_dec != nullptr )
+        sub_dec->unref_frame();
+    Decode::unref_frame();
+}
+
 
 
 

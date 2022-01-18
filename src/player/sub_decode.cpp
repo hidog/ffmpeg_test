@@ -264,6 +264,17 @@ int SubDecode::init_sws_ctx( SubData sd )
 
 
 
+#ifdef _DEBUG
+/*******************************************************************************
+SubDecode::resend_to_filter()
+********************************************************************************/
+int     SubDecode::resend_to_filter()
+{
+    int ret =   av_buffersink_get_frame_flags( bf_sink_ctx, frame, 0 );    
+    return  ret;
+}
+#endif
+
 
 
 

@@ -44,9 +44,8 @@ public:
 
     virtual int     send_packet( AVPacket *pkt );
     virtual int     recv_frame( int index );
+    virtual void    unref_frame();
 
-
-    void    unref_frame();
     int     get_frame_count();
     bool    find_index( int index );
     int     current_index();

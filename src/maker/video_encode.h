@@ -33,9 +33,10 @@ public:
     void    list_frame_rate( AVCodecID code_id );
     void    list_pix_fmt( AVCodecID code_id );
     
-    void        next_frame() override;
-    int64_t     get_pts() override;
-    void        unref_data() override;
+    void    next_frame() override;
+    void    unref_data() override;
+    int64_t get_pts() override;
+
 
 
 #ifdef FFMPEG_TEST

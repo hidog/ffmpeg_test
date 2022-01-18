@@ -69,6 +69,11 @@ public:
 
     void    init_graphic_subtitle( SubData sd );
 
+#ifdef _DEBUG
+    int     resend_to_filter();
+#endif
+
+
     std::string     get_subfile();
     SubSourceType   get_sub_src_type();
 

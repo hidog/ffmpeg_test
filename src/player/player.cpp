@@ -498,9 +498,14 @@ void    Player::play()
 
 
     // flush
+    // subtitle 必須在最前面 flush.
     if( s_decoder.exist_stream() == true )
         s_decoder.flush();
 #ifdef RENDER_SUBTITLE
+    /* 
+        在有字幕的情況下, video decoder 需要額外呼叫 subtitle decoer 來處理, 所以需要額外的 code.
+        如果要併入 flush, 設計上並沒有比較好看.
+    */
     ret     =   v_decoder.send_packet(nullptr);
     if( ret >= 0 )
     {       
@@ -510,6 +515,10 @@ void    Player::play()
             if( ret <= 0 )
                 break;
 
+            if( v_decoder.output_frame_func != nullptr )
+                v_decoder.output_frame_func();
+            v_decoder.unref_frame();
+#if 0
             frame   =   v_decoder.get_frame();
             ret     =   s_decoder.send_video_frame( frame );
 
@@ -525,9 +534,11 @@ void    Player::play()
             }
 
             v_decoder.unref_frame();  
+#endif
         }
     }
 #else
+    // 理論上只有一個 video stream. 如果不是, 這邊有機會出問題.
     v_decoder.flush();
 #endif
     a_decoder.flush();
