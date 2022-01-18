@@ -457,45 +457,8 @@ void    Player::play()
             
         }
         demuxer->unref_packet();
-
-#if 0
-        //
-        if( dc == &s_decoder )
-            s_decoder.decode_subtitle( pkt );
-#ifdef RENDER_SUBTITLE
-        // 尚未處理 graphic subtitle. 以後有需要再新增.
-        // note: 通常一個檔案只會有一個video stream,就不處理多個video stream的狀況了.
-        else if( s_decoder.exist_stream() == true && dc == &v_decoder )
-            play_decode_video_subtitle( pkt );
-#endif
-        else
-        {
-            //
-            ret     =   dc->send_packet(pkt);
-            if( ret >= 0 )
-            {
-                while(true)
-                {
-                    ret     =   dc->recv_frame(pkt->stream_index);
-                    if( ret <= 0 )
-                        break;
-
-                    if( dc->output_frame_func != nullptr && pkt->stream_index == dc->current_index() )
-                        dc->output_frame_func();
-                    dc->unref_frame();
-                }
-            }
-        }
-        demuxer->unref_packet();
-#endif
-
     }
-
-
-
-    MYLOG( LOG::INFO, "play main loop end. it will flush.");
-
-
+    MYLOG( LOG::INFO, "play main loop end. it will flush." );
 
     // flush
     // subtitle 必須在最前面 flush.
@@ -518,23 +481,6 @@ void    Player::play()
             if( v_decoder.output_frame_func != nullptr )
                 v_decoder.output_frame_func();
             v_decoder.unref_frame();
-#if 0
-            frame   =   v_decoder.get_frame();
-            ret     =   s_decoder.send_video_frame( frame );
-
-            while(true)
-            {
-                // 這邊一樣沒處理 subtitle 為 image 的 case.
-                ret     =   s_decoder.render_subtitle();
-                if( ret <= 0 )
-                    break;
-
-                s_decoder.output_frame_func();
-                s_decoder.unref_frame();
-            }
-
-            v_decoder.unref_frame();  
-#endif
         }
     }
 #else
@@ -543,7 +489,7 @@ void    Player::play()
 #endif
     a_decoder.flush();
 
-    printf("Demuxing succeeded.\n");
+    MYLOG( LOG::INFO, "Demuxing succeeded." );
 }
 #endif
 
@@ -1299,8 +1245,8 @@ void    player_decode_example()
     DecodeSetting   setting;
     setting.io_type     =   IO_Type::DEFAULT;
     //setting.io_type     =   IO_Type::SRT_IO;
-    setting.filename   =   "D:/test.mkv";     // 使用 D:\\code\\test.mkv 會出錯
-    //setting.subname    =   "D:/code/test.ass";   
+    setting.filename   =   "D:/test.mp4";     // 使用 D:\\code\\test.mkv 會出錯
+    setting.subname    =   "D:/test.ass";   
     //setting.srt_port    =   "1234";
 
     Player  player;  
