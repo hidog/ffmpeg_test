@@ -689,16 +689,13 @@ bool    Player::demux_need_wait()
         return  false;
     else if( v_decoder.exist_stream() == true && a_decoder.exist_stream() == true )
     {
-        //if( video_queue.size() >= MAX_QUEUE_SIZE && audio_queue.size() >= MAX_QUEUE_SIZE )
         if( decode::get_video_size() >= MAX_QUEUE_SIZE && decode::get_audio_size() >= MAX_QUEUE_SIZE )
             return  true;
         else
             return  false;
-    }
-    //else if( v_decoder.exist_stream() == true && video_queue.size() >= MAX_QUEUE_SIZE )    
+    }   
     else if( v_decoder.exist_stream() == true && decode::get_video_size() >= MAX_QUEUE_SIZE )    
         return  true;  
-    //else if( a_decoder.exist_stream() == true && audio_queue.size() >= MAX_QUEUE_SIZE )
     else if( a_decoder.exist_stream() == true && decode::get_audio_size() >= MAX_QUEUE_SIZE )
         return  true;
     else
@@ -771,24 +768,7 @@ void    Player::handle_seek()
 
     // clear queue.
     decode::clear_video_queue();
-#if 0
-    v_mtx.lock();
-    while( video_queue.empty() == false )
-        video_queue.pop();
-    v_mtx.unlock();
-#endif
-
     decode::clear_audio_queue();
-#if 0
-    a_mtx.lock();
-    while( audio_queue.empty() == false )
-    {
-        adata   =   audio_queue.front();
-        delete [] adata.pcm;
-        audio_queue.pop();
-    }
-    a_mtx.unlock();
-#endif
 
     v_decoder.flush_for_seek();
     a_decoder.flush_for_seek();
@@ -1050,25 +1030,13 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
                     vdata   =   overlap_subtitle_image();
                 else
                     vdata   =   v_decoder.output_video_data();
-#if 0
-                v_mtx.lock();
-                video_queue.push(vdata);
-                v_mtx.unlock();
-#else
                 decode::add_video_data(vdata);
-#endif
             }
             else if( pkt->stream_index == a_decoder.current_index() )
             {
                 //a_decoder.output_audio_frame_info();
                 adata   =   a_decoder.output_audio_data();
-#if 0
-                a_mtx.lock();
-                audio_queue.push(adata);
-                a_mtx.unlock();
-#else
                 decode::add_audio_data(adata);
-#endif
             }     
 
             dc->unref_frame();
@@ -1280,14 +1248,7 @@ int    Player::decode_video_with_nongraphic_subtitle( AVPacket* pkt )
                 vdata.index         =   v_decoder.get_frame_count();
                 vdata.timestamp     =   ts;
 
-#if 0
-                v_mtx.lock();
-                video_queue.push(vdata);
-                v_mtx.unlock();
-#else
                 decode::add_video_data(vdata);
-#endif
-
                 s_decoder.unref_frame();
 
                 count++;
@@ -1380,14 +1341,7 @@ int    Player::flush()
             }
 
             // flush 階段本來想處理 subtitle, 但會跳錯誤, 還沒找到解決的做法. 目前只處理graphic subtitle的部分
-#if 0
-            v_mtx.lock();
-            video_queue.push(vdata);
-            v_mtx.unlock();
-#else
             decode::add_video_data(vdata);
-#endif
-
             v_decoder.unref_frame();  
         }
     }
@@ -1407,15 +1361,7 @@ int    Player::flush()
                 output_live_stream( &a_decoder );
 
             adata   =   a_decoder.output_audio_data();
-
-#if 0
-            a_mtx.lock();
-            audio_queue.push(adata);
-            a_mtx.unlock();
-#else
             decode::add_audio_data( adata );
-#endif
-
             a_decoder.unref_frame();
         }
     }

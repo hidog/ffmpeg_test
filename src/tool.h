@@ -123,8 +123,8 @@ DLL_API void    clear_video_queue();
 DLL_API int     get_audio_size();
 DLL_API int     get_video_size();
 
-DLL_API bool& get_v_seek_lock(); 
-DLL_API bool& get_a_seek_lock(); 
+DLL_API bool&   get_v_seek_lock(); 
+DLL_API bool&   get_a_seek_lock(); 
 
 } // end namespace decode
 
