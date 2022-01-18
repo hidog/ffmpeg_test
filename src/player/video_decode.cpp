@@ -345,6 +345,19 @@ int64_t     VideoDecode::get_timestamp()
 
 
 
+/*******************************************************************************
+VideoDecode::get_frame()
+********************************************************************************/
+AVFrame*    VideoDecode::get_frame()
+{
+    if( sub_dec == nullptr )
+        return  Decode::get_frame();
+    else
+        return  sub_dec->get_frame();
+}
+
+
+
 
 /*******************************************************************************
 VideoDecode::get_pts()

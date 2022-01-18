@@ -33,6 +33,9 @@ public:
     int     init() override;
     int     end() override;
     void    unref_frame() override;
+    
+    AVFrame*    get_frame() override;
+
 
 
     int     render_nongraphic_subtitle();

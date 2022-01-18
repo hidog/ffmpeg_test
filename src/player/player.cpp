@@ -847,11 +847,8 @@ void    Player::play_QT()
 
         //
         ret     =   demuxer->demux();
-        if( ret < 0 )
-        {
-            MYLOG( LOG::INFO, "demux finish.");
+        if( ret < 0 )        
             break;
-        }
 
         //
         pkt     =   demuxer->get_packet();
@@ -872,6 +869,7 @@ void    Player::play_QT()
         decode( dc, pkt );       
         demuxer->unref_packet();
     }
+    MYLOG( LOG::INFO, "demux finish.");
 
     //
     flush();
@@ -933,8 +931,8 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
             if( ret <= 0 )
                 break;
 
-            //if( is_live_stream == true )
-              //  output_live_stream( dc );
+            if( output_live_stream_func != nullptr )
+                output_live_stream_func( dc );
 
             if( pkt->stream_index == v_decoder.current_index() )
             {
@@ -1076,8 +1074,8 @@ int    Player::flush()
             if( ret <= 0 )
                 break;
 
-            //if( is_live_stream == true )
-              //  output_live_stream( &a_decoder );
+            if( output_live_stream_func != nullptr )
+                output_live_stream_func( &a_decoder );
 
             vdata   =   v_decoder.output_video_data();
             decode::add_video_data(vdata);  
@@ -1097,8 +1095,8 @@ int    Player::flush()
             if( ret <= 0 )
                 break;
 
-            //if( is_live_stream == true )
-              //  output_live_stream( &a_decoder );
+            if( output_live_stream_func != nullptr )
+                output_live_stream_func( &a_decoder );
 
             adata   =   a_decoder.output_audio_data();
             decode::add_audio_data( adata );
@@ -1180,6 +1178,37 @@ void    Player::switch_subtitle( int index )
 
 
 
+
+
+/*******************************************************************************
+Player::get_video_decoder()
+********************************************************************************/
+VideoDecode&    Player::get_video_decoder()
+{
+    return  v_decoder;
+}
+    
+
+
+
+/*******************************************************************************
+Player::get_audio_decoder()
+********************************************************************************/
+AudioDecode&    Player::get_audio_decoder()
+{
+    return  a_decoder;
+}
+
+
+
+    
+/*******************************************************************************
+Player::get_subtitle_decoder()
+********************************************************************************/
+SubDecode&      Player::get_subtitle_decoder()
+{
+    return  s_decoder;
+}
 
 
 

@@ -6,6 +6,7 @@
 #include <queue>
 #include <thread>
 #include <mutex>
+#include <functional>
 
 #include "demux.h"
 #include "audio_decode.h"
@@ -41,11 +42,11 @@ public:
     Player& operator = ( Player&& ) = delete;
 
     virtual int     init();
+    virtual void    play_QT();
+    virtual int     end();
 
 
     //
-    void    play_QT();
-    int     end();
     int     flush();
     void    stop();
     void    seek( int value, int old_value );
@@ -97,6 +98,14 @@ public:
 protected:
     DecodeSetting&  get_setting();
     Demux*          get_demuxer();
+    VideoDecode&    get_video_decoder();
+    AudioDecode&    get_audio_decoder();
+    SubDecode&      get_subtitle_decoder();
+
+    std::function<void(Decode*)>    output_live_stream_func =   nullptr;
+
+    bool    stop_flag               =   false;
+
 
 private:
 
@@ -115,7 +124,6 @@ private:
 
     bool    switch_subtitle_flag    =   false;
     int     new_subtitle_index      =   0;
-    bool    stop_flag               =   false;
 
     int     seek_old    =   0;
     int     seek_value  =   0;
@@ -134,9 +142,7 @@ private:
 
     DecodeSetting   setting;
 
-    // use for live stream.
-    bool        is_live_stream      =   false;
-    int64_t     audio_pts_count     =   0;
+
 };
 
 

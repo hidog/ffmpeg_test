@@ -7,6 +7,7 @@
 #include "video_worker.h"
 #include "mainwindow.h"
 #include "tool.h"
+#include "player/player_stream.h"
 
 
 
@@ -208,9 +209,6 @@ void    Worker::play()
 #ifdef USE_MT
     player.play_QT_multi_thread();
 #else
-    /*if( is_output == true )
-        player.play_live_stream();
-    else*/
     player->play_QT();
 #endif
     player->end();
@@ -255,6 +253,8 @@ void    Worker::run()
 
     if( is_output == false )
         player  =   new Player; // 未來有需要的話, 增加 create_player(type)
+    else
+        player  =   new PlayerStream;
 
     assert( player != nullptr );
 
@@ -264,13 +264,9 @@ void    Worker::run()
     // 目前暫不支援從 live stream output.
     if( is_output == true && wtype == WorkType::DEFAULT )
     {
-        assert(0);
         encode::set_is_finish(false);
 
         MediaInfo   media_info  =   player->get_media_info();
-
-        //player.add_audio_frame_cb   =   std::bind( &encode::add_audio_frame, std::placeholders::_1 );
-        //player.add_video_frame_cb   =   std::bind( &encode::add_video_frame, std::placeholders::_1 );
 
         if( output_thr != nullptr )
             MYLOG( LOG::ERROR, "output_thr not null." );
@@ -284,8 +280,6 @@ void    Worker::run()
 
     if( output_thr != nullptr && wtype == WorkType::DEFAULT )
     {
-        assert(0);
-
         encode::set_is_finish(true);
 
         output_thr->join();
@@ -397,8 +391,11 @@ Worker::switch_subtitle()
 ********************************************************************************/
 void    Worker::switch_subtitle_slot_str( QString path )
 {
-    if( player->is_file_subtitle() == true )
-        player->switch_subtitle( path.toStdString() );
+    if( player != nullptr )
+    {
+        if( player->is_file_subtitle() == true )
+            player->switch_subtitle( path.toStdString() );
+    }
 }
 
 
@@ -409,8 +406,11 @@ Worker::switch_subtitle()
 ********************************************************************************/
 void    Worker::switch_subtitle_slot_int( int index )
 {
-    if( player->is_embedded_subtitle() == true )
-        player->switch_subtitle(index);
+    if( player != nullptr )
+    {
+        if( player->is_embedded_subtitle() == true )
+            player->switch_subtitle(index);
+    }
 }
 
 

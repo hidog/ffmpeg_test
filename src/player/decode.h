@@ -41,6 +41,9 @@ public:
     virtual bool    exist_stream();
     virtual void    flush_for_seek();
     virtual void    flush_all_stream();
+    
+    virtual AVFrame*        get_frame();
+
 
     virtual int     send_packet( AVPacket *pkt );
     virtual int     recv_frame( int index );
@@ -51,7 +54,6 @@ public:
     int     current_index();
     int     get_dec_map_size();
 
-    AVFrame*        get_frame();
     AVMediaType     get_decode_context_type();
     AVCodecContext* get_decode_context();
     AVStream*       get_stream();

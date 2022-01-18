@@ -137,7 +137,7 @@ void VideoWorker::video_play()
     while( decode::get_video_size() <= 3 )
         SLEEP_10MS;
 
-    //std::this_thread::sleep_for( std::chrono::milliseconds(350) );
+    std::this_thread::sleep_for( std::chrono::milliseconds(350) );  // live stream 的時候, 降低延遲的 work around.
 
     v_start     =   true;
     while( a_start == false )

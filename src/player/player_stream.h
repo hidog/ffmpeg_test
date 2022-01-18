@@ -7,7 +7,7 @@
 
 
 // 用來輸出 frame 到 maker, 再 encode 後輸出 stream.
-class PlayerStream : public Player
+class DLL_API PlayerStream : public Player
 {
 public:
     PlayerStream();
@@ -20,9 +20,12 @@ public:
     PlayerStream& operator = ( PlayerStream&& ) = delete;
 
     // use for live steeam
-    void    init_live_stream();
-    void    end_live_stream();
-    void    play_live_stream();
+    void    play_QT() override;
+    int     init() override;
+    int     end() override;
+
+
+
     void    output_live_stream( Decode* dc );
 
     AVFrame*    get_new_v_frame();
@@ -32,6 +35,10 @@ public:
     std::function< void(AVFrame*) >     add_video_frame_cb;
 
 private:
+
+    // use for live stream.
+    bool        is_live_stream      =   false;
+    int64_t     audio_pts_count     =   0;
 
 };
 
