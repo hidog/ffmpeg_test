@@ -1047,57 +1047,9 @@ int    Player::flush()
     VideoData   vdata;
     AudioData   adata;
 
-    // 處理subtitle, 非圖片.
-    auto    flush_with_nongraphic_subtitle  =   [this] () -> VideoData
-    {
-        VideoData   vd;
-        int         ret;
-        AVFrame     *frame  =   v_decoder.get_frame();
-
-        // 認為這邊應該不需要迴圈控制, 但留意是否會出現一張 frame render 出多張圖片的現象.
-        ret =   s_decoder.send_video_frame( frame );
-        if( ret < 0 )
-            MYLOG( LOG::ERROR, "flush send fail." );
-
-        ret =   s_decoder.render_subtitle();
-        if( ret < 0 )
-            MYLOG( LOG::ERROR, "flush render fail." );
-
-        //if( is_live_stream == true )
-          //  output_live_stream( &s_decoder );
-        
-        vd.frame         =   s_decoder.get_subtitle_image();
-        vd.index         =   v_decoder.get_frame_count();
-        vd.timestamp     =   v_decoder.get_timestamp();
-
-        s_decoder.unref_frame();
-
-        return  vd;
-    };
-
-
     // flush subtitle
     // 需要考慮 graphic 的 case
     s_decoder.flush_all_stream();       
-
-
-
-#if 0
-            if( pkt->stream_index == v_decoder.current_index() )
-            {
-                vdata   =   v_decoder.output_video_data();
-                decode::add_video_data(vdata);                
-            }
-            else if( pkt->stream_index == a_decoder.current_index() )
-            {
-                adata   =   a_decoder.output_audio_data();
-                decode::add_audio_data(adata);
-            }
-            else
-            {
-                MYLOG( LOG::ERROR, "undefined behavier." );
-            }
-#endif
 
     // flush video
     ret     =   v_decoder.send_packet(nullptr);
@@ -1109,27 +1061,12 @@ int    Player::flush()
             if( ret <= 0 )
                 break;
 
+            //if( is_live_stream == true )
+              //  output_live_stream( &a_decoder );
+
             vdata   =   v_decoder.output_video_data();
-            decode::add_video_data(vdata);    
-#if 0
-            if( s_decoder.exist_stream() == true )
-            {
-                if( s_decoder.is_graphic_subtitle() == true )
-                    vdata   =   overlap_subtitle_image();
-                else                
-                    vdata   =   flush_with_nongraphic_subtitle();                
-            }
-            else
-            {
-                //if( is_live_stream == true )
-                  //  output_live_stream( &v_decoder );
+            decode::add_video_data(vdata);  
 
-                vdata   =   v_decoder.output_video_data();
-            }
-
-            // flush 階段本來想處理 subtitle, 但會跳錯誤, 還沒找到解決的做法. 目前只處理graphic subtitle的部分
-            decode::add_video_data(vdata);
-#endif
             v_decoder.unref_frame();  
         }
     }
