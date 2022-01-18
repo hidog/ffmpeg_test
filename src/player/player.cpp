@@ -1197,6 +1197,7 @@ Player::overlap_subtitle_image()
 ********************************************************************************/
 VideoData       Player::overlap_subtitle_image()
 {
+    assert(0);
     int64_t     timestamp   =   v_decoder.get_timestamp();
     VideoData   vdata;
 
@@ -1204,7 +1205,7 @@ VideoData       Player::overlap_subtitle_image()
         vdata     =   v_decoder.output_video_data();
     else
     {
-        QImage  v_img   =   v_decoder.get_video_image();
+        QImage  v_img   =   QImage(); //v_decoder.get_video_image();
         QImage  s_img   =   s_decoder.get_subtitle_image();
         
         QPainter    painter( &v_img );
@@ -1245,8 +1246,8 @@ void    player_decode_example()
     DecodeSetting   setting;
     setting.io_type     =   IO_Type::DEFAULT;
     //setting.io_type     =   IO_Type::SRT_IO;
-    setting.filename   =   "D:/test.mp4";     // 使用 D:\\code\\test.mkv 會出錯
-    setting.subname    =   "D:/test.ass";   
+    setting.filename   =   "H:/test.mkv";     // 使用 D:\\code\\test.mkv 會出錯
+    //setting.subname    =   "D:/test.ass";   
     //setting.srt_port    =   "1234";
 
     Player  player;  

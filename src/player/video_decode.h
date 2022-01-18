@@ -34,6 +34,10 @@ public:
     int     end() override;
     void    unref_frame() override;
 
+
+    int     render_nongraphic_subtitle();
+    int     overlap_subtitle_image();
+
     
     int     get_video_width();
     int     get_video_height();
@@ -42,7 +46,7 @@ public:
     int64_t     get_timestamp();
     int64_t     get_pts( int sec );
     VideoData   output_video_data();
-    QImage      get_video_image();        
+    void        generate_overlay_image();        
 
     AVPixelFormat   get_pix_fmt();
 
@@ -51,6 +55,7 @@ public:
     void    set_subtitle_decoder( SubDecode *sd );
 
 #ifdef FFMPEG_TEST
+    int     output_overlay_by_QT();   // 處理 graphic subtitle
     int     output_jpg_by_QT();
     int     output_jpg_by_openCV();
     void    set_output_jpg_root( std::string _root_path );
@@ -74,6 +79,8 @@ private:
 #endif
 
     SubDecode   *sub_dec    =   nullptr;
+
+    QImage  overlay_image;  // 用來處理 graphic subtitle, overlay 的 image.
 
 /*
     未來增加nv decode 可以參考這邊
