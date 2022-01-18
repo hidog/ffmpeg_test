@@ -3,6 +3,7 @@
 
 
 #include <QThread>
+#include <QMutex>
 #include <thread>
 #include "player/player.h"
 #include "maker/maker_interface.h"
@@ -32,6 +33,7 @@ public:
 
     void    play_init();
     void    play();
+    void    end();
     void    set_src_file( std::string file );
     bool    is_set_src_file();
     void    finish_set_video();
@@ -63,7 +65,7 @@ private:
 
     WorkType    wtype    =   WorkType::DEFAULT;
 
-    Player  player;
+    Player  *player     =   nullptr;
     bool    is_set_video    =   false;
     bool    is_play_end     =   true;
 
@@ -79,6 +81,8 @@ private:
 
     // use for encode and output.
     MakerInterface*     maker   =   nullptr;
+
+    QMutex  end_lock;
 };
 
 

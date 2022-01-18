@@ -330,7 +330,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClCompile Include="..\src\player\demux.cpp" />
     <ClCompile Include="..\src\player\demux_io.cpp" />
     <ClCompile Include="..\src\player\player.cpp" />
-    <ClCompile Include="..\src\player\player_io.cpp" />
+    <ClCompile Include="..\src\player\player_stream.cpp" />
     <ClCompile Include="..\src\player\sub_decode.cpp" />
     <ClCompile Include="..\src\player\video_decode.cpp" />
     <ClCompile Include="..\src\tool.cpp" />
@@ -366,7 +366,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClInclude Include="..\src\player\demux.h" />
     <ClInclude Include="..\src\player\demux_io.h" />
     <ClInclude Include="..\src\player\player.h" />
-    <ClInclude Include="..\src\player\player_io.h" />
+    <ClInclude Include="..\src\player\player_stream.h" />
     <ClInclude Include="..\src\player\play_def.h" />
     <ClInclude Include="..\src\player\sub_decode.h" />
     <ClInclude Include="..\src\player\video_decode.h" />

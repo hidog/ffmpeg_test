@@ -432,19 +432,21 @@ int     SrtIO::read( uint8_t *buf, int buf_size )
 {
     int read_size   =   0;
 
-    if( handle == -1 || is_end == true )
-        return -1;
+    //if( handle == -1 || is_end == true )
+      //  return -1;
 
     while( read_index == write_index )
     {
         // no data.
-        if( handle == -1 || is_end == true )
-            return -1;
+        //if( handle == -1 || is_end == true )
+        if( handle == SRT_INVALID_SOCK )
+            return  EOF;
         SLEEP_10MS;
     }
 
     if( rd[read_index].size <= 0 )
-        return  -1;  // 代表已經斷線了沒資料.
+        return  EOF;  // 代表已經斷線了沒資料.
+
     memcpy( buf, rd[read_index].data, rd[read_index].size );
 
     read_size   =   rd[read_index].size;

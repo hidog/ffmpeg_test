@@ -27,7 +27,7 @@ struct AVPacket;
 #endif
 
 
-
+// 若有需要, 增加抽象介面.
 class DLL_API Player
 {
 public:
@@ -40,9 +40,11 @@ public:
     Player& operator = ( const Player& ) = delete;
     Player& operator = ( Player&& ) = delete;
 
+    virtual int     init();
+
+
     //
     void    play_QT();
-    int     init();
     int     end();
     int     flush();
     void    stop();
@@ -92,7 +94,9 @@ public:
     MediaInfo   get_media_info();   // use for output.
 #endif
      
-
+protected:
+    DecodeSetting&  get_setting();
+    Demux*          get_demuxer();
 
 private:
 

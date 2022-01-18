@@ -318,6 +318,8 @@ void    MainWindow::finish_slot()
     ui->seekSlider->setSliderPosition(0);
     ui->seekSlider->setValue(0);
 
+    worker->end();
+
     disconnect( seek_connect[0] );
     disconnect( seek_connect[1] );
     disconnect( seek_connect[2] );

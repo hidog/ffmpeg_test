@@ -21,6 +21,7 @@ DemuxIO::DemuxIO( DecodeSetting _st )
     :   Demux()
 {
     setting     =   _st;
+
     IO          =   create_IO( setting.io_type, IO_Direction::RECV );
     IO->set_decode( setting );
 }
