@@ -111,7 +111,7 @@ SrtIO::is_connect()
 ********************************************************************************/
 bool    SrtIO::is_connect()
 {
-    if( handle == -1 )
+    if( handle == SRT_INVALID_SOCK )
         return  false;
     else
         return  true;
@@ -125,7 +125,10 @@ SrtIO::is_connect()
 ********************************************************************************/
 bool    SrtIO::is_stop()
 {
-    return  is_connect();
+    if( handle == SRT_INVALID_SOCK )
+        return  true;
+    else
+        return  false;
 }
 
 

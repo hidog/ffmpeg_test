@@ -154,7 +154,6 @@ void    PlayerStream::play_QT()
     }
     MYLOG( LOG::INFO, "demux finish.");
 
-
     //
     flush();
     MYLOG( LOG::INFO, "play stream finish.")

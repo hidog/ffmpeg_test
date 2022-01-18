@@ -1075,7 +1075,7 @@ int    Player::flush()
                 break;
 
             if( output_live_stream_func != nullptr )
-                output_live_stream_func( &a_decoder );
+                output_live_stream_func( &v_decoder );
 
             vdata   =   v_decoder.output_video_data();
             decode::add_video_data(vdata);  
