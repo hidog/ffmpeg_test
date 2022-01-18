@@ -276,7 +276,6 @@ AudioData   AudioDecode::output_audio_data()
     ad.bytes        =   0;
     ad.timestamp    =   0;
 
-
     uint8_t     *data[2]    =   { 0 };  // S16 改 S32, 不確定是不是這邊的 array 要改成 4
     //int         byte_count     =   frame->nb_samples * 2 * 2;  // S16 改 S32, 改成 *4, 理論上資料量會增加, 但不確定是否改的是這邊
                                                                  // frame->nb_samples * 2 * 2     表示     分配樣本資料量 * 兩通道 * 每通道2位元組大小

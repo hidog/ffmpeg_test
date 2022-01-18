@@ -1201,6 +1201,10 @@ AVFrame*    Player::get_new_a_frame()
     a_frame->channels         =     a_decoder.get_audio_channel();
     a_frame->sample_rate      =     a_decoder.get_audio_sample_rate();
 
+    // 以 vorbis 來講,他會變動 sample 個數,暫時不支援這個壓縮格式
+    if( a_frame->nb_samples == 0 )
+        MYLOG( LOG::ERROR, "un support format." );
+
     //
     ret     =   av_frame_get_buffer( a_frame, 0 );
     if( ret < 0 ) 

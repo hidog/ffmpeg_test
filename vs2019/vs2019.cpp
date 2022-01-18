@@ -94,6 +94,14 @@ http://www.famous1993.com.tw/tech/tech545.html
 
 
 https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/435707/
+
+
+
+https://www.twblogs.net/a/5ef50c480cb8aa77788390c9
+
+
+
+https://codeantenna.com/a/lykOP0j637
 */
 
 
@@ -133,6 +141,8 @@ int main()
 
     return 0;
 }
+
+
 
 
 

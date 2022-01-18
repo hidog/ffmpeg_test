@@ -76,16 +76,17 @@ MuxIO::end()
 ********************************************************************************/
 void    MuxIO::end()
 {
+    if( io_ctx != nullptr )
+    {
+        // avio_close( io_ctx ); ©I¥s³o¦æ·| crash
+        avio_context_free( &io_ctx );
+        io_ctx  =   nullptr;
+    }
+
     if( output_buf != nullptr )
     {
         av_free( output_buf );
         output_buf  =   nullptr;
-    }
-
-    if( io_ctx != nullptr )
-    {
-        avio_context_free( &io_ctx );
-        io_ctx  =   nullptr;
     }
 
     Mux::end();

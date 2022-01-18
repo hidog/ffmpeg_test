@@ -6,7 +6,7 @@
 
 
 class InputOutput;
-
+struct AVIOContext;
 
 
 
@@ -29,6 +29,9 @@ public:
     int     end() override;
 
 private:
+
+    //AVInputFormat*  input_fmt = nullptr;
+    AVIOContext*    io_ctx = nullptr;
 
     InputOutput     *IO     =   nullptr;
     DecodeSetting   setting;

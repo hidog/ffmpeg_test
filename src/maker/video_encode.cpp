@@ -63,7 +63,7 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
 #ifdef FFMPEG_TEST
     ctx->bit_rate   =   3000000;
 #else
-    ctx->bit_rate   =   8000000;
+    ctx->bit_rate   =   3000000;
 #endif
 
     if( codec->id == AV_CODEC_ID_H264 || codec->id == AV_CODEC_ID_H265 )

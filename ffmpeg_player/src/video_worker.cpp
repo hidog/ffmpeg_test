@@ -141,6 +141,9 @@ void VideoWorker::video_play()
     //
     while( v_queue->size() <= 3 )    
         SLEEP_10MS;
+
+    //std::this_thread::sleep_for( std::chrono::milliseconds(350) );
+
     v_start     =   true;
     while( a_start == false )
         SLEEP_10MS;
