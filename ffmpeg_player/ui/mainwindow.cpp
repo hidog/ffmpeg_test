@@ -156,6 +156,11 @@ void    MainWindow::start_connect_slot()
     std::string     ip      =   ui->ipLEdit->text().toStdString();
     std::string     port    =   ui->portLEdit->text().toStdString();
 
+    if( ip.empty() == true )
+        ip      =   "127.0.0.1";
+    if( port.empty() == true )
+        port    =   "1234";
+
     worker->set_ip( ip );
     worker->set_port( port );
    
