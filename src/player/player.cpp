@@ -411,11 +411,9 @@ void    Player::play()
     if( demuxer == nullptr )
         MYLOG( LOG::ERROR, "demuxer is null." );
 
-    int         count   =   0;
     int         ret     =   0;
-    AVPacket*   pkt     =   nullptr;
+    AVPacket    *pkt    =   nullptr;
     Decode      *dc     =   nullptr;
-    AVFrame     *frame  =   nullptr;
 
     // read frames from the file 
     while( true ) 
