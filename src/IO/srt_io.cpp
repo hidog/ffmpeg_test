@@ -416,9 +416,12 @@ void    SrtIO::server_end()
 
     MYLOG( LOG::INFO, "server end." );
 
-
     srt_close(handle);  // note: call srt_close, it will not send data in buffer.
+    handle  =   SRT_INVALID_SOCK;
+
     srt_close(serv);
+    serv    =   SRT_INVALID_SOCK;
+
     srt_cleanup();
 }
 
