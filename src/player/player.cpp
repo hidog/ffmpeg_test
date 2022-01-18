@@ -128,9 +128,11 @@ int     Player::init()
     // 有遇到影片會在這邊卡很久, 或許可以考慮用multi-thread的方式做處理, 以後再說...
     init_subtitle(fmt_ctx);
 
+#ifdef RENDER_SUBTITLE
     // 若有 subtitle, 設置進去 video decoder.
     if( s_decoder.exist_stream() == true )
         v_decoder.set_subtitle_decoder( &s_decoder );
+#endif
 
     return SUCCESS;
 }
@@ -1246,7 +1248,7 @@ void    player_decode_example()
     DecodeSetting   setting;
     setting.io_type     =   IO_Type::DEFAULT;
     //setting.io_type     =   IO_Type::SRT_IO;
-    setting.filename   =   "H:/test.mkv";     // 使用 D:\\code\\test.mkv 會出錯
+    setting.filename   =   "D:/test.mkv";     // 使用 D:\\code\\test.mkv 會出錯
     //setting.subname    =   "D:/test.ass";   
     //setting.srt_port    =   "1234";
 
