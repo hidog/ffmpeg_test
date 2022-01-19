@@ -27,6 +27,15 @@ VideoWorker::VideoWorker( QObject *parent )
 
 
 /*******************************************************************************
+VideoWorker::~VideoWorker()
+********************************************************************************/
+VideoWorker::~VideoWorker()
+{}
+
+
+
+
+/*******************************************************************************
 VideoWorker::get_video_start_state()
 ********************************************************************************/
 bool&   VideoWorker::get_video_start_state()
@@ -37,11 +46,6 @@ bool&   VideoWorker::get_video_start_state()
 
 
 
-/*******************************************************************************
-VideoWorker::~VideoWorker()
-********************************************************************************/
-VideoWorker::~VideoWorker()
-{}
 
 
 
@@ -137,7 +141,7 @@ void VideoWorker::video_play()
     while( decode::get_video_size() <= 3 )
         SLEEP_10MS;
 
-    //std::this_thread::sleep_for( std::chrono::milliseconds(350) );
+    std::this_thread::sleep_for( std::chrono::milliseconds(350) );  // live stream 的時候, 降低延遲的 work around.
 
     v_start     =   true;
     while( a_start == false )
@@ -209,7 +213,6 @@ void VideoWorker::video_play()
     {       
         while( pause_flag == true )
             SLEEP_10MS;
-
         handle_func();
     }
 

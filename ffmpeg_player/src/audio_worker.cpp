@@ -4,7 +4,6 @@
 
 #include "video_worker.h"
 #include "worker.h"
-
 #include "mainwindow.h"
 
 
@@ -17,6 +16,17 @@ AudioWorker::AudioWorker()
 AudioWorker::AudioWorker( QObject *parent )
     :   QThread(parent)
 {}
+
+
+
+
+/*******************************************************************************
+AudioWorker::~AudioWorker()
+********************************************************************************/
+AudioWorker::~AudioWorker()
+{}
+
+
 
 
 
@@ -98,14 +108,6 @@ void    AudioWorker::handleStateChanged( QAudio::State state )
 }
 
 
-
-
-
-/*******************************************************************************
-AudioWorker::~AudioWorker()
-********************************************************************************/
-AudioWorker::~AudioWorker()
-{}
 
 
 
@@ -206,7 +208,7 @@ void AudioWorker::audio_play()
 
     std::chrono::steady_clock::time_point       last, now;
     std::chrono::duration<int64_t, std::milli>  duration;
-    int64_t last_ts = 0;
+    int64_t last_ts =   0;
     
     // 一次寫入4096的效果比較好. 用原本的作法會有機會破音. 記得修改變數名稱
     int     wanted_buffer_size  =   4096; //audio->bufferSize()/2;

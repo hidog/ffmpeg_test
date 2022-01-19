@@ -8,22 +8,14 @@
 
 
 
-
-
-
 struct DecodeSetting
 {
     IO_Type         io_type;
-    
     std::string     filename;
     std::string     subname;           // •~±æ¶rπı¿…¶W
-
     std::string     srt_ip;
     std::string     srt_port;
-
 };
-
-
 
 
 

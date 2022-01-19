@@ -1,9 +1,10 @@
 #ifndef DEMUX_H
 #define DEMUX_H
 
-#include <string>
+#ifdef USE_MT
 #include <queue>
 #include <mutex>
+#endif
 
 #include "tool.h"
 
@@ -32,7 +33,10 @@ public:
     Demux& operator = ( const Demux& ) = delete;
     Demux& operator = ( Demux&& ) = delete;
 
-    //
+    virtual int     open_input();
+    virtual int     init();
+    virtual int     end();
+    
     int     demux();
     int     stream_info();
     void    set_input_file( std::string fn );
@@ -42,11 +46,6 @@ public:
     int64_t     get_duration_time();
 
     AVFormatContext*    get_format_context();
-
-    virtual int     open_input();
-    virtual int     init();
-    virtual int     end();
-
 
 #ifdef USE_MT
     std::pair<int,AVPacket*>    demux_multi_thread();
@@ -62,7 +61,7 @@ private:
     std::string     filename;
 
 #ifdef USE_MT
-    static constexpr int   pkt_size    =   500;
+    static constexpr int    pkt_size    =   500;
     AVPacket*               pkt_array[pkt_size]  =   {nullptr};  
     std::queue<AVPacket*>   pkt_queue;
     std::mutex              pkt_mtx; 

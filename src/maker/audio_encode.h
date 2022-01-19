@@ -12,8 +12,6 @@ https://blog.csdn.net/wanggao_1990/article/details/115725163
 NOTE: 如果要改sample rate 48000 -> 44100
 可以參考 resampling_audio 官方範例.
 利用 swr_convert 可做轉換, 需要的 buffer 可以用 av_samples_alloc_array_and_samples 取得. 這邊考慮其他因素, 直接使用 frame 跟 pointer 處理.
-轉換後,資料長度會改變. 例如從1024 -> 941
-轉換後的資料無法立刻encode, 要湊滿 ctx->frame_size  (或者frame->nb_samples) 才能 encode. 
 
 */
 
@@ -38,19 +36,15 @@ public:
     AudioEncode& operator = ( const AudioEncode& ) = delete;
     AudioEncode& operator = ( const AudioEncode&& ) = delete;
 
-    virtual void    init( int st_idx, AudioEncodeSetting setting, bool need_global_header );
-
-
-    void    end() override;
-
+    void    init( int st_idx, AudioEncodeSetting setting, bool need_global_header );
     void    list_sample_format( AVCodecID code_id );
     void    list_sample_rate( AVCodecID code_id );
     void    list_channel_layout( AVCodecID code_id );
 
-    int64_t     get_pts() override;
-    void        next_frame() override;
-    void        unref_data() override;
-
+    void    end() override;
+    void    next_frame() override;
+    void    unref_data() override;
+    int64_t get_pts() override;
 
 #ifdef FFMPEG_TEST
     void    init_swr( AudioEncodeSetting setting );
@@ -61,7 +55,6 @@ public:
     void    encode_test();
     void    work_test();
 #endif
-
 
 private:
 

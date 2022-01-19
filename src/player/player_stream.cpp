@@ -1,16 +1,48 @@
 #include "player_stream.h"
+#include <thread>
+
+extern "C" {
+
+#include <libavutil/samplefmt.h>
+#include <libavutil/frame.h>
+#include <libavcodec/packet.h>
+
+} // end extern "C"
 
 
 
-#if 0
+
 
 /*******************************************************************************
-Player::init_live_stream()
+PlayerStream::PlayerStream()
 ********************************************************************************/
-void    Player::init_live_stream()
-{
-    is_live_stream      =   true;
+PlayerStream::PlayerStream()
+    :   Player()
+{}
 
+
+
+/*******************************************************************************
+PlayerStream::~PlayerStream()
+********************************************************************************/
+PlayerStream::~PlayerStream()
+{}
+
+
+
+
+/*******************************************************************************
+PlayerStream::init_live_stream()
+********************************************************************************/
+int    PlayerStream::init()
+{
+    // 必須先初始化
+    Player::init();
+
+    //
+    AudioDecode &a_decoder  =   Player::get_audio_decoder();
+
+    is_live_stream      =   true;
     AVSampleFormat  audio_fmt   =   static_cast<AVSampleFormat>(a_decoder.get_audio_sample_format());
 
     int   audio_channel     =   a_decoder.get_audio_channel();
@@ -18,9 +50,15 @@ void    Player::init_live_stream()
     int   bytes_per_sample  =   av_get_bytes_per_sample(audio_fmt);
 
     audio_pts_count     =   av_samples_get_buffer_size( NULL, audio_channel, nb_sample, audio_fmt, 0 );
-
     audio_pts_count     /=  audio_channel;
     audio_pts_count     /=  bytes_per_sample;
+
+    //
+    add_audio_frame_cb          =   std::bind( &encode::add_audio_frame, std::placeholders::_1 );
+    add_video_frame_cb          =   std::bind( &encode::add_video_frame, std::placeholders::_1 );
+    output_live_stream_func     =   std::bind( &PlayerStream::output_live_stream, this, std::placeholders::_1 );
+
+    return  1;
 }
 
 
@@ -30,11 +68,13 @@ void    Player::init_live_stream()
 
 
 /*******************************************************************************
-Player::end_live_stream()
+PlayerStream::end_live_stream()
 ********************************************************************************/
-void    Player::end_live_stream()
+int    PlayerStream::end()
 {
-    is_live_stream  =   false; 
+    is_live_stream  =   false;
+    Player::end();
+    return  1;
 }
 
 
@@ -43,11 +83,17 @@ void    Player::end_live_stream()
 
 
 /*******************************************************************************
-Player::play_live_stream()
+PlayerStream::play_QT()
+
+跟 Player::play_QT 相比, 移除了 seek 功能
 ********************************************************************************/
-void    Player::play_live_stream()
+void    PlayerStream::play_QT()
 {
-    init_live_stream();  // 偷懶的寫法 以後再修
+    VideoDecode     &v_decoder  =   Player::get_video_decoder();
+    AudioDecode     &a_decoder  =   Player::get_audio_decoder();
+    SubDecode       &s_decoder  =   Player::get_subtitle_decoder();
+    Demux           *demuxer    =   Player::get_demuxer();
+    assert( demuxer != nullptr );
 
     // 目前先不處理字幕圖的live stream.
     if( is_live_stream == true && s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == true )
@@ -57,12 +103,17 @@ void    Player::play_live_stream()
     AVPacket    *pkt    =   nullptr;
     Decode      *dc     =   nullptr;
 
+    // 簡單的 sync 控制. 有空再修
+    bool&   ui_v_seek_lock  =   decode::get_v_seek_lock();
+    bool&   ui_a_seek_lock  =   decode::get_a_seek_lock();
+
     //
     while( stop_flag == false ) 
     {
         // NOTE: seek事件觸發的時候, queue 資料會暴增.
         while( demux_need_wait() == true )
         {
+            //MYLOG( LOG::DEBUG, "v size = %d, a size = %d", video_queue.size(), audio_queue.size() );
             if( stop_flag == true )
                 break;
             SLEEP_1MS;
@@ -71,10 +122,7 @@ void    Player::play_live_stream()
         //
         ret     =   demuxer->demux();
         if( ret < 0 )
-        {
-            MYLOG( LOG::INFO, "demux finish.")
             break;
-        }
 
         //
         pkt     =   demuxer->get_packet();
@@ -86,7 +134,7 @@ void    Player::play_live_stream()
             dc  =   dynamic_cast<Decode*>(&s_decoder);  
         else
         {
-            MYLOG( LOG::ERROR, "stream type not handle.")
+            MYLOG( LOG::ERROR, "stream type not handle.");
             demuxer->unref_packet();
             continue;
         }
@@ -95,12 +143,11 @@ void    Player::play_live_stream()
         decode( dc, pkt );       
         demuxer->unref_packet();
     }
+    MYLOG( LOG::INFO, "demux finish.");
 
     //
     flush();
-    MYLOG( LOG::INFO, "play finish.")
-
-    end_live_stream();  // 偷懶的寫法 以後再修
+    MYLOG( LOG::INFO, "play stream finish.")
 }
 
 
@@ -111,73 +158,37 @@ void    Player::play_live_stream()
 
 
 /*******************************************************************************
-Player::output_live_stream()
+PlayerStream::output_live_stream()
+
+可以參考 
+av_image_copy( v_frame->data, v_frame->linesize, (const uint8_t**)frame->data, frame->linesize, ctx->pix_fmt, ctx->width, ctx->height );
+av_samples_copy( a_frame->data, frame->data, 0, 0, frame->nb_samples, frame->channels, fmt );
 ********************************************************************************/
-void    Player::output_live_stream( Decode* dc )
+void    PlayerStream::output_live_stream( Decode* dc )
 {
     AVFrame*    frame   =   nullptr;
     AVFrame*    v_frame =   nullptr;
     AVFrame*    a_frame =   nullptr;
 
-    if( dc->get_decode_context_type() == AVMEDIA_TYPE_VIDEO ||
-        dc->get_decode_context_type() == AVMEDIA_TYPE_SUBTITLE )
+    if( dc->get_decode_context_type() == AVMEDIA_TYPE_VIDEO )
     {
-
         v_frame     =   get_new_v_frame();
         frame       =   dc->get_frame();
-
         av_frame_copy( v_frame, frame );
-        //av_image_copy( v_frame->data, v_frame->linesize, (const uint8_t**)frame->data, frame->linesize, ctx->pix_fmt, ctx->width, ctx->height );
-
-        v_frame->pts =   dc->get_frame_count();
-        
+        v_frame->pts =   dc->get_frame_count();        
         add_video_frame_cb(v_frame);
-        //printf( "video frame pts = %lld\n", v_frame->pts );
     }
     else if( dc->get_decode_context_type() == AVMEDIA_TYPE_AUDIO )
     {   
-#if 0
-        static bool aaaflag = false;
-        static SwrContext* tmp_swr_ctx = nullptr;
-        if( aaaflag == false )
-        {
-            aaaflag = true;
-            tmp_swr_ctx     =   swr_alloc_set_opts( tmp_swr_ctx,
-                                                      3, AV_SAMPLE_FMT_FLTP, 48000,  // output
-                                                      3, AV_SAMPLE_FMT_FLTP, 48000,         // input 
-                                                      NULL, NULL );
-            swr_init(tmp_swr_ctx);
-        }
-#endif
-
-
         a_frame     =   get_new_a_frame();
         frame       =   dc->get_frame();
-
-        // AVFrame*    AudioEncode::get_frame_from_pcm_file()
-        // 參考這邊 研究如何計算 pts
-
-        // pcm_size    =   av_samples_get_buffer_size( NULL, ctx->channels, ctx->frame_size, AV_SAMPLE_FMT_S16, 0 );
-        // AudioEncode::init_swr
-        // 會需要用到 pcm_size 這個參數
-
-        AVSampleFormat fmt = static_cast<AVSampleFormat>(a_decoder.get_audio_sample_format());
-        //av_samples_copy( a_frame->data, frame->data, 0, 0, frame->nb_samples, frame->channels, fmt );
         av_frame_copy( a_frame, frame );
-
-        //printf("a frame = %d\n", a_frame->data[0][100] );
-
-
-        /*int ret     =   swr_convert( tmp_swr_ctx,
-                                     a_frame->data, a_frame->nb_samples,                              //輸出 
-                                     (const uint8_t**)frame->data, frame->nb_samples );    //輸入*/
-
-
         a_frame->pts    =   audio_pts_count * dc->get_frame_count();
-
-        add_audio_frame_cb( a_frame);
-        //printf( "audio frame pts = %lld\n", a_frame->pts );
-
+        add_audio_frame_cb(a_frame);
+    }
+    else if( dc->get_decode_context_type() == AVMEDIA_TYPE_SUBTITLE )
+    {
+        // do nothing. 目前 live stream 不支援 subtitle stream.
     }
     else
         MYLOG( LOG::ERROR, "un handle type" )
@@ -189,10 +200,12 @@ void    Player::output_live_stream( Decode* dc )
 
 
 /*******************************************************************************
-Player::get_new_v_frame()
+PlayerStream::get_new_v_frame()
 ********************************************************************************/
-AVFrame*    Player::get_new_v_frame()
+AVFrame*    PlayerStream::get_new_v_frame()
 {
+    VideoDecode &v_decoder  =   Player::get_video_decoder();
+
     AVFrame*    v_frame     =   nullptr;
     int         ret         =   0;
     
@@ -226,10 +239,12 @@ AVFrame*    Player::get_new_v_frame()
 
     
 /*******************************************************************************
-Player::get_new_a_frame()
+PlayerStream::get_new_a_frame()
 ********************************************************************************/
-AVFrame*    Player::get_new_a_frame()
+AVFrame*    PlayerStream::get_new_a_frame()
 {
+    AudioDecode &a_decoder  =   Player::get_audio_decoder();
+
     AVFrame*    a_frame     =   nullptr;
     int         ret         =   0;
 
@@ -264,6 +279,3 @@ AVFrame*    Player::get_new_a_frame()
 
 
 
-
-
-#endif

@@ -1,5 +1,4 @@
 #include "demux.h"
-#include "tool.h"
 
 extern "C" {
 
