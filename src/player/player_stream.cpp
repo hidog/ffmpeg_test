@@ -170,16 +170,22 @@ void    PlayerStream::output_live_stream( Decode* dc )
     AVFrame*    v_frame =   nullptr;
     AVFrame*    a_frame =   nullptr;
 
-    if( dc->get_decode_context_type() == AVMEDIA_TYPE_VIDEO && encode::is_video_queue_full() == false )
+    if( dc->get_decode_context_type() == AVMEDIA_TYPE_VIDEO )
     {
+        if( encode::is_video_queue_full() == true )
+            return;
+
         v_frame     =   get_new_v_frame();
         frame       =   dc->get_frame();
         av_frame_copy( v_frame, frame );
         v_frame->pts =   dc->get_frame_count();        
         add_video_frame_cb(v_frame);
     }
-    else if( dc->get_decode_context_type() == AVMEDIA_TYPE_AUDIO && encode::is_audio_queue_full() == false )
+    else if( dc->get_decode_context_type() == AVMEDIA_TYPE_AUDIO )
     {   
+        if( encode::is_audio_queue_full() == true )
+            return;
+
         a_frame     =   get_new_a_frame();
         frame       =   dc->get_frame();
         av_frame_copy( a_frame, frame );
@@ -191,7 +197,9 @@ void    PlayerStream::output_live_stream( Decode* dc )
         // do nothing. 目前 live stream 不支援 subtitle stream.
     }
     else
+    {
         MYLOG( LOG::ERROR, "un handle type" )
+    }
 }
 
 
