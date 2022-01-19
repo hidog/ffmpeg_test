@@ -27,6 +27,15 @@ VideoWorker::VideoWorker( QObject *parent )
 
 
 /*******************************************************************************
+VideoWorker::~VideoWorker()
+********************************************************************************/
+VideoWorker::~VideoWorker()
+{}
+
+
+
+
+/*******************************************************************************
 VideoWorker::get_video_start_state()
 ********************************************************************************/
 bool&   VideoWorker::get_video_start_state()
@@ -37,11 +46,6 @@ bool&   VideoWorker::get_video_start_state()
 
 
 
-/*******************************************************************************
-VideoWorker::~VideoWorker()
-********************************************************************************/
-VideoWorker::~VideoWorker()
-{}
 
 
 
@@ -209,7 +213,6 @@ void VideoWorker::video_play()
     {       
         while( pause_flag == true )
             SLEEP_10MS;
-
         handle_func();
     }
 

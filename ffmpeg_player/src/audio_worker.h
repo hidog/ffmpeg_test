@@ -1,7 +1,6 @@
 #ifndef AUDIO_WORKER_H
 #define AUDIO_WORKER_H
 
-
 #include <QThread>
 #include <QAudioOutput>
 #include <QImage>
@@ -35,12 +34,9 @@ public slots:
 
     void    handleStateChanged( QAudio::State state );
     void    volume_slot( int value );
-
     void    seek_slot( int sec );
 
-
 signals:
-
 
 private:
 
