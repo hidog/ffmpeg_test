@@ -24,8 +24,6 @@ public:
     int     init() override;
     int     end() override;
 
-
-
     void    output_live_stream( Decode* dc );
 
     AVFrame*    get_new_v_frame();
