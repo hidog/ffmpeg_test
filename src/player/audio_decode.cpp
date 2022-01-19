@@ -276,24 +276,21 @@ AudioData   AudioDecode::output_audio_data()
     ad.bytes        =   0;
     ad.timestamp    =   0;
 
-    uint8_t     *data[2]    =   { 0 };  // S16 改 S32, 不確定是不是這邊的 array 要改成 4
-    //int         byte_count     =   frame->nb_samples * 2 * 2;  // S16 改 S32, 改成 *4, 理論上資料量會增加, 但不確定是否改的是這邊
-                                                                 // frame->nb_samples * 2 * 2     表示     分配樣本資料量 * 兩通道 * 每通道2位元組大小
+
     int         byte_count  =   av_samples_get_buffer_size( NULL, out_channel, frame->nb_samples, AV_SAMPLE_FMT_S16, 0 );
 
-    unsigned char   *pcm    =   new uint8_t[byte_count];     
-
-    if( pcm == nullptr )
+    ad.pcm    =   new uint8_t[byte_count];
+    if( ad.pcm == nullptr )
         MYLOG( LOG::WARN, "pcm is null" );
 
-    data[0]     =   pcm;    // 輸出格式為 AV_SAMPLE_FMT_S16(packet型別), 所以轉換後的 LR 兩通道都存在data[0]中
-                            // 研究一下 S32 是不是存兩個資料
+    uint8_t *data[2]    =   { 0 };
+    data[0] =   ad.pcm;    // 輸出格式為 AV_SAMPLE_FMT_S16(packet型別), 所以轉換後的 LR 兩通道都存在data[0]中
+
     int ret     =   swr_convert( swr_ctx,
                                  data, frame->nb_samples,                              //輸出 
                                  (const uint8_t**)frame->data, frame->nb_samples );    //輸入
 
     //
-    ad.pcm          =   pcm;
     ad.bytes        =   byte_count;
     ad.timestamp    =   get_timestamp();
 

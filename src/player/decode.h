@@ -16,9 +16,6 @@ struct AVCodec;
 struct AVStream;
 enum   AVMediaType;
 
-//template class __declspec( dllexport ) std::function<int()>; // fix compiler warning. 主要是匯出成dll的話需要顯式具現化樣板
-
-
 
 class DLL_API Decode
 {
@@ -33,17 +30,16 @@ public:
     Decode& operator = ( const Decode& ) = delete;
     Decode& operator = ( Decode&& ) = delete;
     
-    virtual int     init();
-    virtual int     end();
-    
     virtual void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) = 0;
     virtual int     open_codec_context( AVFormatContext *fmt_ctx ) = 0;
+
+    virtual int     init();
+    virtual int     end();  
     virtual bool    exist_stream();
     virtual void    flush_for_seek();
     virtual void    flush_all_stream();
     
-    virtual AVFrame*        get_frame();
-
+    virtual AVFrame*    get_frame();
 
     virtual int     send_packet( AVPacket *pkt );
     virtual int     recv_frame( int index );
@@ -68,17 +64,17 @@ protected:
     int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type );
     int     open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type );
 
+    // 有空改成 private + protected interface.
     std::map<int,AVCodecContext*>   dec_map;
     std::map<int,AVStream*>         stream_map;
-
+    
     int cs_index    =   -1;     // current stream index.
-
+    
     AVCodecContext  *dec_ctx    =   nullptr;
     AVStream        *stream     =   nullptr;
     AVFrame         *frame      =   nullptr;
-
+    
     int     frame_count =   -1;
-
 
 private:
 

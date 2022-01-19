@@ -10,10 +10,7 @@ struct  AVCodecContext;
 enum    AVSampleFormat;
 
 
-
-// 試著要轉sample rate但沒成功,有機會再試試看.
-// 要轉 sample rate 可以參考 ffplay, 需要將buffer size做 sample rate的轉換.  (例如 48000/44100 )
-
+// 要轉換 sample rate 可以參考 ffmpeg 官方範例的 resample
 
 
 class DLL_API AudioDecode : public Decode
@@ -57,11 +54,8 @@ private:
     uint64_t    channel_layout  =   0;  // 多聲道的時候研究一下
 
     AVSampleFormat  sample_fmt;
-
     AVMediaType     type;    
     SwrContext      *swr_ctx    =   nullptr;   // use for chagne audio data to play.
-
-    //AVCodecID   a_codec_id;
 
 #ifdef FFMPEG_TEST
     std::string     output_pcm_path =   "H:\\test.pcm";

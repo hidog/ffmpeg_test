@@ -23,21 +23,18 @@ public:
     DemuxIO& operator = ( DemuxIO&& ) = delete;
 
     int     open_input() override;
-    void    set_IO( InputOutput* _io );
-
     int     init() override;    
     int     end() override;
 
 private:
 
     //AVInputFormat*  input_fmt = nullptr;
-    AVIOContext*    io_ctx = nullptr;
-
+    //AVIOContext     *io_ctx =   nullptr;
     InputOutput     *IO     =   nullptr;
     DecodeSetting   setting;
 
     static constexpr    int     FFMPEG_INPUT_BUFFER_SIZE    =   4096;
-	uint8_t     *input_buf = nullptr;
+	//uint8_t     *input_buf = nullptr;
 
 };
 

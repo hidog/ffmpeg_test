@@ -22,7 +22,7 @@ DemuxIO::DemuxIO( DecodeSetting _st )
 {
     setting     =   _st;
 
-    IO          =   create_IO( setting.io_type, IO_Direction::RECV );
+    IO  =   create_IO( setting.io_type, IO_Direction::RECV );
     IO->set_decode( setting );
 }
 
@@ -35,7 +35,9 @@ DemuxIO::DemuxIO( DecodeSetting _st )
 DemuxIO::~DemuxIO()
 ********************************************************************************/
 DemuxIO::~DemuxIO()
-{}
+{
+    end();
+}
 
 
 
@@ -62,7 +64,13 @@ DemuxIO::end()
 ********************************************************************************/
 int    DemuxIO::end()
 {
-    IO->close();
+    //
+    if( IO != nullptr )
+    {
+        IO->close();
+        delete IO;
+        IO  =   nullptr;
+    }
 
     // 看討論底下的資源會在 Demux::end() 釋放
     // 手動釋放會 crash.
@@ -97,18 +105,17 @@ DemuxIO::open_input()
 int     DemuxIO::open_input()
 {
     IO->open();
-
-    fmt_ctx     =   avformat_alloc_context();    
+    
     int  ret    =   0;
-
-	AVInputFormat*  input_fmt   =   nullptr;
+    fmt_ctx     =   avformat_alloc_context();    
 	
-    assert( input_buf == nullptr );
-    input_buf   =   (uint8_t*)av_malloc(FFMPEG_INPUT_BUFFER_SIZE);
+    uint8_t     *input_buf   =   (uint8_t*)av_malloc(FFMPEG_INPUT_BUFFER_SIZE);
+    assert( input_buf != nullptr );
 
-    assert( io_ctx == nullptr );
-	io_ctx      =   avio_alloc_context( input_buf, FFMPEG_INPUT_BUFFER_SIZE, 0, (void*)IO, io_read_data, nullptr, nullptr );
+	AVIOContext     *io_ctx =   avio_alloc_context( input_buf, FFMPEG_INPUT_BUFFER_SIZE, 0, (void*)IO, io_read_data, nullptr, nullptr );
+    assert( io_ctx != nullptr );
 
+	AVInputFormat   *input_fmt   =   nullptr;
     ret         =   av_probe_input_buffer( io_ctx, &input_fmt, nullptr, nullptr, 0, 0 );
     assert( ret == 0 );
 	fmt_ctx->pb =   io_ctx;
@@ -136,12 +143,3 @@ int     DemuxIO::open_input()
 
 
 
-
-
-/*******************************************************************************
-DemuxIO::set_IO()
-********************************************************************************/
-void    DemuxIO::set_IO( InputOutput* _io )
-{
-    IO  =   _io;
-}

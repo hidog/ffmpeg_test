@@ -32,7 +32,10 @@ public:
     Demux& operator = ( const Demux& ) = delete;
     Demux& operator = ( Demux&& ) = delete;
 
-    //
+    virtual int     open_input();
+    virtual int     init();
+    virtual int     end();
+    
     int     demux();
     int     stream_info();
     void    set_input_file( std::string fn );
@@ -42,11 +45,6 @@ public:
     int64_t     get_duration_time();
 
     AVFormatContext*    get_format_context();
-
-    virtual int     open_input();
-    virtual int     init();
-    virtual int     end();
-
 
 #ifdef USE_MT
     std::pair<int,AVPacket*>    demux_multi_thread();
