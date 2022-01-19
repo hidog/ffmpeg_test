@@ -1,10 +1,8 @@
 #ifndef VIDEO_WORKER_H
 #define VIDEO_WORKER_H
 
-
 #include <QThread>
 #include "tool.h"
-
 
 class QMutex;
 
@@ -38,7 +36,7 @@ signals:
 private:
 
     bool        v_start     =   false;
-    QMutex*     video_mtx   =   nullptr;    // 跟 mainwindows 共用
+    QMutex      *video_mtx  =   nullptr;    // 跟 mainwindows 共用
     bool        force_stop  =   false;
     bool        pause_flag  =   false;
 

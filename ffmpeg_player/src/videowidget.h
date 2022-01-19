@@ -14,7 +14,6 @@ public:
     void    keyPressEvent( QKeyEvent *event );
 
 private:
-
 	
 };
 

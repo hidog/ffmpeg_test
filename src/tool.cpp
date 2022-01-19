@@ -1,4 +1,4 @@
-#include "tool.h"
+﻿#include "tool.h"
 
 #include <queue>
 #include <mutex>
@@ -6,7 +6,8 @@
 
 
 
-// note: �H��p�G�ݭn multi-encode, �ݭn�g�@�� manager.
+
+// note: 以後如果需要 multi-encode, 需要寫一個 manager.
 namespace encode {
 
 bool    is_finish   =   false;
@@ -16,9 +17,6 @@ std::queue<AVFrame*>     vframe_queue;
 
 std::mutex   af_mtx;
 std::mutex   vf_mtx;
-
-
-
 
 
 /*******************************************************************************
@@ -115,3 +113,148 @@ AVFrame*    get_video_frame()
 
 
 } // end namespace encode
+
+
+#include "player/play_def.h"
+
+
+
+namespace decode {
+    
+std::queue<AudioData>    audio_queue;
+std::queue<VideoData>    video_queue;
+
+std::mutex  a_mtx;
+std::mutex  v_mtx;
+
+// 在seek事件的時候,負責跟UI的video worker, audio worker做同步
+// 簡易做法, 有空再修
+bool ui_v_seek_lock  =   false;  
+bool ui_a_seek_lock  =   false;
+
+
+/*******************************************************************************
+get_v_seek_lock()
+********************************************************************************/
+bool&   get_v_seek_lock() 
+{ 
+    return ui_v_seek_lock; 
+}
+
+
+/*******************************************************************************
+get_a_seek_lock()
+********************************************************************************/
+bool&   get_a_seek_lock() 
+{
+    return ui_a_seek_lock; 
+}
+
+
+/*******************************************************************************
+get_audio_size()
+********************************************************************************/
+int     get_audio_size()
+{
+    return  audio_queue.size();
+}
+
+
+/*******************************************************************************
+get_video_size()
+********************************************************************************/
+int     get_video_size()
+{
+    return  video_queue.size();
+}
+
+
+
+/*******************************************************************************
+add_audio_data()
+********************************************************************************/
+void    add_audio_data( AudioData a_data )
+{
+    std::lock_guard<std::mutex> locker(a_mtx);
+    audio_queue.push(a_data);
+}
+
+
+
+
+/*******************************************************************************
+add_video_data()
+********************************************************************************/
+void    add_video_data( VideoData v_data )
+{
+    std::lock_guard<std::mutex> locker(v_mtx);
+    video_queue.push(v_data);
+}
+
+
+
+
+/*******************************************************************************
+get_audio_data()
+********************************************************************************/
+AudioData    get_audio_data()
+{
+    a_mtx.lock();
+    AudioData   ad  =   audio_queue.front();       
+    audio_queue.pop();
+    a_mtx.unlock();
+
+    return  ad;
+}
+
+
+
+
+/*******************************************************************************
+get_video_data()
+********************************************************************************/
+VideoData    get_video_data()
+{
+    v_mtx.lock();
+    VideoData vd    =   video_queue.front();
+    video_queue.pop();
+    v_mtx.unlock();
+    return  vd;
+}
+
+
+
+
+/*******************************************************************************
+clear_audio_queue()
+********************************************************************************/
+void    clear_audio_queue()
+{
+    std::lock_guard<std::mutex> locker(a_mtx);
+
+    AudioData   a_data;
+    while( audio_queue.empty() == false )
+    {
+        a_data   =   audio_queue.front();
+        delete [] a_data.pcm;
+        audio_queue.pop();
+    }
+}
+
+
+
+
+/*******************************************************************************
+clear_video_queue()
+********************************************************************************/
+void    clear_video_queue()
+{
+    std::lock_guard<std::mutex> locker(v_mtx);
+
+    while( video_queue.empty() == false )
+        video_queue.pop();
+}
+
+
+} // end namespace decode
+

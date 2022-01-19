@@ -1,15 +1,15 @@
 #include "video_decode.h"
 
-#include "tool.h"
-
+#include <QPainter>
 #include <QImage>
+
 #include <opencv2/opencv.hpp>
+#include "sub_decode.h"
 
 
 extern "C" {
 
 #include <libswscale/swscale.h>
-
 #include <libavutil/imgutils.h>
 #include <libavutil/timestamp.h>
 #include <libavcodec/avcodec.h>
@@ -26,11 +26,9 @@ extern "C" {
 VideoDecode::VideoDecode()
 ********************************************************************************/
 VideoDecode::VideoDecode()
-    :   Decode()
+    :   Decode(AVMEDIA_TYPE_VIDEO)
 {
-    type        =   AVMEDIA_TYPE_VIDEO;
     pix_fmt     =   AV_PIX_FMT_NONE;
-    //v_codec_id  =   AV_CODEC_ID_NONE;
 }
 
 
@@ -114,10 +112,40 @@ int     VideoDecode::init()
     //
     Decode::init();
 
+    // 理論上可以在這之前就設置好 sub_dec, 但目前規劃是 init 後再設置 sub_dec.
+    if( sub_dec != nullptr )
+        MYLOG( LOG::ERROR, "sub_dec not null." );
+
     return  SUCCESS;
 }
 
 
+
+
+
+
+/*******************************************************************************
+VideoDecode::set_subtitle_decoder()
+********************************************************************************/
+void    VideoDecode::set_subtitle_decoder( SubDecode* sd )
+{
+    if( sd == nullptr )
+        MYLOG( LOG::ERROR, "sd is null." );
+    if( sub_dec != nullptr )
+        MYLOG( LOG::ERROR, "sub_dec is not null." );
+
+    sub_dec     =   sd;
+
+#ifdef FFMPEG_TEST
+    if( output_frame_func != nullptr )
+        output_frame_func   =   nullptr;
+
+    if( sub_dec->is_graphic_subtitle() == false )
+        output_frame_func   =   std::bind( &SubDecode::output_jpg_by_QT, sub_dec );
+    else
+        output_frame_func   =   std::bind( &VideoDecode::output_overlay_by_QT, this );
+#endif
+}
 
 
 
@@ -192,9 +220,26 @@ int     VideoDecode::end()
     width   =   0;
     height  =   0;
 
+    sub_dec =   nullptr; // 非 owner, 不能刪除記憶體
+
     Decode::end();
     return  SUCCESS;
 }
+
+
+
+
+
+/*******************************************************************************
+VideoDecode::generate_overlay_image()
+********************************************************************************/
+void    VideoDecode::generate_overlay_image()
+{
+    overlay_image   =   QImage{ width, height, QImage::Format_RGB888 }; 
+    sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, video_dst_data, video_dst_linesize );
+    memcpy( overlay_image.bits(), video_dst_data[0], video_dst_bufsize );
+}
+
 
 
 
@@ -218,7 +263,6 @@ QImage      VideoDecode::get_video_image()
 
 
 
-
 /*******************************************************************************
 VideoDecode::output_video_data()
 
@@ -227,11 +271,18 @@ VideoDecode::output_video_data()
 VideoData   VideoDecode::output_video_data()
 {
     VideoData   vd;
-
-    //
     vd.index        =   frame_count;
-    vd.frame        =   get_video_image();
     vd.timestamp    =   get_timestamp();
+
+    if( sub_dec == nullptr )        
+        vd.frame        =   get_video_image();
+    else
+    {
+        if( sub_dec->is_graphic_subtitle() == false )        
+            vd.frame    =   sub_dec->get_subtitle_image();        
+        else
+            vd.frame    =   overlay_image;
+    }
 
     return  vd;
 }
@@ -272,15 +323,28 @@ VideoDecode::get_timestamp()
 ********************************************************************************/
 int64_t     VideoDecode::get_timestamp()
 {
-    if( frame->best_effort_timestamp == AV_NOPTS_VALUE )
+    if( frame_pts == AV_NOPTS_VALUE )
         return  0;
 
-    double  dpts    =   av_q2d(stream->time_base) * frame->best_effort_timestamp;
+    double  dpts    =   av_q2d(stream->time_base) * frame_pts;
     int64_t ts      =   dpts * 1000;  // ms
     return  ts;
 }
 
 
+
+
+
+/*******************************************************************************
+VideoDecode::get_frame()
+********************************************************************************/
+AVFrame*    VideoDecode::get_frame()
+{
+    if( sub_dec == nullptr )
+        return  Decode::get_frame();
+    else
+        return  sub_dec->get_frame();
+}
 
 
 
@@ -398,6 +462,60 @@ int     VideoDecode::video_info()
 
 
 
+/*******************************************************************************
+VideoDecode::render_nongraphic_subtitle()
+********************************************************************************/
+int     VideoDecode::render_nongraphic_subtitle()
+{
+    int ret =   sub_dec->send_video_frame( frame );
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "send video to subtitle fail." );
+
+    ret =   sub_dec->render_subtitle();
+    if( ret < 0 )
+        MYLOG( LOG::ERROR, "render subtitle fail." );
+
+#ifdef _DEBUG
+     // 理論上一次只有一張, 保險起見加檢查.
+     if( sub_dec->resend_to_filter() > 0 )
+        MYLOG( LOG::ERROR, "multi subtitle frame." );
+#endif
+
+     return     ret;
+}
+
+
+
+
+
+
+/*******************************************************************************
+VideoDecode::overlap_subtitle_image()
+********************************************************************************/
+int     VideoDecode::overlap_subtitle_image()
+{
+    int64_t     timestamp   =   this->get_timestamp();
+    
+    generate_overlay_image(); // overlay_image 在這邊產生
+
+    if( sub_dec->is_video_in_duration( timestamp ) == true )    
+    {
+        QImage  s_img   =   sub_dec->get_subtitle_image();
+        
+        QPainter    painter( &overlay_image );
+        QPoint      pos =   sub_dec->get_subtitle_image_pos();
+        painter.drawImage( pos, s_img );
+
+        return  HAVE_FRAME;
+    }
+
+    return  HAVE_FRAME;
+}
+
+
+
+
+
 
 
 
@@ -406,15 +524,41 @@ VideoDecode::recv_frame()
 ********************************************************************************/
 int     VideoDecode::recv_frame( int index )
 {
-    int     ret     =   Decode::recv_frame(index);
-    if( ret >= 0 )
-        frame->pts  =   frame->best_effort_timestamp; 
+    int ret =   Decode::recv_frame(index);
+    
+    // exist frame.
+    if( ret > 0 )
+    {
+        frame_pts   =   frame->best_effort_timestamp;
+
+        if( sub_dec != nullptr )
+        {
+            if( sub_dec->is_graphic_subtitle() == true )
+                ret     =   overlap_subtitle_image();
+            else
+                ret     =   render_nongraphic_subtitle();
+        }
+    }
 
     return  ret;
-/*
-    某個測試影片, 少了這個處理, 造成無法顯示字幕
-*/
 }
+
+
+
+
+
+
+
+/*******************************************************************************
+VideoDecode::unref_frame()
+********************************************************************************/
+void    VideoDecode::unref_frame()
+{
+    if( sub_dec != nullptr )
+        sub_dec->unref_frame();
+    Decode::unref_frame();
+}
+
 
 
 
@@ -458,6 +602,27 @@ int    VideoDecode::output_jpg_by_QT()
 #endif
 }
 #endif
+
+
+
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoDecode::output_overlay_by_QT()
+********************************************************************************/
+int     VideoDecode::output_overlay_by_QT()
+{
+    char    str[1000];
+    sprintf( str, "%s\\%d.jpg", output_jpg_root_path.c_str(), frame_count );
+    if( frame_count % 100 == 0 )
+        MYLOG( LOG::DEBUG, "save jpg %s", str );
+    overlay_image.save(str);
+
+    return  0;
+}
+#endif
+
 
 
 

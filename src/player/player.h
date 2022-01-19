@@ -1,45 +1,39 @@
 ﻿#ifndef PLAYER_H
 #define PLAYER_H
 
-#include <string>
-#include <stdio.h>
+#ifdef USE_MT
 #include <queue>
 #include <thread>
 #include <mutex>
+#endif
+
+#include <functional>
 
 #include "demux.h"
 #include "audio_decode.h"
 #include "video_decode.h"
 #include "sub_decode.h"
 #include "tool.h"
-//#include "../IO/input_output.h"
 
 #include <QImage>
 
-DLL_API std::queue<AudioData>* get_audio_queue();
-DLL_API std::queue<VideoData>* get_video_queue();
 
-DLL_API std::mutex& get_a_mtx(); 
-DLL_API std::mutex& get_v_mtx(); 
-
-DLL_API bool& get_v_seek_lock(); 
-DLL_API bool& get_a_seek_lock(); 
 
 
 struct AVPacket;
 
 
 #ifdef FFMPEG_TEST
-//#define RENDER_SUBTITLE  // 是否要將字幕加進video frame內
+#define RENDER_SUBTITLE  // 是否要將字幕加進video frame內
 #endif
 
 
-
+// 若有需要, 增加抽象介面.
 class DLL_API Player
 {
 public:
     Player();
-    ~Player();
+    virtual ~Player();
 
     Player( const Player& ) = delete;
     Player( Player&& ) = delete;
@@ -47,10 +41,11 @@ public:
     Player& operator = ( const Player& ) = delete;
     Player& operator = ( Player&& ) = delete;
 
+    virtual int     init();
+    virtual void    play_QT();
+    virtual int     end();
+
     //
-    void    play_QT();
-    int     init();
-    int     end();
     int     flush();
     void    stop();
     void    seek( int value, int old_value );
@@ -60,10 +55,8 @@ public:
     bool    demux_need_wait();
     bool    is_set_input_file();
     int     decode( Decode *dc, AVPacket* pkt );
-    //void    set_sub_file( std::string str );
     int     init_demuxer();
 
-    int     decode_video_with_nongraphic_subtitle( AVPacket* pkt );
     void    switch_subtitle( std::string path );
     void    switch_subtitle( int index );
     bool    is_embedded_subtitle();
@@ -71,10 +64,8 @@ public:
 
     void    init_subtitle( AVFormatContext *fmt_ctx );
     void    handle_seek();    
-    void    clear_setting();    
-
-    int64_t         get_duration_time();
-    VideoData       overlap_subtitle_image();
+    void    clear_setting();
+    int64_t get_duration_time();
 
     VideoDecodeSetting    get_video_setting();
     AudioDecodeSetting    get_audio_setting();
@@ -89,74 +80,60 @@ public:
 
 #ifdef FFMPEG_TEST
     void    play(); 
-    void    play_decode_video_subtitle( AVPacket* pkt );
-    std::function<void(QImage)> output_video_frame_func;
-    std::function<void(AudioData)> output_audio_pcm_func;
-
     void    set_output_jpg_root( std::string _root_path );
     void    set_output_audio_pcm_path( std::string _path );
+
+    std::function<void(QImage)>     output_video_frame_func;
+    std::function<void(AudioData)>  output_audio_pcm_func;
 #else
     MediaInfo   get_media_info();   // use for output.
 #endif
      
-    // use for live steeam
-    void    init_live_stream();
-    void    end_live_stream();
-    void    play_live_stream();
-    void    output_live_stream( Decode* dc );
+protected:
+    bool    stop_flag   =   false;
 
-    AVFrame*    get_new_v_frame();
-    AVFrame*    get_new_a_frame();
+    DecodeSetting&  get_setting();
+    Demux*          get_demuxer();
+    VideoDecode&    get_video_decoder();
+    AudioDecode&    get_audio_decoder();
+    SubDecode&      get_subtitle_decoder();
 
-    std::function< void(AVFrame*) >     add_audio_frame_cb;
-    std::function< void(AVFrame*) >     add_video_frame_cb;
+    std::function<void(Decode*)>    output_live_stream_func =   nullptr;
 
 private:
 
     static constexpr int   MAX_QUEUE_SIZE  =   50;
     //static constexpr int   MAX_QUEUE_SIZE  =   10;
 
+    DecodeSetting   setting;
 
-    Demux*          demuxer     =   nullptr;
+    Demux           *demuxer    =   nullptr;
     VideoDecode     v_decoder;
     AudioDecode     a_decoder;
     SubDecode       s_decoder;
 
-    //std::string     src_file;
-    //std::string     sub_name;           // 外掛字幕檔名
-    std::string     new_subtitle_path;  // switch subtitle使用
+    // switch subtitle使用
+    std::string     new_subtitle_path; 
 
     bool    switch_subtitle_flag    =   false;
     int     new_subtitle_index      =   0;
-    bool    stop_flag               =   false;
 
+    // seek use
     int     seek_old    =   0;
     int     seek_value  =   0;
     bool    seek_flag   =   false;
 
 #ifdef USE_MT
     bool    v_thr_start     =   false,
-        a_thr_start     =   false;
+            a_thr_start     =   false;
 
     std::queue<AVPacket*>   video_pkt_queue,
-        audio_pkt_queue;
+                            audio_pkt_queue;
 
     std::thread     *video_decode_thr   =   nullptr,
-        *audio_decode_thr   =   nullptr;
+                    *audio_decode_thr   =   nullptr;
 #endif
-
-    DecodeSetting   setting;
-
-    // use for live stream.
-    bool        is_live_stream      =   false;
-    int64_t     audio_pts_count     =   0;
 };
-
-
-
-
-int     io_read_data( void *opaque, uint8_t *buf, int buf_size );
-
 
 
 #ifdef FFMPEG_TEST

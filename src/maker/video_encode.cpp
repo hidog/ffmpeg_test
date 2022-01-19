@@ -131,6 +131,7 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
 
 
 
+
 /*******************************************************************************
 VideoEncode::list_pixfmt()
 ********************************************************************************/

@@ -7,6 +7,7 @@
 #include "video_worker.h"
 #include "mainwindow.h"
 #include "tool.h"
+#include "player/player_stream.h"
 
 
 
@@ -30,7 +31,10 @@ Worker::~Worker()
 ********************************************************************************/
 Worker::~Worker()
 {
-    delete  maker;
+    if( maker != nullptr )
+        delete  maker;
+    if( player != nullptr )
+    delete  player;
 }
 
 
@@ -126,10 +130,6 @@ void    Worker::set_port( std::string _port )
 
 
 
-
-
-
-
 /*******************************************************************************
 Worker::play_init()
 ********************************************************************************/
@@ -153,15 +153,15 @@ void    Worker::play_init()
     }
 
     //
-    player.set(setting);
-    player.init();
+    player->set(setting);
+    player->init();
 
-    int     duration    =   static_cast<int>(player.get_duration_time());
+    int     duration    =   static_cast<int>(player->get_duration_time());
     emit    duration_signal( duration );
 
-    if( player.is_embedded_subtitle() == true )
+    if( player->is_embedded_subtitle() == true )
     {
-        auto    list    =   player.get_embedded_subtitle_list();
+        auto    list    =   player->get_embedded_subtitle_list();
         emit embedded_sublist_signal(list);
     }
 }
@@ -185,11 +185,11 @@ void    Worker::play()
     
     // send video setting to UI
     is_set_video    =   false;
-    vs              =   player.get_video_setting();
+    vs              =   player->get_video_setting();
     emit video_setting_signal(vs);
     
     // send audio setting to UI
-    as  =   player.get_audio_setting();
+    as  =   player->get_audio_setting();
     aw->open_audio_output(as);
     
     // wait for setting video.
@@ -205,12 +205,9 @@ void    Worker::play()
 #ifdef USE_MT
     player.play_QT_multi_thread();
 #else
-    if( is_output == true )
-        player.play_live_stream();
-    else
-        player.play_QT();
+    player->play_QT();
 #endif
-    player.end();
+    player->end();
     is_play_end     =   true;
     
     // 等待其他兩個thread完成
@@ -247,6 +244,16 @@ Worker::run()
 ********************************************************************************/
 void    Worker::run()  
 {
+    // 確保沒在其他地方被初始化
+    assert( player == nullptr );
+
+    if( is_output == false )
+        player  =   new Player; // 未來有需要的話, 增加 create_player(type)
+    else
+        player  =   new PlayerStream;
+
+    assert( player != nullptr );
+
     play_init(); // 為了取得 file 資訊, 將 play init 拆開來    
 
     // note: wtype = default 代表從檔案讀取
@@ -255,10 +262,7 @@ void    Worker::run()
     {
         encode::set_is_finish(false);
 
-        MediaInfo   media_info  =   player.get_media_info();
-
-        player.add_audio_frame_cb   =   std::bind( &encode::add_audio_frame, std::placeholders::_1 );
-        player.add_video_frame_cb   =   std::bind( &encode::add_video_frame, std::placeholders::_1 );
+        MediaInfo   media_info  =   player->get_media_info();
 
         if( output_thr != nullptr )
             MYLOG( LOG::ERROR, "output_thr not null." );
@@ -282,13 +286,30 @@ void    Worker::run()
 
 
 
+/*******************************************************************************
+Worker::stop_slot()
+********************************************************************************/
+void    Worker::end()
+{
+    end_lock.lock();
+    if( player != nullptr )
+    {
+        delete  player;
+        player  =   nullptr;
+    }
+    end_lock.unlock();
+}
+
 
 /*******************************************************************************
 Worker::stop_slot()
 ********************************************************************************/
 void    Worker::stop_slot()
 {
-    player.stop();
+    end_lock.lock();
+    if( player != nullptr )
+        player->stop();
+    end_lock.unlock();
 
     AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
     VideoWorker     *vw     =   dynamic_cast<MainWindow*>(parent())->get_video_worker();
@@ -354,7 +375,7 @@ Worker::is_set_src_file()
 ********************************************************************************/
 bool    Worker::is_set_src_file()
 {
-    return  player.is_set_input_file();
+    return  player->is_set_input_file();
 }
 
 
@@ -366,8 +387,11 @@ Worker::switch_subtitle()
 ********************************************************************************/
 void    Worker::switch_subtitle_slot_str( QString path )
 {
-    if( player.is_file_subtitle() == true )
-        player.switch_subtitle( path.toStdString() );
+    if( player != nullptr )
+    {
+        if( player->is_file_subtitle() == true )
+            player->switch_subtitle( path.toStdString() );
+    }
 }
 
 
@@ -378,8 +402,11 @@ Worker::switch_subtitle()
 ********************************************************************************/
 void    Worker::switch_subtitle_slot_int( int index )
 {
-    if( player.is_embedded_subtitle() == true )
-        player.switch_subtitle(index);
+    if( player != nullptr )
+    {
+        if( player->is_embedded_subtitle() == true )
+            player->switch_subtitle(index);
+    }
 }
 
 
@@ -396,5 +423,5 @@ void    Worker::seek_slot( int value )
     VideoData   *vd     =   mw->get_view_data();
     int     old_value   =   vd->timestamp / 1000;
 
-    player.seek( value, old_value );
+    player->seek( value, old_value );
 }

@@ -3,10 +3,9 @@
 
 #include "decode.h"
 #include "tool.h"
-
 #include <QImage>
 
-
+class SubDecode;
 struct  SwsContext;
 struct  AVCodec;
 struct  AVCodecContext;
@@ -27,25 +26,33 @@ public:
     
     int     open_codec_context( AVFormatContext *fmt_ctx ) override;
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
-    int     recv_frame( int index ) override;
     
     int     init() override;
     int     end() override;
+    int     recv_frame( int index ) override;
+    void    unref_frame() override;
     
+    AVFrame*    get_frame() override;
+
+    int     render_nongraphic_subtitle();
+    int     overlap_subtitle_image();
     int     get_video_width();
     int     get_video_height();
+    void    output_video_frame_info();
+    void    generate_overlay_image();        
+    void    set_subtitle_decoder( SubDecode *sd );
 
-    void        output_video_frame_info();
     int64_t     get_timestamp();
     int64_t     get_pts( int sec );
     VideoData   output_video_data();
-    QImage      get_video_image();        
+    QImage      get_video_image();
 
     AVPixelFormat   get_pix_fmt();
 
     int     video_info(); // 未來增加 nv decode 可以參考這邊
 
 #ifdef FFMPEG_TEST
+    int     output_overlay_by_QT();   // 處理 graphic subtitle
     int     output_jpg_by_QT();
     int     output_jpg_by_openCV();
     void    set_output_jpg_root( std::string _root_path );
@@ -53,7 +60,8 @@ public:
 
 private:
 
-    AVMediaType     type;
+    int64_t     frame_pts   =   0;
+
     AVPixelFormat   pix_fmt;
     SwsContext      *sws_ctx    =   nullptr;   // use for transform yuv to rgb, others.
 
@@ -67,6 +75,10 @@ private:
 #ifdef FFMPEG_TEST
     std::string     output_jpg_root_path    =   "H:\\jpg";
 #endif
+
+    SubDecode   *sub_dec    =   nullptr;
+
+    QImage  overlay_image;  // 用來處理 graphic subtitle, overlay 的 image.
 
 /*
     未來增加nv decode 可以參考這邊

@@ -1,5 +1,4 @@
 #include "decode.h"
-#include "tool.h"
 
 extern "C" {
 
@@ -18,7 +17,8 @@ extern "C" {
 /*******************************************************************************
 Decode::Decode()
 ********************************************************************************/
-Decode::Decode()
+Decode::Decode( AVMediaType _type )
+    :   type(_type)
 {}
 
 
@@ -221,7 +221,7 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
 /*******************************************************************************
 Decode::send_packet()
 ********************************************************************************/
-int     Decode::send_packet( const AVPacket *pkt )
+int     Decode::send_packet( AVPacket *pkt )
 {
     int     index   =   pkt == nullptr ? cs_index : pkt->stream_index;
 
@@ -287,23 +287,10 @@ void    Decode::flush_for_seek()
     int     ret;
 
     AVCodecContext  *ctx    =   nullptr;
-
     for( auto itr : dec_map )
     {
         ctx     =   itr.second;
-
         avcodec_flush_buffers( ctx );
-
-
-        /*avcodec_send_packet( ctx, nullptr );
-
-        while(true)
-        {
-            ret     =   avcodec_receive_frame( ctx, frame );
-            if( ret < 0 )
-                break;
-            av_frame_unref(frame);
-        }*/
     }
 }
 
@@ -352,7 +339,7 @@ int     Decode::recv_frame( int index )
         // those two return values are special and mean there is no output
         // frame available, but there were no errors during decoding
         if( ret == AVERROR_EOF || ret == AVERROR(EAGAIN) )
-            return 0;
+            return  0;
 
         auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
         MYLOG( LOG::ERROR, "Error during decoding (%s)", str );
@@ -453,7 +440,7 @@ int    Decode::flush()
                 // those two return values are special and mean there is no output
                 // frame available, but there were no errors during decoding
                 if( ret == AVERROR_EOF || ret == AVERROR(EAGAIN) )
-                    break; //return 0;
+                    break; 
 
                 auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
                 MYLOG( LOG::ERROR, "Error during decoding (%s)", str );
@@ -470,7 +457,7 @@ int    Decode::flush()
             av_frame_unref(frame);
 
             if( ret < 0 )
-                break; //return ret;
+                break;
         }
     }
 
