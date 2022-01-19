@@ -112,6 +112,44 @@ AVFrame*    get_video_frame()
 }
 
 
+
+
+
+/*******************************************************************************
+is_audio_queue_full
+*******************************************************************************/
+bool    is_audio_queue_full()
+{
+    if( aframe_queue.size() > MAX_QUEUE_SIZE )
+    {
+        MYLOG( LOG::WARN, "aframe queue full." );
+        return  true;
+    }
+    else
+        return  false;
+}
+
+
+
+
+
+/*******************************************************************************
+is_video_queue_full
+*******************************************************************************/
+bool    is_video_queue_full()
+{
+    if( vframe_queue.size() > MAX_QUEUE_SIZE )
+    {
+        MYLOG( LOG::WARN, "vframe queue full." );
+        return  true;
+    }
+    else
+        return  false;
+}
+
+
+
+
 } // end namespace encode
 
 

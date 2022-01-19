@@ -170,7 +170,7 @@ void    PlayerStream::output_live_stream( Decode* dc )
     AVFrame*    v_frame =   nullptr;
     AVFrame*    a_frame =   nullptr;
 
-    if( dc->get_decode_context_type() == AVMEDIA_TYPE_VIDEO )
+    if( dc->get_decode_context_type() == AVMEDIA_TYPE_VIDEO && encode::is_video_queue_full() == false )
     {
         v_frame     =   get_new_v_frame();
         frame       =   dc->get_frame();
@@ -178,7 +178,7 @@ void    PlayerStream::output_live_stream( Decode* dc )
         v_frame->pts =   dc->get_frame_count();        
         add_video_frame_cb(v_frame);
     }
-    else if( dc->get_decode_context_type() == AVMEDIA_TYPE_AUDIO )
+    else if( dc->get_decode_context_type() == AVMEDIA_TYPE_AUDIO && encode::is_audio_queue_full() == false )
     {   
         a_frame     =   get_new_a_frame();
         frame       =   dc->get_frame();

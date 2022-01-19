@@ -94,6 +94,7 @@ struct AVFrame;
 namespace encode {
 
 constexpr int   ENCODE_WAIT_SIZE    =   5;
+constexpr int   MAX_QUEUE_SIZE      =   1000;
 
 DLL_API void    set_is_finish( bool flag );
 
@@ -105,6 +106,9 @@ DLL_API AVFrame*    get_video_frame();
 
 DLL_API bool    audio_need_wait();
 DLL_API bool    video_need_wait();
+
+DLL_API bool    is_audio_queue_full();
+DLL_API bool    is_video_queue_full();
 
 } // end namespace encode
 
@@ -124,7 +128,7 @@ DLL_API int     get_audio_size();
 DLL_API int     get_video_size();
 
 DLL_API bool&   get_v_seek_lock(); 
-DLL_API bool&   get_a_seek_lock(); 
+DLL_API bool&   get_a_seek_lock();
 
 } // end namespace decode
 
