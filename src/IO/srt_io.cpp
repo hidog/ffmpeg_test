@@ -482,6 +482,7 @@ int     SrtIO::write( uint8_t *buffer, int size )
         if( remain > 1316 )
         {
             ret     =   srt_send( handle, (const char*)(buffer + send_size), 1316 );
+            // 暫時不作斷線檢查. 如果 remote disconnect 會造成 crash.
             if( ret != 1316 )
                 MYLOG( LOG::ERROR, "ret = %d", ret );
             send_size   +=  1316;

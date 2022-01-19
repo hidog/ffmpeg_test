@@ -385,6 +385,15 @@ SubDecode::set_subfile()
 void    SubDecode::set_subfile( std::string path )
 {
     sub_file    =   path;
+
+#ifdef _WIN32
+    // 斜線會影響執行結果.
+    for( auto &c : sub_file )
+    {
+        if( c == '\\' )
+            c   =   '/';
+    }
+#endif
 }
 
 
@@ -783,7 +792,7 @@ SubDecode::switch_subtltle()
 ********************************************************************************/
 void    SubDecode::switch_subtltle( std::string path )
 {
-    sub_file    =   path;
+    set_subfile( path );
 
     std::string     filename    =   "\\";    
     filename    +=  sub_file;
