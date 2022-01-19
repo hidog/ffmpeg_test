@@ -1,9 +1,10 @@
 #ifndef DEMUX_H
 #define DEMUX_H
 
-#include <string>
+#ifdef USE_MT
 #include <queue>
 #include <mutex>
+#endif
 
 #include "tool.h"
 
@@ -60,7 +61,7 @@ private:
     std::string     filename;
 
 #ifdef USE_MT
-    static constexpr int   pkt_size    =   500;
+    static constexpr int    pkt_size    =   500;
     AVPacket*               pkt_array[pkt_size]  =   {nullptr};  
     std::queue<AVPacket*>   pkt_queue;
     std::mutex              pkt_mtx; 

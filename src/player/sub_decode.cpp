@@ -8,7 +8,6 @@ extern "C" {
 #include <libavutil/imgutils.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
-
 #include <libavfilter/buffersrc.h>  // use for subtitle
 #include <libavfilter/buffersink.h>
 

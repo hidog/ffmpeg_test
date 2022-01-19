@@ -1,16 +1,10 @@
 #include "player.h"
 #include "tool.h"
 #include "demux_io.h"
-#include "../IO/input_output.h"
-
 #include <thread>
-#include <QPainter>
-
-
 
 extern "C" {
 
-#include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 
 } // end extern "C"
@@ -136,22 +130,6 @@ int     Player::init()
 
     return SUCCESS;
 }
-
-
-
-
-
-
-/*******************************************************************************
-io_read_data
-********************************************************************************/
-int     io_read_data( void *opaque, uint8_t *buf, int buf_size )
-{
-    InputOutput*    io  =   (InputOutput*)opaque;
-    int     ret     =   io->read( buf, buf_size );
-    return  ret;
-}
-
 
 
 

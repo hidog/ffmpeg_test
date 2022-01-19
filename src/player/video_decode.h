@@ -3,11 +3,9 @@
 
 #include "decode.h"
 #include "tool.h"
-
 #include <QImage>
 
 class SubDecode;
-
 struct  SwsContext;
 struct  AVCodec;
 struct  AVCodecContext;

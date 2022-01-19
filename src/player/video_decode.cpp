@@ -1,7 +1,5 @@
 #include "video_decode.h"
 
-#include "tool.h"
-
 #include <QPainter>
 #include <QImage>
 
@@ -12,7 +10,6 @@
 extern "C" {
 
 #include <libswscale/swscale.h>
-
 #include <libavutil/imgutils.h>
 #include <libavutil/timestamp.h>
 #include <libavcodec/avcodec.h>

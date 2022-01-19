@@ -1,11 +1,8 @@
 #ifndef DECODE_H
 #define DECODE_H
 
-#include <string>
 #include <functional>
 #include "tool.h"
-#include "play_def.h"
-
 
 
 struct AVFormatContext;

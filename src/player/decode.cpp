@@ -1,5 +1,4 @@
 #include "decode.h"
-#include "tool.h"
 
 extern "C" {
 

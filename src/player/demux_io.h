@@ -6,7 +6,7 @@
 
 
 class InputOutput;
-struct AVIOContext;
+//struct AVIOContext;
 
 
 
@@ -37,6 +37,11 @@ private:
 	//uint8_t     *input_buf = nullptr;
 
 };
+
+
+
+int     io_read_data( void *opaque, uint8_t *buf, int buf_size );
+
 
 
 

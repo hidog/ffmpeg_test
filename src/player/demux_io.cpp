@@ -1,5 +1,4 @@
 #include "demux_io.h"
-#include "player.h"
 #include "../IO/input_output.h"
 
 
@@ -23,6 +22,7 @@ DemuxIO::DemuxIO( DecodeSetting _st )
     setting     =   _st;
 
     IO  =   create_IO( setting.io_type, IO_Direction::RECV );
+    assert( IO != nullptr );
     IO->set_decode( setting );
 }
 
@@ -139,6 +139,20 @@ int     DemuxIO::open_input()
     }
 
     return  SUCCESS;
+}
+
+
+
+
+
+/*******************************************************************************
+io_read_data
+********************************************************************************/
+int     io_read_data( void *opaque, uint8_t *buf, int buf_size )
+{
+    InputOutput*    io  =   (InputOutput*)opaque;
+    int     ret     =   io->read( buf, buf_size );
+    return  ret;
 }
 
 

@@ -1,11 +1,12 @@
 ﻿#ifndef PLAYER_H
 #define PLAYER_H
 
-#include <string>
-#include <stdio.h>
+#ifdef USE_MT
 #include <queue>
 #include <thread>
 #include <mutex>
+#endif
+
 #include <functional>
 
 #include "demux.h"
@@ -13,7 +14,6 @@
 #include "video_decode.h"
 #include "sub_decode.h"
 #include "tool.h"
-//#include "../IO/input_output.h"
 
 #include <QImage>
 
@@ -134,12 +134,6 @@ private:
                     *audio_decode_thr   =   nullptr;
 #endif
 };
-
-
-
-
-int     io_read_data( void *opaque, uint8_t *buf, int buf_size );
-
 
 
 #ifdef FFMPEG_TEST
