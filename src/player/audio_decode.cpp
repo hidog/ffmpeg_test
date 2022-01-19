@@ -19,10 +19,9 @@ extern "C" {
 AudioDecode::AudioDecode()
 ********************************************************************************/
 AudioDecode::AudioDecode()
-    :   Decode()
+    :   Decode(AVMEDIA_TYPE_AUDIO)
 {
-    type  =   AVMEDIA_TYPE_AUDIO;
-    //a_codec_id  =   AV_CODEC_ID_NONE;
+    sample_fmt  =   AV_SAMPLE_FMT_NONE;
 }
 
 

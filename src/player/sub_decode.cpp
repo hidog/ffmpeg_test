@@ -23,15 +23,8 @@ extern "C" {
 SubDecode::SubDecode()
 ********************************************************************************/
 SubDecode::SubDecode()
-    :   Decode()
-{
-    type  =   AVMEDIA_TYPE_SUBTITLE;
-}
-
-
-
-
-
+    :   Decode(AVMEDIA_TYPE_SUBTITLE)
+{}
 
 
 
@@ -80,9 +73,7 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     out_param    =   ss.str();
     //out_param    =   "subtitles='\\D\\:/code/test.mkv':stream_index=0";
 
-    
     MYLOG( LOG::INFO, "out = %s", out_param.c_str() );
-
     return  std::make_pair( in_param, out_param );
 }
 
@@ -137,7 +128,6 @@ void    SubDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
     MYLOG( LOG::INFO, "sub dec name = %s", dec->name );
     MYLOG( LOG::INFO, "sub dec long name = %s", dec->long_name );
     MYLOG( LOG::INFO, "sub dec codec id = %s", avcodec_get_name(dec->id) );
-    //MYLOG( LOG::INFO, "audio bitrate = %d", dec_ctx->bit_rate );
 }
 
 
@@ -751,35 +741,9 @@ int     SubDecode::sub_info()
     for( auto itr : stream_map )
     {
         AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)itr.second->metadata, "title", NULL, AV_DICT_MATCH_CASE );
-        MYLOG( LOG::DEBUG, "title %s", dic->value );
+        MYLOG( LOG::DEBUG, "index = %d, title = %s", itr.first, dic->value );
     }
 
-#if 0
-    ss_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0 );
-    if( ss_idx < 0 )
-    {
-        MYLOG( LOG::INFO, "no subtitle stream" );        
-        return  SUCCESS;
-    }
-
-    //
-    AVStream    *sub_stream   =   fmt_ctx->streams[ss_idx];
-    if( sub_stream == nullptr )
-    {
-        MYLOG( LOG::INFO, "this stream has no sub stream" );
-        return  SUCCESS;
-    }
-
-    //
-    AVCodecID   codec_id    =   fmt_ctx->streams[ss_idx]->codecpar->codec_id;
-    MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(codec_id) );
-
-    // 測試用 未來需要能掃描 metadata, 並且秀出對應的 sub title, audio title.
-    AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)fmt_ctx->streams[ss_idx]->metadata, "title", NULL, AV_DICT_MATCH_CASE );
-    MYLOG( LOG::DEBUG, "title %s", dic->value );
-
-    return  ss_idx;
-#endif
     return 0;
 }
 
@@ -998,7 +962,6 @@ ref : https://github.com/mythsaber/AudioVideo
 void    extract_subtitle_frome_file()
 {
     static int64_t  last_pts    =   -1;    // 用來處理 flush 的 pts
-
 
     char src_file_path[1000]    =   "D:\\code\\test2.mkv";
     //char src_file_path[1000]    =   "D:\\code\\output.mkv";

@@ -35,11 +35,9 @@ public:
     SubDecode& operator = ( SubDecode&& ) = delete;
 
     int     init() override;
-    int     end() override;
-    
+    int     end() override;    
     int     send_packet( AVPacket *pkt ) override;
     int     recv_frame( int index ) override;
-
 
     int     open_codec_context( AVFormatContext *fmt_ctx ) override;
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
@@ -53,26 +51,24 @@ public:
     void    set_subfile( std::string path );
 
     bool    open_subtitle_filter( std::string args, std::string desc );
-    QImage  get_subtitle_image();
     bool    is_graphic_subtitle();
-
     int     send_video_frame( AVFrame *video_frame );
     int     render_subtitle();
     int     init_sws_ctx( SubData sd );
+
     void    switch_subtltle( std::string path );
     void    switch_subtltle( int index );
-
     void    set_filter_args( std::string args );
     void    set_sub_src_type( SubSourceType type );
     bool    is_video_in_duration( int64_t timestamp );
-    QPoint  get_subtitle_image_pos();
 
+    QPoint  get_subtitle_image_pos();
+    QImage  get_subtitle_image();
     void    init_graphic_subtitle( SubData sd );
 
 #ifdef _DEBUG
     int     resend_to_filter();
 #endif
-
 
     std::string     get_subfile();
     SubSourceType   get_sub_src_type();
@@ -80,7 +76,7 @@ public:
     std::pair<std::string,std::string>  get_subtitle_param( AVFormatContext *fmt_ctx, std::string src_file, SubData sd );
     std::vector<std::string>            get_embedded_subtitle_list();
 
-    int sub_info(); // 目前無作用
+    int     sub_info(); // 目前無作用
 
 #ifdef FFMPEG_TEST
     std::function<int()>    output_frame_func;
@@ -89,11 +85,7 @@ public:
     void    set_output_jpg_root( std::string _root_path );
 #endif
 
-
-
 private:
-
-    AVMediaType     type;    
 
     AVFilterContext     *bf_src_ctx     =   nullptr;
     AVFilterContext     *bf_sink_ctx    =   nullptr;

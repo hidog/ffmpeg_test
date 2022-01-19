@@ -54,7 +54,6 @@ private:
     uint64_t    channel_layout  =   0;  // 多聲道的時候研究一下
 
     AVSampleFormat  sample_fmt;
-    AVMediaType     type;    
     SwrContext      *swr_ctx    =   nullptr;   // use for chagne audio data to play.
 
 #ifdef FFMPEG_TEST

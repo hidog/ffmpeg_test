@@ -21,7 +21,7 @@ class DLL_API Decode
 {
 public:
 
-    Decode();
+    Decode( AVMediaType _type );
     virtual ~Decode();
 
     Decode( const Decode& ) = delete;
@@ -60,6 +60,7 @@ public:
 #endif
 
 protected:
+    AVMediaType     type;
 
     int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type );
     int     open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type );

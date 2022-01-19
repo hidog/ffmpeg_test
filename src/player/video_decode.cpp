@@ -29,11 +29,9 @@ extern "C" {
 VideoDecode::VideoDecode()
 ********************************************************************************/
 VideoDecode::VideoDecode()
-    :   Decode()
+    :   Decode(AVMEDIA_TYPE_VIDEO)
 {
-    type        =   AVMEDIA_TYPE_VIDEO;
     pix_fmt     =   AV_PIX_FMT_NONE;
-    //v_codec_id  =   AV_CODEC_ID_NONE;
 }
 
 
@@ -240,14 +238,9 @@ VideoDecode::generate_overlay_image()
 ********************************************************************************/
 void    VideoDecode::generate_overlay_image()
 {
-    //QImage  image {  };
     overlay_image   =   QImage{ width, height, QImage::Format_RGB888 }; 
-
-    //av_image_fill_linesizes( linesizes, AV_PIX_FMT_RGB24, frame->width );
     sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, video_dst_data, video_dst_linesize );
     memcpy( overlay_image.bits(), video_dst_data[0], video_dst_bufsize );
-
-    //return  image;
 }
 
 
