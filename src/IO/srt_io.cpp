@@ -335,24 +335,65 @@ int     SrtIO::recv_handle()
         write_index             =   next_index(write_index);
 
         //MYLOG( LOG::DEBUG, "recv size = %d", res );
-
         if( res <= 0 )
         {
             MYLOG( LOG::INFO, "recv no data." );
-            break;
+            is_end  =   true;  // 利用設置 flag 來跳出迴圈. ret <= 0 通常是斷線造成.
         }
     }
 
-    // 因為可能是斷線退出迴圈.
-    is_end  =   true;
+     //
     srt_close(handle);
     handle  =   SRT_INVALID_SOCK;
-
-
     MYLOG( LOG::INFO, "recv_handle finish." );
-
-
     return  1;
+}
+
+
+
+
+
+/*******************************************************************************
+SrtIO::read()
+********************************************************************************/
+int     SrtIO::read( uint8_t *buffer, int size )
+{
+    while( read_index == write_index )
+    {
+        // no data.
+        if( handle == SRT_INVALID_SOCK )
+            return  EOF;
+        SLEEP_1MS;
+    }
+
+    if( rd[read_index].size <= 0 )
+        return  EOF;  // 代表已經斷線了沒資料.
+
+    // 如果需要的資料太少, 跳錯誤. 目前並沒有處理這樣的 case.
+    // 理論上 size >= 1316.
+    if( rd[read_index].size > size )
+        MYLOG( LOG::ERROR, "wanted size = %d too small.", size );
+
+    //
+    int     read_size   =   0;
+    int     remain      =   size;
+    while( true )
+    {
+        if( remain < rd[read_index].size || rd[read_index].size <= 0 )
+            break;
+        
+        // 資料夠就多讀幾筆.
+        memcpy( buffer + read_size, rd[read_index].data, rd[read_index].size );
+        read_size   +=  rd[read_index].size;
+        remain      -=  rd[read_index].size;
+        read_index  =   next_index(read_index);
+
+        if( read_index == write_index )
+            break;
+    }
+
+    //MYLOG( LOG::DEBUG, "wanted size = %d, read size = %d", size, read_size );
+    return  read_size;
 }
 
 
@@ -427,40 +468,6 @@ void    SrtIO::server_end()
 
     srt_cleanup();
 }
-
-
-
-
-/*******************************************************************************
-SrtIO::read()
-********************************************************************************/
-int     SrtIO::read( uint8_t *buf, int buf_size )
-{
-    int read_size   =   0;
-
-    //if( handle == -1 || is_end == true )
-      //  return -1;
-
-    while( read_index == write_index )
-    {
-        // no data.
-        //if( handle == -1 || is_end == true )
-        if( handle == SRT_INVALID_SOCK )
-            return  EOF;
-        SLEEP_10MS;
-    }
-
-    if( rd[read_index].size <= 0 )
-        return  EOF;  // 代表已經斷線了沒資料.
-
-    memcpy( buf, rd[read_index].data, rd[read_index].size );
-
-    read_size   =   rd[read_index].size;
-    read_index  =   next_index(read_index);
-
-    return  read_size;
-}
-
 
 
 

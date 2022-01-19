@@ -32,7 +32,7 @@ public:
     bool    need_wait();
 
     // use for client
-    int     read( uint8_t *buf, int buf_size ) override;
+    int     read( uint8_t *buffer, int size ) override;
 
     void    client_init();
     void    client_open();
