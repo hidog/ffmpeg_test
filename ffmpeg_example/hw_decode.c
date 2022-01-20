@@ -146,7 +146,8 @@ static int decode_write(AVCodecContext *avctx, AVPacket *packet)
     }
 }
 
-int main(int argc, char *argv[])
+
+int hw_decode_func()
 {
     AVFormatContext *input_ctx = NULL;
     int video_stream, ret;
@@ -157,15 +158,9 @@ int main(int argc, char *argv[])
     enum AVHWDeviceType type;
     int i;
 
-    if (argc < 4) {
-        fprintf(stderr, "Usage: %s <device type> <input file> <output file>\n", argv[0]);
-        return -1;
-    }
 
-    type = av_hwdevice_find_type_by_name(argv[1]);
+    type = av_hwdevice_find_type_by_name("cuda");
     if (type == AV_HWDEVICE_TYPE_NONE) {
-        fprintf(stderr, "Device type %s is not supported.\n", argv[1]);
-        fprintf(stderr, "Available device types:");
         while((type = av_hwdevice_iterate_types(type)) != AV_HWDEVICE_TYPE_NONE)
             fprintf(stderr, " %s", av_hwdevice_get_type_name(type));
         fprintf(stderr, "\n");
@@ -179,8 +174,7 @@ int main(int argc, char *argv[])
     }
 
     /* open the input file */
-    if (avformat_open_input(&input_ctx, argv[2], NULL, NULL) != 0) {
-        fprintf(stderr, "Cannot open input file '%s'\n", argv[2]);
+    if (avformat_open_input(&input_ctx, "D:/test.mkv", NULL, NULL) != 0) {
         return -1;
     }
 
@@ -229,7 +223,7 @@ int main(int argc, char *argv[])
     }
 
     /* open the file to dump raw data */
-    output_file = fopen(argv[3], "w+b");
+    output_file = fopen( "F:/output.data", "w+b");
 
     /* actual decoding and dump the raw data */
     while (ret >= 0) {
@@ -238,6 +232,8 @@ int main(int argc, char *argv[])
 
         if (video_stream == packet->stream_index)
             ret = decode_write(decoder_ctx, packet);
+
+        printf( "size = %d\n", packet->size );
 
         av_packet_unref(packet);
     }

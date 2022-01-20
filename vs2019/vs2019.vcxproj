@@ -281,36 +281,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\ffmpeg_example\remuxing.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_cmd|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\resampling_audio.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_cmd|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\scaling_video.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_cmd|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\transcode_aac.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_cmd|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\transcoding.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_cmd|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\hw_decode.c" />
     <ClCompile Include="..\src\IO\file_io.cpp" />
     <ClCompile Include="..\src\IO\input_output.cpp" />
     <ClCompile Include="..\src\IO\srt_io.cpp" />
@@ -342,9 +313,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\ffmpeg_example\resampling_audio.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
-    </ClInclude>
+    <ClInclude Include="..\ffmpeg_example\hw_decode.h" />
     <ClInclude Include="..\src\IO\file_io.h" />
     <ClInclude Include="..\src\IO\input_output.h" />
     <ClInclude Include="..\src\IO\io_def.h" />
