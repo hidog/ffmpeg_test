@@ -131,12 +131,43 @@ void MainWindow::set_signal_slot()
     connect(    ui->stopButton,     &QPushButton::clicked,                          worker,         &Worker::stop_slot                          );   
     connect(    ui->playButton,     &QPushButton::clicked,                          this,           &MainWindow::play_slot                      );
     connect(    ui->pauseButton,    &QPushButton::clicked,                          this,           &MainWindow::pause_slot                     );
+    connect(    ui->connectButton,  &QPushButton::clicked,                          this,           &MainWindow::start_connect_slot             );
 
     connect(    video_worker,       &VideoWorker::recv_video_frame_signal,          this,           &MainWindow::recv_video_frame_slot          );
     connect(    video_worker,       &VideoWorker::update_seekbar_signal,            this,           &MainWindow::update_seekbar_slot            );
 
     connect(    ui->volumeSlider,   &QSlider::valueChanged,                         audio_worker,   &AudioWorker::volume_slot                   );
 
+}
+
+
+
+
+
+
+/*******************************************************************************
+MainWindow::start_connect_slot()
+********************************************************************************/
+void    MainWindow::start_connect_slot()
+{
+    worker->set_type( WorkType::SRT );
+    ui->subCBox->clear();
+
+    std::string     ip      =   ui->ipLEdit->text().toStdString();
+    std::string     port    =   ui->portLEdit->text().toStdString();
+
+    if( ip.empty() == true )
+        ip      =   "127.0.0.1";
+    if( port.empty() == true )
+        port    =   "1234";
+
+    worker->set_ip( ip );
+    worker->set_port( port );
+   
+    ui->playButton->setDisabled(true);
+    ui->centralwidget->setFocus();  // 不加這行會造成 keyboard event 失去作用
+
+    worker->start();
 }
 
 
@@ -221,6 +252,12 @@ MainWindow::play_slot()
 ********************************************************************************/
 void MainWindow::play_slot()
 {
+    std::string     port        =   ui->portLEdit->text().toStdString();
+    bool            is_output   =   ui->outputCBox->checkState() == Qt::Checked;
+
+    worker->set_type( WorkType::DEFAULT );
+    worker->set_output( is_output, port );
+
     ui->subCBox->clear();
 
     QString filename     =   QFileDialog::getOpenFileName( this, tr("select src file"), "D:\\" );
@@ -280,6 +317,8 @@ void    MainWindow::finish_slot()
 
     ui->seekSlider->setSliderPosition(0);
     ui->seekSlider->setValue(0);
+
+    worker->end();
 
     disconnect( seek_connect[0] );
     disconnect( seek_connect[1] );

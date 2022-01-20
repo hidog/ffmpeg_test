@@ -1,5 +1,4 @@
 #include "decode.h"
-#include "tool.h"
 
 extern "C" {
 
@@ -18,7 +17,8 @@ extern "C" {
 /*******************************************************************************
 Decode::Decode()
 ********************************************************************************/
-Decode::Decode()
+Decode::Decode( AVMediaType _type )
+    :   type(_type)
 {}
 
 
@@ -101,6 +101,20 @@ int     Decode::open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type )
     stream      =   cs_index == -1 ? nullptr : stream_map[cs_index];
 
     return  SUCCESS;
+}
+
+
+
+
+
+/*******************************************************************************
+Decode::get_stream()
+********************************************************************************/
+AVStream*   Decode::get_stream()
+{
+    if( stream == nullptr )
+        MYLOG( LOG::ERROR, "stream is null." );
+    return  stream;
 }
 
 
@@ -191,7 +205,7 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
 
     // for psg subtitle use.
     // 沒設置的話, decode psg subtitle 的時候無法取得timestamp.
-    dec_ctx->pkt_timebase = fmt_ctx->streams[stream_index]->time_base;
+    dec_ctx->pkt_timebase   =   fmt_ctx->streams[stream_index]->time_base;
 
     // output info
     output_decode_info( dec, dec_ctx );
@@ -207,7 +221,7 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
 /*******************************************************************************
 Decode::send_packet()
 ********************************************************************************/
-int     Decode::send_packet( const AVPacket *pkt )
+int     Decode::send_packet( AVPacket *pkt )
 {
     int     index   =   pkt == nullptr ? cs_index : pkt->stream_index;
 
@@ -256,7 +270,10 @@ if( get_decode_context_type() == AVMEDIA_TYPE_VIDEO )
 ********************************************************************************/
 AVMediaType     Decode::get_decode_context_type()
 {
-    return  dec_ctx->codec->type;
+    if( dec_ctx == nullptr )
+        return  AVMEDIA_TYPE_SUBTITLE;
+    else
+        return  dec_ctx->codec->type;
 }
 
 
@@ -270,23 +287,10 @@ void    Decode::flush_for_seek()
     int     ret;
 
     AVCodecContext  *ctx    =   nullptr;
-
     for( auto itr : dec_map )
     {
         ctx     =   itr.second;
-
         avcodec_flush_buffers( ctx );
-
-
-        /*avcodec_send_packet( ctx, nullptr );
-
-        while(true)
-        {
-            ret     =   avcodec_receive_frame( ctx, frame );
-            if( ret < 0 )
-                break;
-            av_frame_unref(frame);
-        }*/
     }
 }
 
@@ -335,7 +339,7 @@ int     Decode::recv_frame( int index )
         // those two return values are special and mean there is no output
         // frame available, but there were no errors during decoding
         if( ret == AVERROR_EOF || ret == AVERROR(EAGAIN) )
-            return 0;
+            return  0;
 
         auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
         MYLOG( LOG::ERROR, "Error during decoding (%s)", str );
@@ -436,7 +440,7 @@ int    Decode::flush()
                 // those two return values are special and mean there is no output
                 // frame available, but there were no errors during decoding
                 if( ret == AVERROR_EOF || ret == AVERROR(EAGAIN) )
-                    break; //return 0;
+                    break; 
 
                 auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
                 MYLOG( LOG::ERROR, "Error during decoding (%s)", str );
@@ -453,7 +457,7 @@ int    Decode::flush()
             av_frame_unref(frame);
 
             if( ret < 0 )
-                break; //return ret;
+                break;
         }
     }
 

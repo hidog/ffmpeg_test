@@ -4,7 +4,6 @@
 
 #include "video_worker.h"
 #include "worker.h"
-
 #include "mainwindow.h"
 
 
@@ -17,6 +16,17 @@ AudioWorker::AudioWorker()
 AudioWorker::AudioWorker( QObject *parent )
     :   QThread(parent)
 {}
+
+
+
+
+/*******************************************************************************
+AudioWorker::~AudioWorker()
+********************************************************************************/
+AudioWorker::~AudioWorker()
+{}
+
+
 
 
 
@@ -101,14 +111,6 @@ void    AudioWorker::handleStateChanged( QAudio::State state )
 
 
 
-/*******************************************************************************
-AudioWorker::~AudioWorker()
-********************************************************************************/
-AudioWorker::~AudioWorker()
-{}
-
-
-
 
 /*******************************************************************************
 AudioWorker::audio_play()
@@ -172,12 +174,10 @@ seek 的時候, 由 UI 端負責清空資料, 之後等到有資料才繼續播放.
 ********************************************************************************/
 void    AudioWorker::flush_for_seek()
 {
-    std::queue<AudioData>   *a_queue    =   get_audio_queue();
-
     bool    &v_start    =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
 
     // 重新等待有資料才播放
-    while( a_queue->size() <= 3 )
+    while( decode::get_audio_size() <= 3 )
         SLEEP_10MS;
     a_start     =   true;
     while( v_start == false )
@@ -185,7 +185,6 @@ void    AudioWorker::flush_for_seek()
 }
 
 
-//extern bool ui_a_seek_lock;
 
 
 
@@ -197,14 +196,11 @@ void AudioWorker::audio_play()
 {
     MYLOG( LOG::INFO, "start play audio" );
 
-    std::mutex& a_mtx = get_a_mtx();
-    
     AudioData   ad;
-    std::queue<AudioData>*  a_queue     =   get_audio_queue();
     bool    &v_start        =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
     bool    &is_play_end    =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_play_end_state();
 
-    while( a_queue->size() <= 3 )
+    while( decode::get_audio_size() <= 30 )
         SLEEP_10MS;
     a_start = true;
     while( v_start == false )
@@ -212,7 +208,7 @@ void AudioWorker::audio_play()
 
     std::chrono::steady_clock::time_point       last, now;
     std::chrono::duration<int64_t, std::milli>  duration;
-    int64_t last_ts = 0;
+    int64_t last_ts =   0;
     
     // 一次寫入4096的效果比較好. 用原本的作法會有機會破音. 記得修改變數名稱
     int     wanted_buffer_size  =   4096; //audio->bufferSize()/2;
@@ -226,10 +222,7 @@ void AudioWorker::audio_play()
     auto    handle_func    =   [&]() 
     {
         //
-        a_mtx.lock();
-        ad  =   a_queue->front();       
-        a_queue->pop();
-        a_mtx.unlock();
+        ad  =   decode::get_audio_data();
 
         while(true)
         {
@@ -272,8 +265,8 @@ void AudioWorker::audio_play()
         last_ts = ad.timestamp;
     };
 
-    //
-    bool    &ui_a_seek_lock     =   get_a_seek_lock();
+    // 用 bool 簡單做 sync, 有空再修
+    bool    &ui_a_seek_lock     =   decode::get_a_seek_lock();
 
     last   =   std::chrono::steady_clock::now();
     while( is_play_end == false && force_stop == false )
@@ -289,7 +282,7 @@ void AudioWorker::audio_play()
             flush_for_seek();
         }
 
-        if( a_queue->size() <= 0 )
+        if( decode::get_audio_size() <= 0 )
         {
             MYLOG( LOG::WARN, "audio queue empty." );
             SLEEP_10MS;
@@ -300,9 +293,9 @@ void AudioWorker::audio_play()
     }
 
     // flush
-    while( a_queue->empty() == false && force_stop == false )
+    while( decode::get_audio_size() > 0 && force_stop == false )
     {      
-        if( a_queue->size() <= 0 )
+        if( decode::get_audio_size() <= 0 )
         {
             MYLOG( LOG::WARN, "audio queue empty." );
             SLEEP_10MS;
@@ -317,12 +310,7 @@ void AudioWorker::audio_play()
         SLEEP_10MS;
 
     // force stop 需要手動清除 queue.
-    while( a_queue->empty() == false )
-    {
-        ad  =   a_queue->front();
-        delete [] ad.pcm;
-        a_queue->pop();
-    }
+    decode::clear_audio_queue();
 }
 
 

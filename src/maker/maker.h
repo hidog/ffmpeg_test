@@ -2,24 +2,23 @@
 #define MAKER_H
 
 
-#include "mux.h"
+#include "maker_interface.h"
 #include "audio_encode.h"
 #include "video_encode.h"
 #include "sub_encode.h"
 
 
-/*
-    未來如果要做 subtitle encode 的話
-    do_subtitle_out, avcodec_encode_subtitle, 用這兩個關鍵字去搜尋
-*/
+class Mux;
 
 
-class Maker
+
+
+class Maker : public MakerInterface
 {
 public:
 
     Maker();
-    ~Maker();
+    virtual ~Maker();
 
     Maker( const Maker& ) = delete;
     Maker( Maker&& ) = delete;
@@ -28,14 +27,20 @@ public:
     Maker& operator = ( Maker&& ) = delete;
 
     void    init( EncodeSetting _setting, VideoEncodeSetting v_setting, AudioEncodeSetting a_setting, SubEncodeSetting s_setting );
-    void    work();
+
+    void    work() override;
+    void    end() override;
+    bool    is_connect() override;
+
     void    work_with_subtitle();
     void    work_without_subtitle();
-    void    end();
+    void    flush_encoder( Encode* enc );
 
-private:
 
-    Mux     muxer;
+protected:
+    
+    // note: 未來有時間再看要不要移到 private, 並且增加 protected interface
+    Mux*    muxer  =   nullptr;
 
     AudioEncode     a_encoder;
     VideoEncode     v_encoder;
@@ -47,8 +52,9 @@ private:
 
 
 
-
+#ifdef FFMPEG_TEST
 void    maker_encode_example();
+#endif
 
 
 

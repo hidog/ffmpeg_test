@@ -3,8 +3,6 @@
 
 extern "C" {
 
-#include <libavutil/opt.h>
-#include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 
 }
@@ -27,7 +25,9 @@ Mux::Mux()
 Mux::Mux()
 ********************************************************************************/
 Mux::~Mux()
-{}
+{
+    end();
+}
 
 
 
@@ -49,10 +49,23 @@ void Mux::end()
 
 
 
+
+/*******************************************************************************
+Mux::is_connect()
+********************************************************************************/
+bool    Mux::is_connect()
+{
+    MYLOG( LOG::WARN, "io type is default." );
+    return  true;
+}
+
+
+
+
 /*******************************************************************************
 Mux::init()
 ********************************************************************************/
-void Mux::init( EncodeSetting setting )
+void    Mux::init( EncodeSetting setting )
 {
     int             ret;
     AVDictionary    *opt    =   nullptr;
@@ -63,13 +76,10 @@ void Mux::init( EncodeSetting setting )
     if( output_ctx == nullptr ) 
         MYLOG( LOG::ERROR, "output_ctx = nullptr" );
 
-    output_ctx->start_time;
-
     // 
     MYLOG( LOG::INFO, "default video codec is %s", avcodec_get_name(output_ctx->oformat->video_codec) );
     MYLOG( LOG::INFO, "default audio codec is %s", avcodec_get_name(output_ctx->oformat->audio_codec) );
     MYLOG( LOG::INFO, "default subtitle codec is %s", avcodec_get_name(output_ctx->oformat->subtitle_codec) );
-
 
     // add stream
     // video
@@ -92,8 +102,6 @@ void Mux::init( EncodeSetting setting )
             MYLOG( LOG::ERROR, "a_stream is nullptr." );
         s_stream->id    =   output_ctx->nb_streams - 1;
     }
-
-
 }
 
 
@@ -122,7 +130,7 @@ void    Mux::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext*
     //
     int     ret     =   0;
 
-    // after open
+    // after avcodec_open2
     ret     =   avcodec_parameters_from_context( v_stream->codecpar, v_ctx );
     assert( ret == 0 );
     ret     =   avcodec_parameters_from_context( a_stream->codecpar, a_ctx );
@@ -194,7 +202,7 @@ void    Mux::write_frame( AVPacket* pkt )
 /*******************************************************************************
 Mux::write_end()
 ********************************************************************************/
-void Mux::write_end()
+void    Mux::write_end()
 {
     av_write_trailer(output_ctx);
 

@@ -1,9 +1,10 @@
 #ifndef DEMUX_H
 #define DEMUX_H
 
-#include <string>
+#ifdef USE_MT
 #include <queue>
 #include <mutex>
+#endif
 
 #include "tool.h"
 
@@ -24,7 +25,7 @@ class DLL_API Demux
 {
 public:
     Demux();
-    ~Demux();
+    virtual ~Demux();
 
     Demux( const Demux& ) = delete;
     Demux( Demux&& ) = delete;
@@ -32,13 +33,13 @@ public:
     Demux& operator = ( const Demux& ) = delete;
     Demux& operator = ( Demux&& ) = delete;
 
-    //
-    int     init();
-    int     demux();
-    int     end();    
+    virtual int     open_input();
+    virtual int     init();
+    virtual int     end();
     
-    int     open_input( std::string src_file );
-    int     stream_info();    
+    int     demux();
+    int     stream_info();
+    void    set_input_file( std::string fn );
     
     AVPacket*   get_packet();
     void        unref_packet();
@@ -51,14 +52,16 @@ public:
     void    collect_packet( AVPacket *_pkt );
 #endif
 
+protected:
+    AVFormatContext *fmt_ctx    =   nullptr;
 
 private:
     
-    AVFormatContext *fmt_ctx    =   nullptr;
     AVPacket        *pkt        =   nullptr;
+    std::string     filename;
 
 #ifdef USE_MT
-    static constexpr int   pkt_size    =   500;
+    static constexpr int    pkt_size    =   500;
     AVPacket*               pkt_array[pkt_size]  =   {nullptr};  
     std::queue<AVPacket*>   pkt_queue;
     std::mutex              pkt_mtx; 

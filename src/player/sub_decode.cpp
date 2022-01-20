@@ -8,7 +8,6 @@ extern "C" {
 #include <libavutil/imgutils.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
-
 #include <libavfilter/buffersrc.h>  // use for subtitle
 #include <libavfilter/buffersink.h>
 
@@ -23,15 +22,8 @@ extern "C" {
 SubDecode::SubDecode()
 ********************************************************************************/
 SubDecode::SubDecode()
-    :   Decode()
-{
-    type  =   AVMEDIA_TYPE_SUBTITLE;
-}
-
-
-
-
-
+    :   Decode(AVMEDIA_TYPE_SUBTITLE)
+{}
 
 
 
@@ -78,9 +70,9 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     ss << "subtitles='" << filename_param << "':stream_index=" << sub_index;
     
     out_param    =   ss.str();
-    
-    MYLOG( LOG::INFO, "out = %s", out_param.c_str() );
+    //out_param    =   "subtitles='\\D\\:/code/test.mkv':stream_index=0";
 
+    MYLOG( LOG::INFO, "out = %s", out_param.c_str() );
     return  std::make_pair( in_param, out_param );
 }
 
@@ -102,6 +94,32 @@ void    SubDecode::set_filter_args( std::string args )
 
 
 /*******************************************************************************
+SubDecode::send_packet
+********************************************************************************/
+int     SubDecode::send_packet( AVPacket *pkt )
+{
+    int ret =   decode_subtitle( pkt );
+    return  ret;
+}
+
+
+
+
+/*******************************************************************************
+SubDecode::recv_frame
+
+subtitle 跟 video, audio 不同, recv 固定無資料.
+********************************************************************************/
+int     SubDecode::recv_frame( int index )
+{
+    return  0;
+}
+
+
+
+
+
+/*******************************************************************************
 SubDecode::output_decode_info()
 ********************************************************************************/
 void    SubDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
@@ -109,7 +127,6 @@ void    SubDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
     MYLOG( LOG::INFO, "sub dec name = %s", dec->name );
     MYLOG( LOG::INFO, "sub dec long name = %s", dec->long_name );
     MYLOG( LOG::INFO, "sub dec codec id = %s", avcodec_get_name(dec->id) );
-    //MYLOG( LOG::INFO, "audio bitrate = %d", dec_ctx->bit_rate );
 }
 
 
@@ -236,13 +253,24 @@ int SubDecode::init_sws_ctx( SubData sd )
 
 
 
+#ifdef _DEBUG
+/*******************************************************************************
+SubDecode::resend_to_filter()
+********************************************************************************/
+int     SubDecode::resend_to_filter()
+{
+    int ret =   av_buffersink_get_frame_flags( bf_sink_ctx, frame, 0 );    
+    return  ret;
+}
+#endif
+
 
 
 
 /*******************************************************************************
 SubDecode::render_subtitle()
 ********************************************************************************/
-int SubDecode::render_subtitle()
+int     SubDecode::render_subtitle()
 {
     sub_image   =   QImage( video_width, video_height, QImage::Format_RGB888 );
 
@@ -346,6 +374,15 @@ SubDecode::set_subfile()
 void    SubDecode::set_subfile( std::string path )
 {
     sub_file    =   path;
+
+#ifdef _WIN32
+    // 斜線會影響執行結果.
+    for( auto &c : sub_file )
+    {
+        if( c == '\\' )
+            c   =   '/';
+    }
+#endif
 }
 
 
@@ -703,35 +740,9 @@ int     SubDecode::sub_info()
     for( auto itr : stream_map )
     {
         AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)itr.second->metadata, "title", NULL, AV_DICT_MATCH_CASE );
-        MYLOG( LOG::DEBUG, "title %s", dic->value );
+        MYLOG( LOG::DEBUG, "index = %d, title = %s", itr.first, dic->value );
     }
 
-#if 0
-    ss_idx  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0 );
-    if( ss_idx < 0 )
-    {
-        MYLOG( LOG::INFO, "no subtitle stream" );        
-        return  SUCCESS;
-    }
-
-    //
-    AVStream    *sub_stream   =   fmt_ctx->streams[ss_idx];
-    if( sub_stream == nullptr )
-    {
-        MYLOG( LOG::INFO, "this stream has no sub stream" );
-        return  SUCCESS;
-    }
-
-    //
-    AVCodecID   codec_id    =   fmt_ctx->streams[ss_idx]->codecpar->codec_id;
-    MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(codec_id) );
-
-    // 測試用 未來需要能掃描 metadata, 並且秀出對應的 sub title, audio title.
-    AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)fmt_ctx->streams[ss_idx]->metadata, "title", NULL, AV_DICT_MATCH_CASE );
-    MYLOG( LOG::DEBUG, "title %s", dic->value );
-
-    return  ss_idx;
-#endif
     return 0;
 }
 
@@ -744,7 +755,7 @@ SubDecode::switch_subtltle()
 ********************************************************************************/
 void    SubDecode::switch_subtltle( std::string path )
 {
-    sub_file    =   path;
+    set_subfile( path );
 
     std::string     filename    =   "\\";    
     filename    +=  sub_file;
@@ -820,14 +831,33 @@ SubDecode::output_jpg_by_QT()
 ********************************************************************************/
 int    SubDecode::output_jpg_by_QT()
 {
-    char str[1000];
-    sprintf( str, "J:\\jpg\\%d.jpg", frame_count );
-    MYLOG( LOG::DEBUG, "save jpg %s", str );
-    sub_image.save(str);
+    char    str[1000];
+    sprintf( str, "%s\\%d.jpg", output_jpg_root_path.c_str(), frame_count );
 
+    if( frame_count % 100 == 0 )
+        MYLOG( LOG::DEBUG, "save jpg %s", str );
+
+    sub_image.save(str);
     return  0;
 }
 #endif
+
+
+
+
+
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoDecode::set_output_jpg_root()
+********************************************************************************/
+void    SubDecode::set_output_jpg_root( std::string _root_path )
+{
+    output_jpg_root_path    =   _root_path;
+}
+#endif
+
 
 
 
@@ -931,7 +961,6 @@ ref : https://github.com/mythsaber/AudioVideo
 void    extract_subtitle_frome_file()
 {
     static int64_t  last_pts    =   -1;    // 用來處理 flush 的 pts
-
 
     char src_file_path[1000]    =   "D:\\code\\test2.mkv";
     //char src_file_path[1000]    =   "D:\\code\\output.mkv";

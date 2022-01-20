@@ -27,6 +27,15 @@ VideoWorker::VideoWorker( QObject *parent )
 
 
 /*******************************************************************************
+VideoWorker::~VideoWorker()
+********************************************************************************/
+VideoWorker::~VideoWorker()
+{}
+
+
+
+
+/*******************************************************************************
 VideoWorker::get_video_start_state()
 ********************************************************************************/
 bool&   VideoWorker::get_video_start_state()
@@ -37,11 +46,6 @@ bool&   VideoWorker::get_video_start_state()
 
 
 
-/*******************************************************************************
-VideoWorker::~VideoWorker()
-********************************************************************************/
-VideoWorker::~VideoWorker()
-{}
 
 
 
@@ -96,12 +100,10 @@ seek 的時候, 由 UI 端負責清空資料, 之後等到有資料才繼續播放.
 ********************************************************************************/
 void    VideoWorker::flush_for_seek()
 {
-    std::queue<VideoData>   *v_queue    =   get_video_queue();
-
     bool    &a_start    =   dynamic_cast<MainWindow*>(parent())->get_audio_worker()->get_audio_start_state();
 
     // 重新等待有資料才播放
-    while( v_queue->size() <= 3 )
+    while( decode::get_video_size() <= 3 )
         SLEEP_10MS;
     v_start     =   true;
     while( a_start == false )
@@ -119,12 +121,9 @@ void VideoWorker::video_play()
     // 這邊沒有print, 會造成 release build 無作用
     MYLOG( LOG::INFO, "start play video" );
 
-    std::mutex &v_mtx   =   get_v_mtx();
-
     std::chrono::steady_clock::time_point       last, now;
     std::chrono::duration<int64_t, std::milli>  duration;
 
-    std::queue<VideoData>*  v_queue     =   get_video_queue();
     VideoData               *view_data  =   dynamic_cast<MainWindow*>(parent())->get_view_data();    
 
     // init again.
@@ -138,9 +137,12 @@ void VideoWorker::video_play()
     if( view_data == nullptr )
         MYLOG( LOG::ERROR, "view_data is null." );
 
-    //
-    while( v_queue->size() <= 3 )    
+    //  
+    while( decode::get_video_size() <= 30 )
         SLEEP_10MS;
+
+    //std::this_thread::sleep_for( std::chrono::milliseconds(350) );  // live stream 的時候, 降低延遲的 work around.
+
     v_start     =   true;
     while( a_start == false )
         SLEEP_10MS;
@@ -148,10 +150,7 @@ void VideoWorker::video_play()
     //
     auto    handle_func =   [&]() 
     {
-        v_mtx.lock();
-        VideoData vd    =   v_queue->front();
-        v_queue->pop();
-        v_mtx.unlock();
+        VideoData vd    =   decode::get_video_data();
 
         while(true)
         {
@@ -176,8 +175,8 @@ void VideoWorker::video_play()
         last    =   now;
     };
 
-    //
-    bool    &ui_v_seek_lock     =   get_v_seek_lock();
+    // 用 bool 簡易做 sync, 有空再修
+    bool    &ui_v_seek_lock     =   decode::get_v_seek_lock();
 
     last   =   std::chrono::steady_clock::now();
     while( is_play_end == false && force_stop == false )
@@ -199,7 +198,7 @@ void VideoWorker::video_play()
         }
 
         //
-        if( v_queue->size() <= 0 )
+        if( decode::get_video_size() <= 0 )
         {
             MYLOG( LOG::WARN, "video queue empty." );
             SLEEP_10MS;
@@ -210,11 +209,10 @@ void VideoWorker::video_play()
     }
 
     // flush
-    while( v_queue->empty() == false && force_stop == false )
+    while( decode::get_video_size() > 0 && force_stop == false )
     {       
         while( pause_flag == true )
             SLEEP_10MS;
-
         handle_func();
     }
 
@@ -223,8 +221,7 @@ void VideoWorker::video_play()
         SLEEP_10MS;
 
     // force stop 的時候需要手動清除資料
-    while( v_queue->empty() == false )
-        v_queue->pop();
+    decode::clear_video_queue();
 }
 
 

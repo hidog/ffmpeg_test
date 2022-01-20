@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 #include <string>
-
+#include "../IO/io_def.h"
 
 
 extern "C" {
@@ -16,22 +16,20 @@ extern "C" {
 
 
 
-// 目前只會處理一個 v/a/s, 所以用列舉即可
-// 如果需要處理多個 a/s, 要改成回傳 stream index 之類.
-enum class EncodeOrder : uint8_t 
-{
-    VIDEO,
-    AUDIO,
-    SUBTITLE
-};
+constexpr int   default_video_stream_index      =   0;
+constexpr int   default_audio_stream_index      =   1;
+constexpr int   default_subtitle_stream_index   =   2;
 
 
 
 struct EncodeSetting
 {
+    IO_Type         io_type;
     std::string     filename;
     std::string     extension;
     bool            has_subtitle;
+    std::string     srt_ip;     // 保留欄位 目前srt encode是server side.
+    std::string     srt_port;
 };
 
 
@@ -63,6 +61,7 @@ struct AudioEncodeSetting
     int64_t     bit_rate;
     int         sample_rate;
     uint64_t    channel_layout;
+    int         sample_fmt;
 
     std::string     load_pcm_path;
 };

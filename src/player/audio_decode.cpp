@@ -5,7 +5,6 @@ extern "C" {
 
 #include <libavutil/timestamp.h>
 #include <libavformat/avformat.h>
-
 #include <libswresample/swresample.h>
 
 } // end extern "C"
@@ -19,10 +18,9 @@ extern "C" {
 AudioDecode::AudioDecode()
 ********************************************************************************/
 AudioDecode::AudioDecode()
-    :   Decode()
+    :   Decode(AVMEDIA_TYPE_AUDIO)
 {
-    type  =   AVMEDIA_TYPE_AUDIO;
-    //a_codec_id  =   AV_CODEC_ID_NONE;
+    sample_fmt  =   AV_SAMPLE_FMT_NONE;
 }
 
 
@@ -201,14 +199,37 @@ void    AudioDecode::output_audio_frame_info()
 
 
 /*******************************************************************************
+AudioDecode::get_audio_nb_sample()
+********************************************************************************/
+int     AudioDecode::get_audio_nb_sample()
+{
+    return  dec_ctx->frame_size;
+}
+
+
+
+
+
+/*******************************************************************************
 AudioDecode::get_audio_channel()
 ********************************************************************************/
 int     AudioDecode::get_audio_channel()
 {
-    return  stream->codecpar->channels;
+    return  dec_ctx->channels;
+    //return  stream->codecpar->channels;
 }
 
 
+
+
+
+/*******************************************************************************
+AudioDecode::get_audio_channel_layout()
+********************************************************************************/
+int     AudioDecode::get_audio_channel_layout()
+{
+    return  dec_ctx->channel_layout;
+}
 
 
 
@@ -217,11 +238,20 @@ AudioDecode::get_audio_sample_rate()
 ********************************************************************************/
 int     AudioDecode::get_audio_sample_rate()
 {
-    return  stream->codecpar->sample_rate;
+    //return  stream->codecpar->sample_rate;
+    return  dec_ctx->sample_rate;
 }
 
 
 
+/*******************************************************************************
+AudioDecode::get_audio_sample_format()
+********************************************************************************/
+int     AudioDecode::get_audio_sample_format()
+{
+    //return  stream->codecpar->format;
+    return  static_cast<int>(dec_ctx->sample_fmt);
+}
 
 
 
@@ -245,24 +275,20 @@ AudioData   AudioDecode::output_audio_data()
     ad.timestamp    =   0;
 
 
-    uint8_t     *data[2]    =   { 0 };  // S16 改 S32, 不確定是不是這邊的 array 要改成 4
-    //int         byte_count     =   frame->nb_samples * 2 * 2;  // S16 改 S32, 改成 *4, 理論上資料量會增加, 但不確定是否改的是這邊
-                                                                 // frame->nb_samples * 2 * 2     表示     分配樣本資料量 * 兩通道 * 每通道2位元組大小
     int         byte_count  =   av_samples_get_buffer_size( NULL, out_channel, frame->nb_samples, AV_SAMPLE_FMT_S16, 0 );
 
-    unsigned char   *pcm    =   new uint8_t[byte_count];     
-
-    if( pcm == nullptr )
+    ad.pcm    =   new uint8_t[byte_count];
+    if( ad.pcm == nullptr )
         MYLOG( LOG::WARN, "pcm is null" );
 
-    data[0]     =   pcm;    // 輸出格式為 AV_SAMPLE_FMT_S16(packet型別), 所以轉換後的 LR 兩通道都存在data[0]中
-                            // 研究一下 S32 是不是存兩個資料
+    uint8_t *data[2]    =   { 0 };
+    data[0] =   ad.pcm;    // 輸出格式為 AV_SAMPLE_FMT_S16(packet型別), 所以轉換後的 LR 兩通道都存在data[0]中
+
     int ret     =   swr_convert( swr_ctx,
                                  data, frame->nb_samples,                              //輸出 
                                  (const uint8_t**)frame->data, frame->nb_samples );    //輸入
 
     //
-    ad.pcm          =   pcm;
     ad.bytes        =   byte_count;
     ad.timestamp    =   get_timestamp();
 

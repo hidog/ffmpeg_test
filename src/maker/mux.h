@@ -1,24 +1,14 @@
 #ifndef MUX_H
 #define MUX_H
 
-
 #include "maker_def.h"
 
 
-extern "C" {
-
-#include <libavutil/rational.h>
-
-} // end extern "C"
-
-
-
-
 struct AVFormatContext;
-struct AVCodec;
 struct AVCodecContext;
 struct AVStream;
 struct AVPacket;
+
 
 
 class Mux
@@ -26,7 +16,7 @@ class Mux
 public:
 
     Mux();
-    ~Mux();
+    virtual ~Mux();
 
     Mux( const Mux& ) = delete;
     Mux( Mux&& ) = delete;
@@ -34,22 +24,23 @@ public:
     Mux& operator = ( const Mux& ) = delete;
     Mux& operator = ( Mux&& ) = delete;
 
-    void    init( EncodeSetting setting );
-    void    end();
     void    open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, AVCodecContext* s_ctx );
-
     bool    is_need_global_header();
-
     void    write_header();
     void    write_frame( AVPacket* pkt );
-    void    write_end();
+
+    virtual void    init( EncodeSetting setting );
+    virtual void    write_end();
+    virtual void    end();
+    virtual bool    is_connect();   
 
     AVRational  get_video_stream_timebase();
     AVRational  get_audio_stream_timebase();
     AVRational  get_sub_stream_timebase();
 
-private:
+protected:
 
+    // note: 未來有時間再看要不要移到 private, 並且增加 protected interface
     AVFormatContext     *output_ctx     =   nullptr;
 
     AVStream    *v_stream   =   nullptr;
@@ -57,6 +48,8 @@ private:
     AVStream    *s_stream   =   nullptr;
 
 };
+
+
 
 
 
