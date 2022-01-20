@@ -138,10 +138,10 @@ void VideoWorker::video_play()
         MYLOG( LOG::ERROR, "view_data is null." );
 
     //  
-    while( decode::get_video_size() <= 3 )
+    while( decode::get_video_size() <= 30 )
         SLEEP_10MS;
 
-    std::this_thread::sleep_for( std::chrono::milliseconds(350) );  // live stream 的時候, 降低延遲的 work around.
+    //std::this_thread::sleep_for( std::chrono::milliseconds(350) );  // live stream 的時候, 降低延遲的 work around.
 
     v_start     =   true;
     while( a_start == false )
