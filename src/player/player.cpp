@@ -847,7 +847,8 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
             }
             else
             {
-                MYLOG( LOG::ERROR, "undefined behavier." );
+                // 可以印 log. 目前 graphic subtitle 會跑進這邊, 有空再修正
+                // MYLOG( LOG::ERROR, "undefined behavier." );
             }
             dc->unref_frame();
         }
