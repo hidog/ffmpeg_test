@@ -200,7 +200,7 @@ void AudioWorker::audio_play()
     bool    &v_start        =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
     bool    &is_play_end    =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_play_end_state();
 
-    while( decode::get_audio_size() <= 3 )
+    while( decode::get_audio_size() <= 30 )
         SLEEP_10MS;
     a_start = true;
     while( v_start == false )
