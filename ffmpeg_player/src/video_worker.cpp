@@ -161,6 +161,8 @@ void VideoWorker::video_play()
                 break;
         }
 
+        //MYLOG( LOG::DEBUG, "video time stamp = %lld\n", vd.timestamp );
+
         video_mtx->lock();
         view_data->index        =   vd.index;
         view_data->frame        =   vd.frame;
