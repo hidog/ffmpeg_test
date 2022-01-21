@@ -1,5 +1,7 @@
 #include "video_decode_hw.h"
 
+#include "../hw/NvDecoder.h"
+
 
 extern "C" {
 
@@ -82,9 +84,13 @@ AV_PIX_FMT_P016LE
 ********************************************************************************/
 int     VideoDecodeHW::init()
 {
-    int ret     =   0;
+    pkt_bsf     =   av_packet_alloc();
+
     width       =   dec_ctx->width;
     height      =   dec_ctx->height;
+
+    // init nvidia decoder.
+    init_nvidia_decoder();
 
     MYLOG( LOG::INFO, "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
     
@@ -96,7 +102,7 @@ int     VideoDecodeHW::init()
     }
 
     // NOTE : 可以改變寬高. 
-    sws_ctx     =   sws_getContext( width, height, AV_PIX_FMT_P016LE,                     // src
+    sws_ctx     =   sws_getContext( width, height, AV_PIX_FMT_YUV420P,           // src
                                     width, height, AV_PIX_FMT_RGB24,            // dst
                                     SWS_BICUBIC, NULL, NULL, NULL);                        
 
@@ -117,13 +123,80 @@ int     VideoDecodeHW::init()
 
 
 
+
+inline cudaVideoCodec FFmpeg2NvCodecId(AVCodecID id) {
+    switch (id) {
+    case AV_CODEC_ID_MPEG1VIDEO : return cudaVideoCodec_MPEG1;
+    case AV_CODEC_ID_MPEG2VIDEO : return cudaVideoCodec_MPEG2;
+    case AV_CODEC_ID_MPEG4      : return cudaVideoCodec_MPEG4;
+    case AV_CODEC_ID_VC1        : return cudaVideoCodec_VC1;
+    case AV_CODEC_ID_H264       : return cudaVideoCodec_H264;
+    case AV_CODEC_ID_HEVC       : return cudaVideoCodec_HEVC;
+    case AV_CODEC_ID_VP8        : return cudaVideoCodec_VP8;
+    case AV_CODEC_ID_VP9        : return cudaVideoCodec_VP9;
+    case AV_CODEC_ID_MJPEG      : return cudaVideoCodec_JPEG;
+    default                     : return cudaVideoCodec_NumCodecs;
+    }
+}
+
+
+
+/*******************************************************************************
+VideoDecodeHW::init_nvidia_decoder
+********************************************************************************/
+int     VideoDecodeHW::init_nvidia_decoder()
+{
+    AVCodecID   codec_id    =   dec_ctx->codec_id;
+    cudaVideoCodec cuda_codec = FFmpeg2NvCodecId(codec_id);
+
+
+    cuInit(0);
+    int     gpu_index   =   0; // 使用第一張顯示卡
+    int     gpu_num     =   0;
+    cuDeviceGetCount( &gpu_num );
+    if( gpu_index >= gpu_num ) 
+    {
+        MYLOG( LOG::ERROR, "no video card." );
+        return  ERROR;
+    }
+
+    CUdevice    nv_dev  =   0;
+    cuDeviceGet( &nv_dev, gpu_index );
+
+    char    device_name[80];
+    cuDeviceGetName( device_name, sizeof(device_name), nv_dev );
+    MYLOG( LOG::INFO, "gpu use %s", device_name )
+
+    CUcontext   cuda_ctx    =   nullptr;
+    cuCtxCreate( &cuda_ctx, 0, nv_dev );
+
+    //
+    Rect    rRect   =   {};
+    Dim     resize_dim = {};
+    nv_decoder  =   new NvDecoder( cuda_ctx, width, height, false, cuda_codec, nullptr, false, false, &rRect, &resize_dim );
+
+    return  SUCCESS;
+}
+
+
+
+/*******************************************************************************
+VideoDecodeHW::get_pix_fmt
+********************************************************************************/
+AVPixelFormat   VideoDecodeHW::get_pix_fmt()
+{
+    return  AV_PIX_FMT_P016LE;
+}
+
+
+
 /*******************************************************************************
 VideoDecodeHW::init_bsf
 ********************************************************************************/
 int     VideoDecodeHW::init_bsf( AVFormatContext *fmt_ctx )
 {
     AVCodecID   codec_id    =   dec_ctx->codec_id;
-
+    int     ret     =   0;
 
     if( use_bsf == true )
     {
@@ -136,10 +209,14 @@ int     VideoDecodeHW::init_bsf( AVFormatContext *fmt_ctx )
         else 
             assert(0);
 
-        av_bsf_alloc( bsf, &v_bsf_ctx );
+        ret     =   av_bsf_alloc( bsf, &v_bsf_ctx );
+        assert( ret == 0 );
+
         v_bsf_ctx->par_in   =   fmt_ctx->streams[cs_index]->codecpar;
         av_bsf_init( v_bsf_ctx );
     }
+
+    return  SUCCESS;
 }
 
 
@@ -153,6 +230,8 @@ VideoDecodeHW::end
 int     VideoDecodeHW::end()
 {
     VideoDecode::end();
+
+    return  SUCCESS;
 }
 
 
@@ -164,11 +243,93 @@ VideoDecodeHW::send_packet
 ********************************************************************************/
 int     VideoDecodeHW::send_packet( AVPacket *pkt )
 {
+
     if( use_bsf == true )
     {
         av_bsf_send_packet( v_bsf_ctx, pkt );
         av_bsf_receive_packet( v_bsf_ctx, pkt_bsf );
       
         // insert nv decode here.
+        uint8_t *ppVideo = pkt_bsf->data;
+        int pnVideoBytes = pkt_bsf->size;
+
+
+        nv_decoder->Decode( ppVideo, pnVideoBytes, &ppFrame, &nFrameReturned );
+        recv_count  =   0;
     }
+
+    return  SUCCESS;
+}
+
+
+
+#include "../hw/NvCodecUtils.h"
+
+
+
+void ConvertToPlanar(uint8_t *pHostFrame, int nWidth, int nHeight, int nBitDepth) 
+{
+    if (nBitDepth == 8) 
+    {
+        // nv12->iyuv
+        YuvConverter<uint8_t> converter8(nWidth, nHeight);
+        converter8.UVInterleavedToPlanar(pHostFrame);
+    } 
+    else 
+    {
+        // p016->yuv420p16
+        YuvConverter<uint16_t> converter16(nWidth, nHeight);
+        converter16.UVInterleavedToPlanar((uint16_t *)pHostFrame);
+    }
+}
+
+
+
+
+/*******************************************************************************
+VideoDecodeHW::recv_frame
+********************************************************************************/
+int     VideoDecodeHW::recv_frame( int index )
+{
+    if( nFrameReturned == 0 || recv_count == nFrameReturned )
+        return  0;
+
+    if( use_bsf == true )
+    {     
+        ConvertToPlanar( ppFrame[recv_count], nv_decoder->GetWidth(), nv_decoder->GetHeight(), nv_decoder->GetBitDepth());            
+
+
+
+        frame->format   =   AV_PIX_FMT_YUV420P;
+        frame->width    =   width;
+        frame->height   =   height;
+
+        int ret     =   av_frame_get_buffer( frame, 0 );
+        if( ret < 0 ) 
+            MYLOG( LOG::ERROR, "get buffer fail." );
+
+        ret     =   av_frame_make_writable(frame);
+        if( ret < 0 )
+            assert(0);
+
+        int fsize = nv_decoder->GetFrameSize();
+        
+        memcpy( frame->data[0], ppFrame[recv_count], 1280*720 );
+        memcpy( frame->data[1] , ppFrame[recv_count] + width*height , 1280*720/4 );
+        memcpy( frame->data[2] , ppFrame[recv_count] + width*height*5/4 , 1280*720/4 );
+
+
+        //av_image_copy( frame->data, frame->linesize, (const uint8_t**)ppFrame[recv_count], frame->linesize, AV_PIX_FMT_YUV420P16LE, width, height );
+
+
+        // need add time stamp here.
+
+        recv_count++;
+        frame_count++;
+    }
+
+    if( (recv_count-1) < nFrameReturned )
+        return  1;
+    else
+        return  0;
 }

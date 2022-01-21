@@ -28,6 +28,8 @@ public:
     virtual int     end() override;
     virtual int     open_codec_context( AVFormatContext *fmt_ctx ) override;
 
+    virtual AVPixelFormat   get_pix_fmt();
+
 
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
     
@@ -50,7 +52,6 @@ public:
     VideoData   output_video_data();
     QImage      get_video_image();
 
-    AVPixelFormat   get_pix_fmt();
 
     int     video_info(); // 未來增加 nv decode 可以參考這邊
 

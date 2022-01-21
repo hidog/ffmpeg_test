@@ -28,6 +28,9 @@
     <Filter Include="IO">
       <UniqueIdentifier>{45464b67-3143-4077-8a0e-5cdd4adccb97}</UniqueIdentifier>
     </Filter>
+    <Filter Include="hw">
+      <UniqueIdentifier>{bafdab57-e0c0-4db9-955c-0a4f2ef91c54}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vs2019.cpp">
@@ -101,6 +104,9 @@
     </ClCompile>
     <ClCompile Include="..\src\player\video_decode_hw.cpp">
       <Filter>src\player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\hw\NvDecoder.cpp">
+      <Filter>hw</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -181,6 +187,9 @@
     </ClInclude>
     <ClInclude Include="..\src\player\video_decode_hw.h">
       <Filter>src\player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\hw\NvDecoder.h">
+      <Filter>hw</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
