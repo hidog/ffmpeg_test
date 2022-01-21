@@ -232,7 +232,32 @@ void AudioWorker::audio_play()
             if( duration.count() >= ad.timestamp - last_ts )
                 break;
         }
+        
+#if 0
+        // 測試用的 a/v sync 程式, live stream 的時候比較容易發生不同步.
+        // 這邊是容許值範圍外會讓影音同步.
+        static volatile VideoData    *view_data  =   dynamic_cast<MainWindow*>(parent())->get_view_data();
+        assert( view_data != nullptr );
+        if( ad.timestamp < view_data->timestamp - 100 )
+        {
+            MYLOG( LOG::WARN, "trigger a/v sync. skip audio" );
+            // skip this audio data.
+            do {
+                delete [] ad.pcm;
+                ad.pcm      =   nullptr;
+                ad.bytes    =   0;
+                ad  =   decode::get_audio_data();
+            } while( ad.timestamp <= view_data->timestamp + 100 );
+        }
+        else if( ad.timestamp > view_data->timestamp + 100 )
+        {
+            MYLOG( LOG::WARN, "trigger a/v sync. wait video. ad = %lld, vd = %lld", ad.timestamp, view_data->timestamp );
+            while( ad.timestamp >= view_data->timestamp - 100 )
+                SLEEP_1MS;
+        }
+#endif
 
+        // 
         remain_bytes    =   ad.bytes;
         ptr             =   ad.pcm; 
 
