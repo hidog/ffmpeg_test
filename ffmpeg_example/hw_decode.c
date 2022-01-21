@@ -155,9 +155,13 @@ int hw_decode_func()
     AVCodecContext *decoder_ctx = NULL;
     const AVCodec *decoder = NULL;
     AVPacket *packet = NULL;
-    enum AVHWDeviceType type;
+    enum AVHWDeviceType type = AV_HWDEVICE_TYPE_NONE;
     int i;
 
+
+    while((type = av_hwdevice_iterate_types(type)) != AV_HWDEVICE_TYPE_NONE)
+        printf( " %s", av_hwdevice_get_type_name(type));
+    printf("\n");
 
     type = av_hwdevice_find_type_by_name("cuda");
     if (type == AV_HWDEVICE_TYPE_NONE) {

@@ -257,7 +257,6 @@ void AudioWorker::audio_play()
         }
 #endif
 
-        // 
         remain_bytes    =   ad.bytes;
         ptr             =   ad.pcm; 
 
