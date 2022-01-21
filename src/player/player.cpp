@@ -1052,8 +1052,8 @@ void    player_decode_example()
     DecodeSetting   setting;
     setting.io_type     =   IO_Type::DEFAULT;
     //setting.io_type     =   IO_Type::SRT_IO;
-    setting.filename   =   "D:\\test2.mp4";     // 使用 D:\\code\\test.mkv 會出錯. 已增加程式碼處理這個問題.
-    setting.subname    =   "D:\\test2.ass";   
+    setting.filename   =   "D:\\abc.mkv";     // 使用 D:\\code\\test.mkv 會出錯. 已增加程式碼處理這個問題.
+    //setting.subname    =   "D:\\test2.ass";   
     //setting.srt_port    =   "1234";
 
     Player  player;  
@@ -1061,8 +1061,8 @@ void    player_decode_example()
     player.set( setting );
     player.init();
 
-    player.set_output_jpg_root( "J:\\jpg" );
-    player.set_output_audio_pcm_path( "J:\\test.pcm" );
+    player.set_output_jpg_root( "H:\\jpg" );
+    player.set_output_audio_pcm_path( "H:\\test.pcm" );
 
     player.play();
     player.end();

@@ -1,12 +1,12 @@
 #ifndef DEMUX_H
 #define DEMUX_H
 
+#include "tool.h"
+
 #ifdef USE_MT
 #include <queue>
 #include <mutex>
 #endif
-
-#include "tool.h"
 
 struct AVPacket;
 struct AVFormatContext;

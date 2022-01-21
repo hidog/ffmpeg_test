@@ -87,11 +87,7 @@ int     VideoDecode::init()
 
     MYLOG( LOG::INFO, "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
     
-#ifndef FFMPEG_TEST
     video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
-#else
-    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
-#endif
     if( video_dst_bufsize < 0 )
     {
         MYLOG( LOG::ERROR, "Could not allocate raw video buffer" );
@@ -103,13 +99,11 @@ int     VideoDecode::init()
                                     width, height, AV_PIX_FMT_RGB24,            // dst
                                     SWS_BICUBIC, NULL, NULL, NULL);                        
 
-    //
 #ifdef FFMPEG_TEST
     output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
     //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
 #endif
 
-    //
     Decode::init();
 
     // 理論上可以在這之前就設置好 sub_dec, 但目前規劃是 init 後再設置 sub_dec.
@@ -409,53 +403,6 @@ int     VideoDecode::video_info()
     double  fps     =   av_q2d( fmt_ctx->streams[vs_idx]->r_frame_rate );
     MYLOG( LOG::INFO, "fps = %lf", fps );
 #endif
-
-#if 0
-    // use for NVDEC
-    bool flag1  =   !strcmp( fmt_ctx->iformat->long_name, "QuickTime / MOV" )   ||
-        !strcmp( fmt_ctx->iformat->long_name, "FLV (Flash Video)" ) ||
-        !strcmp( fmt_ctx->iformat->long_name, "Matroska / WebM" );
-    bool flag2  =   codec_id == AV_CODEC_ID_H264 || codec_id == AV_CODEC_ID_HEVC;
-
-    use_bsf     =   flag1 && flag2;
-#endif
-
-#if 0
-    // use for NVDEC
-    if( use_bsf == true )
-    {
-        const AVBitStreamFilter*  bsf   =   nullptr;
-        if( codec_id == AV_CODEC_ID_H264 )
-            bsf     =   av_bsf_get_by_name("h264_mp4toannexb");
-        else if( codec_id == AV_CODEC_ID_HEVC )
-            bsf     =   av_bsf_get_by_name("hevc_mp4toannexb");
-        else 
-            assert(0);
-
-        av_bsf_alloc( bsf, &v_bsf_ctx );
-        v_bsf_ctx->par_in   =   fmt_ctx->streams[vs_idx]->codecpar;
-        av_bsf_init( v_bsf_ctx );
-    }
-
-#endif
-
-
-
-
-#if 0
-    用 bsf 處理 pkt, 再丟給 nv decode 的參考.
-    if( use_bsf && pkt->stream_index == vs_idx )
-    {
-        av_bsf_send_packet( v_bsf_ctx, pkt );
-        av_bsf_receive_packet( v_bsf_ctx, pkt_bsf );
-    }
-    else if( pkt->stream_index == as_idx )
-    {
-        av_bsf_send_packet( a_bsf_ctx, pkt );
-        av_bsf_receive_packet( a_bsf_ctx, pkt );
-    }
-#endif
-
 
     return SUCCESS;
 }
