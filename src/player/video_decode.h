@@ -29,6 +29,7 @@ public:
     virtual int     open_codec_context( AVFormatContext *fmt_ctx ) override;
 
     virtual AVPixelFormat   get_pix_fmt();
+    virtual VideoData       output_video_data();
 
 
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
@@ -49,7 +50,7 @@ public:
 
     int64_t     get_timestamp();
     int64_t     get_pts( int sec );
-    VideoData   output_video_data();
+    //VideoData   output_video_data();
     QImage      get_video_image();
 
 

@@ -32,6 +32,9 @@ public:
     int     end() override;
     int     send_packet( AVPacket *pkt ) override;
     int     recv_frame( int index ) override;
+    
+    VideoData       output_video_data() override;
+
 
     AVPixelFormat   get_pix_fmt() override;
 

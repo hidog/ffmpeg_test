@@ -1,7 +1,7 @@
 #include "video_decode_hw.h"
 
 #include "../hw/NvDecoder.h"
-
+#include "sub_decode.h"
 
 extern "C" {
 
@@ -104,8 +104,10 @@ int     VideoDecodeHW::init()
         return  ERROR;
     }
 
-    // NOTE : 可以改變寬高. 
-    sws_ctx     =   sws_getContext( width, height, AV_PIX_FMT_P016LE,           // src
+    //
+    AVPixelFormat  tmp_fmt  =   get_pix_fmt();
+
+    sws_ctx     =   sws_getContext( width, height, tmp_fmt,                     // src
                                     width, height, AV_PIX_FMT_RGB24,            // dst
                                     SWS_BICUBIC, NULL, NULL, NULL);                        
 
@@ -188,7 +190,11 @@ VideoDecodeHW::get_pix_fmt
 ********************************************************************************/
 AVPixelFormat   VideoDecodeHW::get_pix_fmt()
 {
-    return  AV_PIX_FMT_P016LE;
+    if( stream->codecpar->format == AV_PIX_FMT_YUV420P )
+        return  AV_PIX_FMT_YUV420P;
+    else
+        return  AV_PIX_FMT_YUV420P16LE;
+
 }
 
 
@@ -267,7 +273,7 @@ int     VideoDecodeHW::send_packet( AVPacket *pkt )
         static int n = 0;
 
         nv_decoder->Decode( ppVideo, pnVideoBytes, &ppFrame, &nFrameReturned, CUVID_PKT_ENDOFPICTURE, &p_timestamp, pkt_bsf->pts );
-        MYLOG( LOG::DEBUG, "nFrameReturned = %d", nFrameReturned );
+        //MYLOG( LOG::DEBUG, "nFrameReturned = %d", nFrameReturned );
         recv_count  =   0;
     }
 
@@ -309,11 +315,9 @@ int     VideoDecodeHW::recv_frame( int index )
 
     if( use_bsf == true )
     {     
-        //ConvertToPlanar( ppFrame[recv_count], nv_decoder->GetWidth(), nv_decoder->GetHeight(), nv_decoder->GetBitDepth());            
+        ConvertToPlanar( ppFrame[recv_count], nv_decoder->GetWidth(), nv_decoder->GetHeight(), nv_decoder->GetBitDepth());        
 
-
-
-        frame->format   =   AV_PIX_FMT_P016LE;
+        frame->format   =   get_pix_fmt();
         frame->width    =   width;
         frame->height   =   height;
 
@@ -331,15 +335,20 @@ int     VideoDecodeHW::recv_frame( int index )
         memcpy( frame->data[1] , ppFrame[recv_count] + width*height , 1280*720/4 );
         memcpy( frame->data[2] , ppFrame[recv_count] + width*height*5/4 , 1280*720/4 );*/
 
-        av_image_fill_arrays( frame->data, frame->linesize, ppFrame[recv_count], AV_PIX_FMT_P016LE, width, height, 1 );
+        AVPixelFormat  tmp_fmt  =   get_pix_fmt();
+        av_image_fill_arrays( frame->data, frame->linesize, ppFrame[recv_count], tmp_fmt, width, height, 1 );
 
 
-        if( frame->format == AV_PIX_FMT_CUDA )
-            printf("test");
+
+
+
 
 
         frame->best_effort_timestamp = p_timestamp[recv_count];
+        frame->pts = frame->best_effort_timestamp;
+
         frame_pts   =   frame->best_effort_timestamp;
+        
 
         //av_image_copy( frame->data, frame->linesize, (const uint8_t**)ppFrame[recv_count], frame->linesize, AV_PIX_FMT_YUV420P16LE, width, height );
 
@@ -348,10 +357,51 @@ int     VideoDecodeHW::recv_frame( int index )
 
         recv_count++;
         frame_count++;
+
+
+        // exist frame.
+        //if( ret > 0 )
+        //{
+            //frame_pts   =   frame->best_effort_timestamp;
+
+        if( sub_dec != nullptr )
+        {
+            if( sub_dec->is_graphic_subtitle() == true )
+                ret     =   overlap_subtitle_image();
+            else
+                ret     =   render_nongraphic_subtitle();
+        }
+        //}
+
     }
 
     if( (recv_count-1) < nFrameReturned )
         return  1;
     else
         return  0;
+}
+
+
+
+
+/*******************************************************************************
+VideoDecodeHW::output_video_data
+********************************************************************************/
+VideoData   VideoDecodeHW::output_video_data()
+{
+    VideoData   vd;
+    vd.index        =   frame_count;
+    vd.timestamp    =   get_timestamp();
+
+    if( sub_dec == nullptr )        
+        vd.frame        =   get_video_image();
+    else
+    {
+        if( sub_dec->is_graphic_subtitle() == false )        
+            vd.frame    =   sub_dec->get_subtitle_image();        
+        else
+            vd.frame    =   overlay_image;
+    }
+
+    return  vd;
 }
