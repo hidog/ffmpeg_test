@@ -24,17 +24,13 @@ public:
     VideoDecode& operator = ( const VideoDecode& ) = delete;
     VideoDecode& operator = ( VideoDecode&& ) = delete;
     
+    virtual AVPixelFormat   get_pix_fmt();
+
     virtual int     init() override;
     virtual int     end() override;
     virtual int     open_codec_context( AVFormatContext *fmt_ctx ) override;
 
-    virtual AVPixelFormat   get_pix_fmt();
-    virtual VideoData       output_video_data();
-
-
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
-    
-
     int     recv_frame( int index ) override;
     void    unref_frame() override;
     
@@ -42,6 +38,7 @@ public:
 
     int     render_nongraphic_subtitle();
     int     overlap_subtitle_image();
+    
     int     get_video_width();
     int     get_video_height();
     void    output_video_frame_info();
@@ -50,9 +47,8 @@ public:
 
     int64_t     get_timestamp();
     int64_t     get_pts( int sec );
-    //VideoData   output_video_data();
+    VideoData   output_video_data();
     QImage      get_video_image();
-
 
     int     video_info(); // 未來增加 nv decode 可以參考這邊
 
