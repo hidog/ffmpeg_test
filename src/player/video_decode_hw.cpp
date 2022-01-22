@@ -53,7 +53,7 @@ int     VideoDecodeHW::open_codec_context( AVFormatContext *fmt_ctx )
 {
     int     ret     =   VideoDecode::open_codec_context( fmt_ctx );
 
-    AVCodecID       codec_id    =   dec_ctx->codec_id;
+    AVCodecID       codec_id    =   stream->codecpar->codec_id;
     std::string     log_name    =   fmt_ctx->iformat->long_name;
 
     bool    flag1   =   log_name == "QuickTime / MOV"    ||
@@ -245,7 +245,12 @@ int     VideoDecodeHW::init_bsf( AVFormatContext* fmt_ctx )
         ret     =   av_bsf_alloc( bsf, &v_bsf_ctx );
         assert( ret == 0 );
 
+        // 參考 end(), 如果沒改 par_in, 會造成 crash.
+        // 參考 av_bsf_alloc, 裡面會 alloc par_in, 所以手動釋放
+        avcodec_parameters_free( &v_bsf_ctx->par_in );
         v_bsf_ctx->par_in   =   fmt_ctx->streams[cs_index]->codecpar;
+        // avcodec_parameters_copy( v_bsf_ctx->par_in, fmt_ctx->streams[cs_index]->codecpar );  嘗試用 copy, 會 crash.
+
         av_bsf_init( v_bsf_ctx );
     }
 
@@ -276,15 +281,13 @@ int     VideoDecodeHW::end()
         pkt_bsf     =   nullptr;
     }
  
-    /*  release 會造成 crash.
     if( v_bsf_ctx != nullptr )
     {
         av_bsf_flush( v_bsf_ctx );
+        v_bsf_ctx->par_in   =   nullptr;  // 指向 fmt_ctx, 不設成 nullptr 會造成 fmt_ctx 釋放的時候 crash.
         av_bsf_free( &v_bsf_ctx );
         v_bsf_ctx   =   nullptr;
-    }*/
-    v_bsf_ctx   =   nullptr;
-
+    }
  
     //
     use_bsf     =   false;  

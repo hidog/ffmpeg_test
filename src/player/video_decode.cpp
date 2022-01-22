@@ -278,10 +278,6 @@ VideoData   VideoDecode::output_video_data()
             vd.frame    =   overlay_image;
     }
 
-    /*char str[1000];
-    sprintf( str, "H:\\jpg\\%d.jpg", frame_count );
-    vd.frame.save(str);*/
-
     return  vd;
 }
 
