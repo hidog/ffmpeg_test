@@ -66,7 +66,7 @@ protected:
     std::map<int,AVCodecContext*>   dec_map;
     std::map<int,AVStream*>         stream_map;
     
-    int cs_index    =   -1;     // current stream index.
+    int     cs_index    =   -1;     // current stream index.
     
     AVCodecContext  *dec_ctx    =   nullptr;
     AVStream        *stream     =   nullptr;

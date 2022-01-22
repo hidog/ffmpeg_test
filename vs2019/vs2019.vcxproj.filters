@@ -28,6 +28,9 @@
     <Filter Include="IO">
       <UniqueIdentifier>{45464b67-3143-4077-8a0e-5cdd4adccb97}</UniqueIdentifier>
     </Filter>
+    <Filter Include="hw">
+      <UniqueIdentifier>{bafdab57-e0c0-4db9-955c-0a4f2ef91c54}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vs2019.cpp">
@@ -56,21 +59,6 @@
     </ClCompile>
     <ClCompile Include="..\src\maker\maker.cpp">
       <Filter>src\maker</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\remuxing.c">
-      <Filter>ffmpeg_example</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\resampling_audio.c">
-      <Filter>ffmpeg_example</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\scaling_video.c">
-      <Filter>ffmpeg_example</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\transcode_aac.c">
-      <Filter>ffmpeg_example</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\transcoding.c">
-      <Filter>ffmpeg_example</Filter>
     </ClCompile>
     <ClCompile Include="..\src\maker\audio_encode.cpp">
       <Filter>src\maker</Filter>
@@ -110,6 +98,12 @@
     </ClCompile>
     <ClCompile Include="..\src\player\player_stream.cpp">
       <Filter>src\player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\player\video_decode_hw.cpp">
+      <Filter>src\player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\hw\NvDecoder.cpp">
+      <Filter>hw</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -155,9 +149,6 @@
     <ClInclude Include="..\src\maker\maker_def.h">
       <Filter>src\maker</Filter>
     </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\resampling_audio.h">
-      <Filter>ffmpeg_example</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\maker\sub_encode.h">
       <Filter>src\maker</Filter>
     </ClInclude>
@@ -187,6 +178,12 @@
     </ClInclude>
     <ClInclude Include="..\src\player\player_stream.h">
       <Filter>src\player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\player\video_decode_hw.h">
+      <Filter>src\player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\hw\NvDecoder.h">
+      <Filter>hw</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

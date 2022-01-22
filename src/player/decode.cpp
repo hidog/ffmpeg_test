@@ -56,12 +56,12 @@ int     Decode::init()
     frame       =   av_frame_alloc();
     if( frame == nullptr ) 
     {
-        MYLOG( LOG::ERROR, "Could not allocate frame" );
+        MYLOG( LOG::L_ERROR, "Could not allocate frame" );
         ret =   AVERROR(ENOMEM);        
         return  ret;
     }
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -100,7 +100,7 @@ int     Decode::open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type )
     dec_ctx     =   cs_index == -1 ? nullptr : dec_map[cs_index];
     stream      =   cs_index == -1 ? nullptr : stream_map[cs_index];
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -113,7 +113,7 @@ Decode::get_stream()
 AVStream*   Decode::get_stream()
 {
     if( stream == nullptr )
-        MYLOG( LOG::ERROR, "stream is null." );
+        MYLOG( LOG::L_ERROR, "stream is null." );
     return  stream;
 }
 
@@ -172,8 +172,8 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     if( dec == nullptr )
     {
         auto str =  av_get_media_type_string(type);
-        MYLOG( LOG::ERROR, "Failed to find %s codec. error code = %d", str, AVERROR(EINVAL) );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "Failed to find %s codec. error code = %d", str, AVERROR(EINVAL) );
+        return  R_ERROR;
     }
 
     // Allocate a codec context for the decoder 
@@ -181,8 +181,8 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     if( dec_ctx == nullptr )
     {
         auto str    =   av_get_media_type_string(type);
-        MYLOG( LOG::ERROR, "Failed to allocate the %s codec context. error code = %d", str,  AVERROR(ENOMEM) );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "Failed to allocate the %s codec context. error code = %d", str,  AVERROR(ENOMEM) );
+        return  R_ERROR;
     }
 
     // Copy codec parameters from input stream to output codec context 
@@ -190,8 +190,8 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     if( ret < 0 )
     {
         auto str    =   av_get_media_type_string(type);
-        MYLOG( LOG::ERROR, "Failed to copy %s codec parameters to decoder context. ret = %d", str, ret );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "Failed to copy %s codec parameters to decoder context. ret = %d", str, ret );
+        return  R_ERROR;
     }
 
     // Init the decoders 
@@ -199,8 +199,8 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     if( ret < 0 )
     {
         auto str    =   av_get_media_type_string(type);
-        MYLOG( LOG::ERROR, "Failed to open %s codec. ret = %d", str, ret );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "Failed to open %s codec. ret = %d", str, ret );
+        return  R_ERROR;
     }   
 
     // for psg subtitle use.
@@ -210,7 +210,7 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     // output info
     output_decode_info( dec, dec_ctx );
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -234,11 +234,11 @@ int     Decode::send_packet( AVPacket *pkt )
     if( ret < 0 ) 
     {
         auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
-        MYLOG( LOG::WARN, "Error submitting a packet for decoding (%s)", str );
+        MYLOG( LOG::L_WARN, "Error submitting a packet for decoding (%s)", str );
         return  ret;
     }
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -342,7 +342,7 @@ int     Decode::recv_frame( int index )
             return  0;
 
         auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
-        MYLOG( LOG::ERROR, "Error during decoding (%s)", str );
+        MYLOG( LOG::L_ERROR, "Error during decoding (%s)", str );
         return  ret;
     }
 
@@ -401,7 +401,7 @@ int     Decode::end()
     cs_index    =   -1;
     frame_count =   -1;
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -427,8 +427,8 @@ int    Decode::flush()
         if( ret < 0 ) 
         {
             auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
-            MYLOG( LOG::ERROR, "Error submitting a packet for decoding (%s)", str );
-            return  ERROR;
+            MYLOG( LOG::L_ERROR, "Error submitting a packet for decoding (%s)", str );
+            return  R_ERROR;
         }
 
         // get all the available frames from the decoder
@@ -443,7 +443,7 @@ int    Decode::flush()
                     break; 
 
                 auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
-                MYLOG( LOG::ERROR, "Error during decoding (%s)", str );
+                MYLOG( LOG::L_ERROR, "Error during decoding (%s)", str );
                 break; //return  ret;
             }
 

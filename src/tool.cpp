@@ -6,7 +6,6 @@
 
 
 
-
 // note: 以後如果需要 multi-encode, 需要寫一個 manager.
 namespace encode {
 
@@ -122,7 +121,7 @@ bool    is_audio_queue_full()
 {
     if( aframe_queue.size() > MAX_QUEUE_SIZE )
     {
-        MYLOG( LOG::WARN, "aframe queue full." );
+        MYLOG( LOG::L_WARN, "aframe queue full." );
         return  true;
     }
     else
@@ -140,7 +139,7 @@ bool    is_video_queue_full()
 {
     if( vframe_queue.size() > MAX_QUEUE_SIZE )
     {
-        MYLOG( LOG::WARN, "vframe queue full." );
+        MYLOG( LOG::L_WARN, "vframe queue full." );
         return  true;
     }
     else

@@ -63,7 +63,7 @@ Maker::is_connect()
 ********************************************************************************/
 bool    Maker::is_connect()
 {
-    MYLOG( LOG::ERROR, "should not run into this code." );
+    MYLOG( LOG::L_ERROR, "should not run into this code." );
     return  true;
 }
 
@@ -90,7 +90,7 @@ void    Maker::flush_encoder( Encode* enc )
             break;
         else if( ret < 0 )
         {
-            MYLOG( LOG::ERROR, "recv fail." );
+            MYLOG( LOG::L_ERROR, "recv fail." );
             break;
         }
     
@@ -143,7 +143,7 @@ void    Maker::work_with_subtitle()
         ret     =   encoder->send_frame();
         if( ret < 0 )
         {
-            MYLOG( LOG::ERROR, "send fail." );
+            MYLOG( LOG::L_ERROR, "send fail." );
             break;
         }
 
@@ -155,7 +155,7 @@ void    Maker::work_with_subtitle()
                 break;
             else if( ret < 0 )
             {
-                MYLOG( LOG::ERROR, "recv fail." );
+                MYLOG( LOG::L_ERROR, "recv fail." );
                 break;
             }
 
@@ -179,9 +179,9 @@ void    Maker::work_with_subtitle()
 
     //
     if( s_encoder.get_queue_size() > 0 )
-        MYLOG( LOG::WARN, "subtitie queue is not empty." );
+        MYLOG( LOG::L_WARN, "subtitie queue is not empty." );
     if( s_encoder.is_flush() == false )
-        MYLOG( LOG::WARN, "subtitie not flush." );
+        MYLOG( LOG::L_WARN, "subtitie not flush." );
     
     // flush
     if( s_encoder.is_flush() == false )
@@ -227,7 +227,7 @@ void    Maker::work_without_subtitle()
         ret     =   encoder->send_frame();
         if( ret < 0 )
         {
-            MYLOG( LOG::ERROR, "send fail." );
+            MYLOG( LOG::L_ERROR, "send fail." );
             break;
         }
 
@@ -241,7 +241,7 @@ void    Maker::work_without_subtitle()
                 break;
             else if( ret < 0 )
             {
-                MYLOG( LOG::ERROR, "recv fail." );
+                MYLOG( LOG::L_ERROR, "recv fail." );
                 break;
             }
 
@@ -267,7 +267,7 @@ void    Maker::work_without_subtitle()
     // flush. 
     // note: 理論上已經在 loop 內 flush 完畢.
     if( v_encoder.is_flush() == false || a_encoder.is_flush() == false )
-        MYLOG( LOG::WARN, "not flush in loop." );
+        MYLOG( LOG::L_WARN, "not flush in loop." );
     if( v_encoder.is_flush() == false )
         flush_encoder( &v_encoder );
     if( a_encoder.is_flush() == false )
@@ -306,7 +306,7 @@ void Maker::work()
     else
         work_without_subtitle();
 
-    MYLOG( LOG::INFO, "encode finish." );
+    MYLOG( LOG::L_INFO, "encode finish." );
 }
 
 

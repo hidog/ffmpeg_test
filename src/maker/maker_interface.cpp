@@ -112,7 +112,7 @@ void    output_by_io( MediaInfo media_info, std::string _port, MakerInterface* m
     MakerIO*    maker_io    =   dynamic_cast<MakerIO*>(maker);
     if( maker_io == nullptr )
     {
-        MYLOG( LOG::ERROR, "maker io convert fail." );
+        MYLOG( LOG::L_ERROR, "maker io convert fail." );
         return;
     }
 

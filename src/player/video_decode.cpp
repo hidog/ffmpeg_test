@@ -67,7 +67,7 @@ int     VideoDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
     Decode::open_all_codec( fmt_ctx, type );
     //dec_ctx->thread_count   =   4;
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -85,17 +85,13 @@ int     VideoDecode::init()
     height      =   dec_ctx->height;
     pix_fmt     =   dec_ctx->pix_fmt;
 
-    MYLOG( LOG::INFO, "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
+    MYLOG( LOG::L_INFO, "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
     
-#ifndef FFMPEG_TEST
     video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
-#else
-    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
-#endif
     if( video_dst_bufsize < 0 )
     {
-        MYLOG( LOG::ERROR, "Could not allocate raw video buffer" );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "Could not allocate raw video buffer" );
+        return  R_ERROR;
     }
 
     // NOTE : 可以改變寬高. 
@@ -103,20 +99,18 @@ int     VideoDecode::init()
                                     width, height, AV_PIX_FMT_RGB24,            // dst
                                     SWS_BICUBIC, NULL, NULL, NULL);                        
 
-    //
 #ifdef FFMPEG_TEST
-    output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
-    //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
+    //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
+    output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
 #endif
 
-    //
     Decode::init();
 
     // 理論上可以在這之前就設置好 sub_dec, 但目前規劃是 init 後再設置 sub_dec.
     if( sub_dec != nullptr )
-        MYLOG( LOG::ERROR, "sub_dec not null." );
+        MYLOG( LOG::L_ERROR, "sub_dec not null." );
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -130,9 +124,9 @@ VideoDecode::set_subtitle_decoder()
 void    VideoDecode::set_subtitle_decoder( SubDecode* sd )
 {
     if( sd == nullptr )
-        MYLOG( LOG::ERROR, "sd is null." );
+        MYLOG( LOG::L_ERROR, "sd is null." );
     if( sub_dec != nullptr )
-        MYLOG( LOG::ERROR, "sub_dec is not null." );
+        MYLOG( LOG::L_ERROR, "sub_dec is not null." );
 
     sub_dec     =   sd;
 
@@ -157,10 +151,10 @@ VideoDecode::output_decode_info()
 ********************************************************************************/
 void    VideoDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
 {
-    MYLOG( LOG::INFO, "video dec name = %s", dec->name );
-    MYLOG( LOG::INFO, "video dec long name = %s", dec->long_name );
-    MYLOG( LOG::INFO, "video dec codec id = %s", avcodec_get_name(dec->id) );
-    MYLOG( LOG::INFO, "video bitrate = %lld, pix_fmt = %s", dec_ctx->bit_rate, av_get_pix_fmt_name(dec_ctx->pix_fmt) );
+    MYLOG( LOG::L_INFO, "video dec name = %s", dec->name );
+    MYLOG( LOG::L_INFO, "video dec long name = %s", dec->long_name );
+    MYLOG( LOG::L_INFO, "video dec codec id = %s", avcodec_get_name(dec->id) );
+    MYLOG( LOG::L_INFO, "video bitrate = %lld, pix_fmt = %s", dec_ctx->bit_rate, av_get_pix_fmt_name(dec_ctx->pix_fmt) );
 }
 
 
@@ -177,12 +171,12 @@ void    VideoDecode::output_video_frame_info()
 {
     const char  *frame_format_str   =   av_get_pix_fmt_name( static_cast<AVPixelFormat>(frame->format) );
 
-    MYLOG( LOG::INFO, "frame width = %d, height = %d", frame->width, frame->height );
-    MYLOG( LOG::INFO, "frame format = %s", frame_format_str );
+    MYLOG( LOG::L_INFO, "frame width = %d, height = %d", frame->width, frame->height );
+    MYLOG( LOG::L_INFO, "frame format = %s", frame_format_str );
 
     char        buf[AV_TS_MAX_STRING_SIZE]{0};
     const char* time_str    =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
-    MYLOG( LOG::INFO, "video_frame = %d, coded_n : %d, time = %s", frame_count, frame->coded_picture_number, time_str );
+    MYLOG( LOG::L_INFO, "video_frame = %d, coded_n : %d, time = %s", frame_count, frame->coded_picture_number, time_str );
 }
 
 
@@ -223,7 +217,7 @@ int     VideoDecode::end()
     sub_dec =   nullptr; // 非 owner, 不能刪除記憶體
 
     Decode::end();
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -384,8 +378,8 @@ int     VideoDecode::video_info()
     AVStream    *video_stream   =   fmt_ctx->streams[vs_idx];
     if( video_stream == nullptr )
     {
-        MYLOG( LOG::INFO, "this stream has no video stream" );
-        return  SUCCESS;
+        MYLOG( LOG::L_INFO, "this stream has no video stream" );
+        return  R_SUCCESS;
     }
 
     //if( fmt_ctx->streams[vs_idx]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
@@ -402,62 +396,15 @@ int     VideoDecode::video_info()
     if( fmt_ctx->streams[vs_idx]->codecpar->format == AV_PIX_FMT_YUV420P12LE )
         depth = 12;
 
-    MYLOG( LOG::INFO, "width = %d, height = %d, depth = %d", width, height, depth );
-    MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(v_codec_id) );
+    MYLOG( LOG::L_INFO, "width = %d, height = %d, depth = %d", width, height, depth );
+    MYLOG( LOG::L_INFO, "code name = %s", avcodec_get_name(v_codec_id) );
 
     //
     double  fps     =   av_q2d( fmt_ctx->streams[vs_idx]->r_frame_rate );
-    MYLOG( LOG::INFO, "fps = %lf", fps );
+    MYLOG( LOG::L_INFO, "fps = %lf", fps );
 #endif
 
-#if 0
-    // use for NVDEC
-    bool flag1  =   !strcmp( fmt_ctx->iformat->long_name, "QuickTime / MOV" )   ||
-        !strcmp( fmt_ctx->iformat->long_name, "FLV (Flash Video)" ) ||
-        !strcmp( fmt_ctx->iformat->long_name, "Matroska / WebM" );
-    bool flag2  =   codec_id == AV_CODEC_ID_H264 || codec_id == AV_CODEC_ID_HEVC;
-
-    use_bsf     =   flag1 && flag2;
-#endif
-
-#if 0
-    // use for NVDEC
-    if( use_bsf == true )
-    {
-        const AVBitStreamFilter*  bsf   =   nullptr;
-        if( codec_id == AV_CODEC_ID_H264 )
-            bsf     =   av_bsf_get_by_name("h264_mp4toannexb");
-        else if( codec_id == AV_CODEC_ID_HEVC )
-            bsf     =   av_bsf_get_by_name("hevc_mp4toannexb");
-        else 
-            assert(0);
-
-        av_bsf_alloc( bsf, &v_bsf_ctx );
-        v_bsf_ctx->par_in   =   fmt_ctx->streams[vs_idx]->codecpar;
-        av_bsf_init( v_bsf_ctx );
-    }
-
-#endif
-
-
-
-
-#if 0
-    用 bsf 處理 pkt, 再丟給 nv decode 的參考.
-    if( use_bsf && pkt->stream_index == vs_idx )
-    {
-        av_bsf_send_packet( v_bsf_ctx, pkt );
-        av_bsf_receive_packet( v_bsf_ctx, pkt_bsf );
-    }
-    else if( pkt->stream_index == as_idx )
-    {
-        av_bsf_send_packet( a_bsf_ctx, pkt );
-        av_bsf_receive_packet( a_bsf_ctx, pkt );
-    }
-#endif
-
-
-    return SUCCESS;
+    return R_SUCCESS;
 }
 
 
@@ -469,16 +416,16 @@ int     VideoDecode::render_nongraphic_subtitle()
 {
     int ret =   sub_dec->send_video_frame( frame );
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "send video to subtitle fail." );
+        MYLOG( LOG::L_ERROR, "send video to subtitle fail." );
 
     ret =   sub_dec->render_subtitle();
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "render subtitle fail." );
+        MYLOG( LOG::L_ERROR, "render subtitle fail." );
 
 #ifdef _DEBUG
      // 理論上一次只有一張, 保險起見加檢查.
      if( sub_dec->resend_to_filter() > 0 )
-        MYLOG( LOG::ERROR, "multi subtitle frame." );
+        MYLOG( LOG::L_ERROR, "multi subtitle frame." );
 #endif
 
      return     ret;
@@ -595,7 +542,7 @@ int    VideoDecode::output_jpg_by_QT()
     char    str[1000];
     sprintf( str, "%s\\%d.jpg", output_jpg_root_path.c_str(), frame_count );
     if( frame_count % 100 == 0 )
-        MYLOG( LOG::DEBUG, "save jpg %s", str );
+        MYLOG( LOG::L_DEBUG, "save jpg %s", str );
     img.save(str);
 
     return  0;
@@ -616,7 +563,7 @@ int     VideoDecode::output_overlay_by_QT()
     char    str[1000];
     sprintf( str, "%s\\%d.jpg", output_jpg_root_path.c_str(), frame_count );
     if( frame_count % 100 == 0 )
-        MYLOG( LOG::DEBUG, "save jpg %s", str );
+        MYLOG( LOG::L_DEBUG, "save jpg %s", str );
     overlay_image.save(str);
 
     return  0;
@@ -661,7 +608,7 @@ int     VideoDecode::output_jpg_by_openCV()
     memcpy( img.data + width*height, frame->data[1], width*height/4 );
     memcpy( img.data + width*height*5/4, frame->data[2], width*height/4 );
 #else
-    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, pix_fmt, width, height );
+    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, AV_PIX_FMT_YUV420P, width, height );
     cv::Mat img( cv::Size( width, height*3/2 ), CV_8UC1, video_dst_data[0] );
 #endif
 

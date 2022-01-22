@@ -3,7 +3,6 @@
 #include <srt.h>
 
 
-#undef ERROR  // 為了避免跟某個 header 的define起衝突 
 
 // 避免重複呼叫 srt_startup. 若改成multi-thread,則需要修改這邊的設計.
 static bool     srt_has_init    =   false;
@@ -62,19 +61,19 @@ void    SrtIO::server_init()
 
     ret     =   getaddrinfo( NULL, setting.srt_port.c_str(), &hints, &res );
     if( 0 != ret )    
-        MYLOG( LOG::ERROR, "getaddrinfo fail." );    
+        MYLOG( LOG::L_ERROR, "getaddrinfo fail." );    
 
     //
     serv    =   srt_create_socket();
     if( serv == SRT_INVALID_SOCK )
-        MYLOG( LOG::ERROR, "create serv fail." );
+        MYLOG( LOG::L_ERROR, "create serv fail." );
 
     SRT_TRANSTYPE   live_mode   =   SRTT_LIVE;
     srt_setsockopt( serv, 0, SRTO_TRANSTYPE, &live_mode, sizeof(live_mode) );
 
     ret     =   srt_bind(serv, res->ai_addr, res->ai_addrlen);
     if( SRT_ERROR == ret )
-        MYLOG( LOG::ERROR, "bind fail." );
+        MYLOG( LOG::L_ERROR, "bind fail." );
 
     freeaddrinfo(res);
 }
@@ -96,7 +95,7 @@ bool    SrtIO::need_wait()
     srt_getsockopt( handle, 0, SRTO_SNDDATA, &data_in_buf, &len );
     
     if( data_in_buf > 3*send_buf_size/4 )
-        MYLOG( LOG::WARN, "data_in_buf = %d, 3*send_buf_size/4 = %d\n", data_in_buf, 3*send_buf_size/4 );
+        MYLOG( LOG::L_WARN, "data_in_buf = %d, 3*send_buf_size/4 = %d\n", data_in_buf, 3*send_buf_size/4 );
 
     return  data_in_buf > 3*send_buf_size/4;
 }
@@ -200,12 +199,12 @@ void    SrtIO::client_open()
 
     ret     =   getaddrinfo( setting.srt_ip.c_str(), setting.srt_port.c_str(), &hints, &peer );
     if( 0 != ret )
-        MYLOG( LOG::ERROR, "get addr fail." );
+        MYLOG( LOG::L_ERROR, "get addr fail." );
 
     assert( handle == SRT_INVALID_SOCK );
     handle  =   srt_create_socket();
     if( handle == SRT_INVALID_SOCK )
-        MYLOG( LOG::ERROR, "create fail." );
+        MYLOG( LOG::L_ERROR, "create fail." );
 
     SRT_TRANSTYPE   live_mode   =   SRTT_LIVE;
     srt_setsockopt( handle, 0, SRTO_TRANSTYPE, &live_mode, sizeof live_mode );
@@ -227,10 +226,10 @@ void    SrtIO::client_open()
         if( SRT_ERROR != ret ) 
             break;
 
-        MYLOG( LOG::DEBUG, "connect fail. ret = %d\n", ret );
+        MYLOG( LOG::L_DEBUG, "connect fail. ret = %d\n", ret );
     }
     freeaddrinfo(peer);
-    MYLOG( LOG::INFO, "connected." );
+    MYLOG( LOG::L_INFO, "connected." );
 
     // start
     assert( thr == nullptr );
@@ -262,7 +261,7 @@ void    SrtIO::server_open()
         handle  =   srt_accept(serv, (sockaddr*)&clientaddr, &addrlen);
         if (SRT_INVALID_SOCK == handle)
         {
-            MYLOG( LOG::INFO, "accept fail." );
+            MYLOG( LOG::L_INFO, "accept fail." );
         }
         else
             break;
@@ -319,14 +318,14 @@ SrtIO::recv_handle()
 ********************************************************************************/
 int     SrtIO::recv_handle()
 {
-    MYLOG( LOG::INFO, "start recv." );
+    MYLOG( LOG::L_INFO, "start recv." );
     int     res =   0;
 
     while( is_end == false )
     {
         if( next_index(write_index) == read_index )
         {
-            MYLOG( LOG::WARN, "buffer full!!" );
+            MYLOG( LOG::L_WARN, "buffer full!!" );
             SLEEP_10MS;
         }
 
@@ -334,10 +333,10 @@ int     SrtIO::recv_handle()
         rd[write_index].size    =   res;
         write_index             =   next_index(write_index);
 
-        //MYLOG( LOG::DEBUG, "recv size = %d", res );
+        //MYLOG( LOG::L_DEBUG, "recv size = %d", res );
         if( res <= 0 )
         {
-            MYLOG( LOG::INFO, "recv no data." );
+            MYLOG( LOG::L_INFO, "recv no data." );
             is_end  =   true;  // 利用設置 flag 來跳出迴圈. ret <= 0 通常是斷線造成.
         }
     }
@@ -345,7 +344,7 @@ int     SrtIO::recv_handle()
      //
     srt_close(handle);
     handle  =   SRT_INVALID_SOCK;
-    MYLOG( LOG::INFO, "recv_handle finish." );
+    MYLOG( LOG::L_INFO, "recv_handle finish." );
     return  1;
 }
 
@@ -372,7 +371,7 @@ int     SrtIO::read( uint8_t *buffer, int size )
     // 如果需要的資料太少, 跳錯誤. 目前並沒有處理這樣的 case.
     // 理論上 size >= 1316.
     if( rd[read_index].size > size )
-        MYLOG( LOG::ERROR, "wanted size = %d too small.", size );
+        MYLOG( LOG::L_ERROR, "wanted size = %d too small.", size );
 
     //
     int     read_size   =   0;
@@ -392,7 +391,7 @@ int     SrtIO::read( uint8_t *buffer, int size )
             break;
     }
 
-    //MYLOG( LOG::DEBUG, "wanted size = %d, read size = %d", size, read_size );
+    //MYLOG( LOG::L_DEBUG, "wanted size = %d, read size = %d", size, read_size );
     return  read_size;
 }
 
@@ -426,7 +425,7 @@ void    SrtIO::client_end()
     is_end  =   true;
     thr->join();
     handle  =   SRT_INVALID_SOCK;
-    MYLOG( LOG::INFO, "close socket.");
+    MYLOG( LOG::L_INFO, "close socket.");
 
     is_end  =   false;
 
@@ -455,10 +454,10 @@ void    SrtIO::server_end()
         srt_getsockopt( handle, 0, SRTO_SNDDATA, &data_in_buf, &len );
         if( data_in_buf == 0 )
             break;        
-        //MYLOG( LOG::DEBUG, "data_in_buf = %d", data_in_buf );
+        //MYLOG( LOG::L_DEBUG, "data_in_buf = %d", data_in_buf );
     }
 
-    MYLOG( LOG::INFO, "server end." );
+    MYLOG( LOG::L_INFO, "server end." );
 
     srt_close(handle);  // note: call srt_close, it will not send data in buffer.
     handle  =   SRT_INVALID_SOCK;
@@ -478,7 +477,7 @@ SrtIO::write()
 ********************************************************************************/
 int     SrtIO::write( uint8_t *buffer, int size )
 {
-    //MYLOG( LOG::DEBUG, "buf size = %d", buf_size );
+    //MYLOG( LOG::L_DEBUG, "buf size = %d", buf_size );
 
     int     ret         =   0;
     int     send_size   =   0;
@@ -491,7 +490,7 @@ int     SrtIO::write( uint8_t *buffer, int size )
             ret     =   srt_send( handle, (const char*)(buffer + send_size), 1316 );
             // 暫時不作斷線檢查. 如果 remote disconnect 會造成 crash.
             if( ret != 1316 )
-                MYLOG( LOG::ERROR, "ret = %d", ret );
+                MYLOG( LOG::L_ERROR, "ret = %d", ret );
             send_size   +=  1316;
             remain      -=  1316;
         }
@@ -499,7 +498,7 @@ int     SrtIO::write( uint8_t *buffer, int size )
         {
             ret     =   srt_send( handle, (const char*)(buffer + send_size), remain );
             if( ret != remain )
-                MYLOG( LOG::ERROR, "ret = %d", ret );
+                MYLOG( LOG::L_ERROR, "ret = %d", ret );
             break;
         }
     }
@@ -509,8 +508,3 @@ int     SrtIO::write( uint8_t *buffer, int size )
 
 
 
-
-
-
-
-#define ERROR 0   // 參考 #undef 的註解

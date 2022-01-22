@@ -55,7 +55,7 @@ Mux::is_connect()
 ********************************************************************************/
 bool    Mux::is_connect()
 {
-    MYLOG( LOG::WARN, "io type is default." );
+    MYLOG( LOG::L_WARN, "io type is default." );
     return  true;
 }
 
@@ -74,24 +74,24 @@ void    Mux::init( EncodeSetting setting )
     //avformat_alloc_output_context2( &output_ctx, NULL, NULL, setting.filename.c_str() );  //副檔名參數可以不用傳進去,讓系統自動判斷
     avformat_alloc_output_context2( &output_ctx, NULL, setting.extension.c_str(), setting.filename.c_str() );
     if( output_ctx == nullptr ) 
-        MYLOG( LOG::ERROR, "output_ctx = nullptr" );
+        MYLOG( LOG::L_ERROR, "output_ctx = nullptr" );
 
     // 
-    MYLOG( LOG::INFO, "default video codec is %s", avcodec_get_name(output_ctx->oformat->video_codec) );
-    MYLOG( LOG::INFO, "default audio codec is %s", avcodec_get_name(output_ctx->oformat->audio_codec) );
-    MYLOG( LOG::INFO, "default subtitle codec is %s", avcodec_get_name(output_ctx->oformat->subtitle_codec) );
+    MYLOG( LOG::L_INFO, "default video codec is %s", avcodec_get_name(output_ctx->oformat->video_codec) );
+    MYLOG( LOG::L_INFO, "default audio codec is %s", avcodec_get_name(output_ctx->oformat->audio_codec) );
+    MYLOG( LOG::L_INFO, "default subtitle codec is %s", avcodec_get_name(output_ctx->oformat->subtitle_codec) );
 
     // add stream
     // video
     v_stream    =   avformat_new_stream( output_ctx, nullptr );  // 第二個參數丟 nullptr 即可
     if( v_stream == nullptr )
-        MYLOG( LOG::ERROR, "v_stream is nullptr." );
+        MYLOG( LOG::L_ERROR, "v_stream is nullptr." );
     v_stream->id    =   output_ctx->nb_streams - 1;         // 未來改掉這邊的寫法. 增加彈性. 方便增加多個 audio stream, subtitle stream
     
     // audio
     a_stream    =   avformat_new_stream( output_ctx, nullptr );
     if( a_stream == nullptr )
-        MYLOG( LOG::ERROR, "a_stream is nullptr." );
+        MYLOG( LOG::L_ERROR, "a_stream is nullptr." );
     a_stream->id    =   output_ctx->nb_streams - 1;
 
     // subtitle
@@ -99,7 +99,7 @@ void    Mux::init( EncodeSetting setting )
     {
         s_stream    =   avformat_new_stream( output_ctx, nullptr );
         if( s_stream == nullptr )
-            MYLOG( LOG::ERROR, "a_stream is nullptr." );
+            MYLOG( LOG::L_ERROR, "a_stream is nullptr." );
         s_stream->id    =   output_ctx->nb_streams - 1;
     }
 }
@@ -116,10 +116,10 @@ Mux::open()
 void    Mux::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext* a_ctx, AVCodecContext* s_ctx )
 {
     if( v_ctx == nullptr || a_ctx == nullptr )
-        MYLOG( LOG::ERROR, "v ctx or a ctx is null" );
+        MYLOG( LOG::L_ERROR, "v ctx or a ctx is null" );
 
     if( setting.has_subtitle == true && s_ctx == nullptr )
-        MYLOG( LOG::ERROR, "subtitle ctx is null." );   
+        MYLOG( LOG::L_ERROR, "subtitle ctx is null." );   
 
     // copy time base.
     v_stream->time_base     =   v_ctx->time_base;   // 在某個操作後這邊的 value 會變.
@@ -149,7 +149,7 @@ void    Mux::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContext*
     {
         ret     =   avio_open( &output_ctx->pb, setting.filename.c_str() , AVIO_FLAG_WRITE );
         if( ret < 0 ) 
-            MYLOG( LOG::ERROR, "open output file fail" );
+            MYLOG( LOG::L_ERROR, "open output file fail" );
     }
 }
 
@@ -176,8 +176,8 @@ void    Mux::write_header()
     AVDictionary    *opt    =   nullptr; // 未來改成class member. 方便寫入參數 
     int ret =   avformat_write_header( output_ctx, &opt );
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "write header fail. err = %d", ret );
-        //MYLOG( LOG::ERROR, "write header fail. err = %s", av_make_error_string(tmp,AV_ERROR_MAX_STRING_SIZE,ret) );
+        MYLOG( LOG::L_ERROR, "write header fail. err = %d", ret );
+        //MYLOG( LOG::L_ERROR, "write header fail. err = %s", av_make_error_string(tmp,AV_ERROR_MAX_STRING_SIZE,ret) );
 }
 
 
@@ -190,7 +190,7 @@ void    Mux::write_frame( AVPacket* pkt )
 {
     int ret =   av_interleaved_write_frame( output_ctx, pkt );
     if( ret < 0 ) 
-        MYLOG( LOG::ERROR, "write fail." );
+        MYLOG( LOG::L_ERROR, "write fail." );
 }
 
 
@@ -220,7 +220,7 @@ Mux::get_video_stream_timebase()
 AVRational  Mux::get_video_stream_timebase()
 {
     if( v_stream == nullptr )
-        MYLOG( LOG::ERROR, "v stream is null." );
+        MYLOG( LOG::L_ERROR, "v stream is null." );
     return  v_stream->time_base;
 }
 
@@ -235,7 +235,7 @@ Mux::get_audio_stream_timebase()
 AVRational  Mux::get_audio_stream_timebase()
 {
     if( a_stream == nullptr )
-        MYLOG( LOG::ERROR, "a stream is null." );
+        MYLOG( LOG::L_ERROR, "a stream is null." );
     return  a_stream->time_base;
 }
 
@@ -250,6 +250,6 @@ Mux::get_sub_stream_timebase()
 AVRational  Mux::get_sub_stream_timebase()
 {
     if( s_stream == nullptr )
-        MYLOG( LOG::ERROR, "a stream is null." );
+        MYLOG( LOG::L_ERROR, "a stream is null." );
     return  s_stream->time_base;
 }

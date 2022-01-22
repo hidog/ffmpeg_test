@@ -1,6 +1,8 @@
 ﻿#ifndef PLAYER_H
 #define PLAYER_H
 
+#include "tool.h"
+
 #ifdef USE_MT
 #include <queue>
 #include <thread>
@@ -11,9 +13,11 @@
 
 #include "demux.h"
 #include "audio_decode.h"
-#include "video_decode.h"
 #include "sub_decode.h"
-#include "tool.h"
+
+#include "video_decode.h"
+#include "video_decode_hw.h"
+
 
 #include <QImage>
 
@@ -108,7 +112,9 @@ private:
     DecodeSetting   setting;
 
     Demux           *demuxer    =   nullptr;
-    VideoDecode     v_decoder;
+    
+    //VideoDecode     v_decoder;
+    VideoDecodeHW   v_decoder;
     AudioDecode     a_decoder;
     SubDecode       s_decoder;
 
