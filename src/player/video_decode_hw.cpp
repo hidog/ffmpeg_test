@@ -298,9 +298,6 @@ VideoDecodeHW::send_packet
 ********************************************************************************/
 int     VideoDecodeHW::send_packet( AVPacket *pkt )
 {
-    if( pkt_bsf->data != nullptr ) 
-        MYLOG( LOG::ERROR, "forget release." )
-
     uint8_t     *pkt_ptr    =   nullptr;
     int         pkt_size    =   0;
     int64_t     pkt_ts      =   0;
@@ -328,6 +325,17 @@ int     VideoDecodeHW::send_packet( AVPacket *pkt )
     return  SUCCESS;
 }
 
+
+
+
+/*******************************************************************************
+VideoDecodeHW::flush_for_seek
+********************************************************************************/
+void    VideoDecodeHW::flush_for_seek()
+{
+    av_bsf_flush( v_bsf_ctx );
+    Decode::flush_for_seek();
+}
 
 
 

@@ -8,7 +8,7 @@
 class NvDecoder;
 struct AVPacket;
 struct AVBSFContext;
-enum cudaVideoCodec;
+enum cudaVideoCodec_enum;
 enum AVCodecID;
 
 
@@ -31,9 +31,10 @@ public:
     VideoDecodeHW& operator = ( const VideoDecodeHW& ) = delete;
     VideoDecodeHW& operator = ( VideoDecodeHW&& ) = delete;
 
-    int     open_codec_context( AVFormatContext *fmt_ctx ) override;
     int     init() override;
     int     end() override;
+    void    flush_for_seek() override;
+    int     open_codec_context( AVFormatContext *fmt_ctx ) override;
     int     send_packet( AVPacket *pkt ) override;
     int     recv_frame( int index ) override;
     
@@ -43,8 +44,7 @@ public:
     int     init_nvidia_decoder();
     void    convert_to_planar( uint8_t *ptr, int w, int h, int d );
 
-
-    cudaVideoCodec  codec_id_ffmpeg_to_cuda( AVCodecID id );
+    cudaVideoCodec_enum  codec_id_ffmpeg_to_cuda( AVCodecID id );  // 用 cudaVideoCodec, 沒 include, 會造成編譯錯誤. 思考要不要改成回傳 int.
 
 private:
 
