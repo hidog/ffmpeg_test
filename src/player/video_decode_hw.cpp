@@ -87,9 +87,11 @@ AV_PIX_FMT_NV12
 ********************************************************************************/
 int     VideoDecodeHW::init()
 {
+    assert( stream != nullptr );
+
     pkt_bsf     =   av_packet_alloc();
-    width       =   dec_ctx->width;
-    height      =   dec_ctx->height;
+    width       =   stream->codecpar->width;
+    height      =   stream->codecpar->height;
 
     // init nvidia decoder.
     init_nvidia_decoder();
@@ -274,11 +276,15 @@ int     VideoDecodeHW::end()
         pkt_bsf     =   nullptr;
     }
  
+    /*  release ·|³y¦¨ crash.
     if( v_bsf_ctx != nullptr )
     {
+        av_bsf_flush( v_bsf_ctx );
         av_bsf_free( &v_bsf_ctx );
         v_bsf_ctx   =   nullptr;
-    }
+    }*/
+    v_bsf_ctx   =   nullptr;
+
  
     //
     use_bsf     =   false;  

@@ -17,6 +17,9 @@ enum AVCodecID;
 
 
 // note: 檢查那些資料是 VideoDecode allocate 但忘了釋放的
+// 會多 alloc 一些資料 (VideoDecode用的)  未來再考慮要不要移掉 
+
+
 
 class VideoDecodeHW : public VideoDecode 
 {
