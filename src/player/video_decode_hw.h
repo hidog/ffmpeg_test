@@ -52,6 +52,7 @@ private:
     int nFrameReturned = 0;
     int recv_count = 0;
      
+    int64_t *p_timestamp = nullptr;
 };
 
 

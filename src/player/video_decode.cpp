@@ -100,8 +100,8 @@ int     VideoDecode::init()
                                     SWS_BICUBIC, NULL, NULL, NULL);                        
 
 #ifdef FFMPEG_TEST
-    output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
-    //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
+    //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
+    output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
 #endif
 
     Decode::init();
@@ -608,7 +608,7 @@ int     VideoDecode::output_jpg_by_openCV()
     memcpy( img.data + width*height, frame->data[1], width*height/4 );
     memcpy( img.data + width*height*5/4, frame->data[2], width*height/4 );
 #else
-    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, pix_fmt, width, height );
+    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, AV_PIX_FMT_YUV420P, width, height );
     cv::Mat img( cv::Size( width, height*3/2 ), CV_8UC1, video_dst_data[0] );
 #endif
 

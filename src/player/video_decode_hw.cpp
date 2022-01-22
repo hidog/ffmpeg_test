@@ -81,6 +81,7 @@ ffplay -f rawvideo -pix_fmt nv12 -video_size 1280x720 output.data
 ffplay -f rawvideo -pix_fmt p016 -video_size 1920x1080 2output.data
 
 AV_PIX_FMT_P016LE
+AV_PIX_FMT_NV12
 ********************************************************************************/
 int     VideoDecodeHW::init()
 {
@@ -95,6 +96,8 @@ int     VideoDecodeHW::init()
     MYLOG( LOG::INFO, "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
     
     video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
+    //video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_YUV420P, 1 );
+
     if( video_dst_bufsize < 0 )
     {
         MYLOG( LOG::ERROR, "Could not allocate raw video buffer" );
@@ -102,7 +105,7 @@ int     VideoDecodeHW::init()
     }
 
     // NOTE : 可以改變寬高. 
-    sws_ctx     =   sws_getContext( width, height, AV_PIX_FMT_YUV420P,           // src
+    sws_ctx     =   sws_getContext( width, height, AV_PIX_FMT_P016LE,           // src
                                     width, height, AV_PIX_FMT_RGB24,            // dst
                                     SWS_BICUBIC, NULL, NULL, NULL);                        
 
@@ -243,18 +246,28 @@ VideoDecodeHW::send_packet
 ********************************************************************************/
 int     VideoDecodeHW::send_packet( AVPacket *pkt )
 {
+    if( pkt_bsf->data ) 
+        av_packet_unref(pkt_bsf);
 
     if( use_bsf == true )
     {
         av_bsf_send_packet( v_bsf_ctx, pkt );
+        //printf( "pts = %lld\n", pkt_bsf->pts) ;
+
+
         av_bsf_receive_packet( v_bsf_ctx, pkt_bsf );
       
+
+        //printf( "pkt_bsf = %lld\n", pkt_bsf->pts) ;
+
         // insert nv decode here.
         uint8_t *ppVideo = pkt_bsf->data;
         int pnVideoBytes = pkt_bsf->size;
 
+        static int n = 0;
 
-        nv_decoder->Decode( ppVideo, pnVideoBytes, &ppFrame, &nFrameReturned );
+        nv_decoder->Decode( ppVideo, pnVideoBytes, &ppFrame, &nFrameReturned, CUVID_PKT_ENDOFPICTURE, &p_timestamp, pkt_bsf->pts );
+        MYLOG( LOG::DEBUG, "nFrameReturned = %d", nFrameReturned );
         recv_count  =   0;
     }
 
@@ -296,11 +309,11 @@ int     VideoDecodeHW::recv_frame( int index )
 
     if( use_bsf == true )
     {     
-        ConvertToPlanar( ppFrame[recv_count], nv_decoder->GetWidth(), nv_decoder->GetHeight(), nv_decoder->GetBitDepth());            
+        //ConvertToPlanar( ppFrame[recv_count], nv_decoder->GetWidth(), nv_decoder->GetHeight(), nv_decoder->GetBitDepth());            
 
 
 
-        frame->format   =   AV_PIX_FMT_YUV420P;
+        frame->format   =   AV_PIX_FMT_P016LE;
         frame->width    =   width;
         frame->height   =   height;
 
@@ -314,10 +327,19 @@ int     VideoDecodeHW::recv_frame( int index )
 
         int fsize = nv_decoder->GetFrameSize();
         
-        memcpy( frame->data[0], ppFrame[recv_count], 1280*720 );
+        /*memcpy( frame->data[0], ppFrame[recv_count], 1280*720 );
         memcpy( frame->data[1] , ppFrame[recv_count] + width*height , 1280*720/4 );
-        memcpy( frame->data[2] , ppFrame[recv_count] + width*height*5/4 , 1280*720/4 );
+        memcpy( frame->data[2] , ppFrame[recv_count] + width*height*5/4 , 1280*720/4 );*/
 
+        av_image_fill_arrays( frame->data, frame->linesize, ppFrame[recv_count], AV_PIX_FMT_P016LE, width, height, 1 );
+
+
+        if( frame->format == AV_PIX_FMT_CUDA )
+            printf("test");
+
+
+        frame->best_effort_timestamp = p_timestamp[recv_count];
+        frame_pts   =   frame->best_effort_timestamp;
 
         //av_image_copy( frame->data, frame->linesize, (const uint8_t**)ppFrame[recv_count], frame->linesize, AV_PIX_FMT_YUV420P16LE, width, height );
 

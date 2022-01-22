@@ -9,8 +9,15 @@
 
 
 
+extern "C" {
+#include "../ffmpeg_example/hw_decode.h"
+}
+
+
 int main()
 {
+    //hw_decode_func();
+
     //maker_encode_example();
 
     player_decode_example();
