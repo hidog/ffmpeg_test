@@ -21,7 +21,7 @@
 #include "video_worker.h"
 #include "audio_worker.h"
 
-
+#include <WinBase.h>
 
 
 
@@ -270,6 +270,14 @@ void MainWindow::play_slot()
     ui->playButton->setDisabled(true);
     ui->centralwidget->setFocus(); // 不加這行會造成 keyboard event 失去作用
 
+
+    // 取消休眠
+#ifdef _WIN32
+    SetThreadExecutionState( ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED );
+#else
+#error  undefined
+#endif
+
     worker->start();
 }
 
@@ -323,6 +331,13 @@ void    MainWindow::finish_slot()
     disconnect( seek_connect[0] );
     disconnect( seek_connect[1] );
     disconnect( seek_connect[2] );
+
+    // 恢復休眠
+#ifdef _WIN32
+    SetThreadExecutionState( ES_CONTINUOUS );
+#else
+#error undefined.
+#endif
 }
 
 
