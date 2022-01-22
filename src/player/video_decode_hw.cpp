@@ -204,6 +204,9 @@ int     VideoDecodeHW::init_nvidia_decoder()
 
 /*******************************************************************************
 VideoDecodeHW::get_pix_fmt
+
+AV_PIX_FMT_P016LE
+AV_PIX_FMT_YUV420P10LE
 ********************************************************************************/
 AVPixelFormat   VideoDecodeHW::get_pix_fmt()
 {
@@ -307,6 +310,10 @@ VideoDecodeHW::send_packet
 ********************************************************************************/
 int     VideoDecodeHW::send_packet( AVPacket *pkt )
 {
+    // 目前在 recv_frame 做 unref. 如果忘了做, yuv420p10 的影片會出錯
+    //if( pkt_bsf->data != nullptr )
+      //  av_packet_unref(pkt_bsf);
+
     uint8_t     *pkt_ptr    =   nullptr;
     int         pkt_size    =   0;
     int64_t     pkt_ts      =   0;
@@ -326,7 +333,13 @@ int     VideoDecodeHW::send_packet( AVPacket *pkt )
     }
 
     // decode
-    nv_decoder->Decode( pkt_ptr, pkt_size, &nv_frames, &recv_size, CUVID_PKT_ENDOFPICTURE, &p_timestamp, pkt_bsf->pts );
+    //recv_size   =   0;
+    if( pkt != nullptr )
+        nv_decoder->Decode( pkt_ptr, pkt_size, &nv_frames, &recv_size, CUVID_PKT_TIMESTAMP, &p_timestamp, pkt_bsf->pts );
+    else
+        nv_decoder->Decode( pkt_ptr, pkt_size, &nv_frames, &recv_size, CUVID_PKT_ENDOFSTREAM, &p_timestamp, pkt_bsf->pts );
+    //nv_decoder->Decode( pkt_ptr, pkt_size, &nv_frames, &recv_size );
+
 
     // need set count to zero. and use in recv loop.
     recv_count  =   0;    
@@ -391,7 +404,10 @@ int     VideoDecodeHW::recv_frame( int index )
     // note: 理論上 video 只有一個 stream, 這邊就不處理 index 了.
 
     if( recv_size == 0 || recv_count == recv_size )
+    {
+        av_packet_unref( pkt_bsf );  // 這邊沒 unref, yuv420p10 會出錯
         return  0;  // this loop has no frame.
+    }
 
     if( use_bsf == false )
         MYLOG( LOG::ERROR, "use bsf is false." )  // 測試看看 use_bsf == false 的時候程式是否能運行
@@ -444,7 +460,7 @@ int     VideoDecodeHW::recv_frame( int index )
     else
     {
         // 找不到位置塞, 暫時先放這裡.
-        av_packet_unref(pkt_bsf);
+        av_packet_unref(pkt_bsf);   // 沒 unref, yuv420p10 會出錯
         return  0;  // break loop.
     }
 }
