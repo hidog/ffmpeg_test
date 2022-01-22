@@ -20,7 +20,7 @@ VideoWorker::VideoWorker( QObject *parent )
 {
     video_mtx   =   dynamic_cast<MainWindow*>(parent)->get_video_mutex();
     if( video_mtx == nullptr )    
-        MYLOG( LOG::ERROR, "video mtx is null" );
+        MYLOG( LOG::L_ERROR, "video mtx is null" );
 }
 
 
@@ -58,7 +58,7 @@ void VideoWorker::run()
     force_stop  =   false;
     seek_flag   =   false;
     video_play();
-    MYLOG( LOG::INFO, "finish video play." );
+    MYLOG( LOG::L_INFO, "finish video play." );
 }
 
 
@@ -119,7 +119,7 @@ VideoWorker::video_play()
 void VideoWorker::video_play()
 {
     // 這邊沒有print, 會造成 release build 無作用
-    MYLOG( LOG::INFO, "start play video" );
+    MYLOG( LOG::L_INFO, "start play video" );
 
     std::chrono::steady_clock::time_point       last, now;
     std::chrono::duration<int64_t, std::milli>  duration;
@@ -135,7 +135,7 @@ void VideoWorker::video_play()
     bool    &is_play_end    =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_play_end_state();
 
     if( view_data == nullptr )
-        MYLOG( LOG::ERROR, "view_data is null." );
+        MYLOG( LOG::L_ERROR, "view_data is null." );
 
     //  
     while( decode::get_video_size() <= 30 )
@@ -157,12 +157,12 @@ void VideoWorker::video_play()
             now         =   std::chrono::steady_clock::now();
             duration    =   std::chrono::duration_cast<std::chrono::milliseconds>( now - last );
 
-            //MYLOG( LOG::DEBUG, "duration = %lld, diff = %lld",  duration, vd.timestamp - view_data->timestamp );
+            //MYLOG( LOG::L_DEBUG, "duration = %lld, diff = %lld",  duration, vd.timestamp - view_data->timestamp );
             if( duration.count() >= vd.timestamp - view_data->timestamp )
                 break;
         }
 
-        //MYLOG( LOG::DEBUG, "video time stamp = %lld\n", vd.timestamp );
+        //MYLOG( LOG::L_DEBUG, "video time stamp = %lld\n", vd.timestamp );
 
         video_mtx->lock();
         view_data->index        =   vd.index;
@@ -203,7 +203,7 @@ void VideoWorker::video_play()
         //
         if( decode::get_video_size() <= 0 )
         {
-            MYLOG( LOG::WARN, "video queue empty." );
+            MYLOG( LOG::L_WARN, "video queue empty." );
             SLEEP_10MS;
             continue;
         }

@@ -45,7 +45,7 @@ void    VideoWidget::keyPressEvent( QKeyEvent *event )
         {
             MainWindow  *mw     =   dynamic_cast<MainWindow*>(parent()->parent());
             if( mw == nullptr )
-                MYLOG( LOG::ERROR, "mw = nullptr.");
+                MYLOG( LOG::L_ERROR, "mw = nullptr.");
             mw->pause();
             break;
         }

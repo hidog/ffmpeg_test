@@ -52,7 +52,7 @@ void    AudioWorker::open_audio_output( AudioDecodeSetting as )
     QAudioDeviceInfo info { QAudioDeviceInfo::defaultOutputDevice() };
     if( false == info.isFormatSupported(format) ) 
     {
-        MYLOG( LOG::ERROR, "Raw audio format not supported by backend, cannot play audio." );
+        MYLOG( LOG::L_ERROR, "Raw audio format not supported by backend, cannot play audio." );
         return;
     }
 
@@ -72,13 +72,13 @@ void    AudioWorker::open_audio_output( AudioDecodeSetting as )
 
     MainWindow  *mw     =   dynamic_cast<MainWindow*>(parent());
     if( mw == nullptr )
-        MYLOG( LOG::ERROR, "mw is nullptr");
+        MYLOG( LOG::L_ERROR, "mw is nullptr");
 
     int     volume      =   mw->volume();
     volume_slot(volume);
 
     if( io != nullptr )
-        MYLOG( LOG::ERROR, "io is not null." );
+        MYLOG( LOG::L_ERROR, "io is not null." );
 
     io  =   audio->start();
 }
@@ -104,7 +104,7 @@ AudioWorker::handleStateChanged()
 ********************************************************************************/
 void    AudioWorker::handleStateChanged( QAudio::State state )
 {
-    MYLOG( LOG::DEBUG, "state = %d", state );
+    MYLOG( LOG::L_DEBUG, "state = %d", state );
 }
 
 
@@ -119,13 +119,13 @@ void AudioWorker::run()
 {
     if( io == nullptr )
     {
-        MYLOG( LOG::ERROR, "io is null." );
+        MYLOG( LOG::L_ERROR, "io is null." );
         return;
     }
     
     if( audio == nullptr )
     {
-        MYLOG( LOG::ERROR, "audio is null." );
+        MYLOG( LOG::L_ERROR, "audio is null." );
         return;
     }
 
@@ -142,7 +142,7 @@ void AudioWorker::run()
     delete audio;
     audio   =   nullptr;
 
-    MYLOG( LOG::INFO, "finish audio play." );
+    MYLOG( LOG::L_INFO, "finish audio play." );
 }
 
 
@@ -194,7 +194,7 @@ AudioWorker::audio_play()
 ********************************************************************************/
 void AudioWorker::audio_play()
 {
-    MYLOG( LOG::INFO, "start play audio" );
+    MYLOG( LOG::L_INFO, "start play audio" );
 
     AudioData   ad;
     bool    &v_start        =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
@@ -240,7 +240,7 @@ void AudioWorker::audio_play()
         assert( view_data != nullptr );
         if( ad.timestamp < view_data->timestamp - 100 )
         {
-            MYLOG( LOG::WARN, "trigger a/v sync. skip audio" );
+            MYLOG( LOG::L_WARN, "trigger a/v sync. skip audio" );
             // skip this audio data.
             do {
                 delete [] ad.pcm;
@@ -251,7 +251,7 @@ void AudioWorker::audio_play()
         }
         else if( ad.timestamp > view_data->timestamp + 100 )
         {
-            MYLOG( LOG::WARN, "trigger a/v sync. wait video. ad = %lld, vd = %lld", ad.timestamp, view_data->timestamp );
+            MYLOG( LOG::L_WARN, "trigger a/v sync. wait video. ad = %lld, vd = %lld", ad.timestamp, view_data->timestamp );
             while( ad.timestamp >= view_data->timestamp - 100 )
                 SLEEP_1MS;
         }
@@ -262,7 +262,7 @@ void AudioWorker::audio_play()
 
         while(true)
         {
-            //MYLOG( LOG::DEBUG, "bytesFree = %d\n", audio->bytesFree() );
+            //MYLOG( LOG::L_DEBUG, "bytesFree = %d\n", audio->bytesFree() );
 
             if( audio->bytesFree() < wanted_buffer_size )
                 continue;
@@ -270,7 +270,7 @@ void AudioWorker::audio_play()
             {
                 remain  =   io->write( (const char*)ptr, remain_bytes );
                 if( remain != remain_bytes )
-                    MYLOG( LOG::WARN, "remain != remain_bytes" );
+                    MYLOG( LOG::L_WARN, "remain != remain_bytes" );
                 delete [] ad.pcm;
                 ad.pcm      =   nullptr;
                 ad.bytes    =   0;
@@ -280,7 +280,7 @@ void AudioWorker::audio_play()
             {
                 remain  =   io->write( (const char*)ptr, wanted_buffer_size );
                 if( remain != wanted_buffer_size )
-                    MYLOG( LOG::WARN, "r != wanted_buffer_size" );
+                    MYLOG( LOG::L_WARN, "r != wanted_buffer_size" );
                 ptr             +=  wanted_buffer_size;
                 remain_bytes    -=  wanted_buffer_size;
             }
@@ -308,7 +308,7 @@ void AudioWorker::audio_play()
 
         if( decode::get_audio_size() <= 0 )
         {
-            MYLOG( LOG::WARN, "audio queue empty." );
+            MYLOG( LOG::L_WARN, "audio queue empty." );
             SLEEP_10MS;
             continue;
         }
@@ -321,7 +321,7 @@ void AudioWorker::audio_play()
     {      
         if( decode::get_audio_size() <= 0 )
         {
-            MYLOG( LOG::WARN, "audio queue empty." );
+            MYLOG( LOG::L_WARN, "audio queue empty." );
             SLEEP_10MS;
             continue;
         }
@@ -404,6 +404,6 @@ void    AudioWorker::pause()
         else if( st == QAudio::ActiveState )
             audio->suspend();
         else
-            MYLOG( LOG::ERROR, "not handle");
+            MYLOG( LOG::L_ERROR, "not handle");
     }
 }

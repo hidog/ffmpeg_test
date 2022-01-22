@@ -110,7 +110,7 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
 
     int     ret     =   avcodec_open2( ctx, codec, nullptr );
     if( ret < 0 ) 
-        MYLOG( LOG::ERROR, "open fail" );
+        MYLOG( LOG::L_ERROR, "open fail" );
 
 #ifdef FFMPEG_TEST
     // frame setting
@@ -120,7 +120,7 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
 
     ret     =   av_frame_get_buffer( frame, 0 );
     if( ret < 0 ) 
-        MYLOG( LOG::ERROR, "get buffer fail." );
+        MYLOG( LOG::L_ERROR, "get buffer fail." );
 
     //
     init_sws( setting );
@@ -144,7 +144,7 @@ void    VideoEncode::list_pix_fmt( AVCodecID code_id )
     pix_fmt    =   codec->pix_fmts;
     if( pix_fmt == nullptr )
     {
-        MYLOG( LOG::INFO, "can not list.\n" );
+        MYLOG( LOG::L_INFO, "can not list.\n" );
         return;
     }
 
@@ -153,7 +153,7 @@ void    VideoEncode::list_pix_fmt( AVCodecID code_id )
         printf( "%s support pix_fmt = %d %s\n", avcodec_get_name(code_id), static_cast<int>(*pix_fmt), av_get_pix_fmt_name(*pix_fmt) );
         pix_fmt++;
     }
-    MYLOG( LOG::DEBUG, "finish.");
+    MYLOG( LOG::L_DEBUG, "finish.");
 }
 
 
@@ -172,7 +172,7 @@ void    VideoEncode::list_frame_rate( AVCodecID code_id )
     rt    =   codec->supported_framerates;
     if( rt == nullptr )
     {
-        MYLOG( LOG::INFO, "can not list.\n" );
+        MYLOG( LOG::L_INFO, "can not list.\n" );
         return;
     }
 
@@ -181,7 +181,7 @@ void    VideoEncode::list_frame_rate( AVCodecID code_id )
         printf( "%s support frame rate = %d/%d = %lf\n", avcodec_get_name(code_id), rt->num, rt->den, av_q2d(*rt) );
         rt++;
     }
-    MYLOG( LOG::DEBUG, "finish.");
+    MYLOG( LOG::L_DEBUG, "finish.");
 }
 
 
@@ -236,7 +236,7 @@ void    VideoEncode::encode_test()
     /* send the frame to the encoder */
     ret = avcodec_send_frame( ctx, frame );
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "send fail." );
+        MYLOG( LOG::L_ERROR, "send fail." );
 
     while( ret >= 0 ) 
     {
@@ -244,7 +244,7 @@ void    VideoEncode::encode_test()
         if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
             return;
         else if( ret < 0 ) 
-            MYLOG( LOG::ERROR, "recv fail." );
+            MYLOG( LOG::L_ERROR, "recv fail." );
 
         printf( "write packet %lld %d\n", pkt->pts, pkt->size );
         //fwrite( pkt->data, 1, pkt->size, output );
@@ -483,7 +483,7 @@ void    VideoEncode::get_fram_from_file_openCV()
 
     sprintf( str, "%s\\%d.jpg", load_jpg_root_path.c_str(), frame_count );
     if( frame_count % 100 == 0 )
-        MYLOG( LOG::DEBUG, "load jpg = %s", str );
+        MYLOG( LOG::L_DEBUG, "load jpg = %s", str );
 
     cv::Mat img =   cv::imread( str, cv::IMREAD_COLOR );
     if( img.empty() == true )

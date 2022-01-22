@@ -97,7 +97,7 @@ void    PlayerStream::play_QT()
 
     // 目前先不處理字幕圖的live stream.
     if( is_live_stream == true && s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == true )
-        MYLOG( LOG::ERROR, "un hanlde." )
+        MYLOG( LOG::L_ERROR, "un hanlde." )
 
     int         ret     =   0;
     AVPacket    *pkt    =   nullptr;
@@ -113,7 +113,7 @@ void    PlayerStream::play_QT()
         // NOTE: seek事件觸發的時候, queue 資料會暴增.
         while( demux_need_wait() == true )
         {
-            //MYLOG( LOG::DEBUG, "v size = %d, a size = %d", video_queue.size(), audio_queue.size() );
+            //MYLOG( LOG::L_DEBUG, "v size = %d, a size = %d", video_queue.size(), audio_queue.size() );
             if( stop_flag == true )
                 break;
             SLEEP_1MS;
@@ -134,7 +134,7 @@ void    PlayerStream::play_QT()
             dc  =   dynamic_cast<Decode*>(&s_decoder);  
         else
         {
-            MYLOG( LOG::ERROR, "stream type not handle.");
+            MYLOG( LOG::L_ERROR, "stream type not handle.");
             demuxer->unref_packet();
             continue;
         }
@@ -143,11 +143,11 @@ void    PlayerStream::play_QT()
         decode( dc, pkt );       
         demuxer->unref_packet();
     }
-    MYLOG( LOG::INFO, "demux finish.");
+    MYLOG( LOG::L_INFO, "demux finish.");
 
     //
     flush();
-    MYLOG( LOG::INFO, "play stream finish.")
+    MYLOG( LOG::L_INFO, "play stream finish.")
 }
 
 
@@ -198,7 +198,7 @@ void    PlayerStream::output_live_stream( Decode* dc )
     }
     else
     {
-        MYLOG( LOG::ERROR, "un handle type" )
+        MYLOG( LOG::L_ERROR, "un handle type" )
     }
 }
 
@@ -220,7 +220,7 @@ AVFrame*    PlayerStream::get_new_v_frame()
     //
     v_frame   =   av_frame_alloc();
     if( v_frame == nullptr ) 
-        MYLOG( LOG::ERROR, "v_frame alloc fail." );
+        MYLOG( LOG::L_ERROR, "v_frame alloc fail." );
     v_frame->pts  =   0;
 
     //
@@ -230,7 +230,7 @@ AVFrame*    PlayerStream::get_new_v_frame()
 
     ret     =   av_frame_get_buffer( v_frame, 0 );
     if( ret < 0 ) 
-        MYLOG( LOG::ERROR, "get buffer fail." );
+        MYLOG( LOG::L_ERROR, "get buffer fail." );
 
     ret     =   av_frame_make_writable(v_frame);
     if( ret < 0 )
@@ -259,7 +259,7 @@ AVFrame*    PlayerStream::get_new_a_frame()
     //
     a_frame   =   av_frame_alloc();
     if( a_frame == nullptr ) 
-        MYLOG( LOG::ERROR, "a_frame alloc fail." );
+        MYLOG( LOG::L_ERROR, "a_frame alloc fail." );
     a_frame->pts  =   0;
 
     //
@@ -271,12 +271,12 @@ AVFrame*    PlayerStream::get_new_a_frame()
 
     // 以 vorbis 來講,他會變動 sample 個數,暫時不支援這個壓縮格式
     if( a_frame->nb_samples == 0 )
-        MYLOG( LOG::ERROR, "un support format." );
+        MYLOG( LOG::L_ERROR, "un support format." );
 
     //
     ret     =   av_frame_get_buffer( a_frame, 0 );
     if( ret < 0 ) 
-        MYLOG( LOG::ERROR, "get buffer fail." );
+        MYLOG( LOG::L_ERROR, "get buffer fail." );
 
     ret     =   av_frame_make_writable(a_frame);
     if( ret < 0 )

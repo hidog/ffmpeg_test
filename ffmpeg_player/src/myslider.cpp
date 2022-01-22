@@ -91,7 +91,7 @@ MySlider::mouse_move()
 int    MySlider::mouse_move( QMouseEvent *ev )
 {
     QPoint    pos   =   ev->pos();
-    //MYLOG( LOG::DEBUG, "pos = %d %d %d %d", pos.rx(), pos.ry(), pos.x(), pos.y() );
+    //MYLOG( LOG::L_DEBUG, "pos = %d %d %d %d", pos.rx(), pos.ry(), pos.x(), pos.y() );
 
     int     max     =   this->maximum();
     int     min     =   this->minimum();
@@ -107,7 +107,7 @@ int    MySlider::mouse_move( QMouseEvent *ev )
     else if( orientation() == Qt::Vertical )
         rate = 1.0 * pos.ry() / height;
     else
-        MYLOG( LOG::ERROR, "un handle");
+        MYLOG( LOG::L_ERROR, "un handle");
 
     value   =   rate * (max - min);
     value   =   value > max ? max : value;

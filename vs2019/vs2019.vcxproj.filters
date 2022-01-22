@@ -99,9 +99,6 @@
     <ClCompile Include="..\src\player\player_stream.cpp">
       <Filter>src\player</Filter>
     </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\hw_decode.c">
-      <Filter>ffmpeg_example</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\player\video_decode_hw.cpp">
       <Filter>src\player</Filter>
     </ClCompile>
@@ -181,9 +178,6 @@
     </ClInclude>
     <ClInclude Include="..\src\player\player_stream.h">
       <Filter>src\player</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\hw_decode.h">
-      <Filter>ffmpeg_example</Filter>
     </ClInclude>
     <ClInclude Include="..\src\player\video_decode_hw.h">
       <Filter>src\player</Filter>

@@ -51,8 +51,8 @@ int    Demux::init()
         if( pkt_array[i] == nullptr )
         {
             ret     =   AVERROR(ENOMEM);
-            MYLOG( LOG::ERROR, "Could not allocate packet. error = %d", ret );
-            return  ERROR; 
+            MYLOG( LOG::L_ERROR, "Could not allocate packet. error = %d", ret );
+            return  R_ERROR; 
         }
 
         pkt_queue.emplace( pkt_array[i] );        
@@ -67,11 +67,11 @@ int    Demux::init()
     if( pkt == nullptr )
     {
         ret     =   AVERROR(ENOMEM);
-        MYLOG( LOG::ERROR, "Could not allocate packet. error = %d", ret );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "Could not allocate packet. error = %d", ret );
+        return  R_ERROR;
     }
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -101,13 +101,13 @@ int     Demux::stream_info()
     ret     =   avformat_find_stream_info( fmt_ctx, nullptr );
     if( ret < 0) 
     {
-        MYLOG( LOG::ERROR, "Could not find stream information. ret = %d", ret );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "Could not find stream information. ret = %d", ret );
+        return  R_ERROR;
     }
 
-    MYLOG( LOG::INFO, "nb_streams = %d", fmt_ctx->nb_streams );
+    MYLOG( LOG::L_INFO, "nb_streams = %d", fmt_ctx->nb_streams );
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -140,7 +140,7 @@ int     Demux::end()
         av_packet_free( &pkt_array[i] );
 #endif
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -156,27 +156,27 @@ int     Demux::open_input()
     fmt_ctx     =   avformat_alloc_context();    
     int  ret    =   0;
 
-    MYLOG( LOG::INFO, "load file %s", filename.c_str() );
+    MYLOG( LOG::L_INFO, "load file %s", filename.c_str() );
     ret     =   avformat_open_input( &fmt_ctx, filename.c_str(), NULL, NULL );
 
     if( ret < 0 )
     {
-        MYLOG( LOG::ERROR, "Could not open source file %s", filename.c_str() );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "Could not open source file %s", filename.c_str() );
+        return  R_ERROR;
     }
 
     // 
     ret     =   stream_info();
-    if( ret == ERROR )
+    if( ret == R_ERROR )
     {
-        MYLOG( LOG::ERROR, "init fail. ret = %d", ret );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "init fail. ret = %d", ret );
+        return  R_ERROR;
     }
 
     // dump input information to stderr 
     av_dump_format( fmt_ctx, 0, filename.c_str(), 0 );
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -230,7 +230,7 @@ int    Demux::demux()
     ret     =   av_read_frame( fmt_ctx, pkt );
 
     //if( ret < 0 )    
-      //  MYLOG( LOG::INFO, "load file end." );
+      //  MYLOG( LOG::L_INFO, "load file end." );
 
     return ret;
 }
@@ -270,12 +270,12 @@ std::pair<int,AVPacket*>     Demux::demux_multi_thread()
 
     if( pkt_queue.empty() == true )
     {
-        MYLOG( LOG::ERROR, "pkt stack empty." );
+        MYLOG( LOG::L_ERROR, "pkt stack empty." );
         return  std::make_pair( 0, nullptr );
     }
 
     if( pkt_queue.size() < 10 )
-        MYLOG( LOG::WARN, "queue size = %d", pkt_queue.size() );
+        MYLOG( LOG::L_WARN, "queue size = %d", pkt_queue.size() );
 
     pkt_mtx.lock();
     packet  =   pkt_queue.front();
@@ -285,7 +285,7 @@ std::pair<int,AVPacket*>     Demux::demux_multi_thread()
     ret     =   av_read_frame( fmt_ctx, packet );
 
     if( ret < 0 )    
-        MYLOG( LOG::INFO, "load file end." );
+        MYLOG( LOG::L_INFO, "load file end." );
 
     std::pair<int,AVPacket*>    result  =   std::make_pair( ret, packet );
 
@@ -302,7 +302,7 @@ int64_t     Demux::get_duration_time()
 {
     if( fmt_ctx->duration == AV_NOPTS_VALUE )
     {
-        MYLOG( LOG::WARN, "not defined duration");
+        MYLOG( LOG::L_WARN, "not defined duration");
         return  INT64_MAX;
     }
 

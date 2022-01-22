@@ -281,7 +281,6 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\ffmpeg_example\hw_decode.c" />
     <ClCompile Include="..\src\hw\NvDecoder.cpp" />
     <ClCompile Include="..\src\IO\file_io.cpp" />
     <ClCompile Include="..\src\IO\input_output.cpp" />
@@ -315,7 +314,6 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\ffmpeg_example\hw_decode.h" />
     <ClInclude Include="..\src\hw\NvDecoder.h" />
     <ClInclude Include="..\src\IO\file_io.h" />
     <ClInclude Include="..\src\IO\input_output.h" />

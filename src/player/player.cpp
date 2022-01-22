@@ -19,14 +19,14 @@ Player::init_demuxer()
 int     Player::init_demuxer()
 {
     if( demuxer != nullptr )
-        MYLOG( LOG::ERROR, "demuxer not null." );
+        MYLOG( LOG::L_ERROR, "demuxer not null." );
     if( setting.io_type == IO_Type::DEFAULT )
     {
         demuxer     =   new Demux{};
         if( setting.filename.empty() == true )
         {
-            MYLOG( LOG::ERROR, "src file is empty." );
-            return  ERROR;   
+            MYLOG( LOG::L_ERROR, "src file is empty." );
+            return  R_ERROR;   
         }
         demuxer->set_input_file( setting.filename );
     }
@@ -35,12 +35,12 @@ int     Player::init_demuxer()
         demuxer     =   new DemuxIO{ setting };
         if( demuxer == nullptr )
         {
-            MYLOG( LOG::ERROR, "init demuxer fail." );
-            return  ERROR;
+            MYLOG( LOG::L_ERROR, "init demuxer fail." );
+            return  R_ERROR;
         }
     }
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -68,7 +68,7 @@ MediaInfo   Player::get_media_info()
         info.time_den   =   stream->avg_frame_rate.num;
     }
     else
-        MYLOG( LOG::ERROR, "stream is nullptr" );
+        MYLOG( LOG::L_ERROR, "stream is nullptr" );
 
     // audio
     info.channel_layout =   a_decoder.get_audio_channel_layout();
@@ -92,9 +92,9 @@ int     Player::init()
 
     // init demux
     ret     =   init_demuxer();
-    if( ret != SUCCESS )
+    if( ret != R_SUCCESS )
     {
-        MYLOG( LOG::ERROR, "init demux fail." );
+        MYLOG( LOG::L_ERROR, "init demux fail." );
         return  ret;
     }
 
@@ -128,7 +128,7 @@ int     Player::init()
         v_decoder.set_subtitle_decoder( &s_decoder );
 #endif
 
-    return SUCCESS;
+    return R_SUCCESS;
 }
 
 
@@ -327,7 +327,7 @@ Player::get_duration_time
 int64_t     Player::get_duration_time()
 {
     if( demuxer == nullptr )  
-        MYLOG( LOG::ERROR, "demuxer is null." );
+        MYLOG( LOG::L_ERROR, "demuxer is null." );
     return  demuxer->get_duration_time();
 }
 
@@ -354,7 +354,7 @@ frame   =   dc->get_frame();
 void    Player::play()
 {
     if( demuxer == nullptr )
-        MYLOG( LOG::ERROR, "demuxer is null." );
+        MYLOG( LOG::L_ERROR, "demuxer is null." );
 
     int         ret     =   0;
     AVPacket    *pkt    =   nullptr;
@@ -379,7 +379,7 @@ void    Player::play()
             dc  =   dynamic_cast<Decode*>(&s_decoder);
         else        
         {
-            MYLOG( LOG::ERROR, "stream type not handle.");
+            MYLOG( LOG::L_ERROR, "stream type not handle.");
             demuxer->unref_packet();
             continue;
         }
@@ -403,7 +403,7 @@ void    Player::play()
         }
         demuxer->unref_packet();
     }
-    MYLOG( LOG::INFO, "play main loop end. it will flush." );
+    MYLOG( LOG::L_INFO, "play main loop end. it will flush." );
 
     // flush
     // subtitle 必須在最前面 flush.
@@ -434,7 +434,7 @@ void    Player::play()
 #endif
     a_decoder.flush();
 
-    MYLOG( LOG::INFO, "Demuxing succeeded." );
+    MYLOG( LOG::L_INFO, "Demuxing succeeded." );
 }
 #endif
 
@@ -565,7 +565,7 @@ void    Player::play_QT_multi_thread()
         while( video_queue.size() > 100 || audio_queue.size() > 200 )      // 1080p, 10bit的影像, 必須拉大buffer
         {
             SLEEP_1MS;  // 這邊不能睡太久, 不然會造成 demux 速度來不及.
-            MYLOG( LOG::DEBUG, "v queue %d, a queue %d", video_queue.size(), audio_queue.size() );
+            MYLOG( LOG::L_DEBUG, "v queue %d, a queue %d", video_queue.size(), audio_queue.size() );
         }
 
         auto    pkt_pair    =   demuxer.demux_multi_thread();
@@ -575,7 +575,7 @@ void    Player::play_QT_multi_thread()
             break;    
         if( pkt == nullptr )
         {
-            MYLOG( LOG::ERROR, "pkt is nullptr" );
+            MYLOG( LOG::L_ERROR, "pkt is nullptr" );
             break;
         }
 
@@ -585,7 +585,7 @@ void    Player::play_QT_multi_thread()
             audio_pkt_queue.push(pkt);       
         else
         {
-            MYLOG( LOG::DEBUG, "stream type not handle.")
+            MYLOG( LOG::L_DEBUG, "stream type not handle.")
             demuxer.collect_packet(pkt);
         }
 
@@ -594,7 +594,7 @@ void    Player::play_QT_multi_thread()
 
     //
     //flush();
-    MYLOG( LOG::INFO, "play finish.")
+    MYLOG( LOG::L_INFO, "play finish.")
 
     video_decode_thr->join();
     audio_decode_thr->join();
@@ -722,7 +722,7 @@ void    Player::handle_seek()
 
     ret     =   avformat_seek_file( fmt_ctx, -1, min, ts, max, 0 );  //AVSEEK_FLAG_ANY
     if( ret < 0 )
-        MYLOG( LOG::DEBUG, "seek fail." );
+        MYLOG( LOG::L_DEBUG, "seek fail." );
 
 }
 
@@ -745,11 +745,11 @@ void    Player::play_QT()
     //
     while( stop_flag == false ) 
     {
-        //MYLOG( LOG::DEBUG, "video = %d, audio = %d", video_queue.size(), audio_queue.size() );
+        //MYLOG( LOG::L_DEBUG, "video = %d, audio = %d", video_queue.size(), audio_queue.size() );
         // NOTE: seek事件觸發的時候, queue 資料會暴增.
         while( demux_need_wait() == true )
         {
-            //MYLOG( LOG::DEBUG, "v size = %d, a size = %d", video_queue.size(), audio_queue.size() );
+            //MYLOG( LOG::L_DEBUG, "v size = %d, a size = %d", video_queue.size(), audio_queue.size() );
             if( stop_flag == true )
                 break;
             SLEEP_1MS;
@@ -781,7 +781,7 @@ void    Player::play_QT()
             dc  =   dynamic_cast<Decode*>(&s_decoder);  
         else
         {
-            MYLOG( LOG::ERROR, "stream type not handle.");
+            MYLOG( LOG::L_ERROR, "stream type not handle.");
             demuxer->unref_packet();
             continue;
         }
@@ -790,11 +790,11 @@ void    Player::play_QT()
         decode( dc, pkt );       
         demuxer->unref_packet();
     }
-    MYLOG( LOG::INFO, "demux finish.");
+    MYLOG( LOG::L_INFO, "demux finish.");
 
     //
     flush();
-    MYLOG( LOG::INFO, "play finish.")
+    MYLOG( LOG::L_INFO, "play finish.")
 }
 
 
@@ -814,7 +814,7 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
         else if( s_decoder.get_sub_src_type() == SubSourceType::EMBEDDED )
             s_decoder.switch_subtltle(new_subtitle_index);
         else
-            MYLOG( LOG::ERROR, "no subtitle.");
+            MYLOG( LOG::L_ERROR, "no subtitle.");
     }
 
     int ret =   0;
@@ -848,13 +848,13 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
             else
             {
                 // 可以印 log. 目前 graphic subtitle 會跑進這邊, 有空再修正
-                // MYLOG( LOG::ERROR, "undefined behavier." );
+                // MYLOG( LOG::L_ERROR, "undefined behavier." );
             }
             dc->unref_frame();
         }
     }
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -959,12 +959,12 @@ int     Player::end()
 
     //
     if( demuxer == nullptr )
-        MYLOG( LOG::ERROR, "demuxer is null." );
+        MYLOG( LOG::L_ERROR, "demuxer is null." );
     demuxer->end();
     delete demuxer;
     demuxer =   nullptr;
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 

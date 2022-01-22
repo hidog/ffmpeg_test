@@ -91,7 +91,7 @@ int    DemuxIO::end()
 
     Demux::end();
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -126,19 +126,19 @@ int     DemuxIO::open_input()
 
     if( ret < 0 )
     {
-        MYLOG( LOG::ERROR, "Could not open" );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "Could not open" );
+        return  R_ERROR;
     }
 
     // 
     ret     =   stream_info();
-    if( ret == ERROR )
+    if( ret == R_ERROR )
     {
-        MYLOG( LOG::ERROR, "init fail. ret = %d", ret );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "init fail. ret = %d", ret );
+        return  R_ERROR;
     }
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 

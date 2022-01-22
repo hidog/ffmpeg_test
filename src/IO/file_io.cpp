@@ -50,7 +50,7 @@ FileIO::is_connect()
 ********************************************************************************/
 bool    FileIO::is_connect()
 {
-    MYLOG( LOG::WARN, "io type is file." );
+    MYLOG( LOG::L_WARN, "io type is file." );
     return  true;
 }
 
@@ -81,10 +81,10 @@ void    FileIO::open()
         DecodeSetting&  setting     =   get_decode_setting();
         std::string     filename    =   setting.filename;
 
-        MYLOG( LOG::INFO, "load file %s", filename.c_str() );
+        MYLOG( LOG::L_INFO, "load file %s", filename.c_str() );
         fp  =   fopen( filename.c_str(), "rb" );
         if( fp == nullptr )
-            MYLOG( LOG::ERROR, "open file fail." );
+            MYLOG( LOG::L_ERROR, "open file fail." );
     }
     else
     {
@@ -96,7 +96,7 @@ void    FileIO::open()
             assert( setting.filename.empty() == false );
             fp  =   fopen( setting.filename.c_str(), "wb+" );
             if( fp == nullptr )
-                MYLOG( LOG::ERROR, "open file fail." );
+                MYLOG( LOG::L_ERROR, "open file fail." );
             break;
         default:
             assert(0);
@@ -114,7 +114,7 @@ FileIO::read()
 int     FileIO::read( uint8_t *buffer, int size )
 {
     if( fp == nullptr )
-        MYLOG( LOG::ERROR, "fp not open." );
+        MYLOG( LOG::L_ERROR, "fp not open." );
 
     if( feof(fp) != 0 )
         return  EOF;
@@ -134,7 +134,7 @@ FileIO::write()
 int     FileIO::write( uint8_t *buf, int buf_size )
 {
     if( fp == nullptr )
-        MYLOG( LOG::ERROR, "fp not open." );
+        MYLOG( LOG::L_ERROR, "fp not open." );
 
     int ret     =   fwrite( buf, 1, buf_size, fp );
     return ret;

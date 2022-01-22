@@ -65,7 +65,7 @@ int     VideoDecodeHW::open_codec_context( AVFormatContext *fmt_ctx )
     use_bsf     =   flag1 && flag2;
 
     if( use_bsf == false )
-        MYLOG( LOG::ERROR, "not support nv decode.");  // 測試一下不支援的影片會發生甚麼事情
+        MYLOG( LOG::L_ERROR, "not support nv decode.");  // 測試一下不支援的影片會發生甚麼事情
 
     // NOTE: hardware decode need init bsf.
     init_bsf(fmt_ctx);
@@ -96,15 +96,15 @@ int     VideoDecodeHW::init()
     // init nvidia decoder.
     init_nvidia_decoder();
 
-    MYLOG( LOG::INFO, "width = %d, height = %d\n", width, height );
+    MYLOG( LOG::L_INFO, "width = %d, height = %d\n", width, height );
     
     video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
     //video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_YUV420P, 1 );  use for opencv
 
     if( video_dst_bufsize < 0 )
     {
-        MYLOG( LOG::ERROR, "Could not allocate raw video buffer" );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "Could not allocate raw video buffer" );
+        return  R_ERROR;
     }
 
     //
@@ -123,9 +123,9 @@ int     VideoDecodeHW::init()
 
     // 理論上可以在這之前就設置好 sub_dec, 但目前規劃是 init 後再設置 sub_dec.
     if( sub_dec != nullptr )
-        MYLOG( LOG::ERROR, "sub_dec not null." );
+        MYLOG( LOG::L_ERROR, "sub_dec not null." );
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -178,8 +178,8 @@ int     VideoDecodeHW::init_nvidia_decoder()
     cuDeviceGetCount( &gpu_num );
     if( gpu_index >= gpu_num ) 
     {
-        MYLOG( LOG::ERROR, "no video card." );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "no video card." );
+        return  R_ERROR;
     }
 
     CUdevice    nv_dev  =   0;
@@ -187,7 +187,7 @@ int     VideoDecodeHW::init_nvidia_decoder()
 
     char    device_name[80];
     cuDeviceGetName( device_name, sizeof(device_name), nv_dev );
-    MYLOG( LOG::INFO, "gpu use %s", device_name )
+    MYLOG( LOG::L_INFO, "gpu use %s", device_name )
 
     CUcontext   cuda_ctx    =   nullptr;
     cuCtxCreate( &cuda_ctx, 0, nv_dev );
@@ -197,7 +197,7 @@ int     VideoDecodeHW::init_nvidia_decoder()
     Dim     resize_dim  =   {};
     nv_decoder  =   new NvDecoder( cuda_ctx, width, height, false, cuda_codec, nullptr, false, false, &rect, &resize_dim );
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -217,7 +217,7 @@ AVPixelFormat   VideoDecodeHW::get_pix_fmt()
     else
     {
         // note: 理論上能相容 測試看看
-        MYLOG( LOG::ERROR, "not yuv420p, yuv420p10" );
+        MYLOG( LOG::L_ERROR, "not yuv420p, yuv420p10" );
         return  AV_PIX_FMT_YUV420P16LE;    
     }
 }
@@ -242,7 +242,7 @@ int     VideoDecodeHW::init_bsf( AVFormatContext* fmt_ctx )
             bsf     =   av_bsf_get_by_name("hevc_mp4toannexb");
         else 
         {
-            MYLOG( LOG::ERROR, "un support." );
+            MYLOG( LOG::L_ERROR, "un support." );
         }
 
         ret     =   av_bsf_alloc( bsf, &v_bsf_ctx );
@@ -257,7 +257,7 @@ int     VideoDecodeHW::init_bsf( AVFormatContext* fmt_ctx )
         av_bsf_init( v_bsf_ctx );
     }
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -298,7 +298,7 @@ int     VideoDecodeHW::end()
     recv_count  =   0; 
     p_timestamp =   nullptr;
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -344,7 +344,7 @@ int     VideoDecodeHW::send_packet( AVPacket *pkt )
     // need set count to zero. and use in recv loop.
     recv_count  =   0;    
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -410,7 +410,7 @@ int     VideoDecodeHW::recv_frame( int index )
     }
 
     if( use_bsf == false )
-        MYLOG( LOG::ERROR, "use bsf is false." )  // 測試看看 use_bsf == false 的時候程式是否能運行
+        MYLOG( LOG::L_ERROR, "use bsf is false." )  // 測試看看 use_bsf == false 的時候程式是否能運行
       
     // 不轉換到 plannar, 則要改 sws 的 pix_fmt.
     int     w   =   nv_decoder->GetWidth();
@@ -425,7 +425,7 @@ int     VideoDecodeHW::recv_frame( int index )
     // allocate frame data.
     int ret     =   av_frame_get_buffer( frame, 0 );
     if( ret < 0 ) 
-        MYLOG( LOG::ERROR, "get buffer fail." );
+        MYLOG( LOG::L_ERROR, "get buffer fail." );
     
     ret     =   av_frame_make_writable(frame);
     if( ret < 0 )
