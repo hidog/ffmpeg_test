@@ -333,8 +333,17 @@ VideoDecodeHW::flush_for_seek
 ********************************************************************************/
 void    VideoDecodeHW::flush_for_seek()
 {
+    recv_size   =   0;
+    recv_count  =   0;
     av_bsf_flush( v_bsf_ctx );
-    Decode::flush_for_seek();
+
+    // flush nv decode.
+    while(true)
+    {
+        nv_decoder->Decode( nullptr, 0, &nv_frames, &recv_size );
+        if( recv_size == 0 )
+            break;
+    }
 }
 
 

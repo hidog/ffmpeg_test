@@ -17,7 +17,6 @@ enum AVCodecID;
 
 
 // note: 檢查那些資料是 VideoDecode allocate 但忘了釋放的
-// note: 暫時不支援 seek.  參考 av_bsf_flush
 
 class VideoDecodeHW : public VideoDecode 
 {
