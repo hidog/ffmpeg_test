@@ -476,6 +476,7 @@ int     VideoDecode::recv_frame( int index )
     // exist frame.
     if( ret > 0 )
     {
+        frame->pts  =   frame->best_effort_timestamp;  // need set frame pts, otherwise, 不然部分檔案會出現字幕閃爍
         frame_pts   =   frame->best_effort_timestamp;
 
         if( sub_dec != nullptr )
