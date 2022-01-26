@@ -40,7 +40,7 @@ private:
 
 
 
-int     io_read_data( void *opaque, uint8_t *buf, int buf_size );
+int     io_read_data( void *opaque, uint8_t *buffer, int size );
 
 
 

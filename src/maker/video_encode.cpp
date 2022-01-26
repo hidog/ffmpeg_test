@@ -42,6 +42,21 @@ VideoEncode::~VideoEncode()
 
 
 
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoEncode::set_jpg_root_path()
+********************************************************************************/
+void    VideoEncode::set_jpg_root_path( std::string path )
+{
+    load_jpg_root_path  =   path;
+}
+#endif
+
+
+
+
+
+
 /*******************************************************************************
 VideoEncode::init()
 
@@ -487,7 +502,7 @@ void    VideoEncode::get_fram_from_file_openCV()
 
     cv::Mat img =   cv::imread( str, cv::IMREAD_COLOR );
     if( img.empty() == true )
-    //if( frame_count > 300 )
+    //if( frame_count > 1000 )
     {
         eof_flag    =   true;
         return;

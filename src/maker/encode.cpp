@@ -170,7 +170,7 @@ void    Encode::unref_pkt()
 /*******************************************************************************
 Encode::unref_data()
 ********************************************************************************/
-void Encode::unref_data()
+void    Encode::unref_data()
 {
     av_packet_unref(pkt);
 }
@@ -256,7 +256,7 @@ void    Encode::set_frame( AVFrame* _f )
 /*******************************************************************************
 Encode::encode_timestamp()
 ********************************************************************************/
-void Encode::encode_timestamp()
+void    Encode::encode_timestamp()
 {
     if( pkt == nullptr )
         MYLOG( LOG::L_WARN, "pkt is null." );

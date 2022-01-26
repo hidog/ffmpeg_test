@@ -218,10 +218,10 @@ void    Maker::work_without_subtitle()
     while( v_encoder.end_of_file() == false || a_encoder.end_of_file() == false )
     {        
         // 用 pts 決定進去 mux 的順序
-        if( v_encoder <= a_encoder )        
-            encoder =   &v_encoder;        
-        else        
-            encoder =   &a_encoder;        
+        if( v_encoder <= a_encoder ) 
+            encoder =   &v_encoder;
+        else
+            encoder =   &a_encoder;
 
         // send
         ret     =   encoder->send_frame();

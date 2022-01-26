@@ -178,7 +178,7 @@ int hw_decode_func()
     }
 
     /* open the input file */
-    if (avformat_open_input(&input_ctx, "D:/abc.mkv", NULL, NULL) != 0) {
+    if (avformat_open_input(&input_ctx, "D:/test.mp4", NULL, NULL) != 0) {
         return -1;
     }
 
