@@ -159,48 +159,56 @@ int     VideoEncodeHW::get_nv_encode_data( uint8_t *buffer, int size )
         nv_enc->EncodeFrame(encoded_vec);
     }
 
-    // 晚點再來重構這一塊.
+    // get encoded data.
     if( encoded_vec.size() > 0 )    
     {
         for( int i = 0; i < encoded_vec.size(); i++ )
         {
-            NvEncBuffer item;
-            item.enc_data = encoded_vec[i];
-            item.read_size = 0;
-            item.remain_size = encoded_vec[i].size();
-            
+            NvEncBuffer     item;
+            item.enc_data       =   std::move( encoded_vec[i] );
+            item.read_size      =   0;
+            item.remain_size    =   item.enc_data.size();            
             nv_encoded_list.emplace_back( item );
         }
     }
 
+    int     buf_read_size       =   0;     // 外部 buffer 使用
+    int     buf_remain_size     =   size;
+
     if( nv_encoded_list.size() == 0 && eof_flag == true )
-        return EOF;
+        return  EOF;
     if( nv_encoded_list.size() == 0 )
-        return  0;
+        return  0; 
     else
     {
         while( true )
         {
-            NvEncBuffer &item = nv_encoded_list.front();
-            if( item.remain_size <= size )
+            NvEncBuffer &item   =   nv_encoded_list.front();
+            if( item.remain_size <= buf_remain_size )
             {
-                memcpy( buffer, item.enc_data.data() + item.read_size, item.remain_size );
-                int read_size = item.remain_size;
+                memcpy( buffer + buf_read_size, item.enc_data.data() + item.read_size, item.remain_size );
+                buf_read_size   +=  item.remain_size;
+                buf_remain_size -=  item.remain_size;
                 nv_encoded_list.pop_front();
-                return read_size;
             }
             else
             {
-                memcpy( buffer, item.enc_data.data() + item.read_size, size );
-                item.read_size += size;
-                item.remain_size -= size;
-                return size;
+                int     tmp_size    =   buf_remain_size; // 暫存, 避免因為改變 read_size, remain_size 又讀取值造成的 bug.
+
+                memcpy( buffer + buf_read_size, item.enc_data.data() + item.read_size, tmp_size );
+                item.read_size      +=  tmp_size;
+                item.remain_size    -=  tmp_size;
+                buf_read_size       +=  tmp_size;
+                buf_remain_size     -=  tmp_size;
             }
+
+            if( buf_remain_size <= 0 || nv_encoded_list.size() == 0 )
+                break;
         }
     }
 
 
-    return 0;
+    return  buf_read_size;
 }
 
 

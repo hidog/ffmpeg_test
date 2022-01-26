@@ -628,8 +628,8 @@ void    AudioEncode::get_frame_from_pcm_file()
     static FILE *fp     =   fopen( load_pcm_path.c_str(), "rb" );    
 
     //
-    if( feof(fp) != 0 )
-    //if( frame_count > 300 )
+    //if( feof(fp) != 0 )
+    if( frame_count > 1300 )
     {
         eof_flag    =   true;
         return;
