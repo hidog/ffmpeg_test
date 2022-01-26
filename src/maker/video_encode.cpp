@@ -42,6 +42,21 @@ VideoEncode::~VideoEncode()
 
 
 
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoEncode::set_jpg_root_path()
+********************************************************************************/
+void    VideoEncode::set_jpg_root_path( std::string path )
+{
+    load_jpg_root_path  =   path;
+}
+#endif
+
+
+
+
+
+
 /*******************************************************************************
 VideoEncode::init()
 

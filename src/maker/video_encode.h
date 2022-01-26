@@ -19,7 +19,7 @@ class VideoEncode : public Encode
 {
 public:
     VideoEncode();
-    ~VideoEncode();
+    virtual ~VideoEncode();
 
     VideoEncode( const VideoEncode& ) = delete;
     VideoEncode( VideoEncode&& ) = delete;
@@ -27,17 +27,16 @@ public:
     VideoEncode& operator = ( const VideoEncode& ) = delete;
     VideoEncode& operator = ( VideoEncode&& ) = delete;
 
-    void    init( int st_idx, VideoEncodeSetting setting, bool need_global_header );
+    virtual void    init( int st_idx, VideoEncodeSetting setting, bool need_global_header );
+    virtual void    next_frame() override;
+
     void    end();
 
     void    list_frame_rate( AVCodecID code_id );
     void    list_pix_fmt( AVCodecID code_id );
     
-    void    next_frame() override;
     void    unref_data() override;
-    int64_t get_pts() override;
-
-
+    virtual int64_t get_pts() override;
 
 #ifdef FFMPEG_TEST
     void    init_sws( VideoEncodeSetting setting );
@@ -49,11 +48,16 @@ public:
     void    work_test();
 #endif
 
+protected:
 
-private:
+#ifdef FFMPEG_TEST
+    void    set_jpg_root_path( std::string path );
+#endif
 
     int     src_width   =   0;
     int     src_height  =   0;
+
+//private:
 
 #ifdef FFMPEG_TEST
     uint8_t*    video_data[4]       =   { nullptr };
@@ -63,6 +67,7 @@ private:
     SwsContext      *sws_ctx    =   nullptr;
     std::string     load_jpg_root_path  =   "J:\\jpg";
 #endif
+
 };
 
 
