@@ -28,16 +28,16 @@ void    maker_encode_example()
     setting.io_type =   IO_Type::DEFAULT;
 
     // rmvb 是 variable bitrate. 目前還無法使用
-    setting.filename    =   "E:\\output.mkv";
-    setting.extension   =   "matroska";
-    //setting.filename    =   "H:\\output.mp4";
-    //setting.extension   =   "mp4";
+    //setting.filename    =   "H:\\output.mkv";
+    //setting.extension   =   "matroska";
+    setting.filename    =   "H:\\output.mp4";
+    setting.extension   =   "mp4";
     //setting.filename    =   "H:\\test.avi"; 
     //setting.extension   =   "avi";
-    setting.has_subtitle    =   true;
+    setting.has_subtitle    =   false;
 
     VideoEncodeSetting  v_setting;
-    v_setting.load_jpg_root_path    =   "E:\\jpg";
+    v_setting.load_jpg_root_path    =   "H:\\jpg";
     v_setting.code_id   =   AV_CODEC_ID_H264;
     //v_setting.code_id   =   AV_CODEC_ID_H265;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
@@ -52,10 +52,10 @@ void    maker_encode_example()
     /*
         b frame not support on rm
     */
-    v_setting.gop_size      =   30;
-    v_setting.max_b_frames  =   15;
-    //v_setting.gop_size      =   10;
-    //v_setting.max_b_frames  =   0;
+    //v_setting.gop_size      =   30;
+    //v_setting.max_b_frames  =   15;
+    v_setting.gop_size      =   5;
+    v_setting.max_b_frames  =   0;
 
 
     v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
@@ -69,7 +69,7 @@ void    maker_encode_example()
 
 
     AudioEncodeSetting  a_setting;
-    a_setting.load_pcm_path     =   "E:\\test.pcm";
+    a_setting.load_pcm_path     =   "H:\\test.pcm";
     //a_setting.code_id     =   AV_CODEC_ID_MP3;
     a_setting.code_id       =   AV_CODEC_ID_AAC;
     //a_setting.code_id       =   AV_CODEC_ID_AC3;
@@ -87,7 +87,7 @@ void    maker_encode_example()
     s_setting.code_id       =   AV_CODEC_ID_ASS;
     //s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
     //s_setting.code_id       =   AV_CODEC_ID_MOV_TEXT;
-    s_setting.subtitle_file =   "E:\\test.ass";
+    s_setting.subtitle_file =   "H:\\test.ass";
     s_setting.subtitle_ext  =   "ass";
 
 

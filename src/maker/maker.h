@@ -4,7 +4,8 @@
 
 #include "maker_interface.h"
 #include "audio_encode.h"
-#include "video_encode.h"
+//#include "video_encode.h"
+#include "video_encode_hw.h"
 #include "sub_encode.h"
 
 
@@ -36,14 +37,14 @@ public:
     void    work_without_subtitle();
     void    flush_encoder( Encode* enc );
 
-
 protected:
     
     // note: 未來有時間再看要不要移到 private, 並且增加 protected interface
     Mux*    muxer  =   nullptr;
 
     AudioEncode     a_encoder;
-    VideoEncode     v_encoder;
+    //VideoEncode     v_encoder;
+    VideoEncodeHW   v_encoder;
     SubEncode       s_encoder;
 
     EncodeSetting   setting;
