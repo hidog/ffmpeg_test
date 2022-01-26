@@ -110,7 +110,7 @@ int     VideoEncodeHW::get_nv_encode_data( uint8_t *buffer, int size )
         AVPixelFormat   nv_fmt =   static_cast<AVPixelFormat>(nv_stream->codecpar->format);  
         av_image_fill_pointers( frame->data, nv_fmt, height, nv_data[0], nv_linesize );
 
-        NvEncoderCuda::CopyToDeviceFrame( cu_ctx, video_data[0], 0, (CUdeviceptr)nv_input_frame->inputPtr,
+        NvEncoderCuda::CopyToDeviceFrame( cu_ctx, nv_data[0], 0, (CUdeviceptr)nv_input_frame->inputPtr,
                                           (int)nv_input_frame->pitch, width, height, CU_MEMORYTYPE_HOST, 
                                           nv_input_frame->bufferFormat, nv_input_frame->chromaOffsets, nv_input_frame->numChromaPlanes );
 
@@ -220,19 +220,47 @@ int    VideoEncodeHW::open_convert_demux()
 
 
 
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoEncodeHW::init_sws()
+********************************************************************************/
+void    VideoEncodeHW::init_sws( VideoEncodeSetting setting )
+{
+    if( nv_enc == nullptr )
+        MYLOG( LOG::L_ERROR, "nv_enc not init." )
+
+    nv_bufsize  =   av_image_alloc( nv_data, nv_linesize, setting.width, setting.height, setting.pix_fmt, 1 );
+    
+    int     width   =   nv_enc->GetEncodeWidth();
+    int     height  =   nv_enc->GetEncodeHeight();
+
+    // 無法直接存取 pix_fmt.
+    // NV_ENC_BUFFER_FORMAT    enc_format  =    nv_enc->GetPixelFormat();
+
+    nv_sws      =   sws_getContext( setting.src_width, setting.src_height, setting.src_pix_fmt,    // src
+                                    width,             height,             setting.pix_fmt,        // dst
+                                    SWS_BICUBIC, NULL, NULL, NULL );
+}
+#endif
+
+
+
+
+
 /*******************************************************************************
 VideoEncodeHW::init()
 ********************************************************************************/
 void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_global_header )
 {
-    int ret = 0;
+    int     ret     =   0;
     
     Encode::init( st_idx, setting.code_id );
+    init_nv_encode( setting.width, setting.height, setting.pix_fmt );  // 執行順序不能隨便改, 有相依性.
 
 #ifdef FFMPEG_TEST
     VideoEncode::set_jpg_root_path( setting.load_jpg_root_path );
 
-    // frame setting
+    // alloc frame data.
     frame->format   =   setting.pix_fmt;
     frame->width    =   setting.width;
     frame->height   =   setting.height;
@@ -241,12 +269,9 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
     if( ret < 0 ) 
         MYLOG( LOG::L_ERROR, "get buffer fail." );
 
-    // data for sws.
-    video_bufsize   =   av_image_alloc( video_data, video_linesize, setting.width, setting.height, setting.pix_fmt, 1 );
+    // init sws.
+    VideoEncodeHW::init_sws( setting );
 
-    sws_ctx     =   sws_getContext( setting.src_width, setting.src_height, setting.src_pix_fmt,    // src
-                                    setting.width,        setting.height,        setting.pix_fmt,           // dst
-                                    SWS_BICUBIC, NULL, NULL, NULL );
 #endif
 
     //
@@ -260,7 +285,6 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
     src_width   =   setting.src_width;
     src_height  =   setting.src_height;
 
-    init_nv_encode( setting.width, setting.height, setting.pix_fmt );
 
     open_convert_demux();
 }

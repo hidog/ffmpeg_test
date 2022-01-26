@@ -39,7 +39,7 @@ public:
     virtual int64_t get_pts() override;
 
 #ifdef FFMPEG_TEST
-    void    init_sws( VideoEncodeSetting setting );
+    virtual void    init_sws( VideoEncodeSetting setting );
     void    get_fram_from_file_QT();
     void    get_fram_from_file_openCV();
 
@@ -57,7 +57,7 @@ protected:
     int     src_width   =   0;
     int     src_height  =   0;
 
-//private:
+private:
 
 #ifdef FFMPEG_TEST
     uint8_t*    video_data[4]       =   { nullptr };

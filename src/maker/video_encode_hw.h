@@ -21,7 +21,7 @@ struct CUctx_st;
 struct AVFormatContext;
 struct AVBSFContext;
 struct AVStream;
-
+struct SwsContext;
 
 
 /*
@@ -76,6 +76,10 @@ public:
     int     get_nv_encode_data( uint8_t *buffer, int size );
     bool    end_of_file() override;
 
+#ifdef FFMPEG_TEST
+    void    init_sws( VideoEncodeSetting setting ) override;
+#endif
+
 private:
 
     bool nv_eof = false;
@@ -94,12 +98,15 @@ private:
     std::list<NvEncBuffer>  nv_encoded_list;  // nvenc 出來的資料存在這個 list, 再讓 demux 讀取.
     EncodedVector   encoded_vec;   // nvenc 編碼後的資料暫存 
 
-    // frame data 傳入 nvenc 的暫存資料.
+    // frame data 傳入 nvenc 的 buffer.
     uint8_t*    nv_data[4]       =   { nullptr };
     int         nv_linesize[4]   =   { 0 };
     int         nv_bufsize       =   0;
     
     static constexpr int demux_buffer_size = 65536;
+
+    SwsContext      *nv_sws    =   nullptr;
+
 
 };
 
