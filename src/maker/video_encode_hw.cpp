@@ -491,9 +491,21 @@ void    VideoEncodeHW::init_nv_encode( uint32_t width, uint32_t height, AVPixelF
     NvEncoderInitParam  encode_cl_IO_options;
     //std::string parameter = "-preset default -profile main -fpsn 24000 -fpsd 1001 -gop 30 -bf 15 -rc cbr -bitrate 3M";
     //std::string parameter = "-fpsn 24000 -fpsd 1001 -gop 5 -bf 0 -rc cbr -bitrate 1M";
+
+    // note: 以後有需要的話再增加擴充性. 先簡單寫.
     char    nv_param_str[1000];
-    sprintf( nv_param_str, "-preset default -profile main -fpsn %d -fpsd %d -gop %d -bf %d -rc cbr -bitrate 3M", 
-                            setting.time_base.num, setting.time_base.den, setting.gop_size, setting.max_b_frames );
+    if( setting.code_id == AV_CODEC_ID_H265 )
+    {
+        sprintf( nv_param_str, "-codec hevc -preset default -profile main -fpsn %d -fpsd %d -gop %d -bf %d -rc cbr -bitrate 3M", 
+                                setting.time_base.num, setting.time_base.den, setting.gop_size, setting.max_b_frames );
+    }
+    else if( setting.code_id == AV_CODEC_ID_H264 )
+    {
+        if( setting.pix_fmt == AV_PIX_FMT_YUV420P10LE )
+            MYLOG( LOG::L_ERROR, "not support." )
+        sprintf( nv_param_str, "-codec h264 -preset default -profile main -fpsn %d -fpsd %d -gop %d -bf %d -rc cbr -bitrate 3M", 
+                                setting.time_base.num, setting.time_base.den, setting.gop_size, setting.max_b_frames );
+    }
 
     //
     encode_cl_IO_options    =   NvEncoderInitParam( nv_param_str );
