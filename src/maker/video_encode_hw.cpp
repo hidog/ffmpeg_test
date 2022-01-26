@@ -223,6 +223,8 @@ int    VideoEncodeHW::open_convert_demux()
 #ifdef FFMPEG_TEST
 /*******************************************************************************
 VideoEncodeHW::init_sws()
+
+跟 VideoEncode 只有一點差別, 大致上相同.
 ********************************************************************************/
 void    VideoEncodeHW::init_sws( VideoEncodeSetting setting )
 {
@@ -255,7 +257,7 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
     int     ret     =   0;
     
     Encode::init( st_idx, setting.code_id );
-    init_nv_encode( setting.width, setting.height, setting.pix_fmt );  // 執行順序不能隨便改, 有相依性.
+    init_nv_encode( setting.width, setting.height, setting.pix_fmt, setting );  // 執行順序不能隨便改, 有相依性.
 
 #ifdef FFMPEG_TEST
     VideoEncode::set_jpg_root_path( setting.load_jpg_root_path );
@@ -271,12 +273,11 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
 
     // init sws.
     VideoEncodeHW::init_sws( setting );
-
 #endif
 
-    //
-    ctx->time_base.num = 24000;
-    ctx->time_base.den = 1001;
+    // 目前 ctx 的 time_base 可以直接拿來用. 
+    // 為了方便就不另外寫一個變數存 fps 了.
+    ctx->time_base  =   setting.time_base;
 
     // need before avcodec_open2
     if( need_global_header == true )
@@ -285,46 +286,51 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
     src_width   =   setting.src_width;
     src_height  =   setting.src_height;
 
-
+    //
     open_convert_demux();
+
+    // duration per frame =  1000000 / ctx_time_base, 用 av_rescale 做計算, 所以 den, num 順序反過來.
+    duration_per_frame  =  av_rescale( AV_TIME_BASE, ctx->time_base.den, ctx->time_base.num );
 }
+
 
 
 
 
 /*******************************************************************************
 VideoEncodeHW::next_frame()
+
+技術限制, 跟 VideoEncode 差很多
+會在這邊取得 pkt, 寫入 pts, duration.
+
 ********************************************************************************/
 void    VideoEncodeHW::next_frame()
 {
-    int ret = av_read_frame( demux_ctx, pkt );
-
+    int ret     =   av_read_frame( demux_ctx, pkt );
     if( ret < 0 )
     {
-        nv_eof = true;
+        nv_eof  =   true;
         return;
     }
 
     // 不能用 get_stream_time_base.
-    AVRational stb = nv_stream->time_base;
-
-    // dpf = duration per frame = 1000000 / ctx_time_base, 用 av_rescale 做計算, 所以 den, num 順序反過來.
-    int64_t dpf =  av_rescale( AV_TIME_BASE, ctx->time_base.den, ctx->time_base.num );  
+    AVRational  stb     =   nv_stream->time_base;
 
 	//
-    AVRational tmp_1 = { decode_count*dpf, AV_TIME_BASE };
-    AVRational tmp_2 = av_div_q( tmp_1, stb );
-
-    pkt->pts = av_q2d( tmp_2 );  // decode_count*dpf 考慮用變數來累加.
-	pkt->dts = pkt->pts;
+    AVRational  realtime_pts    =   { duration_count, AV_TIME_BASE };
+    AVRational  nv_pts          =   av_div_q( realtime_pts, stb );
+    pkt->pts    =   av_q2d( nv_pts );
+	pkt->dts    =   pkt->pts;
 
 	//
-    AVRational tmp_r { dpf, AV_TIME_BASE };
-    AVRational tmp_r2 = av_div_q( tmp_r, stb );
-    pkt->duration = av_q2d(tmp_r2);
+    AVRational  realtime_duration { duration_per_frame, AV_TIME_BASE };
+    AVRational  nv_duration     =   av_div_q( realtime_duration, stb );
+    pkt->duration   =   av_q2d(nv_duration);
 
-    decode_count++;
+    //
+    duration_count  +=  duration_per_frame;
 }
+
 
 
 
@@ -335,20 +341,26 @@ void    VideoEncodeHW::encode_timestamp()
 {
     if( pkt == nullptr )
         MYLOG( LOG::L_WARN, "pkt is null." );
-    auto ctx_tb =   nv_stream->time_base; //get_timebase();
+    auto ctx_tb =   nv_stream->time_base; // 理論上跟 get_timebase() 相同.
     auto stb    =   get_stream_time_base();
     av_packet_rescale_ts( pkt, ctx_tb, stb );
 }
 
 
 
+
 /*******************************************************************************
 VideoEncodeHW::end_of_file()
+
+這邊要小心, 因為有兩個 eof, 
+一個是 frame 讀取用的, 一個是 nvenc stream 用的.
 ********************************************************************************/
 bool    VideoEncodeHW::end_of_file()
 {
     return  nv_eof;
 }
+
+
 
 
 
@@ -359,6 +371,9 @@ AVRational  VideoEncodeHW::get_compare_timebase()
 {
     return  nv_stream->time_base;
 }
+
+
+
 
 
 /*******************************************************************************
@@ -372,65 +387,64 @@ int64_t     VideoEncodeHW::get_pts()
 
 
 
+
 /*******************************************************************************
 VideoEncodeHW::init_nv_encode()
 ********************************************************************************/
-void    VideoEncodeHW::init_nv_encode( uint32_t width, uint32_t height, AVPixelFormat pix_fmt )
+void    VideoEncodeHW::init_nv_encode( uint32_t width, uint32_t height, AVPixelFormat pix_fmt, VideoEncodeSetting setting )
 {
-    cuInit(0);
-    int nGpu = 0;
-    cuDeviceGetCount(&nGpu);
+    int     gpu_count   =   0;
 
-    if( nGpu <= 0 )    
+    cuInit(0);
+    cuDeviceGetCount( &gpu_count );
+
+    if( gpu_count <= 0 )    
         MYLOG( LOG::L_ERROR, "no gpu." )       
 
-    CUdevice cuDevice = 0;
-    cuDeviceGet( &cuDevice, 0 );  // 寫死 0 表示第一張顯卡.
+    CUdevice    cu_device   =   0;
+    cuDeviceGet( &cu_device, 0 );  // 寫死 0 表示第一張顯卡.
     
-    char szDeviceName[80];
-    cuDeviceGetName( szDeviceName, sizeof(szDeviceName), cuDevice );    
-    MYLOG( LOG::L_INFO, "gpu use %s", szDeviceName );
-
-    //CUcontext cuContext = NULL;
-    cuCtxCreate( &cu_ctx, 0, cuDevice );
+    char device_name[80];
+    cuDeviceGetName( device_name, sizeof(device_name), cu_device );    
+    MYLOG( LOG::L_INFO, "gpu use %s", device_name );
+    cuCtxCreate( &cu_ctx, 0, cu_device );
 
     assert( nv_enc == nullptr );
-
-    NV_ENC_BUFFER_FORMAT    eFormat    =   NV_ENC_BUFFER_FORMAT_UNDEFINED;
+    NV_ENC_BUFFER_FORMAT    nvenc_pix_fmt   =   NV_ENC_BUFFER_FORMAT_UNDEFINED;
     switch( pix_fmt )
     {
     case AV_PIX_FMT_YUV420P:
-        eFormat     =   NV_ENC_BUFFER_FORMAT_IYUV;
+        nvenc_pix_fmt   =   NV_ENC_BUFFER_FORMAT_IYUV;
         break;
     case AV_PIX_FMT_YUV420P10LE:
-        eFormat     =   NV_ENC_BUFFER_FORMAT_YUV420_10BIT;
+        nvenc_pix_fmt   =   NV_ENC_BUFFER_FORMAT_YUV420_10BIT;
         break;
     default:
         MYLOG( LOG::L_ERROR, "un defined." )
     }
 
     // create nv_enc    
-    nv_enc  =   new NvEncoderCuda { cu_ctx, width, height, eFormat };
+    nv_enc  =   new NvEncoderCuda { cu_ctx, width, height, nvenc_pix_fmt };
     assert( nv_enc != nullptr );
 
     //
-    NV_ENC_INITIALIZE_PARAMS initializeParams = { NV_ENC_INITIALIZE_PARAMS_VER };
-    NV_ENC_CONFIG encodeConfig = { NV_ENC_CONFIG_VER };
-    initializeParams.encodeConfig = &encodeConfig;
+    NV_ENC_INITIALIZE_PARAMS    initialize_params   =   { NV_ENC_INITIALIZE_PARAMS_VER };
+    NV_ENC_CONFIG               encode_config       =   { NV_ENC_CONFIG_VER };
+    initialize_params.encodeConfig  =   &encode_config;
 
-    NvEncoderInitParam encodeCLIOptions;
+    NvEncoderInitParam  encode_cl_IO_options;
     //std::string parameter = "-preset default -profile main -fpsn 24000 -fpsd 1001 -gop 30 -bf 15 -rc cbr -bitrate 3M";
-    std::string parameter = "-fpsn 24000 -fpsd 1001 -gop 5 -bf 0 -rc cbr -bitrate 1M";
+    //std::string parameter = "-fpsn 24000 -fpsd 1001 -gop 5 -bf 0 -rc cbr -bitrate 1M";
+    char    nv_param_str[1000];
+    sprintf( nv_param_str, "-preset default -profile main -fpsn %d -fpsd %d -gop %d -bf %d -rc cbr -bitrate 8M", 
+                            setting.time_base.num, setting.time_base.den, setting.gop_size, setting.max_b_frames );
 
-    encodeCLIOptions = NvEncoderInitParam( parameter.c_str() );
+    //
+    encode_cl_IO_options    =   NvEncoderInitParam( nv_param_str );
+    nv_enc->CreateDefaultEncoderParams( &initialize_params, encode_cl_IO_options.GetEncodeGUID(), encode_cl_IO_options.GetPresetGUID() );
+    encode_cl_IO_options.SetInitParams( &initialize_params, nvenc_pix_fmt );
+    nv_enc->CreateEncoder( &initialize_params );
 
-    nv_enc->CreateDefaultEncoderParams( &initializeParams, encodeCLIOptions.GetEncodeGUID(), encodeCLIOptions.GetPresetGUID() );
-    encodeCLIOptions.SetInitParams( &initializeParams, eFormat );
-
-    nv_enc->CreateEncoder( &initializeParams );
-
-    // alloc nvenc_buffer
-    int     frame_size  =   nv_enc->GetFrameSize();
 }
 
 

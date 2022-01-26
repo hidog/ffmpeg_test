@@ -42,6 +42,8 @@ struct NvEncBuffer
     作法不是很好, 會造成初始化的時候需要讀取大量圖片
     目前 study 結果, build ffmpeg with nvenc 應該是比較好的做法.
     ffmpeg 內有 nvenc.c 等相關檔案.
+
+    雖然介面相同, 但內容會跟 VideoEncode 差很多. 有空在思考怎麼處理.
 */
 
 class VideoEncodeHW : public VideoEncode
@@ -70,7 +72,7 @@ public:
     void    encode_timestamp() override;
 
 
-    void    init_nv_encode( uint32_t width, uint32_t height, AVPixelFormat pix_fmt );
+    void    init_nv_encode( uint32_t width, uint32_t height, AVPixelFormat pix_fmt, VideoEncodeSetting setting );
     int     open_convert_demux();  // nvenc 出來的 stream 用 demux 解出 packet, 加上 pts, duration, 再丟入 mux.
 
     int     get_nv_encode_data( uint8_t *buffer, int size );
@@ -82,13 +84,16 @@ public:
 
 private:
 
-    bool nv_eof = false;
+    bool    nv_eof  =   false; // 因為兩個階段, 需要兩個 eof 判斷 stream 是否結束.
+
+    // 為了效能, 計算 pts 的時候用 +=, 不用 *. 紀錄每次增加的 step.
+    int64_t     duration_per_frame  =   0;  
+    int64_t     duration_count      =   0;   // duration_count = count * duration_per_frame
 
 
     AVFormatContext     *demux_ctx     =   nullptr;  // 負責將 nvenc 出來的 stream 做 demux.
     AVStream            *nv_stream     =   nullptr;  // 需要做兩次轉換. source frame -> nvenc -> output. nv_stream 用在 mux 前.
 
-    int decode_count = 0;
 
     //
     NvEncoderCuda   *nv_enc =   nullptr;
