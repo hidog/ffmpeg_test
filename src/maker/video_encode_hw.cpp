@@ -453,22 +453,26 @@ void    VideoEncodeHW::init_nv_encode( uint32_t width, uint32_t height, AVPixelF
 
 /*******************************************************************************
 VideoEncodeHW::send_frame()
+
+技術限制, 這邊架構跟傳統架構非常不同.
 ********************************************************************************/
 int     VideoEncodeHW::send_frame()
 {
-    return 1;
+    return  1;
 }
 
 
 
 
 /*******************************************************************************
-VideoEncodeHW::send_frame()
+VideoEncodeHW::recv_frame()
+
+技術限制, 這邊架構跟傳統架構非常不同.
 ********************************************************************************/
 int     VideoEncodeHW::recv_frame()
 {
     if( pkt->buf != nullptr )
-        return 1;
+        return  1;
     else
-        return AVERROR(EAGAIN);
+        return  AVERROR(EAGAIN);
 }
