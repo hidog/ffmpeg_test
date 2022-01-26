@@ -24,11 +24,15 @@ struct AVStream;
 
 
 
-struct BufferData
+/*
+    NVENC 出來的資料需要做多次讀取
+    用這個結構紀錄存取的位置.
+*/
+struct NvEncBuffer
 {
-    std::vector<uint8_t>  data;
-    int read_size;
-    int remain_size;
+    std::vector<uint8_t>    enc_data;
+    int     read_size;
+    int     remain_size;
 };
 
 
@@ -43,6 +47,8 @@ struct BufferData
 class VideoEncodeHW : public VideoEncode
 {
 public:
+    using EncodedVector = std::vector<std::vector<uint8_t>>;
+
     VideoEncodeHW();
     ~VideoEncodeHW();
 
@@ -85,8 +91,8 @@ private:
     CUctx_st* cu_ctx = nullptr; // note: CUcontext = CUctx_st*
 
 
-    std::vector<std::vector<uint8_t>>  encoded_vec;   // nvenc 編碼後的資料暫存 
-    std::list<BufferData>   buffer_list;
+    std::list<NvEncBuffer>  nv_encoded_list;  // nvenc 出來的資料存在這個 list, 再讓 demux 讀取.
+    EncodedVector   encoded_vec;   // nvenc 編碼後的資料暫存 
 
     // frame data 傳入 nvenc 的暫存資料.
     uint8_t*    nv_data[4]       =   { nullptr };

@@ -113,41 +113,43 @@ int     VideoEncodeHW::get_nv_encode_data( uint8_t *buffer, int size )
         NvEncoderCuda::CopyToDeviceFrame( cu_ctx, video_data[0], 0, (CUdeviceptr)nv_input_frame->inputPtr,
                                           (int)nv_input_frame->pitch, width, height, CU_MEMORYTYPE_HOST, 
                                           nv_input_frame->bufferFormat, nv_input_frame->chromaOffsets, nv_input_frame->numChromaPlanes );
+
         nv_enc->EncodeFrame(encoded_vec);
     }
 
+    // 晚點再來重構這一塊.
     if( encoded_vec.size() > 0 )    
     {
         for( int i = 0; i < encoded_vec.size(); i++ )
         {
-            BufferData item;
-            item.data = encoded_vec[i];
+            NvEncBuffer item;
+            item.enc_data = encoded_vec[i];
             item.read_size = 0;
             item.remain_size = encoded_vec[i].size();
             
-            buffer_list.emplace_back( item );
+            nv_encoded_list.emplace_back( item );
         }
     }
 
-    if( buffer_list.size() == 0 && eof_flag == true )
+    if( nv_encoded_list.size() == 0 && eof_flag == true )
         return EOF;
-    if( buffer_list.size() == 0 )
+    if( nv_encoded_list.size() == 0 )
         return  0;
     else
     {
         while( true )
         {
-            BufferData &item = buffer_list.front();
+            NvEncBuffer &item = nv_encoded_list.front();
             if( item.remain_size <= size )
             {
-                memcpy( buffer, item.data.data() + item.read_size, item.remain_size );
+                memcpy( buffer, item.enc_data.data() + item.read_size, item.remain_size );
                 int read_size = item.remain_size;
-                buffer_list.pop_front();
+                nv_encoded_list.pop_front();
                 return read_size;
             }
             else
             {
-                memcpy( buffer, item.data.data() + item.read_size, size );
+                memcpy( buffer, item.enc_data.data() + item.read_size, size );
                 item.read_size += size;
                 item.remain_size -= size;
                 return size;
