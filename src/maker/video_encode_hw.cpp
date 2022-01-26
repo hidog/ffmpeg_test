@@ -26,14 +26,29 @@ extern "C" {
 VideoEncodeHW::VideoEncodeHW()
 ********************************************************************************/
 VideoEncodeHW::VideoEncodeHW()
+    :   VideoEncode()
 {}
+
+
 
 
 /*******************************************************************************
 VideoEncodeHW::~VideoEncodeHW()
 ********************************************************************************/
 VideoEncodeHW::~VideoEncodeHW()
+{
+    end();
+}
+
+
+
+
+/*******************************************************************************
+VideoEncodeHW::~VideoEncodeHW()
+********************************************************************************/
+void    VideoEncodeHW::end()
 {}
+
 
 
 
@@ -41,19 +56,25 @@ VideoEncodeHW::~VideoEncodeHW()
 /*******************************************************************************
 io_read_data
 ********************************************************************************/
-int     read_encode_data( void *opaque, uint8_t *buffer, int size )
+int     demux_read( void *opaque, uint8_t *buffer, int size )
 {
-    VideoEncodeHW   *video_enc_hw =   (VideoEncodeHW*)opaque;
-    int     read_size;
+    VideoEncodeHW   *video_enc_hw   =   (VideoEncodeHW*)opaque;
+    assert( video_enc_hw != nullptr );
+
+    int     read_size   =   0;
     
     while( true )
     {
-        read_size =   video_enc_hw->get_encode_data( buffer, size );
+        read_size   =   video_enc_hw->get_nv_encode_data( buffer, size );
         if( read_size > 0 )
             break;
-        if( read_size == EOF )
-            break;
+        else if( read_size == EOF )        
+            break;        
     }
+
+    if( read_size == EOF )
+        MYLOG( LOG::L_INFO, "load nvenc stream finish." )
+
     return  read_size;
 }
 
@@ -63,11 +84,15 @@ int     read_encode_data( void *opaque, uint8_t *buffer, int size )
 /*******************************************************************************
 VideoEncodeHW::get_encode_data
 ********************************************************************************/
-int     VideoEncodeHW::get_encode_data( uint8_t *buffer, int size )
+int     VideoEncodeHW::get_nv_encode_data( uint8_t *buffer, int size )
 {
+    // 使用 VideoEncode 介面讀取 frame, 再用 nvenc encode.
     VideoEncode::next_frame();
 
-    const NvEncInputFrame* encoderInputFrame = nv_enc->GetNextInputFrame();
+    // 
+    const NvEncInputFrame   *nv_input_frame     =   nv_enc->GetNextInputFrame();
+    if( nv_input_frame == nullptr )
+        MYLOG( LOG::L_ERROR, "nv_input_frame is nullptr." )
 
     if( eof_flag == true )
     {
@@ -84,13 +109,13 @@ int     VideoEncodeHW::get_encode_data( uint8_t *buffer, int size )
         //
         av_image_fill_pointers( frame->data, AV_PIX_FMT_YUV420P, 720, video_data[0], video_linesize );
 
-        NvEncoderCuda::CopyToDeviceFrame( cuContext, video_data[0], 0, (CUdeviceptr)encoderInputFrame->inputPtr,
-                                          (int)encoderInputFrame->pitch,
+        NvEncoderCuda::CopyToDeviceFrame( cuContext, video_data[0], 0, (CUdeviceptr)nv_input_frame->inputPtr,
+                                          (int)nv_input_frame->pitch,
                                           w, h, 
                                           CU_MEMORYTYPE_HOST, 
-                                          encoderInputFrame->bufferFormat,
-                                          encoderInputFrame->chromaOffsets,
-                                          encoderInputFrame->numChromaPlanes );
+                                          nv_input_frame->bufferFormat,
+                                          nv_input_frame->chromaOffsets,
+                                          nv_input_frame->numChromaPlanes );
         nv_enc->EncodeFrame(vPacket);
         delete [] ptr;
     }
@@ -152,7 +177,7 @@ void    VideoEncodeHW::open_convert_ctx()
     uint8_t     *input_buf   =   (uint8_t*)av_malloc(4096);
     assert( input_buf != nullptr );
 
-	AVIOContext     *io_ctx =   avio_alloc_context( input_buf, 4096, 0, (void*)this, read_encode_data, nullptr, nullptr );
+	AVIOContext     *io_ctx =   avio_alloc_context( input_buf, 4096, 0, (void*)this, demux_read, nullptr, nullptr );
     assert( io_ctx != nullptr );
 
 	AVInputFormat   *input_fmt   =   nullptr;

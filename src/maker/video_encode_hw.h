@@ -32,6 +32,13 @@ struct BufferData
 };
 
 
+/*
+    用 NvEncode 的時候無法透過介面設定 timestamp, duration
+    最後用一個 demux 讀取 NvEncode 的 stream, 再解開 time_base 等資訊
+    作法不是很好, 會造成初始化的時候需要讀取大量圖片
+    目前 study 結果, build ffmpeg with nvenc 應該是比較好的做法.
+    ffmpeg 內有 nvenc.c 等相關檔案.
+*/
 
 class VideoEncodeHW : public VideoEncode
 {
@@ -46,6 +53,7 @@ public:
     VideoEncodeHW& operator = ( VideoEncodeHW&& ) = delete;
 
     void    init( int st_idx, VideoEncodeSetting setting, bool need_global_header ) override;
+    void    end() override;
     int     send_frame() override;
     int     recv_frame() override;
     void    next_frame() override;
@@ -59,7 +67,7 @@ public:
     void    init_nv_encode( uint32_t width, uint32_t height, AVPixelFormat pix_fmt );
     void    open_convert_ctx();
 
-    int     get_encode_data( uint8_t *buffer, int size );
+    int     get_nv_encode_data( uint8_t *buffer, int size );
     bool    end_of_file() override;
 
 private:
@@ -84,7 +92,8 @@ private:
 
 
 
-int     read_encode_data( void *opaque, uint8_t *buffer, int size );
+// VideoEncodeHW 內的 demux 使用這個 callback function 讀取 NvEncode 出來的 stream.
+int     demux_read( void *opaque, uint8_t *buffer, int size );
 
 
 
