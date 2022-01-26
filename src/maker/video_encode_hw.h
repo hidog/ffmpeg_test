@@ -71,6 +71,9 @@ public:
 
     void    encode_timestamp() override;
 
+    int     flush() override;
+
+
 
     void    init_nv_encode( uint32_t width, uint32_t height, AVPixelFormat pix_fmt, VideoEncodeSetting setting );
     int     open_convert_demux();  // nvenc 出來的 stream 用 demux 解出 packet, 加上 pts, duration, 再丟入 mux.
@@ -83,6 +86,8 @@ public:
 #endif
 
 private:
+
+    int     nv_frame_count  =   0;  // 目前只有印 log 功能
 
     bool    nv_eof  =   false; // 因為兩個階段, 需要兩個 eof 判斷 stream 是否結束.
 

@@ -85,6 +85,18 @@ struct NvEncInputFrame
 class NvEncoder
 {
 public:
+    // 個人新增的, 方便程式寫作
+    int get_ffmpeg_pixel_format() const 
+    { 
+        if( m_eBufferFormat == NV_ENC_BUFFER_FORMAT_IYUV )
+            return  0;    // AV_PIX_FMT_YUV420P
+        else if( m_eBufferFormat == NV_ENC_BUFFER_FORMAT_YUV420_10BIT )
+            return  64;   // AV_PIX_FMT_YUV420P10LE
+        else
+            return  -1;   // AV_PIX_FMT_NONE
+    }
+
+
     /**
     *  @brief This function is used to initialize the encoder session.
     *  Application must call this function to initialize the encoder, before

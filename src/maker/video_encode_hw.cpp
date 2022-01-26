@@ -107,7 +107,7 @@ int     VideoEncodeHW::get_nv_encode_data( uint8_t *buffer, int size )
         int     height  =   nv_enc->GetEncodeHeight();
 
         // convert frame to pointer.
-        AVPixelFormat   nv_fmt =   static_cast<AVPixelFormat>(nv_stream->codecpar->format);  
+        AVPixelFormat   nv_fmt =   static_cast<AVPixelFormat>( nv_enc->get_ffmpeg_pixel_format() );  
         av_image_fill_pointers( frame->data, nv_fmt, height, nv_data[0], nv_linesize );
 
         NvEncoderCuda::CopyToDeviceFrame( cu_ctx, nv_data[0], 0, (CUdeviceptr)nv_input_frame->inputPtr,
@@ -272,6 +272,10 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
         MYLOG( LOG::L_ERROR, "get buffer fail." );
 
     // init sws.
+    ctx->width      =   setting.width;  // 為了配合 VideoEncode 的 work around.
+    ctx->height     =   setting.height;
+    ctx->pix_fmt    =   setting.pix_fmt;
+    VideoEncode::init_sws( setting );
     VideoEncodeHW::init_sws( setting );
 #endif
 
@@ -289,8 +293,8 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
     //
     open_convert_demux();
 
-    // duration per frame =  1000000 / ctx_time_base, 用 av_rescale 做計算, 所以 den, num 順序反過來.
-    duration_per_frame  =  av_rescale( AV_TIME_BASE, ctx->time_base.den, ctx->time_base.num );
+    // duration per frame =  1000000 * ctx_time_base.  這邊的 time_base = 1001/24000.
+    duration_per_frame  =  av_rescale( AV_TIME_BASE, ctx->time_base.num, ctx->time_base.den );
 }
 
 
@@ -329,6 +333,20 @@ void    VideoEncodeHW::next_frame()
 
     //
     duration_count  +=  duration_per_frame;
+
+    if( nv_frame_count % 100 == 0 )
+        MYLOG( LOG::L_DEBUG, "nv encode %d frames.", nv_frame_count )
+    nv_frame_count++;
+}
+
+
+
+/*******************************************************************************
+VideoEncodeHW::flush()
+********************************************************************************/
+int     VideoEncodeHW::flush()
+{
+    return  1;  // 會在 demux 階段 flush.
 }
 
 
