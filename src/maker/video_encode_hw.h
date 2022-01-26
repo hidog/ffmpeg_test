@@ -75,18 +75,23 @@ private:
     bool nv_eof = false;
 
 
-    AVFormatContext     *fmt_ctx     =   nullptr;
-    AVStream        *stream = nullptr;
+    AVFormatContext     *fmt_ctx    =   nullptr;
+    AVStream            *nv_stream     =   nullptr;  // 需要做兩次轉換. source frame -> nvenc -> output.
 
     int decode_count = 0;
 
     //
     NvEncoderCuda   *nv_enc =   nullptr;
-    CUctx_st* cuContext = nullptr; // note: CUcontext = CUctx_st*
+    CUctx_st* cu_ctx = nullptr; // note: CUcontext = CUctx_st*
 
 
     std::vector<std::vector<uint8_t>> vPacket;
     std::list<BufferData>   buffer_list;
+
+    // frame data 傳入 nvenc 的暫存資料.
+    uint8_t*    nv_data[4]       =   { nullptr };
+    int         nv_linesize[4]   =   { 0 };
+    int         nv_bufsize       =   0;
     
 };
 

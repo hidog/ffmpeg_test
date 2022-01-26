@@ -94,30 +94,30 @@ int     VideoEncodeHW::get_nv_encode_data( uint8_t *buffer, int size )
     if( nv_input_frame == nullptr )
         MYLOG( LOG::L_ERROR, "nv_input_frame is nullptr." )
 
-    if( eof_flag == true )
-    {
-        nv_enc->EndEncode(vPacket);
-    }
+    /*
+        NOTE: NvEncodeHW 因為某些理由, 需要兩個 eof
+        一個是讀取 frame 的 eof.
+        一個是 stream 結束的 eof.
+    */
+    if( eof_flag == true )    
+        nv_enc->EndEncode(vPacket);  // flush.
     else
     {
-        int w = nv_enc->GetEncodeWidth();
-        int h = nv_enc->GetEncodeHeight();
+        int     width   =   nv_enc->GetEncodeWidth();
+        int     height  =   nv_enc->GetEncodeHeight();
 
-        int nFrameSize = nv_enc->GetFrameSize();
-        uint8_t *ptr = new uint8_t[nFrameSize];
+        // convert frame to pointer.
+        AVPixelFormat   nv_fmt =   static_cast<AVPixelFormat>(nv_stream->codecpar->format);  
+        av_image_fill_pointers( frame->data, nv_fmt, height, nv_data[0], nv_linesize );
 
-        //
-        av_image_fill_pointers( frame->data, AV_PIX_FMT_YUV420P, 720, video_data[0], video_linesize );
-
-        NvEncoderCuda::CopyToDeviceFrame( cuContext, video_data[0], 0, (CUdeviceptr)nv_input_frame->inputPtr,
+        NvEncoderCuda::CopyToDeviceFrame( cu_ctx, video_data[0], 0, (CUdeviceptr)nv_input_frame->inputPtr,
                                           (int)nv_input_frame->pitch,
-                                          w, h, 
+                                          width, height, 
                                           CU_MEMORYTYPE_HOST, 
                                           nv_input_frame->bufferFormat,
                                           nv_input_frame->chromaOffsets,
                                           nv_input_frame->numChromaPlanes );
         nv_enc->EncodeFrame(vPacket);
-        delete [] ptr;
     }
 
     if( vPacket.size() > 0 )    
@@ -197,10 +197,10 @@ void    VideoEncodeHW::open_convert_ctx()
     if( ret < 0) 
         MYLOG( LOG::L_ERROR, "Could not find stream information. ret = %d", ret );
 
-    stream = fmt_ctx->streams[0];
-    printf( "stream time base = %d %d\n", stream->time_base.num, stream->time_base.den );
+    nv_stream = fmt_ctx->streams[0];
+    printf( "stream time base = %d %d\n", nv_stream->time_base.num, nv_stream->time_base.den );
 
-    ret     =   avcodec_parameters_to_context( ctx, stream->codecpar );
+    ret     =   avcodec_parameters_to_context( ctx, nv_stream->codecpar );
 
 }
 
@@ -269,7 +269,7 @@ void    VideoEncodeHW::next_frame()
     }
 
     // 不能用 get_stream_time_base.
-    AVRational stb = stream->time_base;
+    AVRational stb = nv_stream->time_base;
 
     // dpf = duration per frame = 1000000 / ctx_time_base, 用 av_rescale 做計算, 所以 den, num 順序反過來.
     int64_t dpf =  av_rescale( AV_TIME_BASE, ctx->time_base.den, ctx->time_base.num );  
@@ -298,7 +298,7 @@ void    VideoEncodeHW::encode_timestamp()
 {
     if( pkt == nullptr )
         MYLOG( LOG::L_WARN, "pkt is null." );
-    auto ctx_tb =   stream->time_base; //get_timebase();
+    auto ctx_tb =   nv_stream->time_base; //get_timebase();
     auto stb    =   get_stream_time_base();
     av_packet_rescale_ts( pkt, ctx_tb, stb );
 }
@@ -320,7 +320,7 @@ VideoEncodeHW::get_compare_timebase()
 ********************************************************************************/
 AVRational  VideoEncodeHW::get_compare_timebase()
 {
-    return  stream->time_base;
+    return  nv_stream->time_base;
 }
 
 
@@ -355,7 +355,7 @@ void    VideoEncodeHW::init_nv_encode( uint32_t width, uint32_t height, AVPixelF
     MYLOG( LOG::L_INFO, "gpu use %s", szDeviceName );
 
     //CUcontext cuContext = NULL;
-    cuCtxCreate( &cuContext, 0, cuDevice );
+    cuCtxCreate( &cu_ctx, 0, cuDevice );
 
     assert( nv_enc == nullptr );
 
@@ -373,7 +373,7 @@ void    VideoEncodeHW::init_nv_encode( uint32_t width, uint32_t height, AVPixelF
     }
 
     // create nv_enc    
-    nv_enc  =   new NvEncoderCuda { cuContext, width, height, eFormat };
+    nv_enc  =   new NvEncoderCuda { cu_ctx, width, height, eFormat };
     assert( nv_enc != nullptr );
 
     //
@@ -392,10 +392,8 @@ void    VideoEncodeHW::init_nv_encode( uint32_t width, uint32_t height, AVPixelF
 
     nv_enc->CreateEncoder( &initializeParams );
 
-    
-    int nFrameSize = nv_enc->GetFrameSize();
-    MYLOG( LOG::L_DEBUG, "frame size = %d", nFrameSize );
-
+    // alloc nvenc_buffer
+    int     frame_size  =   nv_enc->GetFrameSize();
 }
 
 
