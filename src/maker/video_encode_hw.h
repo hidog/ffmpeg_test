@@ -71,7 +71,7 @@ public:
 
 
     void    init_nv_encode( uint32_t width, uint32_t height, AVPixelFormat pix_fmt );
-    void    open_convert_ctx();
+    void    open_convert_demux();  // nvenc 出來的 stream 用 demux 解出 packet, 加上 pts, duration, 再丟入 mux.
 
     int     get_nv_encode_data( uint8_t *buffer, int size );
     bool    end_of_file() override;

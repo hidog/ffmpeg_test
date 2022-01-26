@@ -163,10 +163,13 @@ int     VideoEncodeHW::get_nv_encode_data( uint8_t *buffer, int size )
 
 
 
+
+
+
 /*******************************************************************************
-VideoEncodeHW::open_convert_ctx()
+VideoEncodeHW::open_convert_demux()
 ********************************************************************************/
-void    VideoEncodeHW::open_convert_ctx()
+void    VideoEncodeHW::open_convert_demux()
 {
     //      
     int  ret    =   0;
@@ -247,7 +250,7 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
 
     init_nv_encode( setting.width, setting.height, setting.pix_fmt );
 
-    open_convert_ctx();
+    open_convert_demux();
 }
 
 
