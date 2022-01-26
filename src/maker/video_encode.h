@@ -28,15 +28,15 @@ public:
     VideoEncode& operator = ( VideoEncode&& ) = delete;
 
     virtual void    init( int st_idx, VideoEncodeSetting setting, bool need_global_header );
+    
     virtual void    next_frame() override;
+    virtual int64_t get_pts() override;
+    virtual void    end() override;
 
-    void    end();
+    void    unref_data() override;
 
     void    list_frame_rate( AVCodecID code_id );
-    void    list_pix_fmt( AVCodecID code_id );
-    
-    void    unref_data() override;
-    virtual int64_t get_pts() override;
+    void    list_pix_fmt( AVCodecID code_id );    
 
 #ifdef FFMPEG_TEST
     void    init_sws( VideoEncodeSetting setting );
