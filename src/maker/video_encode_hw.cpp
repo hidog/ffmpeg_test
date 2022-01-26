@@ -100,7 +100,7 @@ int     VideoEncodeHW::get_nv_encode_data( uint8_t *buffer, int size )
         一個是 stream 結束的 eof.
     */
     if( eof_flag == true )    
-        nv_enc->EndEncode(vPacket);  // flush.
+        nv_enc->EndEncode( encoded_vec );  // flush.
     else
     {
         int     width   =   nv_enc->GetEncodeWidth();
@@ -111,23 +111,19 @@ int     VideoEncodeHW::get_nv_encode_data( uint8_t *buffer, int size )
         av_image_fill_pointers( frame->data, nv_fmt, height, nv_data[0], nv_linesize );
 
         NvEncoderCuda::CopyToDeviceFrame( cu_ctx, video_data[0], 0, (CUdeviceptr)nv_input_frame->inputPtr,
-                                          (int)nv_input_frame->pitch,
-                                          width, height, 
-                                          CU_MEMORYTYPE_HOST, 
-                                          nv_input_frame->bufferFormat,
-                                          nv_input_frame->chromaOffsets,
-                                          nv_input_frame->numChromaPlanes );
-        nv_enc->EncodeFrame(vPacket);
+                                          (int)nv_input_frame->pitch, width, height, CU_MEMORYTYPE_HOST, 
+                                          nv_input_frame->bufferFormat, nv_input_frame->chromaOffsets, nv_input_frame->numChromaPlanes );
+        nv_enc->EncodeFrame(encoded_vec);
     }
 
-    if( vPacket.size() > 0 )    
+    if( encoded_vec.size() > 0 )    
     {
-        for( int i = 0; i < vPacket.size(); i++ )
+        for( int i = 0; i < encoded_vec.size(); i++ )
         {
             BufferData item;
-            item.data = vPacket[i];
+            item.data = encoded_vec[i];
             item.read_size = 0;
-            item.remain_size = vPacket[i].size();
+            item.remain_size = encoded_vec[i].size();
             
             buffer_list.emplace_back( item );
         }

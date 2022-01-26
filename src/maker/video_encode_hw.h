@@ -85,7 +85,7 @@ private:
     CUctx_st* cu_ctx = nullptr; // note: CUcontext = CUctx_st*
 
 
-    std::vector<std::vector<uint8_t>> vPacket;
+    std::vector<std::vector<uint8_t>>  encoded_vec;   // nvenc 編碼後的資料暫存 
     std::list<BufferData>   buffer_list;
 
     // frame data 傳入 nvenc 的暫存資料.
