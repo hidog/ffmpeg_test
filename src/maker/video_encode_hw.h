@@ -71,7 +71,7 @@ public:
 
 
     void    init_nv_encode( uint32_t width, uint32_t height, AVPixelFormat pix_fmt );
-    void    open_convert_demux();  // nvenc 出來的 stream 用 demux 解出 packet, 加上 pts, duration, 再丟入 mux.
+    int     open_convert_demux();  // nvenc 出來的 stream 用 demux 解出 packet, 加上 pts, duration, 再丟入 mux.
 
     int     get_nv_encode_data( uint8_t *buffer, int size );
     bool    end_of_file() override;
@@ -81,7 +81,7 @@ private:
     bool nv_eof = false;
 
 
-    AVFormatContext     *fmt_ctx    =   nullptr;
+    AVFormatContext     *demux_ctx     =   nullptr;  // 負責將 nvenc 出來的 stream 做 demux.
     AVStream            *nv_stream     =   nullptr;  // 需要做兩次轉換. source frame -> nvenc -> output.
 
     int decode_count = 0;
@@ -99,6 +99,8 @@ private:
     int         nv_linesize[4]   =   { 0 };
     int         nv_bufsize       =   0;
     
+    static constexpr int demux_buffer_size = 65536;
+
 };
 
 

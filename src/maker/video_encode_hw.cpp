@@ -168,37 +168,46 @@ int     VideoEncodeHW::get_nv_encode_data( uint8_t *buffer, int size )
 
 /*******************************************************************************
 VideoEncodeHW::open_convert_demux()
+
+nvenc 出來的 stream 用 demux 解出 packet, 加上 pts, duration, 再丟入 mux.
 ********************************************************************************/
-void    VideoEncodeHW::open_convert_demux()
-{
-    //      
+int    VideoEncodeHW::open_convert_demux()
+{   
     int  ret    =   0;
-    fmt_ctx     =   avformat_alloc_context();    
-	
-    uint8_t     *input_buf   =   (uint8_t*)av_malloc(4096);
+
+    assert( demux_ctx == nullptr );
+    demux_ctx   =   avformat_alloc_context();    
+    if( demux_ctx == nullptr )
+    {
+        MYLOG( LOG::L_ERROR, "demux_ctx alloc fail." );
+        return  R_ERROR;
+    }
+
+	//
+    uint8_t     *input_buf   =   (uint8_t*)av_malloc(demux_buffer_size);
     assert( input_buf != nullptr );
 
-	AVIOContext     *io_ctx =   avio_alloc_context( input_buf, 4096, 0, (void*)this, demux_read, nullptr, nullptr );
+	AVIOContext     *io_ctx =   avio_alloc_context( input_buf, demux_buffer_size, 0, (void*)this, demux_read, nullptr, nullptr );
     assert( io_ctx != nullptr );
 
 	AVInputFormat   *input_fmt   =   nullptr;
     ret         =   av_probe_input_buffer( io_ctx, &input_fmt, nullptr, nullptr, 0, 0 );
     assert( ret == 0 );
-	fmt_ctx->pb =   io_ctx;
-    ret         =   avformat_open_input( &fmt_ctx, nullptr, input_fmt, nullptr );
+	demux_ctx->pb =   io_ctx;
+    ret         =   avformat_open_input( &demux_ctx, nullptr, input_fmt, nullptr );
     assert( ret == 0 );
 
-    fmt_ctx->flags |= AVFMT_FLAG_CUSTOM_IO;  
+    demux_ctx->flags |= AVFMT_FLAG_CUSTOM_IO;  
 
     if( ret < 0 )
         MYLOG( LOG::L_ERROR, "Could not open" );
 
     //
-    ret     =   avformat_find_stream_info( fmt_ctx, nullptr );
+    ret     =   avformat_find_stream_info( demux_ctx, nullptr );
     if( ret < 0) 
         MYLOG( LOG::L_ERROR, "Could not find stream information. ret = %d", ret );
 
-    nv_stream = fmt_ctx->streams[0];
+    nv_stream = demux_ctx->streams[0];
     printf( "stream time base = %d %d\n", nv_stream->time_base.num, nv_stream->time_base.den );
 
     ret     =   avcodec_parameters_to_context( ctx, nv_stream->codecpar );
@@ -261,7 +270,7 @@ VideoEncodeHW::next_frame()
 ********************************************************************************/
 void    VideoEncodeHW::next_frame()
 {
-    int ret = av_read_frame( fmt_ctx, pkt );
+    int ret = av_read_frame( demux_ctx, pkt );
 
     if( ret < 0 )
     {
