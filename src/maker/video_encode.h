@@ -39,7 +39,7 @@ public:
     virtual int64_t get_pts() override;
 
 #ifdef FFMPEG_TEST
-    virtual void    init_sws( VideoEncodeSetting setting );
+    void    init_sws( VideoEncodeSetting setting );
     void    get_fram_from_file_QT();
     void    get_fram_from_file_openCV();
 

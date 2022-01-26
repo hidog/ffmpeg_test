@@ -12,7 +12,6 @@ extern "C" {
 #include <libavutil/mathematics.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-#include <libswscale/swscale.h>
 
 } // extern "C"
 
@@ -88,12 +87,6 @@ void    VideoEncodeHW::end()
     nv_linesize[2]   =   0;
     nv_linesize[3]   =   0;
     nv_bufsize       =   0;
-
-    if( nv_sws != nullptr )
-    {
-        sws_freeContext( nv_sws );
-        nv_sws  =   nullptr;
-    }
 
     VideoEncode::end();
 }
@@ -269,30 +262,18 @@ int    VideoEncodeHW::open_convert_demux()
 
 
 
-#ifdef FFMPEG_TEST
-/*******************************************************************************
-VideoEncodeHW::init_sws()
 
-跟 VideoEncode 只有一點差別, 大致上相同.
+/*******************************************************************************
+VideoEncodeHW::init_nv_frame_buffer()
 ********************************************************************************/
-void    VideoEncodeHW::init_sws( VideoEncodeSetting setting )
+void    VideoEncodeHW::init_nv_frame_buffer( VideoEncodeSetting setting )
 {
     if( nv_enc == nullptr )
         MYLOG( LOG::L_ERROR, "nv_enc not init." )
 
     nv_bufsize  =   av_image_alloc( nv_data, nv_linesize, setting.width, setting.height, setting.pix_fmt, 1 );
-    
-    int     width   =   nv_enc->GetEncodeWidth();
-    int     height  =   nv_enc->GetEncodeHeight();
-
-    // 無法直接存取 pix_fmt.
-    // NV_ENC_BUFFER_FORMAT    enc_format  =    nv_enc->GetPixelFormat();
-
-    nv_sws      =   sws_getContext( setting.src_width, setting.src_height, setting.src_pix_fmt,    // src
-                                    width,             height,             setting.pix_fmt,        // dst
-                                    SWS_BICUBIC, NULL, NULL, NULL );
 }
-#endif
+
 
 
 
@@ -325,7 +306,7 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
     ctx->height     =   setting.height;
     ctx->pix_fmt    =   setting.pix_fmt;
     VideoEncode::init_sws( setting );
-    VideoEncodeHW::init_sws( setting );
+    init_nv_frame_buffer( setting );
 #endif
 
     // 目前 ctx 的 time_base 可以直接拿來用. 
