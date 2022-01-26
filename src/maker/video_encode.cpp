@@ -501,8 +501,8 @@ void    VideoEncode::get_fram_from_file_openCV()
         MYLOG( LOG::L_DEBUG, "load jpg = %s", str );
 
     cv::Mat img =   cv::imread( str, cv::IMREAD_COLOR );
-    //if( img.empty() == true )
-    if( frame_count > 1000 )
+    if( img.empty() == true )
+    //if( frame_count > 1000 )
     {
         eof_flag    =   true;
         return;
