@@ -82,7 +82,7 @@ private:
 
 
     AVFormatContext     *demux_ctx     =   nullptr;  // 負責將 nvenc 出來的 stream 做 demux.
-    AVStream            *nv_stream     =   nullptr;  // 需要做兩次轉換. source frame -> nvenc -> output.
+    AVStream            *nv_stream     =   nullptr;  // 需要做兩次轉換. source frame -> nvenc -> output. nv_stream 用在 mux 前.
 
     int decode_count = 0;
 

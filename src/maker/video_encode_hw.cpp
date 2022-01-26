@@ -184,14 +184,14 @@ int    VideoEncodeHW::open_convert_demux()
     }
 
 	//
-    uint8_t     *input_buf   =   (uint8_t*)av_malloc(demux_buffer_size);
-    assert( input_buf != nullptr );
+    uint8_t     *demux_buffer   =   (uint8_t*)av_malloc(demux_buffer_size);
+    assert( demux_buffer != nullptr );
 
-	AVIOContext     *io_ctx =   avio_alloc_context( input_buf, demux_buffer_size, 0, (void*)this, demux_read, nullptr, nullptr );
+	AVIOContext     *io_ctx     =   avio_alloc_context( demux_buffer, demux_buffer_size, 0, (void*)this, demux_read, nullptr, nullptr );
     assert( io_ctx != nullptr );
 
-	AVInputFormat   *input_fmt   =   nullptr;
-    ret         =   av_probe_input_buffer( io_ctx, &input_fmt, nullptr, nullptr, 0, 0 );
+	AVInputFormat   *input_fmt  =   nullptr;
+    ret     =   av_probe_input_buffer( io_ctx, &input_fmt, nullptr, nullptr, 0, 0 );
     assert( ret == 0 );
 	demux_ctx->pb =   io_ctx;
     ret         =   avformat_open_input( &demux_ctx, nullptr, input_fmt, nullptr );
@@ -207,11 +207,14 @@ int    VideoEncodeHW::open_convert_demux()
     if( ret < 0) 
         MYLOG( LOG::L_ERROR, "Could not find stream information. ret = %d", ret );
 
-    nv_stream = demux_ctx->streams[0];
+    // nv_stream 會用在 mux 階段.
+    nv_stream   =   demux_ctx->streams[0];
     printf( "stream time base = %d %d\n", nv_stream->time_base.num, nv_stream->time_base.den );
 
+    // 需要將資訊 copy 進去 ctx. mux 的時候會再從 ctx 讀取.
+    // 這邊的 ctx 只用來存資訊, 不會拿來 encode.
     ret     =   avcodec_parameters_to_context( ctx, nv_stream->codecpar );
-
+    assert( ret >= 0 );
 }
 
 
