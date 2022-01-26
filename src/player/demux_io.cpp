@@ -148,10 +148,10 @@ int     DemuxIO::open_input()
 /*******************************************************************************
 io_read_data
 ********************************************************************************/
-int     io_read_data( void *opaque, uint8_t *buf, int buf_size )
+int     io_read_data( void *opaque, uint8_t *buffer, int size )
 {
     InputOutput*    io  =   (InputOutput*)opaque;
-    int     ret     =   io->read( buf, buf_size );
+    int     ret     =   io->read( buffer, size );
     return  ret;
 }
 
