@@ -47,7 +47,56 @@ VideoEncodeHW::~VideoEncodeHW()
 VideoEncodeHW::~VideoEncodeHW()
 ********************************************************************************/
 void    VideoEncodeHW::end()
-{}
+{
+    nv_frame_count  =   0;
+    nv_eof          =   false;
+
+    duration_per_frame  =   0;
+    duration_count      =   0;
+
+    if( demux_ctx != nullptr )
+    {
+        avformat_close_input( &demux_ctx );
+        demux_ctx   =   nullptr;
+    }
+
+    nv_stream   =   nullptr;
+
+    //
+    if( nv_enc != nullptr )
+    {
+        nv_enc->DestroyEncoder();
+        delete nv_enc;
+        nv_enc  =   nullptr;
+    }
+
+    cu_ctx  =   nullptr;
+
+    assert( nv_encoded_list.empty() == true );
+
+    if( nv_data[0] != nullptr )
+    {
+        av_free( nv_data[0] );
+        nv_data[0]   =   nullptr;
+        nv_data[1]   =   nullptr;
+        nv_data[2]   =   nullptr;
+        nv_data[3]   =   nullptr;
+    }
+
+    nv_linesize[0]   =   0;
+    nv_linesize[1]   =   0;
+    nv_linesize[2]   =   0;
+    nv_linesize[3]   =   0;
+    nv_bufsize       =   0;
+
+    if( nv_sws != nullptr )
+    {
+        sws_freeContext( nv_sws );
+        nv_sws  =   nullptr;
+    }
+
+    VideoEncode::end();
+}
 
 
 
@@ -208,8 +257,8 @@ int    VideoEncodeHW::open_convert_demux()
         MYLOG( LOG::L_ERROR, "Could not find stream information. ret = %d", ret );
 
     // nv_stream 會用在 mux 階段.
-    nv_stream   =   demux_ctx->streams[0];
-    printf( "stream time base = %d %d\n", nv_stream->time_base.num, nv_stream->time_base.den );
+    nv_stream   =   demux_ctx->streams[0];  // 理論上只會有一個 stream, 而且是 video stream.
+    assert( nv_stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO );
 
     // 需要將資訊 copy 進去 ctx. mux 的時候會再從 ctx 讀取.
     // 這邊的 ctx 只用來存資訊, 不會拿來 encode.
@@ -442,7 +491,7 @@ void    VideoEncodeHW::init_nv_encode( uint32_t width, uint32_t height, AVPixelF
     }
 
     // create nv_enc    
-    nv_enc  =   new NvEncoderCuda { cu_ctx, width, height, nvenc_pix_fmt };
+    nv_enc  =   new NvEncoderCuda ( cu_ctx, width, height, nvenc_pix_fmt );
     assert( nv_enc != nullptr );
 
     //

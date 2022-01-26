@@ -19,9 +19,9 @@ class NvEncoderCuda;
 enum AVPixelFormat;
 struct CUctx_st;
 struct AVFormatContext;
-struct AVBSFContext;
 struct AVStream;
 struct SwsContext;
+
 
 
 /*
@@ -49,7 +49,8 @@ struct NvEncBuffer
 class VideoEncodeHW : public VideoEncode
 {
 public:
-    using EncodedVector = std::vector<std::vector<uint8_t>>;
+    using EncodedVector =    std::vector<std::vector<uint8_t>>;
+    using CUcontext     =   CUctx_st*;
 
     VideoEncodeHW();
     ~VideoEncodeHW();
@@ -65,58 +66,49 @@ public:
     int     send_frame() override;
     int     recv_frame() override;
     void    next_frame() override;
-    int64_t     get_pts() override;
+    void    encode_timestamp() override;
+    int     flush() override;
+    bool    end_of_file() override;
+    int64_t get_pts() override;
 
     AVRational  get_compare_timebase() override;
 
-    void    encode_timestamp() override;
-
-    int     flush() override;
-
-
-
     void    init_nv_encode( uint32_t width, uint32_t height, AVPixelFormat pix_fmt, VideoEncodeSetting setting );
     int     open_convert_demux();  // nvenc 出來的 stream 用 demux 解出 packet, 加上 pts, duration, 再丟入 mux.
-
     int     get_nv_encode_data( uint8_t *buffer, int size );
-    bool    end_of_file() override;
 
 #ifdef FFMPEG_TEST
     void    init_sws( VideoEncodeSetting setting ) override;
 #endif
 
 private:
+    static constexpr int    demux_buffer_size   =   65536;
 
-    int     nv_frame_count  =   0;  // 目前只有印 log 功能
-
-    bool    nv_eof  =   false; // 因為兩個階段, 需要兩個 eof 判斷 stream 是否結束.
+    int     nv_frame_count  =   0;      // 目前只有印 log 功能
+    bool    nv_eof          =   false;  // 因為兩個階段, 需要兩個 eof 判斷 stream 是否結束.
 
     // 為了效能, 計算 pts 的時候用 +=, 不用 *. 紀錄每次增加的 step.
     int64_t     duration_per_frame  =   0;  
     int64_t     duration_count      =   0;   // duration_count = count * duration_per_frame
 
-
+    // demux
     AVFormatContext     *demux_ctx     =   nullptr;  // 負責將 nvenc 出來的 stream 做 demux.
     AVStream            *nv_stream     =   nullptr;  // 需要做兩次轉換. source frame -> nvenc -> output. nv_stream 用在 mux 前.
 
-
-    //
+    // nvenc.
     NvEncoderCuda   *nv_enc =   nullptr;
-    CUctx_st* cu_ctx = nullptr; // note: CUcontext = CUctx_st*
+    CUcontext       cu_ctx  =   nullptr;  // note: CUcontext = CUctx_st*
 
 
-    std::list<NvEncBuffer>  nv_encoded_list;  // nvenc 出來的資料存在這個 list, 再讓 demux 讀取.
-    EncodedVector   encoded_vec;   // nvenc 編碼後的資料暫存 
+    std::list<NvEncBuffer>  nv_encoded_list;    // nvenc 出來的資料存在這個 list, 再讓 demux 讀取.
+    EncodedVector           encoded_vec;        // nvenc 編碼後的資料暫存 
 
     // frame data 傳入 nvenc 的 buffer.
-    uint8_t*    nv_data[4]       =   { nullptr };
-    int         nv_linesize[4]   =   { 0 };
-    int         nv_bufsize       =   0;
-    
-    static constexpr int demux_buffer_size = 65536;
+    uint8_t*    nv_data[4]      =   { nullptr };
+    int         nv_linesize[4]  =   { 0 };
+    int         nv_bufsize      =   0;    
 
-    SwsContext      *nv_sws    =   nullptr;
-
+    SwsContext      *nv_sws     =   nullptr;
 
 };
 
