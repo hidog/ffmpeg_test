@@ -190,8 +190,8 @@ int     VideoDecode::end()
 {
     if( frame_count > 0 )
     {
-        MYLOG( LOG::L_INFO, "video decode %d frames.", frame_count );
-        int64_t     duration_time   =   av_rescale( frame_count*AV_TIME_BASE, dec_ctx->time_base.den, dec_ctx->time_base.num ); // us
+        MYLOG( LOG::L_INFO, "video decode %d frames.", frame_count );  // 實際上是 frame_count + 1 張
+        int64_t     duration_time   =   av_rescale( frame_count*AV_TIME_BASE, dec_ctx->time_base.num, dec_ctx->time_base.den ); // us
         int64_t     total_ms        =   duration_time / 1000;
         int64_t     ms              =   total_ms % 1000;
         int64_t     sec             =   total_ms / 1000 % 60;
