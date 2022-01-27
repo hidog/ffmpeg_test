@@ -188,7 +188,7 @@ VideoDecode::end()
 ********************************************************************************/
 int     VideoDecode::end()
 {
-    if( frame_count > 0 )
+    if( frame_count > 0 && dec_ctx != nullptr )
     {
         MYLOG( LOG::L_INFO, "video decode %d frames.", frame_count );  // 實際上是 frame_count + 1 張
         int64_t     duration_time   =   1000LL * frame_count * dec_ctx->time_base.num / dec_ctx->time_base.den; // ms
