@@ -169,12 +169,11 @@ int     AudioDecode::end()
     if( frame_count > 0 )
     {
         MYLOG( LOG::L_INFO, "audio decode %d frames.", frame_count );
-        int64_t     duration_time   =   AV_TIME_BASE * dec_ctx->frame_size * frame_count / dec_ctx->sample_rate; // us
-        int64_t     total_ms        =   duration_time / 1000;
-        int64_t     ms              =   total_ms % 1000;
-        int64_t     sec             =   total_ms / 1000 % 60;
-        int64_t     minute          =   total_ms / 1000 / 60 % 60;
-        int64_t     hour            =   total_ms / 1000 / 60 / 60;
+        int64_t     duration_time   =   1000LL * dec_ctx->frame_size * frame_count / dec_ctx->sample_rate; // ms
+        int64_t     ms              =   duration_time % 1000;
+        int64_t     sec             =   duration_time / 1000 % 60;
+        int64_t     minute          =   duration_time / 1000 / 60 % 60;
+        int64_t     hour            =   duration_time / 1000 / 60 / 60;
         MYLOG( LOG::L_INFO, "audio decode duration = [ %2lld : %2lld : %2lld . %3lld", hour, minute, sec, ms );
     }
 
