@@ -104,6 +104,7 @@ void    Encode::end()
     flush_state =   false;
     eof_flag    =   false;
     codec       =   nullptr;
+    frame_count =   0;
 }
 
 
