@@ -292,41 +292,52 @@ VideoEncodeHW::init()
 ********************************************************************************/
 void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_global_header )
 {
+    VideoEncodeSetting  tmp_setting     =   setting;  // 因為 yuvp10 的時候需要修改 pix_fmt. 用一個暫存變數,避免直接改到原始 setting.
+
+    if( tmp_setting.pix_fmt == AV_PIX_FMT_YUV420P )
+        tmp_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;   // 實際上是 do nothing.
+    else if( tmp_setting.pix_fmt == AV_PIX_FMT_YUV420P10LE )
+        tmp_setting.pix_fmt   =   AV_PIX_FMT_P010LE;  // yuv420p10 要轉成 yuv420p16. nvidia 實際上是對此格式做操作.
+    else
+        assert(0); // un support.
+
     int     ret     =   0;
     
-    Encode::init( st_idx, setting.code_id );
-    init_nv_encode( setting.width, setting.height, setting.pix_fmt, setting );  // 執行順序不能隨便改, 有相依性.
+    Encode::init( st_idx, tmp_setting.code_id );
+    init_nv_encode( tmp_setting.width, tmp_setting.height, setting.pix_fmt, tmp_setting );  // 執行順序不能隨便改, 有相依性.
+                                                      //   ^^^^^^^^^^^^^^^  留意此數要丟舊的 setting
 
 #ifdef FFMPEG_TEST
-    VideoEncode::set_jpg_root_path( setting.load_jpg_root_path );
+    VideoEncode::set_jpg_root_path( tmp_setting.load_jpg_root_path );
 
     // alloc frame data.
-    frame->format   =   setting.pix_fmt;
-    frame->width    =   setting.width;
-    frame->height   =   setting.height;
+    frame->format   =   tmp_setting.pix_fmt;
+    frame->width    =   tmp_setting.width;
+    frame->height   =   tmp_setting.height;
 
     ret     =   av_frame_get_buffer( frame, 0 );
     if( ret < 0 ) 
         MYLOG( LOG::L_ERROR, "get buffer fail." );
 
     // init sws.
-    ctx->width      =   setting.width;  // 為了配合 VideoEncode 的 work around.
-    ctx->height     =   setting.height;
-    ctx->pix_fmt    =   setting.pix_fmt;
-    VideoEncode::init_sws( setting );
-    init_nv_frame_buffer( setting );
+    ctx->pix_fmt    =   tmp_setting.pix_fmt;
+    ctx->width      =   tmp_setting.width;  // 為了配合 VideoEncode 的 work around.
+    ctx->height     =   tmp_setting.height;
+
+    VideoEncode::init_sws( tmp_setting );
+    init_nv_frame_buffer( tmp_setting );
 #endif
 
     // 目前 ctx 的 time_base 可以直接拿來用. 
     // 為了方便就不另外寫一個變數存 fps 了.
-    ctx->time_base  =   setting.time_base;
+    ctx->time_base  =   tmp_setting.time_base;
 
     // need before avcodec_open2
     if( need_global_header == true )
         ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
-    src_width   =   setting.src_width;
-    src_height  =   setting.src_height;
+    src_width   =   tmp_setting.src_width;
+    src_height  =   tmp_setting.src_height;
 
     //
     open_convert_demux();
@@ -512,7 +523,6 @@ void    VideoEncodeHW::init_nv_encode( uint32_t width, uint32_t height, AVPixelF
     nv_enc->CreateDefaultEncoderParams( &initialize_params, encode_cl_IO_options.GetEncodeGUID(), encode_cl_IO_options.GetPresetGUID() );
     encode_cl_IO_options.SetInitParams( &initialize_params, nvenc_pix_fmt );
     nv_enc->CreateEncoder( &initialize_params );
-
 }
 
 

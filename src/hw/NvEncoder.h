@@ -91,7 +91,7 @@ public:
         if( m_eBufferFormat == NV_ENC_BUFFER_FORMAT_IYUV )
             return  0;    // AV_PIX_FMT_YUV420P
         else if( m_eBufferFormat == NV_ENC_BUFFER_FORMAT_YUV420_10BIT )
-            return  64;   // AV_PIX_FMT_YUV420P10LE
+            return  161;   // AV_PIX_FMT_P010LE   note: 這邊實際上要用 p010 來處理.
         else
             return  -1;   // AV_PIX_FMT_NONE
     }
