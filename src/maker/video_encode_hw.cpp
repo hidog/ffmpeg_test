@@ -47,6 +47,8 @@ VideoEncodeHW::~VideoEncodeHW()
 ********************************************************************************/
 void    VideoEncodeHW::end()
 {
+    VideoEncode::end();
+
     nv_frame_count  =   0;
     nv_eof          =   false;
 
@@ -87,8 +89,6 @@ void    VideoEncodeHW::end()
     nv_linesize[2]   =   0;
     nv_linesize[3]   =   0;
     nv_bufsize       =   0;
-
-    VideoEncode::end();
 }
 
 
