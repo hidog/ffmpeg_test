@@ -365,7 +365,7 @@ void    VideoEncode::end()
     if( frame_count > 0 && ctx != nullptr )
     {
         MYLOG( LOG::L_INFO, "video encode %d frames.", frame_count );
-        int64_t     duration_time   =   1000 * frame_count * ctx->time_base.num / ctx->time_base.den; // ms
+        int64_t     duration_time   =   1000LL * frame_count * ctx->time_base.num / ctx->time_base.den; // ms
         int64_t     ms              =   duration_time % 1000;
         int64_t     sec             =   duration_time / 1000 % 60;
         int64_t     minute          =   duration_time / 1000 / 60 % 60;
