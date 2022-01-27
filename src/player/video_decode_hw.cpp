@@ -311,8 +311,6 @@ VideoDecodeHW::send_packet
 int     VideoDecodeHW::send_packet( AVPacket *pkt )
 {
     // 目前在 recv_frame 做 unref. 如果忘了做, yuv420p10 的影片會出錯
-    //if( pkt_bsf->data != nullptr )
-      //  av_packet_unref(pkt_bsf);
 
     uint8_t     *pkt_ptr    =   nullptr;
     int         pkt_size    =   0;
@@ -334,16 +332,14 @@ int     VideoDecodeHW::send_packet( AVPacket *pkt )
 
     // decode
     //recv_size   =   0;
-    if( pkt != nullptr )
+    if( pkt_bsf != nullptr )
         nv_decoder->Decode( pkt_ptr, pkt_size, &nv_frames, &recv_size, CUVID_PKT_TIMESTAMP, &p_timestamp, pkt_bsf->pts );
     else
         nv_decoder->Decode( pkt_ptr, pkt_size, &nv_frames, &recv_size, CUVID_PKT_ENDOFSTREAM, &p_timestamp, pkt_bsf->pts );
     //nv_decoder->Decode( pkt_ptr, pkt_size, &nv_frames, &recv_size );
 
-
     // need set count to zero. and use in recv loop.
-    recv_count  =   0;    
-
+    recv_count  =   0;
     return  R_SUCCESS;
 }
 
@@ -401,12 +397,14 @@ VideoDecodeHW::recv_frame
 ********************************************************************************/
 int     VideoDecodeHW::recv_frame( int index )
 {
-    // note: 理論上 video 只有一個 stream, 這邊就不處理 index 了.
-
     if( recv_size == 0 || recv_count == recv_size )
     {
         av_packet_unref( pkt_bsf );  // 這邊沒 unref, yuv420p10 會出錯
-        return  0;  // this loop has no frame.
+        
+        if( index < 0 )
+            return  AVERROR_EOF;  // flush 階段, 沒資料了.
+        else
+            return  0;  // this loop has no frame.
     }
 
     if( use_bsf == false )
@@ -466,5 +464,52 @@ int     VideoDecodeHW::recv_frame( int index )
 }
 
 
+
+
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoDecodeHW::flush
+********************************************************************************/
+int     VideoDecodeHW::flush()
+{
+    int     ret =   0;
+    char    buf[AV_ERROR_MAX_STRING_SIZE]{0};
+
+
+    // submit the packet to the decoder
+    ret =   send_packet( nullptr );
+    if( ret < 0 ) 
+    {
+        MYLOG( LOG::L_ERROR, "flush error" );
+        return  R_ERROR;
+    }
+    
+    // get all the available frames from the decoder
+    while( ret >= 0 )
+    {
+        ret =   recv_frame( -1 );  // flush 階段必須傳入 < 0 的值
+        if( ret < 0 ) 
+        {
+            // those two return values are special and mean there is no output
+            // frame available, but there were no errors during decoding
+            if( ret == AVERROR_EOF || ret == AVERROR(EAGAIN) )
+                break; 
+    
+            auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
+            MYLOG( LOG::L_ERROR, "Error during decoding (%s)", str );
+            break; //return  ret;
+        }
+    
+        // write the frame data to output file
+        output_frame_func();     
+        av_frame_unref(frame);
+    }
+    
+
+    return 0;
+}
+#endif
 
 

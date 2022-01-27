@@ -100,8 +100,8 @@ int     VideoDecode::init()
                                     SWS_BICUBIC, NULL, NULL, NULL);                        
 
 #ifdef FFMPEG_TEST
-    //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
-    output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
+    output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
+    //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
 #endif
 
     Decode::init();
@@ -188,6 +188,19 @@ VideoDecode::end()
 ********************************************************************************/
 int     VideoDecode::end()
 {
+    if( frame_count > 0 )
+    {
+        MYLOG( LOG::L_INFO, "video decode %d frames.", frame_count );
+        int64_t     duration_time   =   av_rescale( frame_count*AV_TIME_BASE, dec_ctx->time_base.den, dec_ctx->time_base.num ); // us
+        int64_t     total_ms        =   duration_time / 1000;
+        int64_t     ms              =   total_ms % 1000;
+        int64_t     sec             =   total_ms / 1000 % 60;
+        int64_t     minute          =   total_ms / 1000 / 60 % 60;
+        int64_t     hour            =   total_ms / 1000 / 60 / 60;
+        MYLOG( LOG::L_INFO, "video decode duration = [ %2lld : %2lld : %2lld . %3lld", hour, minute, sec, ms );
+    }
+
+    //
     if( video_dst_data[0] != nullptr )
     {
         av_free( video_dst_data[0] );

@@ -913,17 +913,17 @@ int    SubDecode::flush()
     pkt.data    =   nullptr;
     pkt.size    =   0;
 
-    AVCodecContext  *dec    =   dec_map[cs_index];
+    //AVCodecContext  *dec    =   dec_map[cs_index];
     AVSubtitle      subtitle;
 
     int     ret, got_sub;
 
-    for( auto dec : dec_map )
+    for( auto dec_itr : dec_map )
     {
         while(true)
         {
             got_sub     =   0;
-            ret         =   avcodec_decode_subtitle2( dec.second, &subtitle, &got_sub, &pkt );
+            ret         =   avcodec_decode_subtitle2( dec_itr.second, &subtitle, &got_sub, &pkt );
             if( ret < 0 )
                 MYLOG( LOG::L_ERROR, "error." );            
             

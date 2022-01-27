@@ -13,9 +13,9 @@
 int main()
 {
 
-    maker_encode_example();
+    //maker_encode_example();
 
-    //player_decode_example();
+    player_decode_example();
 
     return 0;
 }

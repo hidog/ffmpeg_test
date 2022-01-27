@@ -83,7 +83,7 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
 
     if( codec->id == AV_CODEC_ID_H264 || codec->id == AV_CODEC_ID_H265 )
     {
-#ifdef FFMPEG
+#ifdef FFMPEG_TEST
         av_opt_set( ctx->priv_data, "preset", "veryslow",    0 );
 #else
         av_opt_set( ctx->priv_data, "preset", "ultrafast",   0 );
@@ -362,6 +362,18 @@ VideoEncode::end()
 ********************************************************************************/
 void    VideoEncode::end()
 {
+    if( frame_count > 0 )
+    {
+        MYLOG( LOG::L_INFO, "video encode %d frames.", frame_count );
+        int64_t     duration_time   =   av_rescale( frame_count*AV_TIME_BASE, ctx->time_base.den, ctx->time_base.num ); // us
+        int64_t     total_ms        =   duration_time / 1000;
+        int64_t     ms              =   total_ms % 1000;
+        int64_t     sec             =   total_ms / 1000 % 60;
+        int64_t     minute          =   total_ms / 1000 / 60 % 60;
+        int64_t     hour            =   total_ms / 1000 / 60 / 60;
+        MYLOG( LOG::L_INFO, "video encode duration = [ %2lld : %2lld : %2lld . %3lld", hour, minute, sec, ms );
+    }
+
     Encode::end();
 
     src_width   =   0;

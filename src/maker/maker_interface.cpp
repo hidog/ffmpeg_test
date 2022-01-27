@@ -28,23 +28,23 @@ void    maker_encode_example()
     setting.io_type =   IO_Type::DEFAULT;
 
     // rmvb 是 variable bitrate. 目前還無法使用
-    //setting.filename    =   "H:\\output.mkv";
-    //setting.extension   =   "matroska";
-    setting.filename    =   "H:\\output.mp4";
-    setting.extension   =   "mp4";
+    setting.filename    =   "H:\\output.mkv";
+    setting.extension   =   "matroska";
+    //setting.filename    =   "H:\\output.mp4";
+    //setting.extension   =   "mp4";
     //setting.filename    =   "H:\\test.avi"; 
     //setting.extension   =   "avi";
     setting.has_subtitle    =   false;
 
     VideoEncodeSetting  v_setting;
     v_setting.load_jpg_root_path    =   "H:\\jpg";
-    v_setting.code_id   =   AV_CODEC_ID_H264;
-    //v_setting.code_id   =   AV_CODEC_ID_H265;
+    //v_setting.code_id   =   AV_CODEC_ID_H264;
+    v_setting.code_id   =   AV_CODEC_ID_H265;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG2VIDEO;
 
-    v_setting.width     =   1280;
-    v_setting.height    =   720;
+    v_setting.width     =   1920;
+    v_setting.height    =   1080;
 
     v_setting.time_base.num     =   1001;
     v_setting.time_base.den     =   24000;
@@ -52,18 +52,18 @@ void    maker_encode_example()
     /*
         b frame not support on rm
     */
-    //v_setting.gop_size      =   30;
-    //v_setting.max_b_frames  =   15;
-    v_setting.gop_size      =   5;
-    v_setting.max_b_frames  =   0;
+    v_setting.gop_size      =   30;
+    v_setting.max_b_frames  =   15;
+    //v_setting.gop_size      =   5;
+    //v_setting.max_b_frames  =   0;
 
 
-    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
-    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
+    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
+    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
     //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P12LE;
 
-    v_setting.src_width     =   1280;
-    v_setting.src_height    =   720;
+    v_setting.src_width     =   1920;
+    v_setting.src_height    =   1080;
     //v_setting.src_pix_fmt   =   AV_PIX_FMT_BGRA;    // for QImage
     v_setting.src_pix_fmt   =   AV_PIX_FMT_BGR24;    // for openCV
 

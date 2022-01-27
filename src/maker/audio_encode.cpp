@@ -202,6 +202,18 @@ AudioEncode::end()
 ********************************************************************************/
 void    AudioEncode::end()
 {
+    if( frame_count > 0 )
+    {
+        MYLOG( LOG::L_INFO, "audio encode %d frames.", frame_count );
+        int64_t     duration_time   =   av_rescale( frame_count*AV_TIME_BASE, ctx->time_base.den, ctx->time_base.num ); // us
+        int64_t     total_ms        =   duration_time / 1000;
+        int64_t     ms              =   total_ms % 1000;
+        int64_t     sec             =   total_ms / 1000 % 60;
+        int64_t     minute          =   total_ms / 1000 / 60 % 60;
+        int64_t     hour            =   total_ms / 1000 / 60 / 60;
+        MYLOG( LOG::L_INFO, "audio encode duration = [ %2lld : %2lld : %2lld . %3lld", hour, minute, sec, ms );
+    }
+
     Encode::end();
 
 #ifdef FFMPEG_TEST

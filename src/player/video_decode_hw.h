@@ -48,6 +48,10 @@ public:
 
     cudaVideoCodec_enum  codec_id_ffmpeg_to_cuda( AVCodecID id );  // 用 cudaVideoCodec, 沒 include, 會造成編譯錯誤. 思考要不要改成回傳 int.
 
+#ifdef FFMPEG_TEST
+    int     flush() override;
+#endif
+
 private:
 
     NvDecoder   *nv_decoder  =   nullptr;
