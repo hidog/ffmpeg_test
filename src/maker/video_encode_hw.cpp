@@ -265,6 +265,10 @@ int    VideoEncodeHW::open_convert_demux()
     // 這邊的 ctx 只用來存資訊, 不會拿來 encode.
     ret     =   avcodec_parameters_to_context( ctx, nv_stream->codecpar );
     assert( ret >= 0 );
+
+    // note: 要 encode 10bit 的時候, 必須手動將 pix_fmt 改成 P010, 不然會無法播放 
+    if( ctx->pix_fmt == AV_PIX_FMT_YUV420P10LE )
+        ctx->pix_fmt = AV_PIX_FMT_P010LE;
 }
 
 
