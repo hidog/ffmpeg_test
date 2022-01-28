@@ -374,9 +374,14 @@ void    VideoEncodeHW::next_frame()
     AVRational  stb     =   nv_stream->time_base;
 
 	//
+#if 0
+    // 這邊會發生 overflow, 所以換寫法
     AVRational  realtime_pts    =   { duration_count, AV_TIME_BASE };
     AVRational  nv_pts          =   av_div_q( realtime_pts, stb );
     pkt->pts    =   av_q2d( nv_pts );
+#else
+    pkt->pts    =   1.0 / AV_TIME_BASE * duration_count * stb.den / stb.num;
+#endif
 	pkt->dts    =   pkt->pts;
 
 	//
