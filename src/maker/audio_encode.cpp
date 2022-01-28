@@ -202,6 +202,17 @@ AudioEncode::end()
 ********************************************************************************/
 void    AudioEncode::end()
 {
+    if( frame_count > 0 )
+    {
+        MYLOG( LOG::L_INFO, "audio encode %d frames.", frame_count );
+        int64_t     duration_time   =   1000LL * ctx->frame_size * frame_count / ctx->sample_rate; // ms
+        int64_t     ms              =   duration_time % 1000;
+        int64_t     sec             =   duration_time / 1000 % 60;
+        int64_t     minute          =   duration_time / 1000 / 60 % 60;
+        int64_t     hour            =   duration_time / 1000 / 60 / 60;
+        MYLOG( LOG::L_INFO, "audio encode duration = [ %2lld : %2lld : %2lld . %3lld", hour, minute, sec, ms );
+    }
+
     Encode::end();
 
 #ifdef FFMPEG_TEST
@@ -249,10 +260,10 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
     else if( code_id == AV_CODEC_ID_MP2 || code_id == AV_CODEC_ID_FLAC )
         ctx->sample_fmt     =   AV_SAMPLE_FMT_S16;
     else    
-        MYLOG( LOG::ERROR, "un handle codec" );    
+        MYLOG( LOG::L_ERROR, "un handle codec" );    
 
     if( false == check_sample_fmt( codec, ctx->sample_fmt ) ) 
-        MYLOG( LOG::ERROR, "fmt fail." );
+        MYLOG( LOG::L_ERROR, "fmt fail." );
 
     // init setting
     ctx->sample_rate    =   setting.sample_rate; 
@@ -270,11 +281,11 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
 
     int     ret     =   avcodec_open2( ctx, codec, nullptr );
     if( ret < 0 ) 
-        MYLOG( LOG::ERROR, "open fail." );
+        MYLOG( LOG::L_ERROR, "open fail." );
 
     //
     if( ctx->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE )
-        MYLOG( LOG::WARN, "need set to 10000" );
+        MYLOG( LOG::L_WARN, "need set to 10000" );
 
 #ifdef FFMPEG_TEST
     // set param to frame.
@@ -287,7 +298,7 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
     // allocate the data buffers
     ret     =   av_frame_get_buffer( frame, 0 );
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "alloc buffer fail" );
+        MYLOG( LOG::L_ERROR, "alloc buffer fail" );
 
     //
     init_swr(setting);
@@ -307,7 +318,7 @@ void    AudioEncode::init_swr( AudioEncodeSetting setting )
     int     ret     =   0;
 
     if( swr_ctx != nullptr )
-        MYLOG( LOG::WARN, "swr_ctx is not null." );
+        MYLOG( LOG::L_WARN, "swr_ctx is not null." );
 
     /* use for variable frame size.
     if ( ctx->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE)
@@ -320,7 +331,7 @@ void    AudioEncode::init_swr( AudioEncodeSetting setting )
 
     swr_ctx     =   swr_alloc();
     if( swr_ctx == nullptr ) 
-        MYLOG( LOG::ERROR, "swr ctx is null." );
+        MYLOG( LOG::L_ERROR, "swr ctx is null." );
 
     // 輸入預設值, 未來再改成動態決定參數
     AVSampleFormat  sample_fmt  =   static_cast<AVSampleFormat>(setting.sample_fmt);
@@ -337,16 +348,16 @@ void    AudioEncode::init_swr( AudioEncodeSetting setting )
     //
     ret     =   swr_init( swr_ctx );
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "swr init fail." );
+        MYLOG( LOG::L_ERROR, "swr init fail." );
 
     if( pcm[0] != nullptr )
-        MYLOG( LOG::ERROR, "pc is not null" );
+        MYLOG( LOG::L_ERROR, "pc is not null" );
 
     pcm_size    =   av_samples_get_buffer_size( NULL, ctx->channels, ctx->frame_size, AV_SAMPLE_FMT_S16, 0 );
     pcm[0]      =   new int16_t[pcm_size];
 
     if( pcm[0] == nullptr )
-        MYLOG( LOG::ERROR, "pcm init fail." );
+        MYLOG( LOG::L_ERROR, "pcm init fail." );
 }
 #endif
 
@@ -365,7 +376,7 @@ void    AudioEncode::encode_test()
 
     ret     =   avcodec_send_frame( ctx, frame );
     if( ret < 0 ) 
-        MYLOG( LOG::ERROR, "send fail." );
+        MYLOG( LOG::L_ERROR, "send fail." );
 
     while( ret >= 0 ) 
     {
@@ -373,7 +384,7 @@ void    AudioEncode::encode_test()
         if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
             return;
         else if (ret < 0) 
-            MYLOG( LOG::ERROR, "recv fail." );
+            MYLOG( LOG::L_ERROR, "recv fail." );
 
         printf("write data %d...\n", pkt->size );
 
@@ -456,7 +467,7 @@ void     AudioEncode::work_test()
     {
         ret = av_frame_make_writable(frame);
         if( ret < 0 )
-            MYLOG( LOG::ERROR, "frame not writeable." );
+            MYLOG( LOG::L_ERROR, "frame not writeable." );
 
         for( i = 0; i < frame->nb_samples; i++ )
         {
@@ -504,7 +515,7 @@ AudioEncode::get_pts()
 int64_t     AudioEncode::get_pts()
 {
     if( frame == nullptr )
-        MYLOG( LOG::ERROR, "frame is null." );
+        MYLOG( LOG::L_ERROR, "frame is null." );
     return  frame->pts;
 }
 
@@ -536,7 +547,7 @@ void    AudioEncode::get_frame_from_file_test()
 
     ret     =   av_frame_make_writable(frame);
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "frame not writeable." );
+        MYLOG( LOG::L_ERROR, "frame not writeable." );
 
     int     i;
     int16_t     intens[2];
@@ -629,7 +640,7 @@ void    AudioEncode::get_frame_from_pcm_file()
 
     //
     if( feof(fp) != 0 )
-    //if( frame_count > 300 )
+    //if( frame_count > 1300 )
     {
         eof_flag    =   true;
         return;
@@ -637,14 +648,14 @@ void    AudioEncode::get_frame_from_pcm_file()
 
     ret =   av_frame_make_writable(frame);
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "frame not writeable." );   
+        MYLOG( LOG::L_ERROR, "frame not writeable." );   
 
     ret =   fread( pcm[0], 1, pcm_size, fp );  // 概念上可以想像成 fread( pcm[0], sizeof(int16_t), channels * frame->nb_samples, fp );
 
     if( ret == 0 && feof(fp) != 0 )
     {
         eof_flag    =   true;
-        MYLOG( LOG::WARN, "should not run here." );
+        MYLOG( LOG::L_WARN, "should not run here." );
         return; // end of file.
     }
 
@@ -653,7 +664,7 @@ void    AudioEncode::get_frame_from_pcm_file()
 
     ret     =   swr_convert( swr_ctx, frame->data, frame->nb_samples, (const uint8_t **)pcm, frame->nb_samples );
     if( ret < 0 ) 
-        MYLOG( LOG::ERROR, "convert fail." );
+        MYLOG( LOG::L_ERROR, "convert fail." );
 
     //
     frame->pts  =  frame_count * sp_count;

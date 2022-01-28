@@ -20,7 +20,7 @@ Worker::Worker( QObject *parent )
     // note: 目前只支援 stream output. 有需要的話再增加錄影用的介面.
     maker   =   create_maker_io();
     if( maker == nullptr )
-        MYLOG( LOG::ERROR, "create maker fail." );
+        MYLOG( LOG::L_ERROR, "create maker fail." );
 }
 
 
@@ -216,7 +216,7 @@ void    Worker::play()
     while( vw->isFinished() == false )
         SLEEP_10MS;
 
-    MYLOG( LOG::INFO, "finish decode." );
+    MYLOG( LOG::L_INFO, "finish decode." );
 }
 
 
@@ -230,7 +230,7 @@ Worker::output()
 ********************************************************************************/
 void    Worker::output( MediaInfo media_info )
 {
-    MYLOG( LOG::INFO, "enable output." );
+    MYLOG( LOG::L_INFO, "enable output." );
     output_by_io( media_info, port, maker );
 }
 
@@ -265,7 +265,7 @@ void    Worker::run()
         MediaInfo   media_info  =   player->get_media_info();
 
         if( output_thr != nullptr )
-            MYLOG( LOG::ERROR, "output_thr not null." );
+            MYLOG( LOG::L_ERROR, "output_thr not null." );
         output_thr  =   new std::thread( &Worker::output, this, media_info );
 
         while( maker->is_connect() == false )

@@ -21,7 +21,11 @@
 #include "video_worker.h"
 #include "audio_worker.h"
 
-
+#ifdef _WIN32
+#include <windows.h> // use for disable turn off monitor.
+#else
+#error need maintain.
+#endif
 
 
 
@@ -96,7 +100,7 @@ void MainWindow::recv_video_frame_slot()
     video_mtx->lock();
 
     if( view_data->index - last_index != 1 )
-        MYLOG( LOG::WARN, "vidw_data.index = %d, last_index = %d",  view_data->index , last_index );
+        MYLOG( LOG::L_WARN, "vidw_data.index = %d, last_index = %d",  view_data->index , last_index );
 
     // 未來考慮改成timer驅動,方便確認是否有frame來不及解出來.
     // 未必真的用timer, 可以用loop控制
@@ -264,11 +268,19 @@ void MainWindow::play_slot()
     if( filename.isEmpty() == true )
         return;
 
-    MYLOG( LOG::INFO, "load file %s", filename.toStdString().c_str() );
+    MYLOG( LOG::L_INFO, "load file %s", filename.toStdString().c_str() );
     worker->set_src_file(filename.toStdString());
    
     ui->playButton->setDisabled(true);
     ui->centralwidget->setFocus(); // 不加這行會造成 keyboard event 失去作用
+
+
+    // 取消休眠
+#ifdef _WIN32
+    SetThreadExecutionState( ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED );
+#else
+#error  undefined
+#endif
 
     worker->start();
 }
@@ -323,6 +335,13 @@ void    MainWindow::finish_slot()
     disconnect( seek_connect[0] );
     disconnect( seek_connect[1] );
     disconnect( seek_connect[2] );
+
+    // 恢復休眠
+#ifdef _WIN32
+    SetThreadExecutionState( ES_CONTINUOUS );
+#else
+#error undefined.
+#endif
 }
 
 

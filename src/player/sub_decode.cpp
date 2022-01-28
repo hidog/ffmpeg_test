@@ -34,7 +34,7 @@ SubDecode::get_subtitle_param()
 std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatContext* fmt_ctx, std::string src_file, SubData sd )
 {
     if( is_graphic_subtitle() == true )
-        MYLOG( LOG::ERROR, "cant handle graphic subtitle." );
+        MYLOG( LOG::L_ERROR, "cant handle graphic subtitle." );
 
     std::stringstream   ss;
     std::string     in_param, out_param;;
@@ -55,7 +55,7 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
 
     in_param   =   ss.str();
 
-    MYLOG( LOG::INFO, "in = %s", in_param.c_str() );
+    MYLOG( LOG::L_INFO, "in = %s", in_param.c_str() );
 
     ss.str("");
     ss.clear();   
@@ -72,7 +72,7 @@ std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatConte
     out_param    =   ss.str();
     //out_param    =   "subtitles='\\D\\:/code/test.mkv':stream_index=0";
 
-    MYLOG( LOG::INFO, "out = %s", out_param.c_str() );
+    MYLOG( LOG::L_INFO, "out = %s", out_param.c_str() );
     return  std::make_pair( in_param, out_param );
 }
 
@@ -124,9 +124,9 @@ SubDecode::output_decode_info()
 ********************************************************************************/
 void    SubDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
 {
-    MYLOG( LOG::INFO, "sub dec name = %s", dec->name );
-    MYLOG( LOG::INFO, "sub dec long name = %s", dec->long_name );
-    MYLOG( LOG::INFO, "sub dec codec id = %s", avcodec_get_name(dec->id) );
+    MYLOG( LOG::L_INFO, "sub dec name = %s", dec->name );
+    MYLOG( LOG::L_INFO, "sub dec long name = %s", dec->long_name );
+    MYLOG( LOG::L_INFO, "sub dec codec id = %s", avcodec_get_name(dec->id) );
 }
 
 
@@ -160,7 +160,7 @@ int     SubDecode::open_codec_context( AVFormatContext *fmt_ctx )
             is_graphic  =   false;
     }
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -191,7 +191,7 @@ int     SubDecode::init()
 #endif
 
     Decode::init();
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -220,7 +220,7 @@ int SubDecode::send_video_frame( AVFrame *video_frame )
     int ret =   av_buffersrc_add_frame( bf_src_ctx, video_frame );    
 
     if( ret < 0 )    
-        MYLOG( LOG::ERROR, "add frame flag fail." );
+        MYLOG( LOG::L_ERROR, "add frame flag fail." );
     return  ret;
 }
 
@@ -242,13 +242,13 @@ int SubDecode::init_sws_ctx( SubData sd )
     sub_dst_bufsize     =   av_image_alloc( sub_dst_data, sub_dst_linesize, video_width, video_height, AV_PIX_FMT_RGB24, 1 );
     if( sub_dst_bufsize < 0 )
     {
-        MYLOG( LOG::ERROR, "Could not allocate subtitle image buffer" );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "Could not allocate subtitle image buffer" );
+        return  R_ERROR;
     }
 
     AVPixelFormat   pix_fmt     =   static_cast<AVPixelFormat>(sd.pix_fmt);
     sws_ctx     =   sws_getContext( video_width, video_height, pix_fmt, video_width, video_height, AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL );   
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -281,13 +281,13 @@ int     SubDecode::render_subtitle()
         return  0;  // 沒資料,但沒錯誤.
     else if( ret < 0 )
     {
-        MYLOG( LOG::ERROR, "get frame fail." );
+        MYLOG( LOG::L_ERROR, "get frame fail." );
         return  -1;
     }
 
     ret     =   sws_scale( sws_ctx, frame->data, (const int*)frame->linesize, 0, frame->height, sub_dst_data, sub_dst_linesize );
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "ret = %d", ret );
+        MYLOG( LOG::L_ERROR, "ret = %d", ret );
 
     memcpy( sub_image.bits(), sub_dst_data[0], sub_dst_bufsize );
     frame_count++;
@@ -361,7 +361,7 @@ int     SubDecode::end()
     has_sub_image   =   false;
 
     Decode::end();
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -399,7 +399,7 @@ void    SubDecode::output_sub_frame_info()
     /*char    buf[AV_TS_MAX_STRING_SIZE]{0};
     int     per_sample  =   av_get_bytes_per_sample( static_cast<AVSampleFormat>(frame->format) );
     auto    pts_str     =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
-    MYLOG( LOG::INFO, "audio_frame n = %d, nb_samples = %d, pts : %s", frame_count++, frame->nb_samples, pts_str );*/
+    MYLOG( LOG::L_INFO, "audio_frame n = %d, nb_samples = %d, pts : %s", frame_count++, frame->nb_samples, pts_str );*/
 }
 
 
@@ -450,7 +450,7 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
     graph    =   avfilter_graph_alloc();    
     if( output == nullptr || input == nullptr || graph == nullptr ) 
     {
-        MYLOG( LOG::ERROR, "alloc fail." );
+        MYLOG( LOG::L_ERROR, "alloc fail." );
         release();
         return false;
     }
@@ -460,14 +460,14 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
     if( ret < 0 ) 
     {
         release();
-        MYLOG( LOG::ERROR, "avfilter_graph_create_filter error" );
+        MYLOG( LOG::L_ERROR, "avfilter_graph_create_filter error" );
         return false;
     }
 
     ret     =   avfilter_graph_create_filter( &bf_sink_ctx, buffersink, "out", nullptr, nullptr, graph );
     if( ret < 0 )
     {
-        MYLOG( LOG::ERROR, "avfilter_graph_create_filter error" );
+        MYLOG( LOG::L_ERROR, "avfilter_graph_create_filter error" );
         release();
         return false;
     }
@@ -487,7 +487,7 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
     ret     =   avfilter_graph_parse_ptr( graph, desc.c_str(), &input, &output, nullptr );
     if( ret < 0 )
     {
-        MYLOG( LOG::ERROR, "avfilter_graph_parse_ptr error" );
+        MYLOG( LOG::L_ERROR, "avfilter_graph_parse_ptr error" );
         release();
         return false;
     }
@@ -496,13 +496,13 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
     ret     =   avfilter_graph_config( graph, nullptr );
     if( ret < 0 )
     {
-        MYLOG( LOG::DEBUG, "avfilter_graph_config error" );
+        MYLOG( LOG::L_DEBUG, "avfilter_graph_config error" );
         release();
         return false;
     }
 
     char *str   =   avfilter_graph_dump( graph, nullptr );
-    MYLOG( LOG::DEBUG, "options = %s", str );
+    MYLOG( LOG::L_DEBUG, "options = %s", str );
 
     release();
     return true;
@@ -529,7 +529,7 @@ void    SubDecode::generate_subtitle_image( AVSubtitle &subtitle )
     sub_duration    =   1.0 * (subtitle.end_display_time - subtitle.start_display_time) / 1000;  // 單位不明 未來看能不能找到影片測試 end_display_time
 
     if( subtitle.start_display_time != 0 )
-        MYLOG( LOG::ERROR, "start time not zero, need handle." );
+        MYLOG( LOG::L_ERROR, "start time not zero, need handle." );
 
     //
     if( subtitle.num_rects == 0 )    
@@ -538,11 +538,10 @@ void    SubDecode::generate_subtitle_image( AVSubtitle &subtitle )
     {
         has_sub_image   =   true;
 
-        int     i;
-        int     w, h;
+        int     i, w, h;
 
         if( subtitle.num_rects > 1 )
-            MYLOG( LOG::ERROR, "subtitle.num_rects = %d", subtitle.num_rects ); // 遇到再來解決,目前測試影片一次只有一張圖
+            MYLOG( LOG::L_ERROR, "subtitle.num_rects = %d", subtitle.num_rects ); // 遇到再來解決,目前測試影片一次只有一張圖
 
         for( i = 0; i < subtitle.num_rects; i++ )
         {
@@ -616,15 +615,15 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
                 generate_subtitle_image( subtitle );       
 
             avsubtitle_free( &subtitle );
-            return  SUCCESS;
+            return  R_SUCCESS;
         }
         else         
-            return  SUCCESS;  // decode success, but no subtitle.
+            return  R_SUCCESS;  // decode success, but no subtitle.
     }
     else
     {
-        MYLOG( LOG::ERROR, "decode subtitle fail" );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "decode subtitle fail" );
+        return  R_ERROR;
     }   
 
 #if 0
@@ -635,7 +634,7 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
     // https://tsduck.io/doxy/namespacets.html
     // 可以用 ts 套件做文字轉換.
     const char *text = const_int8_ptr(pkt->data);
-    MYLOG( LOG::DEBUG, "pts = %lf, duration = %lf, text = %s", pts, duration, pkt->data );
+    MYLOG( LOG::L_DEBUG, "pts = %lf, duration = %lf, text = %s", pts, duration, pkt->data );
 #endif
 
 #if 0
@@ -645,9 +644,9 @@ int    SubDecode::decode_subtitle( AVPacket* pkt )
     {
         AVSubtitleRect rect = *rects[i];
         if (rect.type == SUBTITLE_ASS)                 
-            MYLOG( LOG::DEBUG, "ASS %s", rect.ass)                
+            MYLOG( LOG::L_DEBUG, "ASS %s", rect.ass)                
         else if (rect.x == SUBTITLE_TEXT)                 
-            MYLOG( LOG::DEBUG, "TEXT %s", rect.text)
+            MYLOG( LOG::L_DEBUG, "TEXT %s", rect.text)
     }
 #endif
 }
@@ -706,14 +705,14 @@ std::vector<std::string>    SubDecode::get_embedded_subtitle_list()
     char    *buf    =   nullptr;
 
     av_dict_get_string( stream->metadata, &buf, '=', ',' );
-    MYLOG( LOG::INFO, "buf = %s\n", buf );
+    MYLOG( LOG::L_INFO, "buf = %s\n", buf );
 
     for( auto itr : stream_map )
     {
         AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)itr.second->metadata, "title", NULL, AV_DICT_MATCH_CASE );
         if( dic != nullptr )
         {
-            MYLOG( LOG::DEBUG, "title %s", dic->value );
+            MYLOG( LOG::L_DEBUG, "title %s", dic->value );
             list.emplace_back( std::string(dic->value) );
         }
         else
@@ -740,7 +739,7 @@ int     SubDecode::sub_info()
     for( auto itr : stream_map )
     {
         AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)itr.second->metadata, "title", NULL, AV_DICT_MATCH_CASE );
-        MYLOG( LOG::DEBUG, "index = %d, title = %s", itr.first, dic->value );
+        MYLOG( LOG::L_DEBUG, "index = %d, title = %s", itr.first, dic->value );
     }
 
     return 0;
@@ -835,7 +834,7 @@ int    SubDecode::output_jpg_by_QT()
     sprintf( str, "%s\\%d.jpg", output_jpg_root_path.c_str(), frame_count );
 
     if( frame_count % 100 == 0 )
-        MYLOG( LOG::DEBUG, "save jpg %s", str );
+        MYLOG( LOG::L_DEBUG, "save jpg %s", str );
 
     sub_image.save(str);
     return  0;
@@ -885,7 +884,7 @@ void    SubDecode::flush_all_stream()
         {
             ret     =   avcodec_decode_subtitle2( dec.second, &subtitle, &got_sub, &pkt );
             if( ret < 0 )
-                MYLOG( LOG::ERROR, "flush decode subtitle fail." );
+                MYLOG( LOG::L_ERROR, "flush decode subtitle fail." );
 
             avsubtitle_free(&subtitle);
 
@@ -914,19 +913,19 @@ int    SubDecode::flush()
     pkt.data    =   nullptr;
     pkt.size    =   0;
 
-    AVCodecContext  *dec    =   dec_map[cs_index];
+    //AVCodecContext  *dec    =   dec_map[cs_index];
     AVSubtitle      subtitle;
 
     int     ret, got_sub;
 
-    for( auto dec : dec_map )
+    for( auto dec_itr : dec_map )
     {
         while(true)
         {
             got_sub     =   0;
-            ret         =   avcodec_decode_subtitle2( dec.second, &subtitle, &got_sub, &pkt );
+            ret         =   avcodec_decode_subtitle2( dec_itr.second, &subtitle, &got_sub, &pkt );
             if( ret < 0 )
-                MYLOG( LOG::ERROR, "error." );            
+                MYLOG( LOG::L_ERROR, "error." );            
             
             // if need output message, use this flag.
             //if( got_sub > 0 )
@@ -986,28 +985,28 @@ void    extract_subtitle_frome_file()
     src_fmtctx  =   avformat_alloc_context();
     ret         =   avformat_open_input( &src_fmtctx, src_file_path, nullptr, nullptr );
     if( ret != 0 )
-        MYLOG( LOG::ERROR, "open fail." );
+        MYLOG( LOG::L_ERROR, "open fail." );
 
     ret     =   avformat_find_stream_info( src_fmtctx, nullptr );
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "get stream fail." );
+        MYLOG( LOG::L_ERROR, "get stream fail." );
 
     // 第三個引數, 表示要開啟第幾個stream.
     // -1 表示自動搜尋
     // 這邊放 3 是因為影片兩個字幕軌, 我們要開啟第三個
     subidx  =   av_find_best_stream( src_fmtctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, nullptr, 0 );
     if( subidx < 0 )
-        MYLOG( LOG::ERROR, "find stream fail." );  
+        MYLOG( LOG::L_ERROR, "find stream fail." );  
 
     AVStream*   src_stream    =   src_fmtctx->streams[subidx];
     src_codec   =   avcodec_find_decoder( src_stream->codecpar->codec_id );
     if( src_codec == nullptr )
-        MYLOG( LOG::ERROR, "find decoder fail." );
+        MYLOG( LOG::L_ERROR, "find decoder fail." );
 
     src_dec     =   avcodec_alloc_context3(src_codec);  // or avcodec_alloc_context3(nullptr);
     ret         =   avcodec_parameters_to_context( src_dec, src_stream->codecpar );
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "param fail." );
+        MYLOG( LOG::L_ERROR, "param fail." );
 
     // input_decodecctx->pkt_timebase为{name=0,den=1} input_stream->time_base　{name=1,den=1000}
     // 這行刪除了會造成 timestamp 錯掉
@@ -1019,16 +1018,16 @@ void    extract_subtitle_frome_file()
 
     ret     =   avformat_alloc_output_context2( &dst_fmtctx, nullptr, nullptr, dst_file_path );
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "open output fail." );
+        MYLOG( LOG::L_ERROR, "open output fail." );
 
     // 看註解說這邊需要設置 interrupt callback, 有空研究
     ret     =   avio_open2( &dst_fmtctx->pb, dst_file_path, AVIO_FLAG_WRITE, &dst_fmtctx->interrupt_callback, nullptr );
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "open fail." );
+        MYLOG( LOG::L_ERROR, "open fail." );
 
     AVStream*   dst_stream  =   avformat_new_stream( dst_fmtctx, nullptr );
     if( dst_stream == nullptr )
-        MYLOG( LOG::ERROR, "get stream fail." );
+        MYLOG( LOG::L_ERROR, "get stream fail." );
 
     assert( dst_fmtctx->nb_streams == 1 );
 
@@ -1037,7 +1036,7 @@ void    extract_subtitle_frome_file()
     dst_codec   =   avcodec_find_encoder( dst_stream->codecpar->codec_id );
     dst_enc     =   avcodec_alloc_context3(dst_codec);  
     if( dst_enc == nullptr )
-        MYLOG( LOG::ERROR, "open encoder fail." );
+        MYLOG( LOG::L_ERROR, "open encoder fail." );
 
     // 看註解說這邊沒影響, 有空測試一下
     // 不能不設置
@@ -1050,7 +1049,7 @@ void    extract_subtitle_frome_file()
 
     ret     =   avcodec_open2( src_dec, src_codec, nullptr );
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "open fail." );
+        MYLOG( LOG::L_ERROR, "open fail." );
 
     if( src_dec->subtitle_header )
     {
@@ -1064,7 +1063,7 @@ void    extract_subtitle_frome_file()
 
     ret     =   avcodec_open2( dst_enc, dst_codec, nullptr );
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "open fail." );
+        MYLOG( LOG::L_ERROR, "open fail." );
 
     avcodec_parameters_from_context( dst_fmtctx->streams[0]->codecpar, dst_enc );
 
@@ -1074,7 +1073,7 @@ void    extract_subtitle_frome_file()
 
 
     //ret     =   av_opt_set_int( dst_fmtctx->priv_data, "ignore_readorder",  0,       0 );
-    //MYLOG( LOG::INFO, "ret = %d\n", ret );
+    //MYLOG( LOG::L_INFO, "ret = %d\n", ret );
 
 
     // 開始寫入
@@ -1124,7 +1123,7 @@ void    extract_subtitle_frome_file()
             ret =   av_interleaved_write_frame( dst_fmtctx, &pkt );  // 沒找到相關說明...
 
         if( ret < 0 )
-            MYLOG( LOG::ERROR, "write fail." );
+            MYLOG( LOG::L_ERROR, "write fail." );
         return 0;
     };
 
@@ -1177,17 +1176,17 @@ void    extract_subtitle_frome_file()
             
             // pkt_timebase={1,1000}
             if( ret < 0 )
-                MYLOG( LOG::ERROR, "decode fail." );
+                MYLOG( LOG::L_ERROR, "decode fail." );
 
             if( got_sub > 0 )
                 ret     =   subtitle_output_func();
             else
-                MYLOG( LOG::DEBUG, "got < 0" );
+                MYLOG( LOG::L_DEBUG, "got < 0" );
             
             avsubtitle_free(&subtitle);
         }       
         else
-            MYLOG( LOG::ERROR, "demux fail." );
+            MYLOG( LOG::L_ERROR, "demux fail." );
 
         av_packet_unref(&src_pkt);
     }
@@ -1207,7 +1206,7 @@ void    extract_subtitle_frome_file()
     // note: 還有一些資料需要 free. 有空再來補
     av_write_trailer(dst_fmtctx);
 
-    MYLOG( LOG::INFO, "finish encode subtitle." );
+    MYLOG( LOG::L_INFO, "finish encode subtitle." );
 }
 
 

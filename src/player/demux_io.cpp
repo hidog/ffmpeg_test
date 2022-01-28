@@ -91,7 +91,7 @@ int    DemuxIO::end()
 
     Demux::end();
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -116,29 +116,29 @@ int     DemuxIO::open_input()
     assert( io_ctx != nullptr );
 
 	AVInputFormat   *input_fmt   =   nullptr;
-    ret         =   av_probe_input_buffer( io_ctx, &input_fmt, nullptr, nullptr, 0, 0 );
+    ret     =   av_probe_input_buffer( io_ctx, &input_fmt, nullptr, nullptr, 0, 0 );
     assert( ret == 0 );
 	fmt_ctx->pb =   io_ctx;
-    ret         =   avformat_open_input( &fmt_ctx, nullptr, input_fmt, nullptr );
+    ret     =   avformat_open_input( &fmt_ctx, nullptr, input_fmt, nullptr );
     assert( ret == 0 );
 
     fmt_ctx->flags |= AVFMT_FLAG_CUSTOM_IO;  
 
     if( ret < 0 )
     {
-        MYLOG( LOG::ERROR, "Could not open" );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "Could not open" );
+        return  R_ERROR;
     }
 
     // 
     ret     =   stream_info();
-    if( ret == ERROR )
+    if( ret == R_ERROR )
     {
-        MYLOG( LOG::ERROR, "init fail. ret = %d", ret );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "init fail. ret = %d", ret );
+        return  R_ERROR;
     }
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -148,10 +148,10 @@ int     DemuxIO::open_input()
 /*******************************************************************************
 io_read_data
 ********************************************************************************/
-int     io_read_data( void *opaque, uint8_t *buf, int buf_size )
+int     io_read_data( void *opaque, uint8_t *buffer, int size )
 {
     InputOutput*    io  =   (InputOutput*)opaque;
-    int     ret     =   io->read( buf, buf_size );
+    int     ret     =   io->read( buffer, size );
     return  ret;
 }
 

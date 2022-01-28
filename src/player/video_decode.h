@@ -16,7 +16,7 @@ class DLL_API VideoDecode : public Decode
 {
 public:
     VideoDecode();
-    ~VideoDecode();
+    virtual ~VideoDecode();
 
     VideoDecode( const VideoDecode& ) = delete;
     VideoDecode( VideoDecode&& ) = delete;
@@ -24,11 +24,13 @@ public:
     VideoDecode& operator = ( const VideoDecode& ) = delete;
     VideoDecode& operator = ( VideoDecode&& ) = delete;
     
-    int     open_codec_context( AVFormatContext *fmt_ctx ) override;
+    virtual AVPixelFormat   get_pix_fmt();
+
+    virtual int     init() override;
+    virtual int     end() override;
+    virtual int     open_codec_context( AVFormatContext *fmt_ctx ) override;
+
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
-    
-    int     init() override;
-    int     end() override;
     int     recv_frame( int index ) override;
     void    unref_frame() override;
     
@@ -36,6 +38,7 @@ public:
 
     int     render_nongraphic_subtitle();
     int     overlap_subtitle_image();
+    
     int     get_video_width();
     int     get_video_height();
     void    output_video_frame_info();
@@ -47,8 +50,6 @@ public:
     VideoData   output_video_data();
     QImage      get_video_image();
 
-    AVPixelFormat   get_pix_fmt();
-
     int     video_info(); // 未來增加 nv decode 可以參考這邊
 
 #ifdef FFMPEG_TEST
@@ -58,7 +59,8 @@ public:
     void    set_output_jpg_root( std::string _root_path );
 #endif
 
-private:
+//private:
+protected:
 
     int64_t     frame_pts   =   0;
 
@@ -72,21 +74,12 @@ private:
     int      width   =   0;
     int      height  =   0;
 
+    SubDecode   *sub_dec    =   nullptr;
+    QImage      overlay_image;  // 用來處理 graphic subtitle, overlay 的 image.
+
 #ifdef FFMPEG_TEST
     std::string     output_jpg_root_path    =   "H:\\jpg";
 #endif
-
-    SubDecode   *sub_dec    =   nullptr;
-
-    QImage  overlay_image;  // 用來處理 graphic subtitle, overlay 的 image.
-
-/*
-    未來增加nv decode 可以參考這邊
-    AVCodecID   v_codec_id;
-    AVPacket *pkt_bsf    =   nullptr;    
-    AVBSFContext    *v_bsf_ctx  =   nullptr,;
-*/
-
 };
 
 

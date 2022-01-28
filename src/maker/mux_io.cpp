@@ -46,23 +46,23 @@ void    MuxIO::init( EncodeSetting setting )
     // alloc output.
     avformat_alloc_output_context2( &output_ctx, NULL, "mpegts", nullptr );
     if( output_ctx == nullptr ) 
-        MYLOG( LOG::ERROR, "output_ctx = nullptr" );
+        MYLOG( LOG::L_ERROR, "output_ctx = nullptr" );
 
     // 
-    MYLOG( LOG::INFO, "default video codec is %s", avcodec_get_name(output_ctx->oformat->video_codec) );
-    MYLOG( LOG::INFO, "default audio codec is %s", avcodec_get_name(output_ctx->oformat->audio_codec) );
+    MYLOG( LOG::L_INFO, "default video codec is %s", avcodec_get_name(output_ctx->oformat->video_codec) );
+    MYLOG( LOG::L_INFO, "default audio codec is %s", avcodec_get_name(output_ctx->oformat->audio_codec) );
 
     // add stream
     // video
     v_stream    =   avformat_new_stream( output_ctx, nullptr );  // 第二個參數丟 nullptr 即可
     if( v_stream == nullptr )
-        MYLOG( LOG::ERROR, "v_stream is nullptr." );
+        MYLOG( LOG::L_ERROR, "v_stream is nullptr." );
     v_stream->id    =   output_ctx->nb_streams - 1;         // 未來改掉這邊的寫法. 增加彈性. 方便增加多個 audio stream, subtitle stream
     
     // audio
     a_stream    =   avformat_new_stream( output_ctx, nullptr );
     if( a_stream == nullptr )
-        MYLOG( LOG::ERROR, "a_stream is nullptr." );
+        MYLOG( LOG::L_ERROR, "a_stream is nullptr." );
     a_stream->id    =   output_ctx->nb_streams - 1;
 }
 
@@ -136,18 +136,18 @@ void    MuxIO::open( EncodeSetting setting, AVCodecContext* v_ctx, AVCodecContex
 	
     io_ctx  =   avio_alloc_context( output_buf, FFMPEG_OUTPUT_BUFFER_SIZE, 1, (void*)IO, nullptr, io_write_data, nullptr );
     if( io_ctx == nullptr )
-        MYLOG( LOG::ERROR, "io_ctx is null." );
+        MYLOG( LOG::L_ERROR, "io_ctx is null." );
     
     // 測試用
     ret     =   av_dict_set( &(output_ctx->metadata), "service_name", "hidog test", 0 );
     if( ret < 0 )
-        MYLOG( LOG::ERROR, "set service_name fail." );
+        MYLOG( LOG::L_ERROR, "set service_name fail." );
     
     output_ctx->pb      =   io_ctx;
     output_ctx->flags   =   AVFMT_FLAG_CUSTOM_IO;
 
     if( v_ctx == nullptr || a_ctx == nullptr )
-        MYLOG( LOG::ERROR, "v ctx or a ctx is null" );
+        MYLOG( LOG::L_ERROR, "v ctx or a ctx is null" );
 
     // copy time base.
     v_stream->time_base     =   v_ctx->time_base;   // 在某個操作後這邊的 value 會變.

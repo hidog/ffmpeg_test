@@ -139,7 +139,7 @@ void    MakerIO::init( EncodeSetting _setting, VideoEncodeSetting v_setting, Aud
     
     MuxIO*  muxer_io    =   dynamic_cast<MuxIO*>(muxer);
     if( muxer_io == nullptr )
-        MYLOG( LOG::ERROR, "convert mux to mux_io fail." );
+        MYLOG( LOG::L_ERROR, "convert mux to mux_io fail." );
 
     muxer_io->open( setting, v_ctx, a_ctx, IO );
 }

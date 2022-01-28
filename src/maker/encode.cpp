@@ -47,7 +47,7 @@ void    Encode::init( int st_idx, AVCodecID code_id )
         av_frame_free( &frame );
     frame   =   av_frame_alloc();
     if( frame == nullptr ) 
-        MYLOG( LOG::ERROR, "frame alloc fail." );
+        MYLOG( LOG::L_ERROR, "frame alloc fail." );
     frame->pts  =   0;
 #endif    
 
@@ -57,12 +57,12 @@ void    Encode::init( int st_idx, AVCodecID code_id )
     
     pkt     =   av_packet_alloc();
     if( pkt == nullptr )
-        MYLOG( LOG::ERROR, "pkt = nullptr." );
+        MYLOG( LOG::L_ERROR, "pkt = nullptr." );
 
     // codec
     codec   =   avcodec_find_encoder(code_id);
     if( codec == nullptr )
-        MYLOG( LOG::ERROR, "codec not find. code id = %s", avcodec_get_name(code_id) );
+        MYLOG( LOG::L_ERROR, "codec not find. code id = %s", avcodec_get_name(code_id) );
 
     // init codec ctx.
     if( ctx != nullptr )
@@ -70,7 +70,7 @@ void    Encode::init( int st_idx, AVCodecID code_id )
 
     ctx     =   avcodec_alloc_context3( codec );
     if( ctx == nullptr ) 
-        MYLOG( LOG::ERROR, "ctx = nullptr." );
+        MYLOG( LOG::L_ERROR, "ctx = nullptr." );
 }
 
 
@@ -104,6 +104,7 @@ void    Encode::end()
     flush_state =   false;
     eof_flag    =   false;
     codec       =   nullptr;
+    frame_count =   0;
 }
 
 
@@ -149,7 +150,7 @@ Encode::get_stream_time_base()
 AVRational  Encode::get_stream_time_base()
 {
     if( stream_time_base.num == 0 && stream_time_base.den == 0 )
-        MYLOG( LOG::ERROR, "need set stream time base" );
+        MYLOG( LOG::L_ERROR, "need set stream time base" );
     return  stream_time_base;
 }
 
@@ -170,7 +171,7 @@ void    Encode::unref_pkt()
 /*******************************************************************************
 Encode::unref_data()
 ********************************************************************************/
-void Encode::unref_data()
+void    Encode::unref_data()
 {
     av_packet_unref(pkt);
 }
@@ -205,8 +206,8 @@ int     Encode::send_frame()
 {
     if( frame == nullptr || ctx == nullptr )
     {
-        MYLOG( LOG::ERROR, "frame or ctx is null." );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "frame or ctx is null." );
+        return  R_ERROR;
     }
 
     //printf("send frame %d\n", frame->data[0][100] );
@@ -225,7 +226,7 @@ Encode::recv_frame()
 int     Encode::recv_frame()
 {
     if( ctx == nullptr || pkt == nullptr )
-        MYLOG( LOG::ERROR, "ctx or pkt == nullptr." );
+        MYLOG( LOG::L_ERROR, "ctx or pkt == nullptr." );
 
     int     ret;
 
@@ -256,10 +257,10 @@ void    Encode::set_frame( AVFrame* _f )
 /*******************************************************************************
 Encode::encode_timestamp()
 ********************************************************************************/
-void Encode::encode_timestamp()
+void    Encode::encode_timestamp()
 {
     if( pkt == nullptr )
-        MYLOG( LOG::WARN, "pkt is null." );
+        MYLOG( LOG::L_WARN, "pkt is null." );
     auto ctx_tb =   get_timebase();
     auto stb    =   get_stream_time_base();
     av_packet_rescale_ts( pkt, ctx_tb, stb );
@@ -275,7 +276,7 @@ Encode::get_pkt()
 AVPacket*   Encode::get_pkt()
 {
     if( pkt == nullptr )
-        MYLOG( LOG::WARN, "pkt is null." );
+        MYLOG( LOG::L_WARN, "pkt is null." );
     return  pkt;   
 }
 
@@ -324,8 +325,8 @@ int     Encode::flush()
 {
     if( ctx == nullptr )
     {
-        MYLOG( LOG::ERROR, "ctx is null." );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "ctx is null." );
+        return  R_ERROR;
     }
 
     int ret =   avcodec_send_frame( ctx, nullptr );
@@ -360,7 +361,7 @@ bool    operator <= ( Encode& a, Encode& b )
 {
     if( a.end_of_file() == true && b.end_of_file() == true )
     {
-        //MYLOG( LOG::ERROR, "both eof." );
+        //MYLOG( LOG::L_ERROR, "both eof." );
         return  true;
     }
     else if( a.end_of_file() == true )
@@ -393,6 +394,6 @@ Encode::get_frame()
 AVFrame*    Encode::get_frame()
 {
     if( frame == nullptr )
-        MYLOG( LOG::WARN, "frame is null" );
+        MYLOG( LOG::L_WARN, "frame is null" );
     return  frame;
 }

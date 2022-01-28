@@ -12,9 +12,9 @@
 
 
 
-constexpr int ERROR = -1;
-constexpr int SUCCESS = 0;
-constexpr int HAVE_FRAME = 1; // 需要用 1 來判斷是否還有 frame.
+constexpr int R_ERROR       =   -1;  // R_ERROR 跟太多檔案起衝突, 才故意改掉命名.
+constexpr int R_SUCCESS     =   0;
+constexpr int HAVE_FRAME    =   1; // 需要用 1 來判斷是否還有 frame.
 
 
 
@@ -27,27 +27,27 @@ constexpr int HAVE_FRAME = 1; // 需要用 1 來判斷是否還有 frame.
 
 enum class LOG
 {
-    DEBUG = 0,
-    INFO,
-    WARN,
-    ERROR,
+    L_DEBUG = 0,
+    L_INFO,
+    L_WARN,
+    L_ERROR,        // R_ERROR 太容易撞名 才改名稱
 };
 
 
 
 #define MYLOG( TAG, ... ) \
 	{ \
-        if( TAG == LOG::DEBUG ) \
+        if( TAG == LOG::L_DEBUG ) \
 		    printf("[DEBUG] [%s] [%d] ", __FILE__, __LINE__); \
-        else if( TAG == LOG::INFO ) \
+        else if( TAG == LOG::L_INFO ) \
             printf("[INFO] [%s] [%d] ", __FILE__, __LINE__); \
-        else if( TAG == LOG::WARN ) \
+        else if( TAG == LOG::L_WARN ) \
             printf("[WARN] [%s] [%d] ", __FILE__, __LINE__); \
         else \
             printf("[ERR] [%s] [%d] ", __FILE__, __LINE__); \
 		printf(__VA_ARGS__); \
 		printf("\n"); \
-        if( TAG == LOG::ERROR ) \
+        if( TAG == LOG::L_ERROR ) \
             assert(0); \
 	}
 

@@ -33,10 +33,10 @@ AudioDecode::output_decode_info()
 ********************************************************************************/
 void    AudioDecode::output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx )
 {
-    MYLOG( LOG::INFO, "audio dec name = %s", dec->name );
-    MYLOG( LOG::INFO, "audio dec long name = %s", dec->long_name );
-    MYLOG( LOG::INFO, "audio dec codec id = %s", avcodec_get_name(dec->id) );
-    MYLOG( LOG::INFO, "audio bitrate = %d", dec_ctx->bit_rate );
+    MYLOG( LOG::L_INFO, "audio dec name = %s", dec->name );
+    MYLOG( LOG::L_INFO, "audio dec long name = %s", dec->long_name );
+    MYLOG( LOG::L_INFO, "audio dec codec id = %s", avcodec_get_name(dec->id) );
+    MYLOG( LOG::L_INFO, "audio bitrate = %d", dec_ctx->bit_rate );
 }
 
 
@@ -62,7 +62,7 @@ int     AudioDecode::open_codec_context( AVFormatContext *fmt_ctx )
 {
     Decode::open_all_codec( fmt_ctx, type );
     //dec_ctx->thread_count = 4;
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -89,8 +89,8 @@ int     AudioDecode::init()
                                         NULL, NULL );
     swr_init(swr_ctx);
 
-    MYLOG( LOG::INFO, "audio sample format = %s", av_get_sample_fmt_name(sample_fmt) );
-    MYLOG( LOG::INFO, "audio channel = %d, sample rate = %d", av_get_channel_layout_nb_channels(channel_layout), sample_rate );
+    MYLOG( LOG::L_INFO, "audio sample format = %s", av_get_sample_fmt_name(sample_fmt) );
+    MYLOG( LOG::L_INFO, "audio channel = %d, sample rate = %d", av_get_channel_layout_nb_channels(channel_layout), sample_rate );
 
     //
 #ifdef FFMPEG_TEST
@@ -99,7 +99,7 @@ int     AudioDecode::init()
 #endif
 
     Decode::init();
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -140,7 +140,7 @@ int     AudioDecode::output_pcm()
     unsigned char   *pcm    =   new uint8_t[byte_count];     
 
     if( pcm == nullptr )
-        MYLOG( LOG::WARN, "pcm is null" );
+        MYLOG( LOG::L_WARN, "pcm is null" );
 
     data[0]     =   pcm;    // 輸出格式為 AV_SAMPLE_FMT_S16(packet型別), 所以轉換後的 LR 兩通道都存在data[0]中
                             // 研究一下 S32 是不是存兩個資料
@@ -149,11 +149,13 @@ int     AudioDecode::output_pcm()
                                  (const uint8_t**)frame->data, frame->nb_samples );    //輸入
 
     fwrite( pcm, 1, byte_count, fp );
-    //MYLOG( LOG::DEBUG, "audio write %d. frame_count = %d", byte_count, frame_count );
+    //MYLOG( LOG::L_DEBUG, "audio write %d. frame_count = %d", byte_count, frame_count );
 
     return  0;
 }
 #endif
+
+
 
 
 
@@ -164,6 +166,18 @@ AudioDecode::end()
 ********************************************************************************/
 int     AudioDecode::end()
 {
+    if( frame_count > 0 )
+    {
+        MYLOG( LOG::L_INFO, "audio decode %d frames.", frame_count );
+        int64_t     duration_time   =   1000LL * dec_ctx->frame_size * frame_count / dec_ctx->sample_rate; // ms
+        int64_t     ms              =   duration_time % 1000;
+        int64_t     sec             =   duration_time / 1000 % 60;
+        int64_t     minute          =   duration_time / 1000 / 60 % 60;
+        int64_t     hour            =   duration_time / 1000 / 60 / 60;
+        MYLOG( LOG::L_INFO, "audio decode duration = [ %2lld : %2lld : %2lld . %3lld", hour, minute, sec, ms );
+    }
+
+    //
     if( swr_ctx != nullptr )
     {
         swr_close(swr_ctx);
@@ -175,7 +189,7 @@ int     AudioDecode::end()
     sample_fmt      =   AV_SAMPLE_FMT_NONE;
 
     Decode::end();
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -190,7 +204,7 @@ void    AudioDecode::output_audio_frame_info()
     char    buf[AV_TS_MAX_STRING_SIZE]{0};
     int     per_sample  =   av_get_bytes_per_sample( static_cast<AVSampleFormat>(frame->format) );
     auto    pts_str     =   av_ts_make_time_string( buf, frame->pts, &dec_ctx->time_base );
-    MYLOG( LOG::INFO, "audio_frame n = %d, nb_samples = %d, pts : %s", frame_count, frame->nb_samples, pts_str );
+    MYLOG( LOG::L_INFO, "audio_frame n = %d, nb_samples = %d, pts : %s", frame_count, frame->nb_samples, pts_str );
 }
 
 
@@ -279,7 +293,7 @@ AudioData   AudioDecode::output_audio_data()
 
     ad.pcm    =   new uint8_t[byte_count];
     if( ad.pcm == nullptr )
-        MYLOG( LOG::WARN, "pcm is null" );
+        MYLOG( LOG::L_WARN, "pcm is null" );
 
     uint8_t *data[2]    =   { 0 };
     data[0] =   ad.pcm;    // 輸出格式為 AV_SAMPLE_FMT_S16(packet型別), 所以轉換後的 LR 兩通道都存在data[0]中
@@ -332,23 +346,23 @@ int     AudioDecode::audio_info()
     AVStream    *audio_stream   =   fmt_ctx->streams[as_idx];
     if( audio_stream == nullptr )
     {
-        MYLOG( LOG::INFO, "this stream has no audio stream" );
-        return  SUCCESS;
+        MYLOG( LOG::L_INFO, "this stream has no audio stream" );
+        return  R_SUCCESS;
     }
 
     //
     a_codec_id   =   fmt_ctx->streams[as_idx]->codecpar->codec_id;
-    MYLOG( LOG::INFO, "code name = %s", avcodec_get_name(a_codec_id) );
+    MYLOG( LOG::L_INFO, "code name = %s", avcodec_get_name(a_codec_id) );
 
     //
     channel     =   fmt_ctx->streams[as_idx]->codecpar->channels;
     sample_rate =   fmt_ctx->streams[as_idx]->codecpar->sample_rate;
-    MYLOG( LOG::INFO, "channel = %d, sample rate = %d", channel, sample_rate );
+    MYLOG( LOG::L_INFO, "channel = %d, sample rate = %d", channel, sample_rate );
 
     //
     double a_dur_ms = av_q2d( fmt_ctx->streams[as_idx]->time_base) * fmt_ctx->streams[as_idx]->duration;
-    MYLOG( LOG::INFO, "frame duration = %lf ms", a_dur_ms );
+    MYLOG( LOG::L_INFO, "frame duration = %lf ms", a_dur_ms );
 
 #endif
-    return  SUCCESS;
+    return  R_SUCCESS;
 }

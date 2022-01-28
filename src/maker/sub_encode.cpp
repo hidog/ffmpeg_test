@@ -48,7 +48,7 @@ void    SubEncode::copy_sub_header()
         ctx->subtitle_header        =   (uint8_t*)av_mallocz( dec->subtitle_header_size );   // 沒查到 + 1 的理由. 也有沒+1的. 都可執行
         memcpy( ctx->subtitle_header, dec->subtitle_header, dec->subtitle_header_size );
         ctx->subtitle_header_size   =   dec->subtitle_header_size;    
-        //MYLOG( LOG::INFO, "subtitle header = \n%s", ctx->subtitle_header );    
+        //MYLOG( LOG::L_INFO, "subtitle header = \n%s", ctx->subtitle_header );    
     }
 }
 
@@ -149,19 +149,19 @@ void    SubEncode::init( int st_idx, SubEncodeSetting setting, bool need_global_
     last_pts    =   0;
     sub_pkt     =   av_packet_alloc();
     if( sub_pkt == nullptr )
-        MYLOG( LOG::ERROR, "alloc sub pkt fail." );
+        MYLOG( LOG::L_ERROR, "alloc sub pkt fail." );
 
     if( sub_buf == nullptr )
     {
         sub_buf    =   (uint8_t*)av_mallocz(sub_buf_max_size);
         if( sub_buf == nullptr )
-            MYLOG( LOG::ERROR, "sub_buf is null." );
+            MYLOG( LOG::L_ERROR, "sub_buf is null." );
     }
 
     // open subtitle file.    
     ret     =   open_subtitle_source( setting.subtitle_file );
-    if( ret == ERROR )
-        MYLOG( LOG::ERROR, "open subtitle source fail." );
+    if( ret == R_ERROR )
+        MYLOG( LOG::L_ERROR, "open subtitle source fail." );
 
     // 需設置
     ctx->pkt_timebase   =   AVRational{ 1, 1000 }; 
@@ -175,7 +175,7 @@ void    SubEncode::init( int st_idx, SubEncodeSetting setting, bool need_global_
 
     ret     =   avcodec_open2( ctx, codec, nullptr );
     if( ret < 0 ) 
-        MYLOG( LOG::ERROR, "open fail" );
+        MYLOG( LOG::L_ERROR, "open fail" );
 }
 
 
@@ -214,16 +214,16 @@ void    SubEncode::load_all_subtitle()
         if( ret < 0 )
             break;
 
-        //MYLOG( LOG::DEBUG, "sub pkt pts = %lld", sub_pkt.pts );
+        //MYLOG( LOG::L_DEBUG, "sub pkt pts = %lld", sub_pkt.pts );
         sub_queue.emplace( *sub_pkt );
     }
-    MYLOG( LOG::INFO, "load subtitle file finish." );
+    MYLOG( LOG::L_INFO, "load subtitle file finish." );
 
 #if 0
     // print queue for test.
     while( false == sub_queue.empty()) 
     {
-        MYLOG( LOG::DEBUG, "pts = %lld, str = %s", sub_queue.top().pts, sub_queue.top().data );
+        MYLOG( LOG::L_DEBUG, "pts = %lld, str = %s", sub_queue.top().pts, sub_queue.top().data );
         sub_queue.pop();
     }
 #endif
@@ -243,58 +243,58 @@ int     SubEncode::open_subtitle_source( std::string src_sub_file )
     fmt_ctx     =   avformat_alloc_context();
     if( fmt_ctx == nullptr )
     {
-        MYLOG( LOG::ERROR, "alloc fmt ctx fail." );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "alloc fmt ctx fail." );
+        return  R_ERROR;
     }
 
     ret     =   avformat_open_input( &fmt_ctx, src_sub_file.c_str(), nullptr, nullptr );
     if( ret < 0 )
     {
-        MYLOG( LOG::ERROR, "oepn input %s fail.", src_sub_file.c_str() );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "oepn input %s fail.", src_sub_file.c_str() );
+        return  R_ERROR;
     }
 
     ret     =   avformat_find_stream_info( fmt_ctx, nullptr );
     if( ret < 0 )
     {
-        MYLOG( LOG::ERROR, "find stream info fail." );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "find stream info fail." );
+        return  R_ERROR;
     }
 
     sub_idx     =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, -1, -1, nullptr, 0 );
     if( sub_idx < 0 )
     {
-        MYLOG( LOG::ERROR, "stream idx = %d", sub_idx );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "stream idx = %d", sub_idx );
+        return  R_ERROR;
     }
     
     sub_stream  =   fmt_ctx->streams[sub_idx];
     if( sub_stream == nullptr )
     {
-        MYLOG( LOG::ERROR, "sub stream is null." );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "sub stream is null." );
+        return  R_ERROR;
     }
 
-    MYLOG( LOG::INFO, "source subtitle file is %s", avcodec_get_name(sub_stream->codecpar->codec_id) );
+    MYLOG( LOG::L_INFO, "source subtitle file is %s", avcodec_get_name(sub_stream->codecpar->codec_id) );
     const AVCodec   *src_codec  =   avcodec_find_decoder( sub_stream->codecpar->codec_id );
     if( src_codec == nullptr )
     {
-        MYLOG( LOG::ERROR, "src_codec is null." );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "src_codec is null." );
+        return  R_ERROR;
     }
 
     dec     =   avcodec_alloc_context3( src_codec );
     if( dec == nullptr )
     {
-        MYLOG( LOG::ERROR, "dec is null." );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "dec is null." );
+        return  R_ERROR;
     }
 
     ret     =   avcodec_parameters_to_context( dec, sub_stream->codecpar );
     if( ret < 0 )
     {
-        MYLOG( LOG::ERROR, "copy param fail." );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "copy param fail." );
+        return  R_ERROR;
     }
 
     //
@@ -302,11 +302,11 @@ int     SubEncode::open_subtitle_source( std::string src_sub_file )
     ret     =   avcodec_open2( dec, src_codec, nullptr );
     if( ret < 0 )
     {
-        MYLOG( LOG::ERROR, "avcodec_open2 fail");
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "avcodec_open2 fail");
+        return  R_ERROR;
     }
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
@@ -319,7 +319,7 @@ int64_t     SubEncode::get_pts()
 {
     if( sub_queue.empty() == true )
     {
-        MYLOG( LOG::ERROR, "queue is empty." );
+        MYLOG( LOG::L_ERROR, "queue is empty." );
         return  0;
     }
 
@@ -374,8 +374,8 @@ int     SubEncode::encode_subtitle()
 {
     if( sub_queue.empty() == true )
     {
-        MYLOG( LOG::WARN, "queue is empty." );
-        return  ERROR;
+        MYLOG( LOG::L_WARN, "queue is empty." );
+        return  R_ERROR;
     }
 
     int     ret     =   0;
@@ -383,24 +383,24 @@ int     SubEncode::encode_subtitle()
     //sub_queue.pop();
 
     if( sub_pkt->size == 0 )
-        MYLOG( LOG::ERROR, "sub pkt size is 0" );
+        MYLOG( LOG::L_ERROR, "sub pkt size is 0" );
 
-    //MYLOG( LOG::DEBUG, "sub_pkt = %s", sub_pkt.data );
+    //MYLOG( LOG::L_DEBUG, "sub_pkt = %s", sub_pkt.data );
     //memset( subtitle, 0, sizeof(subtitle) );            
     ret     =   avcodec_decode_subtitle2( dec, &sub, &got_sub, sub_pkt ); 
     av_packet_unref( sub_pkt );
     if( ret < 0 )
     {
-        MYLOG( LOG::ERROR, "decode fail." );
-        return  ERROR;
+        MYLOG( LOG::L_ERROR, "decode fail." );
+        return  R_ERROR;
     }
 
-    //MYLOG( LOG::DEBUG, "decode subtitle = %s", subtitle->rects[0]->ass );
+    //MYLOG( LOG::L_DEBUG, "decode subtitle = %s", subtitle->rects[0]->ass );
     if( got_sub > 0 )
     {
         int sub_buf_size   =   avcodec_encode_subtitle( ctx , sub_buf, sub_buf_max_size, &sub );   
         if( sub_buf_size == 0 )
-            MYLOG( LOG::WARN, "subtitle_out_size = 0" );
+            MYLOG( LOG::L_WARN, "subtitle_out_size = 0" );
         
         pkt->data           =   sub_buf;
         pkt->size           =   sub_buf_size;
@@ -409,7 +409,7 @@ int     SubEncode::encode_subtitle()
         return  HAVE_FRAME;
     }
     else
-        return  SUCCESS;
+        return  R_SUCCESS;
 }
 
 
@@ -439,7 +439,7 @@ SubEncode::encode_timestamp()
 void    SubEncode::encode_timestamp()
 {
     if( pkt == nullptr )
-        MYLOG( LOG::ERROR, "pkt is null." );
+        MYLOG( LOG::L_ERROR, "pkt is null." );
 
     if( pkt->size == 0 )  // flush pkt.
         return;
@@ -506,7 +506,7 @@ int     SubEncode::flush()
     pkt->duration       =   0;
     pkt->stream_index   =   stream_index;
 
-    return  SUCCESS;
+    return  R_SUCCESS;
 }
 
 
