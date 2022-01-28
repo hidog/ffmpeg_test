@@ -321,6 +321,7 @@ int     VideoDecodeHW::send_packet( AVPacket *pkt )
         av_bsf_send_packet( v_bsf_ctx, pkt );
         av_bsf_receive_packet( v_bsf_ctx, pkt_bsf );
 
+        pkt->stream_index   =   pkt_bsf->stream_index;   // 否則 stream_index 會被清掉, 造成bug.
         pkt_ptr     =   pkt_bsf->data;
         pkt_size    =   pkt_bsf->size;
     }
