@@ -18,13 +18,11 @@
 #include "video_decode.h"
 #include "video_decode_hw.h"
 
-
 #include <QImage>
 
 
-
-
 struct AVPacket;
+
 
 
 #ifdef FFMPEG_TEST
@@ -139,6 +137,7 @@ private:
     std::thread     *video_decode_thr   =   nullptr,
                     *audio_decode_thr   =   nullptr;
 #endif
+
 };
 
 
