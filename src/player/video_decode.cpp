@@ -663,8 +663,8 @@ int     VideoDecode::test_image_process()
 
     //image_process->histogram( yuvframe, width, height );
     //image_process->rgb_to_gray( yuvframe, width, height );
-    image_process->sobel( yuvframe, width, height );
-
+    //image_process->sobel( yuvframe, width, height );
+    image_process->canny_edge( yuvframe, width, height );  
 
     return 0;
 }

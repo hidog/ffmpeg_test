@@ -169,3 +169,29 @@ void    ImageProcess::sobel( cv::Mat yuvframe, int width, int height )
 }
 
 
+
+
+
+
+/*******************************************************************************
+ImageProcess::canny_edge()
+********************************************************************************/
+void    ImageProcess::canny_edge( cv::Mat yuvframe, int width, int height )
+{
+    cv::Mat     bgr, canny, gray, blur;
+    cv::cvtColor( yuvframe, bgr, cv::COLOR_YUV2BGR_I420 );
+
+    int     low_thr     =   60;
+    int     ratio       =   3;
+    int     kernel_size =   3;
+      
+    cvtColor( bgr, gray, cv::COLOR_BGR2GRAY );    
+    cv::blur( gray, blur, cv::Size(3,3) );
+
+    Canny( blur, canny, low_thr, low_thr*ratio, kernel_size );
+
+    imshow( "edge map", canny );
+    imshow( "bgr", bgr );
+
+    cv::waitKey(1);    
+}
