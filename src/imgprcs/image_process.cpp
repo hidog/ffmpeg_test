@@ -63,7 +63,7 @@ void     ImageProcess::histogram( cv::Mat yuvframe, int width, int height )
     int     sum     =   0;
     uchar*  ptr     =   htg_image.ptr();
 
-    const uchar const*  end     =   ptr + size;
+    const uchar* const  end     =   ptr + size;
 
     int     histogram[256]  =   {0};
     int     mapping[256]    =   {0};
@@ -86,12 +86,43 @@ void     ImageProcess::histogram( cv::Mat yuvframe, int width, int height )
     cv::cvtColor( htg_image, after_histogram, cv::COLOR_YUV2BGR_I420 );
 
     cv::imshow( "original", original );
-    //cv::resizeWindow( cv::String("original"), cv::Size(1280,720) );
-
     cv::imshow( "after histogram equalization", after_histogram );
-    //cv::resizeWindow( cv::String("after histogram equalization"), cv::Size(1280,720) );
-
 
     cv::waitKey(1);
-    
+}
+
+
+
+
+/*******************************************************************************
+ImageProcess::rgb_to_gray()
+********************************************************************************/
+void    ImageProcess::rgb_to_gray( cv::Mat yuvframe, int width, int height )
+{
+    cv::Mat     bgr_image;
+    cv::cvtColor( yuvframe, bgr_image, cv::COLOR_YUV2BGR_I420 );
+
+    cv::Mat     gray_image{ cv::Size(width,height), CV_8UC1 };  // note: 用 gray_image{ width, height, CV_8UC1 } 會被當initialize list造成失敗
+
+    uchar   *src_ptr    =   bgr_image.data;
+    uchar   *dst_ptr    =   gray_image.data;
+
+    static int  src_size    =   width * height * 3;
+    static int  dst_size    =   width * height;
+
+    const uchar* const  src_end     =   src_ptr + src_size;
+    const uchar* const  dst_end     =   dst_ptr + dst_size;
+
+    int     tmp;
+    for( ; dst_ptr != dst_end; src_ptr += 3, ++dst_ptr )
+    {
+        tmp         =   *(src_ptr + 1);
+        tmp         =   (tmp << 1) + *src_ptr + *(src_ptr + 2);
+        *dst_ptr    =   tmp >> 2;
+    }
+        
+    cv::imshow( "bgr", bgr_image );
+    cv::imshow( "gray", gray_image );
+
+    cv::waitKey(1);
 }

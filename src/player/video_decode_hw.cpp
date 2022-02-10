@@ -117,10 +117,8 @@ int     VideoDecodeHW::init()
                                     SWS_BICUBIC, NULL, NULL, NULL);                        
 
 #ifdef FFMPEG_TEST
-    //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
+    output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
     //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
-    ImageProcess    *imgprcs    =   get_image_process_instance();
-    output_frame_func   =   std::bind( &ImageProcess::process, imgprcs );
 #endif
 
     Decode::init();
