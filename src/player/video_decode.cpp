@@ -1,10 +1,10 @@
 #include "video_decode.h"
+#include "sub_decode.h"
+#include "../imgprcs/image_process.h"
 
 #include <QPainter>
 #include <QImage>
-
 #include <opencv2/opencv.hpp>
-#include "sub_decode.h"
 
 
 extern "C" {
@@ -88,6 +88,8 @@ int     VideoDecode::init()
     MYLOG( LOG::L_INFO, "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
     
     video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
+    //video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_YUV420P, 1 );  // when use output_jpg_by_openCV, use this.
+
     if( video_dst_bufsize < 0 )
     {
         MYLOG( LOG::L_ERROR, "Could not allocate raw video buffer" );
@@ -102,6 +104,7 @@ int     VideoDecode::init()
 #ifdef FFMPEG_TEST
     output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
     //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
+    //output_frame_func   =   std::bind( &VideoDecode::test_image_process, this );
 #endif
 
     Decode::init();
@@ -638,6 +641,30 @@ int     VideoDecode::output_jpg_by_openCV()
     sprintf( output_path, "%s\\%d.jpg",  opencv_jpg_root_path.c_str(), output_count++ );
     cv::imwrite( output_path, bgr );
 #endif
+
+    return 0;
+}
+#endif
+
+
+
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoDecode::test_image_process()
+********************************************************************************/
+int     VideoDecode::test_image_process()
+{
+    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, AV_PIX_FMT_YUV420P, width, height );
+    cv::Mat     yuvframe( cv::Size( width, height*3/2 ), CV_8UC1, video_dst_data[0] );
+
+    ImageProcess    *image_process  =   get_image_process_instance();
+
+    //image_process->histogram( yuvframe, width, height );
+    //image_process->rgb_to_gray( yuvframe, width, height );
+    //image_process->sobel( yuvframe, width, height );
+    image_process->canny_edge( yuvframe, width, height );  
 
     return 0;
 }

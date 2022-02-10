@@ -4,6 +4,8 @@
 #include "../hw/NvCodecUtils.h"
 
 #include "sub_decode.h"
+#include "../imgprcs/image_process.h"
+
 
 
 extern "C" {

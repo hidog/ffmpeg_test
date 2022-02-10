@@ -1,7 +1,10 @@
 #include "player.h"
 #include "tool.h"
 #include "demux_io.h"
+
 #include <thread>
+
+
 
 extern "C" {
 
@@ -1052,7 +1055,7 @@ void    player_decode_example()
     DecodeSetting   setting;
     setting.io_type     =   IO_Type::DEFAULT;
     //setting.io_type     =   IO_Type::SRT_IO;
-    setting.filename   =   "D:\\test.mkv";     // 使用 D:\\code\\test.mkv 會出錯. 已增加程式碼處理這個問題.
+    setting.filename   =   "D:\\test.mp4";     // 使用 D:\\code\\test.mkv 會出錯. 已增加程式碼處理這個問題.
     //setting.subname    =   "H:\\test.ass";   
     //setting.srt_port    =   "1234";
 
