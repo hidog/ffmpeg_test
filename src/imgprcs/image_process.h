@@ -1,6 +1,7 @@
 #ifndef IMAGE_PROCESS_H
 #define IMAGE_PROCESS_H
 
+#include <opencv2/highgui.hpp>
 
 
 class ImageProcess
@@ -15,9 +16,8 @@ public:
     ImageProcess& operator = ( const ImageProcess& ) = delete;
     ImageProcess& operator = ( ImageProcess&& ) = delete;
 
-    int     process();
+    void    histogram( cv::Mat yuvframe, int width, int height );
 
-private:
 
 };
 

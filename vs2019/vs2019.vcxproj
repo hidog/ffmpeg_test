@@ -284,6 +284,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClCompile Include="..\src\hw\NvDecoder.cpp" />
     <ClCompile Include="..\src\hw\NvEncoder.cpp" />
     <ClCompile Include="..\src\hw\NvEncoderCuda.cpp" />
+    <ClCompile Include="..\src\imgprcs\image_process.cpp" />
     <ClCompile Include="..\src\IO\file_io.cpp" />
     <ClCompile Include="..\src\IO\input_output.cpp" />
     <ClCompile Include="..\src\IO\srt_io.cpp" />
@@ -320,6 +321,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClInclude Include="..\src\hw\NvDecoder.h" />
     <ClInclude Include="..\src\hw\NvEncoder.h" />
     <ClInclude Include="..\src\hw\NvEncoderCuda.h" />
+    <ClInclude Include="..\src\imgprcs\image_process.h" />
     <ClInclude Include="..\src\IO\file_io.h" />
     <ClInclude Include="..\src\IO\input_output.h" />
     <ClInclude Include="..\src\IO\io_def.h" />
