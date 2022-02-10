@@ -662,7 +662,8 @@ int     VideoDecode::test_image_process()
     ImageProcess    *image_process  =   get_image_process_instance();
 
     //image_process->histogram( yuvframe, width, height );
-    image_process->rgb_to_gray( yuvframe, width, height );
+    //image_process->rgb_to_gray( yuvframe, width, height );
+    image_process->sobel( yuvframe, width, height );
 
 
     return 0;

@@ -126,3 +126,46 @@ void    ImageProcess::rgb_to_gray( cv::Mat yuvframe, int width, int height )
 
     cv::waitKey(1);
 }
+
+
+
+/*******************************************************************************
+ImageProcess::sobel()
+********************************************************************************/
+void    ImageProcess::sobel( cv::Mat yuvframe, int width, int height )
+{
+    cv::Mat     gray_image{ cv::Size(width,height), CV_8UC1 };  // note: 用 gray_image{ width, height, CV_8UC1 } 會被當initialize list造成失敗
+
+    uchar   *src_ptr    =   yuvframe.data;
+    uchar   *dst_ptr    =   gray_image.data;
+
+    static int  size    =   width * height;
+
+    const uchar* const  src_end     =   src_ptr + size;
+    const uchar* const  dst_end     =   dst_ptr + size;
+
+    for( ; dst_ptr != dst_end; ++dst_ptr, ++src_ptr )
+        *dst_ptr    =   *src_ptr;
+
+    // start sobel
+    cv::Mat     grad_x, grad_y, abs_grad_x, abs_grad_y, grad_sobel_image;
+
+    int     kernel_size     =   1;
+    int     scale           =   1;
+    int     delta           =   0;
+
+    Sobel( gray_image, grad_x, CV_16S, 1, 0, kernel_size, scale, delta, cv::BORDER_DEFAULT );
+    Sobel( gray_image, grad_y, CV_16S, 0, 1, kernel_size, scale, delta, cv::BORDER_DEFAULT );
+        
+    // converting back to CV_8U
+    convertScaleAbs( grad_x, abs_grad_x );
+    convertScaleAbs( grad_y, abs_grad_y );
+    addWeighted( abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad_sobel_image );
+
+    cv::imshow( "gray", gray_image );
+    cv::imshow( "sobel", grad_sobel_image );
+
+    cv::waitKey(1);
+}
+
+

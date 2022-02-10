@@ -18,6 +18,7 @@ public:
 
     void    histogram( cv::Mat yuvframe, int width, int height );
     void    rgb_to_gray( cv::Mat yuvframe, int width, int height );
+    void    sobel( cv::Mat yuvframe, int width, int height );
 
 };
 
