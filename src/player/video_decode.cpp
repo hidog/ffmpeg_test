@@ -87,8 +87,8 @@ int     VideoDecode::init()
 
     MYLOG( LOG::L_INFO, "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
     
-    //video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
-    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_YUV420P, 1 );  // when use output_jpg_by_openCV, use this.
+    video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
+    //video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_YUV420P, 1 );  // when use output_jpg_by_openCV, use this.
 
     if( video_dst_bufsize < 0 )
     {
@@ -102,9 +102,9 @@ int     VideoDecode::init()
                                     SWS_BICUBIC, NULL, NULL, NULL);                        
 
 #ifdef FFMPEG_TEST
-    //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
+    output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
     //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
-    output_frame_func   =   std::bind( &VideoDecode::test_image_process, this );
+    //output_frame_func   =   std::bind( &VideoDecode::test_image_process, this );
 #endif
 
     Decode::init();
