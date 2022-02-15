@@ -104,7 +104,7 @@ protected:
 
 private:
 
-    static constexpr int   MAX_QUEUE_SIZE  =   200;
+    static constexpr int   MAX_QUEUE_SIZE  =   200;   // queue 太小有機會出問題
     //static constexpr int   MAX_QUEUE_SIZE  =   10;
 
     DecodeSetting   setting;

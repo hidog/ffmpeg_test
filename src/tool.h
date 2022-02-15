@@ -6,7 +6,7 @@
 
 #include "player/play_def.h"
 
-//#define USE_MT
+//#define USE_MT   // 將 video, audio, subtitle decode拆成不同的thread. 但未完成,僅有測試用的程式碼
 
 
 constexpr int R_ERROR       =   -1;  // R_ERROR 跟太多檔案起衝突, 才故意改掉命名.

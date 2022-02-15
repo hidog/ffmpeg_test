@@ -516,8 +516,6 @@ bool SubDecode::open_subtitle_filter( std::string args, std::string desc )
 
 /*******************************************************************************
 SubDecode::generate_subtitle_image()
-
-這個程式碼沒執行過, 是從網路複製過來的, 想辦法測試.
 ********************************************************************************/
 void    SubDecode::generate_subtitle_image( AVSubtitle &subtitle )
 {
@@ -731,7 +729,6 @@ std::vector<std::string>    SubDecode::get_embedded_subtitle_list()
 SubDecode::sub_info()
 
 https://www.jianshu.com/p/89f2da631e16
-
 實際上不必解開多個字幕軌, 有空再研究.
 ********************************************************************************/
 int     SubDecode::sub_info()
@@ -954,8 +951,8 @@ int    SubDecode::flush()
 extract_subtitle_frome_file()
 
 ref : https://github.com/mythsaber/AudioVideo
-
 測試用
+目前有機會不能動.
 ********************************************************************************/
 void    extract_subtitle_frome_file()
 {
