@@ -6,7 +6,6 @@
 
 
 class InputOutput;
-//struct AVIOContext;
 
 
 
@@ -28,13 +27,10 @@ public:
 
 private:
 
-    //AVInputFormat*  input_fmt = nullptr;
-    //AVIOContext     *io_ctx =   nullptr;
     InputOutput     *IO     =   nullptr;
     DecodeSetting   setting;
 
     static constexpr    int     FFMPEG_INPUT_BUFFER_SIZE    =   4096;
-	//uint8_t     *input_buf = nullptr;
 
 };
 

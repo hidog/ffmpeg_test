@@ -382,7 +382,7 @@ Decode::end()
 ********************************************************************************/
 int     Decode::end()
 {
-    //avcodec_free_context( &dec_ctx );
+    //avcodec_free_context( &dec_ctx );  // 因為併入 dec_map, 所以不用釋放這個物件.
 
     av_frame_free( &frame );
     frame   =   nullptr;
