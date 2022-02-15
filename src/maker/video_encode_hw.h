@@ -23,7 +23,6 @@ struct AVStream;
 
 
 
-
 /*
     NVENC 出來的資料需要做多次讀取
     用這個結構紀錄存取的位置.
@@ -43,7 +42,8 @@ struct NvEncBuffer
     目前 study 結果, build ffmpeg with nvenc 應該是比較好的做法.
     ffmpeg 內有 nvenc.c 等相關檔案.
 
-    雖然介面相同, 但內容會跟 VideoEncode 差很多. 有空在思考怎麼處理.
+    雖然介面相同, 但內容會跟 VideoEncode 差很多.
+    未來應該改掉這一塊.
 */
 
 class VideoEncodeHW : public VideoEncode

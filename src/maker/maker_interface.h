@@ -5,6 +5,11 @@
 #include "tool.h"
 
 
+/*
+    為了避免 UI 端 include 到 ffmpeg, 將 maker 的 interface 切割出來.
+    player 端也可以考慮類似的設計, 但目前尚無需求.
+*/
+
 
 class DLL_API MakerInterface
 {
