@@ -3,11 +3,8 @@
 #include <srt.h>
 
 
-
 // 避免重複呼叫 srt_startup. 若改成multi-thread,則需要修改這邊的設計.
 static bool     srt_has_init    =   false;
-
-
 
 
 
@@ -234,9 +231,6 @@ void    SrtIO::client_open()
     // start
     assert( thr == nullptr );
     thr     =   new std::thread( &SrtIO::recv_handle, this );
-
-    //srt_close(fhandle);
-    //break;
 }
 
 
