@@ -61,7 +61,7 @@ void    VideoEncode::set_jpg_root_path( std::string path )
 VideoEncode::init()
 
 https://www.itread01.com/content/1549629205.html
-
+https://www.itread01.com/content/1550140412.html  parameter 參考
 https://trac.ffmpeg.org/wiki/Encode/H.265
 ultrafast, superfast, veryfast, faster, fast, 
 medium, slow, slower, veryslow, and placebo
@@ -382,7 +382,7 @@ void    VideoEncode::end()
     if( video_data[0] != nullptr )
     {
         av_free( video_data[0] );
-        video_data[0]   =   nullptr;
+        video_data[0]   =   nullptr;  // 看起來不用管這個, 但保險起見都設成 nullptr.
         video_data[1]   =   nullptr;
         video_data[2]   =   nullptr;
         video_data[3]   =   nullptr;
@@ -476,6 +476,7 @@ void    VideoEncode::get_fram_from_file_QT()
                    (const uint8_t**)video_data, video_linesize, 
                    ctx->pix_fmt, ctx->width, ctx->height );
 #else
+    // 暴力硬幹的測試用code.
     // yuv420p
     //memcpy( frame->data[0], video_dst_data[0], ctx->width * ctx->height );
     //memcpy( frame->data[1], video_dst_data[1], ctx->width * ctx->height / 4 );

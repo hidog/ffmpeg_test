@@ -7,8 +7,6 @@
 
 
 
-// https://www.itread01.com/content/1550140412.html
-
 
 struct SwsContext;
 enum AVCodecID;

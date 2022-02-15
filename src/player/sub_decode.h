@@ -8,7 +8,11 @@
 https://www.twblogs.net/a/5ef2639e26bc8c4a8eb3c99e        // ¦r¹õ±Ð¾Ç 
 http://underpop.online.fr/f/ffmpeg/help/subtitles.htm.gz  // subtitle parameter.
 https://programmerclick.com/article/5677107472/
+https://www.programmersought.com/article/85494009767/
+https://github.com/nldzsz/ffmpeg-demo/blob/master/cppsrc/Subtitles.cpp
 */
+
+
 
 
 struct AVCodec;

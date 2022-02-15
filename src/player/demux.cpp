@@ -1,5 +1,6 @@
 #include "demux.h"
 
+
 extern "C" {
 
 #include <libavformat/avformat.h>
@@ -182,12 +183,6 @@ int     Demux::open_input()
 
 
 
-
-
-
-
-
-
 /*******************************************************************************
 Demux::get_format_context()
 ********************************************************************************/
@@ -195,8 +190,6 @@ AVFormatContext*    Demux::get_format_context()
 {
     return  fmt_ctx;
 }
-
-
 
 
 
@@ -238,9 +231,6 @@ int    Demux::demux()
 
 
 
-
-
-
 #ifdef USE_MT
 /*******************************************************************************
 Demux::collect_packet()
@@ -252,8 +242,6 @@ void    Demux::collect_packet( AVPacket *_pkt )
     pkt_queue.push(_pkt);
 }
 #endif
-
-
 
 
 

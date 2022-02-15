@@ -141,13 +141,11 @@ void VideoWorker::video_play()
     while( decode::get_video_size() <= 30 )
         SLEEP_10MS;
 
-    //std::this_thread::sleep_for( std::chrono::milliseconds(350) );  // live stream 的時候, 降低延遲的 work around.
-
     v_start     =   true;
     while( a_start == false )
         SLEEP_10MS;
 
-    //
+    // 測試性的寫法, 當成 lambda operator 的練習 
     auto    handle_func =   [&]() 
     {
         VideoData vd    =   decode::get_video_data();

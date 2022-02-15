@@ -104,15 +104,15 @@ protected:
 
 private:
 
-    static constexpr int   MAX_QUEUE_SIZE  =   200;
+    static constexpr int   MAX_QUEUE_SIZE  =   200;   // queue 太小有機會出問題
     //static constexpr int   MAX_QUEUE_SIZE  =   10;
 
     DecodeSetting   setting;
 
     Demux           *demuxer    =   nullptr;
     
-    //VideoDecode     v_decoder;
-    VideoDecodeHW   v_decoder;
+    VideoDecode     v_decoder;
+    //VideoDecodeHW   v_decoder;
     AudioDecode     a_decoder;
     SubDecode       s_decoder;
 
