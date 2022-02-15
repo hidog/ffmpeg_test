@@ -10,6 +10,11 @@ struct  AVCodecContext;
 enum    AVSampleFormat;
 
 
+/*
+https://www.jianshu.com/p/fd43c1c82945   PCM
+https://www.jianshu.com/p/bf5e54f553a4   重新採樣
+*/
+
 // 要轉換 sample rate 可以參考 ffmpeg 官方範例的 resample
 
 

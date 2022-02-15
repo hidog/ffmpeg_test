@@ -16,6 +16,14 @@ struct RecvData
 };
 
 
+/*
+https://srtlab.github.io/srt-cookbook/apps/ffmpeg/  build ffmpeg with srt
+°Ñ¦Ò½d¨Ò
+ffmpeg -f lavfi -re -i smptebars=duration=60:size=1280x720:rate=30 -f lavfi -re \
+-i sine=frequency=1000:duration=60:sample_rate=44100 -pix_fmt yuv420p \
+-c:v libx264 -b:v 1000k -g 30 -keyint_min 120 -profile:v baseline \
+-preset veryfast -f mpegts "srt://127.0.0.1:4200?pkt_size=1316"
+*/
 
 class SrtIO : public InputOutput
 {
