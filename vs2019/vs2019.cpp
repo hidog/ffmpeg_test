@@ -102,53 +102,32 @@ ffmpeg -h ass
 
 
 
-https://www.jianshu.com/p/f33910818a1c
+
+https://github.com/nldzsz/ffmpeg-demo/blob/master/cppsrc/Subtitles.cpp    subtitle 參考程式碼
 
 
 
-https://github.com/nldzsz/ffmpeg-demo/blob/master/cppsrc/Subtitles.cpp
+https://gist.github.com/TBNolan/a887c5d069425119dd41461b779aa75b    簡單的ffmpeg指令
 
 
 
-https://gist.github.com/TBNolan/a887c5d069425119dd41461b779aa75b
+https://blog.csdn.net/qq_21743659/article/details/109305411    介紹了 ffmpeg 編譯 subtitle 選項
+https://www.jianshu.com/p/f33910818a1c   兩個似乎依樣
 
 
 
-https://blog.csdn.net/qq_21743659/article/details/109305411
+http://www.famous1993.com.tw/tech/tech545.html    影像封裝格式簡介
 
 
-http://www.famous1993.com.tw/tech/tech545.html
-
-
-https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/435707/
+https://codertw.com/%E7%A8%8B%E5%BC%8F%E8%AA%9E%E8%A8%80/435707/    tbr tbc tbn
 
 
 
-https://www.twblogs.net/a/5ef50c480cb8aa77788390c9
+https://www.twblogs.net/a/5ef50c480cb8aa77788390c9   RTP samplpe code
 
 
 
-https://codeantenna.com/a/lykOP0j637
+https://codeantenna.com/a/lykOP0j637     ffmpeg 教學
 */
 
 
-/*
-失敗
-ffmpeg -i mysubs.srt -filter "subtitles=mysubs.srt:force_style='Fontname=Helvetica,Fontsize=16,PrimaryColour=&H23EEF1&,BackColour=&H000000&,BorderStyle=3,Outline=3,Shadow=0,Alignment=2,MarginL=10,MarginR=10,MarginV=10,Encoding=0'" mysubs.ass
-
-ffmpeg -i mysubs.srt -filter 
-"subtitles=mysubs.srt:force_style='
-Fontname=Helvetica,
-Fontsize=16,
-PrimaryColour=&H23EEF1&,
-BackColour=&H000000&,
-BorderStyle=3,
-Outline=3,S
-hadow=0,
-Alignment=2,
-MarginL=10,
-MarginR=10,
-MarginV=10,
-Encoding=0'" 
-mysubs.ass
-*/
