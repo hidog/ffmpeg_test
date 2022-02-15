@@ -9,20 +9,13 @@
 //#define USE_MT
 
 
-
-
-
 constexpr int R_ERROR       =   -1;  // R_ERROR 跟太多檔案起衝突, 才故意改掉命名.
 constexpr int R_SUCCESS     =   0;
 constexpr int HAVE_FRAME    =   1; // 需要用 1 來判斷是否還有 frame.
 
-
-
        
 #define SLEEP_10MS std::this_thread::sleep_for( std::chrono::milliseconds(10) )
 #define SLEEP_1MS std::this_thread::sleep_for( std::chrono::milliseconds(1) )
-
-
 
 
 enum class LOG
@@ -113,6 +106,8 @@ DLL_API bool    is_video_queue_full();
 } // end namespace encode
 
 
+
+// UI 跟 kernel 交換資料用的 functions.
 namespace decode {
 
 DLL_API void    add_audio_data( AudioData a_data );
