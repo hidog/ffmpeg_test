@@ -11,7 +11,8 @@ https://blog.csdn.net/wanggao_1990/article/details/115725163
 
 NOTE: 如果要改sample rate 48000 -> 44100
 可以參考 resampling_audio 官方範例.
-利用 swr_convert 可做轉換, 需要的 buffer 可以用 av_samples_alloc_array_and_samples 取得. 這邊考慮其他因素, 直接使用 frame 跟 pointer 處理.
+利用 swr_convert 可做轉換, 需要的 buffer 可以用 av_samples_alloc_array_and_samples 取得. 
+這邊考慮其他因素, 直接使用 frame 跟 pointer 處理.
 
 */
 
@@ -51,7 +52,7 @@ public:
     void    get_frame_from_pcm_file();
     void    get_frame_from_file_test();
 
-    // 目前不能動, 需要修改.
+    // 底下兩個函數目前不能動, 需要修改.
     void    encode_test();
     void    work_test();
 #endif

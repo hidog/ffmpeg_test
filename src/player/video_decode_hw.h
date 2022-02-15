@@ -12,13 +12,18 @@ enum cudaVideoCodec_enum;
 enum AVCodecID;
 
 
-// ffplay -f rawvideo -pix_fmt nv12 -video_size 1280x720 output.data      yuv420p
-// ffplay -f rawvideo -pix_fmt p016 -video_size 1920x1080 2output.data    yuv420p10
+/*
+ffplay -f rawvideo -pix_fmt nv12 -video_size 1280x720 output.data      yuv420p
+ffplay -f rawvideo -pix_fmt p016 -video_size 1920x1080 2output.data    yuv420p10
+
+note: 檢查那些資料是 VideoDecode allocate 但忘了釋放的
+      會多 alloc 一些資料 (VideoDecode用的)  未來再考慮要不要移掉 
+note: nv decode 支援mpeg4, 有空再研究.
+note: 未來改用 ffmpeg 自己的 nvenc.
+*/
 
 
-// note: 檢查那些資料是 VideoDecode allocate 但忘了釋放的
-// 會多 alloc 一些資料 (VideoDecode用的)  未來再考慮要不要移掉 
-// note: nv decode 支援mpeg4, 有空再研究.
+
 
 
 class VideoDecodeHW : public VideoDecode 

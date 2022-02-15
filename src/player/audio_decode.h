@@ -10,7 +10,12 @@ struct  AVCodecContext;
 enum    AVSampleFormat;
 
 
-// 璶锣传 sample rate 把σ ffmpeg ﹛よ絛ㄒ resample
+/*
+https://www.jianshu.com/p/fd43c1c82945   PCM
+https://www.jianshu.com/p/bf5e54f553a4   穝蹦妓
+璶锣传 sample rate 把σ ffmpeg ﹛よ絛ㄒ resample
+*/
+
 
 
 class DLL_API AudioDecode : public Decode

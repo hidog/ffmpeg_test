@@ -1,8 +1,6 @@
 #ifndef ENCODE_H
 #define ENCODE_H
 
-
-
 #include <stdint.h>
 
 extern "C" {

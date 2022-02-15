@@ -81,7 +81,7 @@ int     AudioDecode::init()
     sample_fmt      =   dec_ctx->sample_fmt;
     channel_layout  =   av_get_default_channel_layout( dec_ctx->channels );
 
-    // 試著想要改變 sample rate, 但沒成功.                                                  
+    // 要改變 sample rate 可以參考 ffmpeg 官方範例.  resampling_audio                                              
     // S16 改 S32, 需要修改pcm的部分. 需要找時間研究
     swr_ctx     =   swr_alloc_set_opts( swr_ctx,
                                         av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16, sample_rate,  // output
@@ -125,6 +125,8 @@ void    AudioDecode::set_output_audio_pcm_path( std::string _path )
 #ifdef FFMPEG_TEST
 /*******************************************************************************
 AudioDecode::output_pcm()
+
+算是測試用的函數, 輸出 pcm raw data 到檔案. 
 ********************************************************************************/
 int     AudioDecode::output_pcm()
 {
@@ -133,7 +135,7 @@ int     AudioDecode::output_pcm()
     static constexpr int    out_channel =   2; // 目前預設輸出成兩聲道. 有空再改
 
     uint8_t     *data[2]    =   { 0 };  // S16 改 S32, 不確定是不是這邊的 array 要改成 4
-                                        //int         byte_count     =   frame->nb_samples * 2 * 2;  // S16 改 S32, 改成 *4, 理論上資料量會增加, 但不確定是否改的是這邊
+                                        // int         byte_count     =   frame->nb_samples * 2 * 2;  // S16 改 S32, 改成 *4, 理論上資料量會增加, 但不確定是否改的是這邊
                                         // frame->nb_samples * 2 * 2     表示     分配樣本資料量 * 兩通道 * 每通道2位元組大小
     int         byte_count  =   av_samples_get_buffer_size( NULL, out_channel, frame->nb_samples, AV_SAMPLE_FMT_S16, 0 );
 

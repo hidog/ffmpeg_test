@@ -301,6 +301,7 @@ void Maker::work()
         s_encoder.set_stream_time_base(stb);
     }
 
+    // note: 為了測試方便, 將有 subtitle 的跟沒有 subtitle 的分開. 未來有需要可以考慮整併
     if( setting.has_subtitle == true )
         work_with_subtitle();
     else
@@ -328,9 +329,5 @@ void Maker::end()
         muxer   =   nullptr;
     }
 }
-
-
-
-
 
 

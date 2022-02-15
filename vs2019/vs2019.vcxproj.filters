@@ -31,6 +31,9 @@
     <Filter Include="hw">
       <UniqueIdentifier>{bafdab57-e0c0-4db9-955c-0a4f2ef91c54}</UniqueIdentifier>
     </Filter>
+    <Filter Include="imgprcs">
+      <UniqueIdentifier>{5ad5a8a8-895d-485e-9117-6c095f96b7aa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vs2019.cpp">
@@ -113,6 +116,9 @@
     </ClCompile>
     <ClCompile Include="..\src\hw\NvEncoderCuda.cpp">
       <Filter>hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\imgprcs\image_process.cpp">
+      <Filter>imgprcs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -202,6 +208,9 @@
     </ClInclude>
     <ClInclude Include="..\src\hw\NvEncoderCuda.h">
       <Filter>hw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\imgprcs\image_process.h">
+      <Filter>imgprcs</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

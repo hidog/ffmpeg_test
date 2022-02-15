@@ -1,9 +1,8 @@
 ﻿#include "tool.h"
+#include "player/play_def.h"
 
 #include <queue>
 #include <mutex>
-
-
 
 
 // note: 以後如果需要 multi-encode, 需要寫一個 manager.
@@ -29,7 +28,7 @@ void    set_is_finish( bool flag )
 
 
 /*******************************************************************************
-audio_is_empty
+audio_need_wait
 ********************************************************************************/
 bool    audio_need_wait()
 {
@@ -38,7 +37,7 @@ bool    audio_need_wait()
 
 
 /*******************************************************************************
-audio_is_empty
+video_need_wait
 ********************************************************************************/
 bool    video_need_wait()
 {
@@ -152,7 +151,7 @@ bool    is_video_queue_full()
 } // end namespace encode
 
 
-#include "player/play_def.h"
+
 
 
 

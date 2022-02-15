@@ -4,9 +4,11 @@
 #include "player.h"
 
 
+/* 
+    用來輸出 frame 到 maker, 再 encode 後輸出 stream.
+*/
 
 
-// 用來輸出 frame 到 maker, 再 encode 後輸出 stream.
 class DLL_API PlayerStream : public Player
 {
 public:
