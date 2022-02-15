@@ -3,12 +3,9 @@
 
 #include <QMutex>
 #include <QMessageBox>
-
 #include <QVideoWidget>
-
 #include <QAbstractVideoSurface>
 #include <QVideoSurfaceFormat>
-
 #include <QFileDialog>
 #include <QDebug>
 #include <QKeyEvent>
@@ -16,7 +13,6 @@
 #include <mutex>
 
 #include "player/player.h"
-
 #include "worker.h"
 #include "video_worker.h"
 #include "audio_worker.h"
@@ -101,11 +97,6 @@ void MainWindow::recv_video_frame_slot()
 
     if( view_data->index - last_index != 1 )
         MYLOG( LOG::L_WARN, "vidw_data.index = %d, last_index = %d",  view_data->index , last_index );
-
-    // 未來考慮改成timer驅動,方便確認是否有frame來不及解出來.
-    // 未必真的用timer, 可以用loop控制
-    // 計算每個frame出現的時間, 超過就秀frame
-    // seek的時候, 把出現時間歸零後重新計算. frame count 跟真正在影片中的frame count脫鉤,而是每次seek播放後重新計算frame count.
 
     last_index = view_data->index;
     video_widget->videoSurface()->present( view_data->frame );

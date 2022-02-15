@@ -210,7 +210,7 @@ void AudioWorker::audio_play()
     std::chrono::duration<int64_t, std::milli>  duration;
     int64_t last_ts =   0;
     
-    // 一次寫入4096的效果比較好. 用原本的作法會有機會破音. 記得修改變數名稱
+    // 一次寫入4096的效能比較好
     int     wanted_buffer_size  =   4096; //audio->bufferSize()/2;
 
     //
@@ -218,7 +218,7 @@ void AudioWorker::audio_play()
     int     remain_bytes    =   0;
     uint8_t *ptr            =   nullptr; 
 
-    //
+    // 練習使用 lambda operator.
     auto    handle_func    =   [&]() 
     {
         //
@@ -236,6 +236,7 @@ void AudioWorker::audio_play()
 #if 0
         // 測試用的 a/v sync 程式, live stream 的時候比較容易發生不同步.
         // 這邊是容許值範圍外會讓影音同步.
+        // 這邊有點醜, 需要把函數搬出去.
         static volatile VideoData    *view_data  =   dynamic_cast<MainWindow*>(parent())->get_view_data();
         assert( view_data != nullptr );
         if( ad.timestamp < view_data->timestamp - 100 )

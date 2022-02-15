@@ -111,8 +111,8 @@ private:
 
     Demux           *demuxer    =   nullptr;
     
-    //VideoDecode     v_decoder;
-    VideoDecodeHW   v_decoder;
+    VideoDecode     v_decoder;
+    //VideoDecodeHW   v_decoder;
     AudioDecode     a_decoder;
     SubDecode       s_decoder;
 
