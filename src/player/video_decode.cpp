@@ -360,9 +360,7 @@ AVFrame*    VideoDecode::get_frame()
 
 /*******************************************************************************
 VideoDecode::get_pts()
-
 逆推回 pts.
-
 NOTE: 傳入值單位是 sec. 
 ********************************************************************************/
 int64_t     VideoDecode::get_pts( int sec )
@@ -609,12 +607,12 @@ VideoDecode::output_jpg_by_openCV()
 int     VideoDecode::output_jpg_by_openCV()
 {
     // note: frame 本身有帶 width, height 的資訊
-    //int width = frame->width, height = frame->height;
+    // int width = frame->width, height = frame->height;
 
     /* 
     yuv420 本身的資料是 width * height * 3 / 2, 一開始沒處理好造成錯誤
-    10bit, 12bit應該會出問題,到時候再研究.
-    有兩個方法可以做轉換. 一個比較暴力, 一個是透過介面做轉換
+    底下兩個方法, 一個是暴力硬幹 (有機會出錯, 有影片在這邊會造成錯誤)
+    一個是透過介面做轉換
     */
 #if 0
     // 某些情況下這段程式碼會出錯.
