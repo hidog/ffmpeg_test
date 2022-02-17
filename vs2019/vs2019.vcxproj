@@ -281,6 +281,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\ffmpeg_example\hw_decode.c" />
     <ClCompile Include="..\src\hw\NvDecoder.cpp" />
     <ClCompile Include="..\src\hw\NvEncoder.cpp" />
     <ClCompile Include="..\src\hw\NvEncoderCuda.cpp" />
@@ -308,6 +309,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClCompile Include="..\src\player\player_stream.cpp" />
     <ClCompile Include="..\src\player\sub_decode.cpp" />
     <ClCompile Include="..\src\player\video_decode.cpp" />
+    <ClCompile Include="..\src\player\video_decode_hw.cpp" />
     <ClCompile Include="..\src\player\video_decode_nv.cpp" />
     <ClCompile Include="..\src\tool.cpp" />
     <ClCompile Include="vs2019.cpp">
@@ -318,6 +320,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\ffmpeg_example\hw_decode.h" />
     <ClInclude Include="..\src\hw\NvDecoder.h" />
     <ClInclude Include="..\src\hw\NvEncoder.h" />
     <ClInclude Include="..\src\hw\NvEncoderCuda.h" />
@@ -348,6 +351,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClInclude Include="..\src\player\play_def.h" />
     <ClInclude Include="..\src\player\sub_decode.h" />
     <ClInclude Include="..\src\player\video_decode.h" />
+    <ClInclude Include="..\src\player\video_decode_hw.h" />
     <ClInclude Include="..\src\player\video_decode_nv.h" />
     <ClInclude Include="..\src\tool.h" />
   </ItemGroup>

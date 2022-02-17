@@ -120,6 +120,12 @@
     <ClCompile Include="..\src\player\video_decode_nv.cpp">
       <Filter>src\player</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\player\video_decode_hw.cpp">
+      <Filter>src\player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\hw_decode.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -211,6 +217,12 @@
     </ClInclude>
     <ClInclude Include="..\src\player\video_decode_nv.h">
       <Filter>src\player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\player\video_decode_hw.h">
+      <Filter>src\player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ffmpeg_example\hw_decode.h">
+      <Filter>ffmpeg_example</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

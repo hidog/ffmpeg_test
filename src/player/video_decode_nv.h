@@ -1,5 +1,5 @@
-#ifndef VIDEO_DECODE_HW_H
-#define VIDEO_DECODE_HW_H
+#ifndef VIDEO_DECODE_NV_H
+#define VIDEO_DECODE_NV_H
 
 #include "video_decode.h"
 

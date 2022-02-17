@@ -17,6 +17,7 @@
 
 #include "video_decode.h"
 #include "video_decode_nv.h"
+#include "video_decode_hw.h"
 
 #include <QImage>
 
@@ -112,7 +113,8 @@ private:
     Demux           *demuxer    =   nullptr;
     
     //VideoDecode     v_decoder;
-    VideoDecodeNV   v_decoder;
+    //VideoDecodeNV   v_decoder;
+    VideoDecodeHW   v_decoder;
     AudioDecode     a_decoder;
     SubDecode       s_decoder;
 
