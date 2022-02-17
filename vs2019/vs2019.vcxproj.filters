@@ -105,9 +105,6 @@
     <ClCompile Include="..\src\hw\NvDecoder.cpp">
       <Filter>hw</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\maker\video_encode_hw.cpp">
-      <Filter>src\maker</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\hw\NvEncoder.cpp">
       <Filter>hw</Filter>
     </ClCompile>
@@ -125,6 +122,9 @@
     </ClCompile>
     <ClCompile Include="..\ffmpeg_example\hw_decode.c">
       <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maker\video_encode_nv.cpp">
+      <Filter>src\maker</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -203,9 +203,6 @@
     <ClInclude Include="..\src\hw\NvDecoder.h">
       <Filter>hw</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\maker\video_encode_hw.h">
-      <Filter>src\maker</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\hw\NvEncoder.h">
       <Filter>hw</Filter>
     </ClInclude>
@@ -223,6 +220,9 @@
     </ClInclude>
     <ClInclude Include="..\ffmpeg_example\hw_decode.h">
       <Filter>ffmpeg_example</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\video_encode_nv.h">
+      <Filter>src\maker</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

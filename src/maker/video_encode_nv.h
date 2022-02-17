@@ -1,5 +1,5 @@
-#ifndef VIDEO_ENCODE_HW_H
-#define VIDEO_ENCODE_HW_H
+#ifndef VIDEO_ENCODE_NV_H
+#define VIDEO_ENCODE_NV_H
 
 
 #include "video_encode.h"
@@ -46,20 +46,20 @@ struct NvEncBuffer
     未來應該改掉這一塊.
 */
 
-class VideoEncodeHW : public VideoEncode
+class VideoEncodeNV : public VideoEncode
 {
 public:
     using EncodedVector =    std::vector<std::vector<uint8_t>>;
     using CUcontext     =   CUctx_st*;
 
-    VideoEncodeHW();
-    ~VideoEncodeHW();
+    VideoEncodeNV();
+    ~VideoEncodeNV();
 
-    VideoEncodeHW( const VideoEncodeHW& ) = delete;
-    VideoEncodeHW( VideoEncodeHW&& ) = delete;
+    VideoEncodeNV( const VideoEncodeNV& ) = delete;
+    VideoEncodeNV( VideoEncodeNV&& ) = delete;
 
-    VideoEncodeHW& operator = ( const VideoEncodeHW& ) = delete;
-    VideoEncodeHW& operator = ( VideoEncodeHW&& ) = delete;
+    VideoEncodeNV& operator = ( const VideoEncodeNV& ) = delete;
+    VideoEncodeNV& operator = ( VideoEncodeNV&& ) = delete;
 
     void    init( int st_idx, VideoEncodeSetting setting, bool need_global_header ) override;
     void    end() override;

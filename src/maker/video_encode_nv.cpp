@@ -1,4 +1,4 @@
-#include "video_encode_hw.h"
+#include "video_encode_nv.h"
 #include "tool.h"
 
 #include "hw/NvEncoderCuda.h"
@@ -22,9 +22,9 @@ extern "C" {
 
 
 /*******************************************************************************
-VideoEncodeHW::VideoEncodeHW()
+VideoEncodeNV::VideoEncodeNV()
 ********************************************************************************/
-VideoEncodeHW::VideoEncodeHW()
+VideoEncodeNV::VideoEncodeNV()
     :   VideoEncode()
 {}
 
@@ -32,9 +32,9 @@ VideoEncodeHW::VideoEncodeHW()
 
 
 /*******************************************************************************
-VideoEncodeHW::~VideoEncodeHW()
+VideoEncodeNV::~VideoEncodeNV()
 ********************************************************************************/
-VideoEncodeHW::~VideoEncodeHW()
+VideoEncodeNV::~VideoEncodeNV()
 {
     end();
 }
@@ -43,9 +43,9 @@ VideoEncodeHW::~VideoEncodeHW()
 
 
 /*******************************************************************************
-VideoEncodeHW::~VideoEncodeHW()
+VideoEncodeNV::end()
 ********************************************************************************/
-void    VideoEncodeHW::end()
+void    VideoEncodeNV::end()
 {
     VideoEncode::end();
 
@@ -100,14 +100,14 @@ io_read_data
 ********************************************************************************/
 int     demux_read( void *opaque, uint8_t *buffer, int size )
 {
-    VideoEncodeHW   *video_enc_hw   =   (VideoEncodeHW*)opaque;
-    assert( video_enc_hw != nullptr );
+    VideoEncodeNV   *video_enc_nv   =   (VideoEncodeNV*)opaque;
+    assert( video_enc_nv != nullptr );
 
     int     read_size   =   0;
     
     while( true )
     {
-        read_size   =   video_enc_hw->get_nv_encode_data( buffer, size );
+        read_size   =   video_enc_nv->get_nv_encode_data( buffer, size );
         if( read_size > 0 )
             break;
         else if( read_size == EOF )        
@@ -124,9 +124,9 @@ int     demux_read( void *opaque, uint8_t *buffer, int size )
 
 
 /*******************************************************************************
-VideoEncodeHW::get_encode_data
+VideoEncodeNV::get_nv_encode_data
 ********************************************************************************/
-int     VideoEncodeHW::get_nv_encode_data( uint8_t *buffer, int size )
+int     VideoEncodeNV::get_nv_encode_data( uint8_t *buffer, int size )
 {
     // 使用 VideoEncode 介面讀取 frame, 再用 nvenc encode.
     VideoEncode::next_frame();
@@ -217,11 +217,11 @@ int     VideoEncodeHW::get_nv_encode_data( uint8_t *buffer, int size )
 
 
 /*******************************************************************************
-VideoEncodeHW::open_convert_demux()
+VideoEncodeNV::open_convert_demux()
 
 nvenc 出來的 stream 用 demux 解出 packet, 加上 pts, duration, 再丟入 mux.
 ********************************************************************************/
-int    VideoEncodeHW::open_convert_demux()
+int    VideoEncodeNV::open_convert_demux()
 {   
     int  ret    =   0;
 
@@ -276,9 +276,9 @@ int    VideoEncodeHW::open_convert_demux()
 
 
 /*******************************************************************************
-VideoEncodeHW::init_nv_frame_buffer()
+VideoEncodeNV::init_nv_frame_buffer()
 ********************************************************************************/
-void    VideoEncodeHW::init_nv_frame_buffer( VideoEncodeSetting setting )
+void    VideoEncodeNV::init_nv_frame_buffer( VideoEncodeSetting setting )
 {
     if( nv_enc == nullptr )
         MYLOG( LOG::L_ERROR, "nv_enc not init." )
@@ -292,9 +292,9 @@ void    VideoEncodeHW::init_nv_frame_buffer( VideoEncodeSetting setting )
 
 
 /*******************************************************************************
-VideoEncodeHW::init()
+VideoEncodeNV::init()
 ********************************************************************************/
-void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_global_header )
+void    VideoEncodeNV::init( int st_idx, VideoEncodeSetting setting, bool need_global_header )
 {
     VideoEncodeSetting  tmp_setting     =   setting;  // 因為 yuvp10 的時候需要修改 pix_fmt. 用一個暫存變數,避免直接改到原始 setting.
 
@@ -355,13 +355,13 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
 
 
 /*******************************************************************************
-VideoEncodeHW::next_frame()
+VideoEncodeNV::next_frame()
 
 技術限制, 跟 VideoEncode 差很多
 會在這邊取得 pkt, 寫入 pts, duration.
 
 ********************************************************************************/
-void    VideoEncodeHW::next_frame()
+void    VideoEncodeNV::next_frame()
 {
     int ret     =   av_read_frame( demux_ctx, pkt );
     if( ret < 0 )
@@ -400,9 +400,9 @@ void    VideoEncodeHW::next_frame()
 
 
 /*******************************************************************************
-VideoEncodeHW::flush()
+VideoEncodeNV::flush()
 ********************************************************************************/
-int     VideoEncodeHW::flush()
+int     VideoEncodeNV::flush()
 {
     return  1;  // 會在 demux 階段 flush.
 }
@@ -411,9 +411,9 @@ int     VideoEncodeHW::flush()
 
 
 /*******************************************************************************
-VideoEncodeHW::encode_timestamp()
+VideoEncodeNV::encode_timestamp()
 ********************************************************************************/
-void    VideoEncodeHW::encode_timestamp()
+void    VideoEncodeNV::encode_timestamp()
 {
     if( pkt == nullptr )
         MYLOG( LOG::L_WARN, "pkt is null." );
@@ -426,12 +426,12 @@ void    VideoEncodeHW::encode_timestamp()
 
 
 /*******************************************************************************
-VideoEncodeHW::end_of_file()
+VideoEncodeNV::end_of_file()
 
 這邊要小心, 因為有兩個 eof, 
 一個是 frame 讀取用的, 一個是 nvenc stream 用的.
 ********************************************************************************/
-bool    VideoEncodeHW::end_of_file()
+bool    VideoEncodeNV::end_of_file()
 {
     return  nv_eof;
 }
@@ -441,9 +441,9 @@ bool    VideoEncodeHW::end_of_file()
 
 
 /*******************************************************************************
-VideoEncodeHW::get_compare_timebase()
+VideoEncodeNV::get_compare_timebase()
 ********************************************************************************/
-AVRational  VideoEncodeHW::get_compare_timebase()
+AVRational  VideoEncodeNV::get_compare_timebase()
 {
     return  nv_stream->time_base;
 }
@@ -453,9 +453,9 @@ AVRational  VideoEncodeHW::get_compare_timebase()
 
 
 /*******************************************************************************
-VideoEncodeHW::get_pts()
+VideoEncodeNV::get_pts()
 ********************************************************************************/
-int64_t     VideoEncodeHW::get_pts()
+int64_t     VideoEncodeNV::get_pts()
 {
     return  pkt->pts;
 }
@@ -465,9 +465,9 @@ int64_t     VideoEncodeHW::get_pts()
 
 
 /*******************************************************************************
-VideoEncodeHW::init_nv_encode()
+VideoEncodeNV::init_nv_encode()
 ********************************************************************************/
-void    VideoEncodeHW::init_nv_encode( uint32_t width, uint32_t height, AVPixelFormat pix_fmt, VideoEncodeSetting setting )
+void    VideoEncodeNV::init_nv_encode( uint32_t width, uint32_t height, AVPixelFormat pix_fmt, VideoEncodeSetting setting )
 {
     int     gpu_count   =   0;
 
@@ -539,11 +539,11 @@ void    VideoEncodeHW::init_nv_encode( uint32_t width, uint32_t height, AVPixelF
 
 
 /*******************************************************************************
-VideoEncodeHW::send_frame()
+VideoEncodeNV::send_frame()
 
 技術限制, 這邊架構跟傳統架構非常不同.
 ********************************************************************************/
-int     VideoEncodeHW::send_frame()
+int     VideoEncodeNV::send_frame()
 {
     return  1;
 }
@@ -552,11 +552,11 @@ int     VideoEncodeHW::send_frame()
 
 
 /*******************************************************************************
-VideoEncodeHW::recv_frame()
+VideoEncodeNV::recv_frame()
 
 技術限制, 這邊架構跟傳統架構非常不同.
 ********************************************************************************/
-int     VideoEncodeHW::recv_frame()
+int     VideoEncodeNV::recv_frame()
 {
     if( pkt->buf != nullptr )
         return  1;
