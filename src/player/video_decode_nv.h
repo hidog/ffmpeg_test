@@ -20,23 +20,25 @@ note: 檢查那些資料是 VideoDecode allocate 但忘了釋放的
       會多 alloc 一些資料 (VideoDecode用的)  未來再考慮要不要移掉 
 note: nv decode 支援mpeg4, 有空再研究.
 note: 未來改用 ffmpeg 自己的 nvenc.
+
+這個是直接使用 nvidia sample code 來修改.
 */
 
 
 
 
 
-class VideoDecodeHW : public VideoDecode 
+class VideoDecodeNV : public VideoDecode 
 {
 public:
-    VideoDecodeHW();
-    ~VideoDecodeHW();
+    VideoDecodeNV();
+    ~VideoDecodeNV();
 
-    VideoDecodeHW( const VideoDecodeHW& ) = delete;
-    VideoDecodeHW( VideoDecodeHW&& ) = delete;
+    VideoDecodeNV( const VideoDecodeNV& ) = delete;
+    VideoDecodeNV( VideoDecodeNV&& ) = delete;
 
-    VideoDecodeHW& operator = ( const VideoDecodeHW& ) = delete;
-    VideoDecodeHW& operator = ( VideoDecodeHW&& ) = delete;
+    VideoDecodeNV& operator = ( const VideoDecodeNV& ) = delete;
+    VideoDecodeNV& operator = ( VideoDecodeNV&& ) = delete;
 
     int     init() override;
     int     end() override;

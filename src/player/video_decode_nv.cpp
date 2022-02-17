@@ -1,4 +1,4 @@
-#include "video_decode_hw.h"
+#include "video_decode_nv.h"
 
 #include "../hw/NvDecoder.h"
 #include "../hw/NvCodecUtils.h"
@@ -23,9 +23,9 @@ extern "C" {
 
 
 /*******************************************************************************
-VideoDecodeHW::VideoDecodeHW()
+VideoDecodeNV::VideoDecodeNV()
 ********************************************************************************/
-VideoDecodeHW::VideoDecodeHW()
+VideoDecodeNV::VideoDecodeNV()
     :   VideoDecode()
 {}
 
@@ -37,9 +37,9 @@ VideoDecodeHW::VideoDecodeHW()
 
 
 /*******************************************************************************
-VideoDecodeHW::~VideoDecodeHW()
+VideoDecodeNV::~VideoDecodeNV()
 ********************************************************************************/
-VideoDecodeHW::~VideoDecodeHW()
+VideoDecodeNV::~VideoDecodeNV()
 {
     end();
 }
@@ -49,9 +49,9 @@ VideoDecodeHW::~VideoDecodeHW()
 
 
 /*******************************************************************************
-VideoDecodeHW::open_codec_context
+VideoDecodeNV::open_codec_context
 ********************************************************************************/
-int     VideoDecodeHW::open_codec_context( AVFormatContext *fmt_ctx )
+int     VideoDecodeNV::open_codec_context( AVFormatContext *fmt_ctx )
 {
     int     ret     =   VideoDecode::open_codec_context( fmt_ctx );
 
@@ -79,7 +79,7 @@ int     VideoDecodeHW::open_codec_context( AVFormatContext *fmt_ctx )
 
 
 /*******************************************************************************
-VideoDecodeHW::init
+VideoDecodeNV::init
 
 ffplay -f rawvideo -pix_fmt nv12 -video_size 1280x720 output.data
 ffplay -f rawvideo -pix_fmt p016 -video_size 1920x1080 2output.data
@@ -87,7 +87,7 @@ ffplay -f rawvideo -pix_fmt p016 -video_size 1920x1080 2output.data
 AV_PIX_FMT_P016LE
 AV_PIX_FMT_NV12
 ********************************************************************************/
-int     VideoDecodeHW::init()
+int     VideoDecodeNV::init()
 {
     assert( stream != nullptr );
 
@@ -135,9 +135,9 @@ int     VideoDecodeHW::init()
 
 
 /*******************************************************************************
-VideoDecodeHW::codec_id_ffmpeg_to_cuda
+VideoDecodeNV::codec_id_ffmpeg_to_cuda
 ********************************************************************************/
-cudaVideoCodec  VideoDecodeHW::codec_id_ffmpeg_to_cuda(AVCodecID id) 
+cudaVideoCodec  VideoDecodeNV::codec_id_ffmpeg_to_cuda(AVCodecID id) 
 {
     switch (id) 
     {
@@ -167,9 +167,9 @@ cudaVideoCodec  VideoDecodeHW::codec_id_ffmpeg_to_cuda(AVCodecID id)
 
 
 /*******************************************************************************
-VideoDecodeHW::init_nvidia_decoder
+VideoDecodeNV::init_nvidia_decoder
 ********************************************************************************/
-int     VideoDecodeHW::init_nvidia_decoder()
+int     VideoDecodeNV::init_nvidia_decoder()
 {
     AVCodecID       codec_id    =   stream->codecpar->codec_id;  //  dec_ctx->codec_id;
     cudaVideoCodec  cuda_codec  =   codec_id_ffmpeg_to_cuda(codec_id);
@@ -205,12 +205,12 @@ int     VideoDecodeHW::init_nvidia_decoder()
 
 
 /*******************************************************************************
-VideoDecodeHW::get_pix_fmt
+VideoDecodeNV::get_pix_fmt
 
 AV_PIX_FMT_P016LE
 AV_PIX_FMT_YUV420P10LE
 ********************************************************************************/
-AVPixelFormat   VideoDecodeHW::get_pix_fmt()
+AVPixelFormat   VideoDecodeNV::get_pix_fmt()
 {
     if( stream->codecpar->format == AV_PIX_FMT_YUV420P )
         return  AV_PIX_FMT_YUV420P;
@@ -227,9 +227,9 @@ AVPixelFormat   VideoDecodeHW::get_pix_fmt()
 
 
 /*******************************************************************************
-VideoDecodeHW::init_bsf
+VideoDecodeNV::init_bsf
 ********************************************************************************/
-int     VideoDecodeHW::init_bsf( AVFormatContext* fmt_ctx )
+int     VideoDecodeNV::init_bsf( AVFormatContext* fmt_ctx )
 {
     AVCodecID   codec_id    =   stream->codecpar->codec_id;
     int         ret         =   0;
@@ -268,9 +268,9 @@ int     VideoDecodeHW::init_bsf( AVFormatContext* fmt_ctx )
 
 
 /*******************************************************************************
-VideoDecodeHW::end
+VideoDecodeNV::end
 ********************************************************************************/
-int     VideoDecodeHW::end()
+int     VideoDecodeNV::end()
 {
     VideoDecode::end();
 
@@ -308,9 +308,9 @@ int     VideoDecodeHW::end()
 
 
 /*******************************************************************************
-VideoDecodeHW::send_packet
+VideoDecodeNV::send_packet
 ********************************************************************************/
-int     VideoDecodeHW::send_packet( AVPacket *pkt )
+int     VideoDecodeNV::send_packet( AVPacket *pkt )
 {
     // 目前在 recv_frame 做 unref. 如果忘了做, yuv420p10 的影片會出錯
 
@@ -352,9 +352,9 @@ int     VideoDecodeHW::send_packet( AVPacket *pkt )
 
 
 /*******************************************************************************
-VideoDecodeHW::flush_for_seek
+VideoDecodeNV::flush_for_seek
 ********************************************************************************/
-void    VideoDecodeHW::flush_for_seek()
+void    VideoDecodeNV::flush_for_seek()
 {
     recv_size   =   0;
     recv_count  =   0;
@@ -374,9 +374,9 @@ void    VideoDecodeHW::flush_for_seek()
 
 
 /*******************************************************************************
-VideoDecodeHW::convert_to_planar
+VideoDecodeNV::convert_to_planar
 ********************************************************************************/
-void    VideoDecodeHW::convert_to_planar( uint8_t *ptr, int w, int h, int d )
+void    VideoDecodeNV::convert_to_planar( uint8_t *ptr, int w, int h, int d )
 {
     if( d == 8 )
     {
@@ -398,9 +398,9 @@ void    VideoDecodeHW::convert_to_planar( uint8_t *ptr, int w, int h, int d )
 
 
 /*******************************************************************************
-VideoDecodeHW::recv_frame
+VideoDecodeNV::recv_frame
 ********************************************************************************/
-int     VideoDecodeHW::recv_frame( int index )
+int     VideoDecodeNV::recv_frame( int index )
 {
     if( recv_size == 0 || recv_count == recv_size )
     {
@@ -475,9 +475,9 @@ int     VideoDecodeHW::recv_frame( int index )
 
 #ifdef FFMPEG_TEST
 /*******************************************************************************
-VideoDecodeHW::flush
+VideoDecodeNV::flush
 ********************************************************************************/
-int     VideoDecodeHW::flush()
+int     VideoDecodeNV::flush()
 {
     int     ret =   0;
     char    buf[AV_ERROR_MAX_STRING_SIZE]{0};
