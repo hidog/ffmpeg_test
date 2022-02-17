@@ -126,6 +126,9 @@
     <ClCompile Include="..\src\maker\video_encode_nv.cpp">
       <Filter>src\maker</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\maker\video_encode_hw.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -222,6 +225,9 @@
       <Filter>ffmpeg_example</Filter>
     </ClInclude>
     <ClInclude Include="..\src\maker\video_encode_nv.h">
+      <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\video_encode_hw.h">
       <Filter>src\maker</Filter>
     </ClInclude>
   </ItemGroup>
