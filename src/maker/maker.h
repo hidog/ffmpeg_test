@@ -6,6 +6,7 @@
 #include "audio_encode.h"
 //#include "video_encode.h"
 #include "video_encode_nv.h"
+#include "video_encode_hw.h"
 #include "sub_encode.h"
 
 
@@ -44,7 +45,8 @@ protected:
 
     AudioEncode     a_encoder;
     //VideoEncode     v_encoder;
-    VideoEncodeNV   v_encoder;
+    //VideoEncodeNV   v_encoder;
+    VideoEncodeHW   v_encoder;
     SubEncode       s_encoder;
 
     EncodeSetting   setting;

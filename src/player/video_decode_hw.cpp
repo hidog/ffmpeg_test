@@ -90,7 +90,7 @@ int     VideoDecodeHW::open_codec_context( AVFormatContext *fmt_ctx )
      
     cs_index   =   ret;  // 先寫死 未來再改.
 
-    init_hw_decoder( dec );    
+    create_hw_decoder( dec );    
     stream  =   fmt_ctx->streams[cs_index];
 
     ret     =   avcodec_parameters_to_context( dec_ctx, stream->codecpar );
@@ -167,9 +167,9 @@ AVPixelFormat   get_hw_format( AVCodecContext* ctx, const AVPixelFormat* pix_fmt
 
 
 /*******************************************************************************
-VideoDecodeHW::init_hw_decoder
+VideoDecodeHW::create_hw_decoder
 ********************************************************************************/
-int     VideoDecodeHW::init_hw_decoder( AVCodec* dec )
+int     VideoDecodeHW::create_hw_decoder( AVCodec* dec )
 {
     if( dec == nullptr )
         MYLOG( LOG::L_ERROR, "dec is nullptr" )
@@ -177,9 +177,6 @@ int     VideoDecodeHW::init_hw_decoder( AVCodec* dec )
     //
     const AVCodecHWConfig     *config     =   nullptr;
     int     flag;
-
-    if( dec == nullptr )
-        MYLOG( LOG::L_ERROR, "decoder is nullptr." )
 
     for( int i = 0; ; i++ )
     {

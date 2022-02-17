@@ -38,8 +38,8 @@ void    maker_encode_example()
 
     VideoEncodeSetting  v_setting;
     v_setting.load_jpg_root_path    =   "H:\\jpg";
-    //v_setting.code_id   =   AV_CODEC_ID_H264;
-    v_setting.code_id   =   AV_CODEC_ID_H265;
+    v_setting.code_id   =   AV_CODEC_ID_H264;
+    //v_setting.code_id   =   AV_CODEC_ID_H265;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG2VIDEO;
 
@@ -52,14 +52,14 @@ void    maker_encode_example()
     /*
         b frame not support on rm
     */
-    v_setting.gop_size      =   30;
-    v_setting.max_b_frames  =   15;
-    //v_setting.gop_size      =   5;
-    //v_setting.max_b_frames  =   0;
+    //v_setting.gop_size      =   30;
+    //v_setting.max_b_frames  =   15;
+    v_setting.gop_size      =   15;     // use for nvenc
+    v_setting.max_b_frames  =   3;
 
 
-    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
-    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
+    v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
+    //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P10LE;
     //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P12LE;
 
     v_setting.src_width     =   1920;

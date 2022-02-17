@@ -40,7 +40,7 @@ public:
 
     void    list_hw_decoders();
     int     find_hw_device_type();
-    int     init_hw_decoder( AVCodec* dec );
+    int     create_hw_decoder( AVCodec* dec );
     int     hw_decoder_init( const AVHWDeviceType type );
     
     AVPixelFormat   get_pix_fmt();
