@@ -11,6 +11,12 @@ enum AVHWDeviceType;
 
 
 
+/*
+
+https://www.cnblogs.com/betterwgo/p/6843390.html    不完整 但可以參考
+
+*/
+
 
 class VideoEncodeHW : public VideoEncode
 {
@@ -25,21 +31,11 @@ public:
     VideoEncodeHW& operator = ( VideoEncodeHW&& ) = delete;
 
     void    init( int st_idx, VideoEncodeSetting setting, bool need_global_header ) override;
-    int     send_frame() override;
-    /*void    end() override;
-    int     recv_frame() override;
-    void    next_frame() override;
-    void    encode_timestamp() override;
-    int     flush() override;
-    bool    end_of_file() override;
-    int64_t get_pts() override;
-
-    AVRational  get_compare_timebase() override;*/
+    void    end() override;
 
     void    list_hw_decoders();
     int     find_hw_device_type();
     int     hw_encoder_init( const AVHWDeviceType type );
-    int     create_hw_encoder( AVCodec* enc );
 
 private:
  
@@ -48,7 +44,6 @@ private:
     AVPixelFormat   hw_pix_fmt;
     AVHWDeviceType  hw_type; 
     AVBufferRef*    hw_device_ctx   =   nullptr;
-    AVFrame*        hw_frame        =   nullptr;
 
 };
 

@@ -40,31 +40,6 @@ VideoEncodeHW::~VideoEncodeHW()
 
 
 /*******************************************************************************
-VideoEncodeHW::create_hw_encoder
-********************************************************************************/
-int     VideoEncodeHW::create_hw_encoder( AVCodec* enc )
-{
-    if( enc == nullptr )
-        MYLOG( LOG::L_ERROR, "enc is nullptr" )
-
-    hw_pix_fmt  =   AV_PIX_FMT_CUDA;
-    MYLOG( LOG::L_INFO, "hw_dev = %s, hw_pix_fmt = %s", hw_dev.c_str(), av_get_pix_fmt_name(hw_pix_fmt) );
-
-    //
-    ctx     =   avcodec_alloc_context3(enc);
-    if( ctx == nullptr )
-    {
-        MYLOG( LOG::L_ERROR, "ctx is nullptr. err = %d",  AVERROR(ENOMEM) );
-        return  R_ERROR;
-    }
-
-    return  R_SUCCESS;
-}
-
-
-
-
-/*******************************************************************************
 VideoEncodeHW::hw_encoder_init
 ********************************************************************************/
 int     VideoEncodeHW::hw_encoder_init( const AVHWDeviceType type )
@@ -88,8 +63,38 @@ int     VideoEncodeHW::hw_encoder_init( const AVHWDeviceType type )
 
 
 
+
+/*******************************************************************************
+VideoEncodeHW::end()
+********************************************************************************/
+void    VideoEncodeHW::end()
+{
+    VideoEncode::end();
+
+    hw_pix_fmt  =   AV_PIX_FMT_NONE;
+    hw_type     =   AV_HWDEVICE_TYPE_NONE;
+
+    if( hw_device_ctx != nullptr )
+    {
+        av_buffer_unref(&hw_device_ctx);
+        hw_device_ctx   =   nullptr;
+    }
+}
+
+
+
+
+
 /*******************************************************************************
 VideoEncodeHW::init()
+
+把计把σ
+https://www.jianshu.com/p/b46a33dd958d
+https://blog.csdn.net/leiflyy/article/details/87935084
+https://blog.csdn.net/NB_vol_1/article/details/78362701
+
+https://www.twblogs.net/a/5c763253bd9eee339917e63a  把计把σ ゑ耕尺舧硂絞
+
 ********************************************************************************/
 void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_global_header )
 {
@@ -109,17 +114,26 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
 #endif
 
     Encode::init( st_idx, setting.code_id );
-    codec   =   avcodec_find_encoder_by_name("h264_nvenc");  // Encode::init ㄏノ avcodec_find_encoder, 礚猭眔 hw encode. 眏眔nvenc
 
-    // 
-    create_hw_encoder(codec);
+    // Encode::init ㄏノ avcodec_find_encoder, 礚猭眔 hw encode. 眏眔nvenc, 砞 codec.
+    if( setting.code_id == AV_CODEC_ID_H264 )
+        codec   =   avcodec_find_encoder_by_name("h264_nvenc");
+    else if( setting.code_id == AV_CODEC_ID_H265 )
+        codec   =   avcodec_find_encoder_by_name("hevc_nvenc");
+    else
+        assert(0);
+
+    // Encode::init 柑穦 create  cpu  ctx. 硂娩穝 alloc. Τ篶硂遏
+    if( ctx != nullptr )
+    {
+        avcodec_free_context( &ctx );
+        ctx     =   nullptr;
+    }
+    ctx     =   avcodec_alloc_context3(codec);
+
     hw_encoder_init(hw_type);
 
-    //
-    assert( hw_frame == nullptr );
-    av_hwframe_get_buffer( ctx->hw_device_ctx, hw_frame, 0 );
-
-    // ┏把计ゼ秨场砞竚,ぇσ璶ぃ璶秨    
+    // 砞 cq 蛤 bitrate 穦が耑, ぃ璶砞
 #ifdef FFMPEG_TEST
     ctx->bit_rate   =   3000000;
 #else
@@ -139,6 +153,10 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
 #endif
     }
 
+    // 摸CRF把计
+    // av_opt_set( ctx, "cq", "50", AV_OPT_SEARCH_CHILDREN );
+
+
     src_width   =   setting.src_width;
     src_height  =   setting.src_height;
 
@@ -146,7 +164,11 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
 
     ctx->width      =   setting.width;
     ctx->height     =   setting.height;
-    ctx->pix_fmt    =   setting.pix_fmt;
+
+    if( setting.pix_fmt == AV_PIX_FMT_YUV420P10LE )
+        ctx->pix_fmt    =   AV_PIX_FMT_P010LE;  // nvenc ゲ斗砞竚 P010
+    else
+        ctx->pix_fmt    =   setting.pix_fmt;
 
     ctx->time_base  =   setting.time_base; 
     ctx->framerate.num  =   setting.time_base.den; 
@@ -181,19 +203,6 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
 #endif
 }
 
-
-
-
-
-/*******************************************************************************
-VideoEncodeHW::send_frame
-********************************************************************************/
-int     VideoEncodeHW::send_frame()
-{
-    //av_hwframe_transfer_data( hw_frame, frame, 0 );
-    int ret =   avcodec_send_frame( ctx, frame );
-    return  ret;
-}
 
 
 
