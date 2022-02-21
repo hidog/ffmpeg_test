@@ -154,7 +154,7 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
     }
 
     // 類似CRF的參數
-    // av_opt_set( ctx, "cq", "50", AV_OPT_SEARCH_CHILDREN );
+    // av_opt_set( ctx, "cq", "50", AV_OPT_SEARCH_CHILDREN );  // 固定品質的設定
 
 
     src_width   =   setting.src_width;
