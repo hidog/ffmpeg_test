@@ -74,15 +74,15 @@ int     Decode::open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type )
 {
     int         ret     =   0;
     int         index;
-    AVStream    *st     =   nullptr;
-    AVCodec     *dec    =   nullptr;
 
     cs_index  =   -1;
 
     //
     for( index = 0; index < fmt_ctx->nb_streams; index++ )
     {
-        ret  =   av_find_best_stream( fmt_ctx, type, index, -1, NULL, 0 );
+        // note: decoder 目前只有 video decode hw 使用. 目前一個影片只有 video, 所以這邊暫時不做 multi-stream 設計. 未來需要再改.
+        ret  =   av_find_best_stream( fmt_ctx, type, index, -1, nullptr, 0 );
+
         if( ret >= 0 )
         {
             if( cs_index < 0 )           
@@ -349,6 +349,8 @@ int     Decode::recv_frame( int index )
     frame_count++;       // 這個參數錯掉會影響後續播放.
     return  HAVE_FRAME;  // 表示有 frame 被解出來. 
 }
+
+
 
 
 

@@ -101,6 +101,11 @@ int     VideoDecode::init()
                                     width, height, AV_PIX_FMT_RGB24,            // dst
                                     SWS_BICUBIC, NULL, NULL, NULL);                        
 
+    if( sws_ctx == nullptr )
+    {
+        MYLOG( LOG::L_ERROR, "sws init fail." );
+    }
+
 #ifdef FFMPEG_TEST
     output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
     //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );

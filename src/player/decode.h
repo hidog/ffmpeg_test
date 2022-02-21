@@ -85,7 +85,7 @@ protected:
     AVCodecContext  *dec_ctx    =   nullptr;    
     AVStream        *stream     =   nullptr;
     AVFrame         *frame      =   nullptr;
-    
+   
     int     frame_count =   -1;
 
 };

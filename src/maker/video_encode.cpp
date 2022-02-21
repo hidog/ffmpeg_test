@@ -91,6 +91,9 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
 #endif
     }
 
+    //av_opt_set_int( ctx, "crf", 50, AV_OPT_SEARCH_CHILDREN );  // ©T©w«~½è
+
+
     src_width   =   setting.src_width;
     src_height  =   setting.src_height;
 

@@ -18,6 +18,11 @@ extern "C" {
 
 
 
+namespace {
+AVPixelFormat  g_hw_pix_fmt   =   AV_PIX_FMT_NONE;  // 造成無法 multi-instance. 有空再修吧...
+} // end namespace
+
+
 
 
 
@@ -26,12 +31,8 @@ extern "C" {
 VideoDecodeHW::VideoDecodeHW()
 ********************************************************************************/
 VideoDecodeHW::VideoDecodeHW()
-    :   VideoDecode()
+    :   VideoDecode(), hw_type{AV_HWDEVICE_TYPE_NONE}, hw_pix_fmt{AV_PIX_FMT_NONE}
 {}
-
-
-
-
 
 
 
@@ -49,30 +50,209 @@ VideoDecodeHW::~VideoDecodeHW()
 
 
 /*******************************************************************************
+VideoDecodeHW::list_hw_decoders
+********************************************************************************/
+void    VideoDecodeHW::list_hw_decoders()
+{
+    AVHWDeviceType  hw_type     =   AV_HWDEVICE_TYPE_NONE;
+
+    while( true )
+    {
+        hw_type     =   av_hwdevice_iterate_types( hw_type );
+        if( hw_type == AV_HWDEVICE_TYPE_NONE )
+            break;
+        MYLOG( LOG::L_INFO, "hw device type = %s", av_hwdevice_get_type_name(hw_type) );
+    }
+}
+
+
+
+
+
+/*******************************************************************************
 VideoDecodeHW::open_codec_context
 ********************************************************************************/
 int     VideoDecodeHW::open_codec_context( AVFormatContext *fmt_ctx )
 {
-    int     ret     =   VideoDecode::open_codec_context( fmt_ctx );
+    list_hw_decoders();
 
-    AVCodecID       codec_id    =   stream->codecpar->codec_id;
-    std::string     log_name    =   fmt_ctx->iformat->long_name;
+    int     ret     =   0;
+    ret     =   find_hw_device_type();
 
-    bool    flag1   =   log_name == "QuickTime / MOV"    ||
-                        log_name == "FLV (Flash Video)"  ||
-                        log_name == "Matroska / WebM" ;
+    // open context
+    AVCodec     *dec    =   nullptr;
+    ret     =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &dec, 0);  
+    if( ret < 0 ) 
+    {
+        MYLOG( LOG::L_ERROR, "Cannot find a video stream in the input file. ret = %d", ret );
+        return  R_ERROR;
+    }
+     
+    cs_index   =   ret;  // 先寫死 未來再改.
 
-    bool    flag2   =   codec_id == AV_CODEC_ID_H264 || codec_id == AV_CODEC_ID_HEVC;
+    create_hw_decoder( dec );    
+    stream  =   fmt_ctx->streams[cs_index];
 
-    use_bsf     =   flag1 && flag2;
+    ret     =   avcodec_parameters_to_context( dec_ctx, stream->codecpar );
+    if( ret < 0 )
+    {
+        MYLOG( LOG::L_ERROR, "avcodec_parameters_to_context fail. ret = %d", ret );
+        return  R_ERROR;
+    }
 
-    if( use_bsf == false )
-        MYLOG( LOG::L_ERROR, "not support nv decode.");  // 測試一下不支援的影片會發生甚麼事情
+    //
+    ret     =   hw_decoder_init( hw_type );
+    if( ret != R_SUCCESS )
+    {
+        MYLOG( LOG::L_ERROR, "hw_decoder_init fail." );
+        return  ret;
+    }
 
-    // NOTE: hardware decode need init bsf.
-    init_bsf(fmt_ctx);
+    //
+    ret     =   avcodec_open2( dec_ctx, dec, NULL );
+    if( ret < 0 ) 
+    {
+        MYLOG( LOG::L_ERROR, "Failed to open codec for stream. ret = %d", ret );
+        return  R_ERROR;
+    }
+
+    // note: 寫法跟 video_decode_nw 有點不同, 當測試.
+    if( dec_ctx->pix_fmt == AV_PIX_FMT_YUV420P10LE )
+        dec_ctx->pix_fmt    =   AV_PIX_FMT_P016LE;  // 強制指定fmt
+    else if( dec_ctx->pix_fmt == AV_PIX_FMT_YUV420P )
+        dec_ctx->pix_fmt    =   AV_PIX_FMT_NV12;
+    else
+    {
+        MYLOG( LOG::L_ERROR, "un handle pix fmt." );
+    }
+
+    // 存回 map, 方便之後管理.
+    dec_map.emplace(    std::make_pair(cs_index,dec_ctx) ); 
+    stream_map.emplace( std::make_pair(cs_index,stream)  );  // 寫法有點醜. 得到 stream index 後, 先從 fmt_ctx 取得 stream, 再寫入自己定義的 map.
 
     return  ret;
+}
+
+
+
+
+
+/*******************************************************************************
+get_hw_format
+********************************************************************************/
+AVPixelFormat   get_hw_format( AVCodecContext* ctx, const AVPixelFormat* pix_fmts )
+{
+    assert(0); // nvdec 似乎不會進到這個 function, 檢查一下
+
+    AVPixelFormat   format  =   AV_PIX_FMT_NONE;
+    const AVPixelFormat     *ptr    =   nullptr;
+
+    for( ptr = pix_fmts; *ptr != AV_PIX_FMT_NONE; ptr++ ) 
+    {
+        if( *ptr == g_hw_pix_fmt )
+        {
+            format  =   *ptr;
+            break;
+        }
+    }
+
+    if( AV_PIX_FMT_NONE == format )
+        MYLOG( LOG::L_ERROR, "Failed to get HW surface format." );
+
+    return  format;
+}
+
+
+
+
+
+/*******************************************************************************
+VideoDecodeHW::create_hw_decoder
+********************************************************************************/
+int     VideoDecodeHW::create_hw_decoder( AVCodec* dec )
+{
+    if( dec == nullptr )
+        MYLOG( LOG::L_ERROR, "dec is nullptr" )
+
+    //
+    const AVCodecHWConfig     *config     =   nullptr;
+    int     flag;
+
+    for( int i = 0; ; i++ )
+    {
+        config  =   avcodec_get_hw_config( dec, i );
+
+        if( nullptr == config ) 
+        {
+            MYLOG( LOG::L_ERROR, "Decoder %s does not support device type %s.\n", dec->name, av_hwdevice_get_type_name(hw_type) );
+            return  R_ERROR;
+        }
+
+        flag    =   config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX;
+        if( flag != 0 && config->device_type == hw_type )
+        {
+            hw_pix_fmt      =   config->pix_fmt;
+            g_hw_pix_fmt    =   hw_pix_fmt;
+            break;
+        }
+    }
+
+    MYLOG( LOG::L_INFO, "hw_dev = %s, hw_pix_fmt = %s", hw_dev.c_str(), av_get_pix_fmt_name(hw_pix_fmt) );
+
+    //
+    dec_ctx     =   avcodec_alloc_context3(dec);
+    if( dec_ctx == nullptr )
+    {
+        MYLOG( LOG::L_ERROR, "dec_ctx is nullptr. err = %d",  AVERROR(ENOMEM) );
+        return  R_ERROR;
+    }
+
+    return  R_SUCCESS;
+}
+
+
+
+
+
+
+/*******************************************************************************
+VideoDecodeHW::find_hw_device_type
+********************************************************************************/
+int     VideoDecodeHW::find_hw_device_type()
+{
+    hw_type     =   av_hwdevice_find_type_by_name( hw_dev.c_str() );
+
+    if( hw_type == AV_HWDEVICE_TYPE_NONE ) 
+    {
+        MYLOG( LOG::L_ERROR, "fine hw type %s fail.", hw_dev.c_str() );
+        return  R_ERROR;
+    }
+
+    return  R_SUCCESS;
+}
+
+
+
+
+
+/*******************************************************************************
+VideoDecodeHW::hw_decoder_init
+********************************************************************************/
+int     VideoDecodeHW::hw_decoder_init( const AVHWDeviceType type )
+{
+    int     ret     =   0;
+
+    ret     =   av_hwdevice_ctx_create( &hw_device_ctx, type, NULL, NULL, 0 );
+
+    if( ret < 0 ) 
+    {
+        MYLOG( LOG::L_ERROR, "Failed to create specified HW device. ret = %d", ret );
+        return  R_ERROR;
+    }
+
+    dec_ctx->hw_device_ctx  =   av_buffer_ref(hw_device_ctx);
+
+    return  R_SUCCESS;
 }
 
 
@@ -81,27 +261,23 @@ int     VideoDecodeHW::open_codec_context( AVFormatContext *fmt_ctx )
 /*******************************************************************************
 VideoDecodeHW::init
 
-ffplay -f rawvideo -pix_fmt nv12 -video_size 1280x720 output.data
-ffplay -f rawvideo -pix_fmt p016 -video_size 1920x1080 2output.data
-
-AV_PIX_FMT_P016LE
-AV_PIX_FMT_NV12
+寫得有點醜 有空整理這邊的程式碼
 ********************************************************************************/
 int     VideoDecodeHW::init()
 {
-    assert( stream != nullptr );
+    list_hw_decoders();
+    
+    int     ret =   0;
+    
+    // 底下程式碼從 VideoDecode::init() 複製過來修改. 有空整理
+    width       =   dec_ctx->width;
+    height      =   dec_ctx->height;
+    pix_fmt     =   dec_ctx->pix_fmt;
 
-    pkt_bsf     =   av_packet_alloc();
-    width       =   stream->codecpar->width;
-    height      =   stream->codecpar->height;
-
-    // init nvidia decoder.
-    init_nvidia_decoder();
-
-    MYLOG( LOG::L_INFO, "width = %d, height = %d\n", width, height );
+    MYLOG( LOG::L_INFO, "width = %d, height = %d, pix_fmt = %d\n", width, height, pix_fmt );
     
     video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_RGB24, 1 );
-    //video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_YUV420P, 1 );  use for opencv
+    //video_dst_bufsize   =   av_image_alloc( video_dst_data, video_dst_linesize, width, height, AV_PIX_FMT_YUV420P, 1 );  // when use output_jpg_by_openCV, use this.
 
     if( video_dst_bufsize < 0 )
     {
@@ -109,16 +285,27 @@ int     VideoDecodeHW::init()
         return  R_ERROR;
     }
 
-    //
-    AVPixelFormat  nv_pix_fmt   =   get_pix_fmt();
-
-    sws_ctx     =   sws_getContext( width, height, nv_pix_fmt,                  // src
+    // NOTE : 可以改變寬高. 
+    AVPixelFormat   frame_fmt   =   AV_PIX_FMT_NONE;    
+    if( pix_fmt == AV_PIX_FMT_NV12 )
+        frame_fmt  =   AV_PIX_FMT_YUV420P; 
+    else if( pix_fmt == AV_PIX_FMT_P016LE )
+        frame_fmt  =   AV_PIX_FMT_YUV420P16LE;
+    else
+        assert(0);
+    sws_ctx     =   sws_getContext( width, height, frame_fmt,                   // src
                                     width, height, AV_PIX_FMT_RGB24,            // dst
                                     SWS_BICUBIC, NULL, NULL, NULL);                        
+
+    if( sws_ctx == nullptr )
+    {
+        MYLOG( LOG::L_ERROR, "sws init fail." );
+    }
 
 #ifdef FFMPEG_TEST
     output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
     //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_openCV, this );
+    //output_frame_func   =   std::bind( &VideoDecode::test_image_process, this );
 #endif
 
     Decode::init();
@@ -127,80 +314,169 @@ int     VideoDecodeHW::init()
     if( sub_dec != nullptr )
         MYLOG( LOG::L_ERROR, "sub_dec not null." );
 
+    // 到這邊為止, copy from VideoDecode::init  應該可以包裝得更好一點, 有空修
+
+    // member
+    assert( hw_frame == nullptr );
+    hw_frame    =   av_frame_alloc();
+    if( hw_frame == nullptr ) 
+    {
+        MYLOG( LOG::L_ERROR, "Could not allocate hw_frame" );
+        ret =   AVERROR(ENOMEM);        
+        return  ret;
+    }
+
+    assert( sw_frame == nullptr );
+    sw_frame    =   av_frame_alloc();
+    if( sw_frame == nullptr ) 
+    {
+        MYLOG( LOG::L_ERROR, "Could not allocate sw_frame" );
+        ret =   AVERROR(ENOMEM);        
+        return  ret;
+    }
+
+    // init sws
+    // 逆推 fmt. 有空包成函數
+    hw_sws_ctx     =   sws_getContext( width, height, pix_fmt,                     // src
+                                       width, height, frame_fmt,                   // dst
+                                       SWS_BICUBIC, NULL, NULL, NULL);
+
     return  R_SUCCESS;
 }
 
 
 
 
-
 /*******************************************************************************
-VideoDecodeHW::codec_id_ffmpeg_to_cuda
+VideoDecodeHW::end
 ********************************************************************************/
-cudaVideoCodec  VideoDecodeHW::codec_id_ffmpeg_to_cuda(AVCodecID id) 
+int     VideoDecodeHW::end()
 {
-    switch (id) 
+    VideoDecode::end();
+
+    hw_type     =   AV_HWDEVICE_TYPE_NONE;
+    hw_pix_fmt  =   AV_PIX_FMT_NONE;
+
+    if( hw_device_ctx != nullptr )
     {
-    case AV_CODEC_ID_MPEG1VIDEO : 
-        return cudaVideoCodec_MPEG1;
-    case AV_CODEC_ID_MPEG2VIDEO : 
-        return cudaVideoCodec_MPEG2;
-    case AV_CODEC_ID_MPEG4      : 
-        return cudaVideoCodec_MPEG4;
-    case AV_CODEC_ID_VC1        : 
-        return cudaVideoCodec_VC1;
-    case AV_CODEC_ID_H264       : 
-        return cudaVideoCodec_H264;
-    case AV_CODEC_ID_HEVC       : 
-        return cudaVideoCodec_HEVC;
-    case AV_CODEC_ID_VP8        : 
-        return cudaVideoCodec_VP8;
-    case AV_CODEC_ID_VP9        : 
-        return cudaVideoCodec_VP9;
-    case AV_CODEC_ID_MJPEG      : 
-        return cudaVideoCodec_JPEG;
-    default                     : 
-        return cudaVideoCodec_NumCodecs;
+        av_buffer_unref(&hw_device_ctx);
+        hw_device_ctx   =   nullptr;
     }
+
+    if( hw_frame != nullptr )
+    {
+        av_frame_free(&hw_frame);
+        hw_frame    =   nullptr;
+    }
+
+    if( sw_frame != nullptr )
+    {
+        av_frame_free(&sw_frame);
+        sw_frame    =   nullptr;
+    }
+
+    if( hw_sws_ctx != nullptr )
+    {
+        sws_freeContext( hw_sws_ctx );
+        hw_sws_ctx  =   nullptr;
+    }
+
+    return  R_SUCCESS;
 }
 
 
 
+
 /*******************************************************************************
-VideoDecodeHW::init_nvidia_decoder
+VideoDecodeHW::flush_for_seek
 ********************************************************************************/
-int     VideoDecodeHW::init_nvidia_decoder()
+void    VideoDecodeHW::flush_for_seek()
 {
-    AVCodecID       codec_id    =   stream->codecpar->codec_id;  //  dec_ctx->codec_id;
-    cudaVideoCodec  cuda_codec  =   codec_id_ffmpeg_to_cuda(codec_id);
+    Decode::flush_for_seek();
+}
 
-    cuInit(0);
-    int     gpu_index   =   0; // 使用第一張顯示卡
-    int     gpu_num     =   0;
-    cuDeviceGetCount( &gpu_num );
-    if( gpu_index >= gpu_num ) 
-    {
-        MYLOG( LOG::L_ERROR, "no video card." );
-        return  R_ERROR;
-    }
 
-    CUdevice    nv_dev  =   0;
-    cuDeviceGet( &nv_dev, gpu_index );
 
-    char    device_name[80];
-    cuDeviceGetName( device_name, sizeof(device_name), nv_dev );
-    MYLOG( LOG::L_INFO, "gpu use %s", device_name )
 
-    CUcontext   cuda_ctx    =   nullptr;
-    cuCtxCreate( &cuda_ctx, 0, nv_dev );
+/*******************************************************************************
+VideoDecodeHW::recv_frame
+********************************************************************************/
+int     VideoDecodeHW::recv_frame( int index )
+{
+    int     ret     =   0;
 
     //
-    Rect    rect        =   {};
-    Dim     resize_dim  =   {};
-    nv_decoder  =   new NvDecoder( cuda_ctx, width, height, false, cuda_codec, nullptr, false, false, &rect, &resize_dim );
+    ret     =   avcodec_receive_frame( dec_ctx, hw_frame );
+    if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )     
+        return  0;
+    else if( ret < 0 ) 
+    {
+        MYLOG( LOG::L_ERROR, "avcodec_receive_frame fail, ret = %d", ret );
+        return  ret;
+    }
+    
+    //
+    frame_count++;       // 這個參數錯掉會影響後續播放.
 
-    return  R_SUCCESS;
+    //
+    if( hw_frame->format == hw_pix_fmt ) 
+    {
+        // retrieve data from GPU to CPU 
+        ret    =   av_hwframe_transfer_data( sw_frame, hw_frame, 0 );
+        if( ret < 0 ) 
+        {
+            MYLOG( LOG::L_ERROR, "Error transferring the data to system memory. ret = %d", ret );
+            return  R_ERROR;
+        }
+    } 
+    else
+    {
+        MYLOG( LOG::L_ERROR, "frame->format != hw_pix_fmt" );
+    }
+    
+    //
+    frame->format   =   get_pix_fmt();
+    frame->width    =   width;
+    frame->height   =   height;
+
+    // allocate frame data.
+    ret     =   av_frame_get_buffer( frame, 0 );
+    if( ret < 0 ) 
+        MYLOG( LOG::L_ERROR, "get buffer fail." );
+    
+    ret     =   av_frame_make_writable(frame);
+    if( ret < 0 )
+        assert(0);
+    
+    // 逆推 fmt. 寫得不好. 很多累贅. 有空修
+    AVPixelFormat   hw_fmt  =   AV_PIX_FMT_NONE;
+    if( frame->format == AV_PIX_FMT_YUV420P )
+        hw_fmt  =   AV_PIX_FMT_NV12;
+    else if( frame->format == AV_PIX_FMT_YUV420P16LE )
+        hw_fmt  =   AV_PIX_FMT_P016LE;
+    else
+        assert(0);
+
+    sws_scale( hw_sws_ctx, sw_frame->data, (const int*)sw_frame->linesize, 0, sw_frame->height, frame->data, frame->linesize );
+
+    //
+    //MYLOG( LOG::L_DEBUG, "ctx timebase = (%d/%d)", dec_ctx->time_base.num, dec_ctx->time_base.den );
+    //MYLOG( LOG::L_DEBUG, "stream timebase = (%d/%d)", stream->time_base.num, stream->time_base.den );
+    frame->best_effort_timestamp    =   hw_frame->best_effort_timestamp;
+    frame->pts                      =   hw_frame->best_effort_timestamp;  // need set frame pts, otherwise, 不然部分檔案會出現字幕閃爍
+    frame_pts                       =   hw_frame->best_effort_timestamp;
+    
+    if( sub_dec != nullptr )
+    {
+        if( sub_dec->is_graphic_subtitle() == true )
+            ret     =   overlap_subtitle_image();
+        else
+            ret     =   render_nongraphic_subtitle();
+    }
+    
+    return  HAVE_FRAME;
 }
+
 
 
 
@@ -209,6 +485,8 @@ VideoDecodeHW::get_pix_fmt
 
 AV_PIX_FMT_P016LE
 AV_PIX_FMT_YUV420P10LE
+
+寫法跟 video decode nv 不同, 實驗看看.
 ********************************************************************************/
 AVPixelFormat   VideoDecodeHW::get_pix_fmt()
 {
@@ -224,249 +502,6 @@ AVPixelFormat   VideoDecodeHW::get_pix_fmt()
     }
 }
 
-
-
-/*******************************************************************************
-VideoDecodeHW::init_bsf
-********************************************************************************/
-int     VideoDecodeHW::init_bsf( AVFormatContext* fmt_ctx )
-{
-    AVCodecID   codec_id    =   stream->codecpar->codec_id;
-    int         ret         =   0;
-
-    if( use_bsf == true )
-    {
-        const AVBitStreamFilter     *bsf    =   nullptr;
-
-        if( codec_id == AV_CODEC_ID_H264 )
-            bsf     =   av_bsf_get_by_name("h264_mp4toannexb");
-        else if( codec_id == AV_CODEC_ID_HEVC )
-            bsf     =   av_bsf_get_by_name("hevc_mp4toannexb");
-        else 
-        {
-            MYLOG( LOG::L_ERROR, "un support." );
-        }
-
-        ret     =   av_bsf_alloc( bsf, &v_bsf_ctx );
-        assert( ret == 0 );
-
-        // 參考 end(), 如果沒改 par_in, 會造成 crash.
-        // 參考 av_bsf_alloc, 裡面會 alloc par_in, 所以手動釋放
-        avcodec_parameters_free( &v_bsf_ctx->par_in );
-        v_bsf_ctx->par_in   =   fmt_ctx->streams[cs_index]->codecpar;
-        // avcodec_parameters_copy( v_bsf_ctx->par_in, fmt_ctx->streams[cs_index]->codecpar );  嘗試用 copy, 會 crash.
-
-        av_bsf_init( v_bsf_ctx );
-    }
-
-    return  R_SUCCESS;
-}
-
-
-
-
-
-
-/*******************************************************************************
-VideoDecodeHW::end
-********************************************************************************/
-int     VideoDecodeHW::end()
-{
-    VideoDecode::end();
-
-    if( nv_decoder != nullptr )
-    {
-        delete nv_decoder;
-        nv_decoder  =   nullptr;
-    }
-
-    if( pkt_bsf != nullptr )
-    {
-        av_packet_free( &pkt_bsf );
-        pkt_bsf     =   nullptr;
-    }
- 
-    if( v_bsf_ctx != nullptr )
-    {
-        av_bsf_flush( v_bsf_ctx );
-        v_bsf_ctx->par_in   =   nullptr;  // 指向 fmt_ctx, 不設成 nullptr 會造成 fmt_ctx 釋放的時候 crash.
-        av_bsf_free( &v_bsf_ctx );
-        v_bsf_ctx   =   nullptr;
-    }
- 
-    //
-    use_bsf     =   false;  
-    recv_size   =   0;
-    recv_count  =   0; 
-    p_timestamp =   nullptr;
-
-    return  R_SUCCESS;
-}
-
-
-
-
-
-/*******************************************************************************
-VideoDecodeHW::send_packet
-********************************************************************************/
-int     VideoDecodeHW::send_packet( AVPacket *pkt )
-{
-    // 目前在 recv_frame 做 unref. 如果忘了做, yuv420p10 的影片會出錯
-
-    uint8_t     *pkt_ptr    =   nullptr;
-    int         pkt_size    =   0;
-    int64_t     pkt_ts      =   0;
-
-    if( use_bsf == true )
-    {
-        av_bsf_send_packet( v_bsf_ctx, pkt );
-        av_bsf_receive_packet( v_bsf_ctx, pkt_bsf );
-
-        if( pkt != nullptr )
-            pkt->stream_index   =   pkt_bsf->stream_index;   // 否則 stream_index 會被清掉, 造成bug.
-
-        pkt_ptr     =   pkt_bsf->data;
-        pkt_size    =   pkt_bsf->size;
-    }
-    else
-    {
-        pkt_ptr     =   pkt->data;
-        pkt_size    =   pkt->size;
-    }
-
-    // decode
-    //recv_size   =   0;
-    if( pkt_bsf != nullptr )
-        nv_decoder->Decode( pkt_ptr, pkt_size, &nv_frames, &recv_size, CUVID_PKT_TIMESTAMP, &p_timestamp, pkt_bsf->pts );
-    else
-        nv_decoder->Decode( pkt_ptr, pkt_size, &nv_frames, &recv_size, CUVID_PKT_ENDOFSTREAM, &p_timestamp, pkt_bsf->pts );
-    //nv_decoder->Decode( pkt_ptr, pkt_size, &nv_frames, &recv_size );
-
-    // need set count to zero. and use in recv loop.
-    recv_count  =   0;
-    return  R_SUCCESS;
-}
-
-
-
-
-/*******************************************************************************
-VideoDecodeHW::flush_for_seek
-********************************************************************************/
-void    VideoDecodeHW::flush_for_seek()
-{
-    recv_size   =   0;
-    recv_count  =   0;
-    av_bsf_flush( v_bsf_ctx );
-
-    // flush nv decode.
-    while(true)
-    {
-        nv_decoder->Decode( nullptr, 0, &nv_frames, &recv_size );
-        if( recv_size == 0 )
-            break;
-    }
-}
-
-
-
-
-
-/*******************************************************************************
-VideoDecodeHW::convert_to_planar
-********************************************************************************/
-void    VideoDecodeHW::convert_to_planar( uint8_t *ptr, int w, int h, int d )
-{
-    if( d == 8 )
-    {
-        // nv12->iyuv
-        YuvConverter<uint8_t>   converter8( w, h );
-        converter8.UVInterleavedToPlanar( ptr );
-    } 
-    else 
-    {
-        // p016->yuv420p16
-        YuvConverter<uint16_t>  converter16( w, h );
-        converter16.UVInterleavedToPlanar( (uint16_t *)ptr );
-    }
-}
-
-
-
-
-
-
-/*******************************************************************************
-VideoDecodeHW::recv_frame
-********************************************************************************/
-int     VideoDecodeHW::recv_frame( int index )
-{
-    if( recv_size == 0 || recv_count == recv_size )
-    {
-        av_packet_unref( pkt_bsf );  // 這邊沒 unref, yuv420p10 會出錯
-        
-        if( index < 0 )
-            return  AVERROR_EOF;  // flush 階段, 沒資料了.
-        else
-            return  0;  // this loop has no frame.
-    }
-
-    if( use_bsf == false )
-        MYLOG( LOG::L_ERROR, "use bsf is false." )  // 測試看看 use_bsf == false 的時候程式是否能運行
-      
-    // 不轉換到 plannar, 則要改 sws 的 pix_fmt.
-    int     w   =   nv_decoder->GetWidth();
-    int     h   =   nv_decoder->GetHeight();
-    int     d   =   nv_decoder->GetBitDepth();
-    convert_to_planar( nv_frames[recv_count], w, h, d );
-    
-    frame->format   =   get_pix_fmt();
-    frame->width    =   width;
-    frame->height   =   height;
-    
-    // allocate frame data.
-    int ret     =   av_frame_get_buffer( frame, 0 );
-    if( ret < 0 ) 
-        MYLOG( LOG::L_ERROR, "get buffer fail." );
-    
-    ret     =   av_frame_make_writable(frame);
-    if( ret < 0 )
-        assert(0);
-    
-    //int fsize = nv_decoder->GetFrameSize();
-    
-    // copy to frame
-    AVPixelFormat   nv_fmt  =   get_pix_fmt();
-    av_image_fill_arrays( frame->data, frame->linesize, nv_frames[recv_count], nv_fmt, width, height, 1 );
-    
-    // time stamp.
-    frame->best_effort_timestamp    =   p_timestamp[recv_count];
-    frame->pts                      =   frame->best_effort_timestamp;
-    frame_pts                       =   frame->best_effort_timestamp;       
-    
-    recv_count++;   // use for control loop.
-    frame_count++;
-    
-    // render subtitle if exist.    
-    if( sub_dec != nullptr )
-    {
-        if( sub_dec->is_graphic_subtitle() == true )
-            ret =   overlap_subtitle_image();
-        else
-            ret =   render_nongraphic_subtitle();
-    }    
-
-    // loop control
-    if( recv_count - 1 < recv_size )
-        return  HAVE_FRAME;
-    else
-    {
-        // 找不到位置塞, 暫時先放這裡.
-        av_packet_unref(pkt_bsf);   // 沒 unref, yuv420p10 會出錯
-        return  0;  // break loop.
-    }
-}
 
 
 

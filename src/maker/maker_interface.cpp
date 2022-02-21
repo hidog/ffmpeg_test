@@ -34,7 +34,7 @@ void    maker_encode_example()
     //setting.extension   =   "mp4";
     //setting.filename    =   "H:\\test.avi"; 
     //setting.extension   =   "avi";
-    setting.has_subtitle    =   false;
+    setting.has_subtitle    =   true;
 
     VideoEncodeSetting  v_setting;
     v_setting.load_jpg_root_path    =   "H:\\jpg";
@@ -52,10 +52,10 @@ void    maker_encode_example()
     /*
         b frame not support on rm
     */
-    v_setting.gop_size      =   30;
-    v_setting.max_b_frames  =   15;
-    //v_setting.gop_size      =   5;
-    //v_setting.max_b_frames  =   0;
+    //v_setting.gop_size      =   30;
+    //v_setting.max_b_frames  =   15;
+    v_setting.gop_size      =   15;     // use for nvenc
+    v_setting.max_b_frames  =   3;
 
 
     //v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
