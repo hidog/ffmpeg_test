@@ -126,6 +126,7 @@ int     Player::init()
 
     //
     decode_manager->open_decoders( fmt_ctx );
+    decode_manager->init_decoders();
 
     /*ret     =   v_decoder.open_codec_context( fmt_ctx );
     ret     =   a_decoder.open_codec_context( fmt_ctx );

@@ -27,6 +27,7 @@ public:
     DecodeManager& operator = ( DecodeManager&& ) = delete;
 
     int     open_decoders( AVFormatContext* fmt_ctx );
+    void    init_decoders();
 
     bool    exist_video_stream();
     bool    exist_audio_stream();

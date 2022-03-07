@@ -215,3 +215,29 @@ void    DecodeManager::set_output_audio_pcm_path( std::string _path )
     }
 }
 #endif
+
+
+
+
+
+/*******************************************************************************
+DecodeManager::init_decoders()
+********************************************************************************/
+void    DecodeManager::init_decoders()
+{
+    // video
+    VideoDecode *v_ptr  =   nullptr;
+    for( auto itr : video_map )
+    {
+        v_ptr   =   dynamic_cast<VideoDecode*>(itr.second);
+        v_ptr->init();
+    }
+
+    // audio
+    AudioDecode *a_ptr  =   nullptr;
+    for( auto itr : audio_map )
+    {
+        a_ptr   =   dynamic_cast<AudioDecode*>(itr.second);
+        a_ptr->init();
+    }
+}
