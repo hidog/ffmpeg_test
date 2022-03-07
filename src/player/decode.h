@@ -79,10 +79,10 @@ protected:
         為了方便撰寫, dec_ctx, stream 這兩個是用來記錄 current decoder and stream. 
         增加 decoder manager 的時候這塊要重新設計
     */
-    std::map<int,AVCodecContext*>   dec_map;
-    std::map<int,AVStream*>         stream_map;
+    //std::map<int,AVCodecContext*>   dec_map;
+    //std::map<int,AVStream*>         stream_map;
     
-    int     cs_index    =   -1;     // current stream index.
+    //int     cs_index    =   -1;     // current stream index.
 
     AVCodecContext  *dec_ctx    =   nullptr;    
     AVStream        *stream     =   nullptr;

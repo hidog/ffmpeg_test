@@ -1,5 +1,7 @@
 #include "decode.h"
 
+#include <cassert>
+
 extern "C" {
 
 #include <libavutil/imgutils.h>
@@ -72,6 +74,7 @@ Decode::open_all_codec()
 ********************************************************************************/
 int     Decode::open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type )
 {
+#if 0
     int         ret     =   0;
     int         index;
 
@@ -99,6 +102,7 @@ int     Decode::open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type )
     // set
     dec_ctx     =   cs_index == -1 ? nullptr : dec_map[cs_index];
     stream      =   cs_index == -1 ? nullptr : stream_map[cs_index];
+#endif
 
     return  R_SUCCESS;
 }
@@ -126,7 +130,9 @@ Decode::exist_stream()
 ********************************************************************************/
 bool    Decode::exist_stream()
 {
-    return  cs_index >= 0 ? true : false;
+    //return  cs_index >= 0 ? true : false;
+    assert(0);
+    return false;
 }
 
 
@@ -136,7 +142,9 @@ Decode::current_index()
 ********************************************************************************/
 int     Decode::current_index()
 {
-    return  cs_index;
+    assert(0);
+    return 0;
+    //return  cs_index;
 }
 
 
@@ -147,8 +155,10 @@ Decode::is_index()
 ********************************************************************************/
 bool    Decode::find_index( int index )
 {
-    auto    item    =   dec_map.find(index);
-    return  item != dec_map.end();
+    //auto    item    =   dec_map.find(index);
+    //return  item != dec_map.end();
+    assert(0);
+    return false;
 }
 
 
@@ -223,14 +233,14 @@ Decode::send_packet()
 ********************************************************************************/
 int     Decode::send_packet( AVPacket *pkt )
 {
-    int     index   =   pkt == nullptr ? cs_index : pkt->stream_index;
+    //int     index   =   pkt == nullptr ? cs_index : pkt->stream_index;
 
     int     ret =   0;
     char    buf[AV_ERROR_MAX_STRING_SIZE]{0};
 
     // submit the packet to the decoder
-    AVCodecContext  *ctx    =   dec_map[index];
-    ret =   avcodec_send_packet( ctx, pkt );
+    //AVCodecContext  *ctx    =   dec_map[index];
+    ret =   avcodec_send_packet( dec_ctx, pkt );
     if( ret < 0 ) 
     {
         auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
@@ -284,6 +294,7 @@ Decode::flush_for_seek()
 ********************************************************************************/
 void    Decode::flush_for_seek()
 {
+#if 0
     int     ret;
 
     AVCodecContext  *ctx    =   nullptr;
@@ -292,6 +303,7 @@ void    Decode::flush_for_seek()
         ctx     =   itr.second;
         avcodec_flush_buffers( ctx );
     }
+#endif
 }
 
 
@@ -304,6 +316,7 @@ Decode::flush_all_stresam()
 ********************************************************************************/
 void    Decode::flush_all_stream()
 {
+#if 0
     int     ret;
 
     for( auto itr : dec_map )
@@ -316,6 +329,8 @@ void    Decode::flush_all_stream()
             av_frame_unref(frame);
         }
     }
+#endif
+    assert(0);
 }
 
 
@@ -326,14 +341,10 @@ Decode::recv_frame()
 ********************************************************************************/
 int     Decode::recv_frame( int index )
 {
-    if( index == -1 ) // -1 use for flush.
-        index   =   cs_index; 
-
     char    buf[AV_ERROR_MAX_STRING_SIZE]{0};
     int     ret     =   0;
 
-    AVCodecContext  *dec    =   dec_map[index];
-    ret     =   avcodec_receive_frame( dec, frame );
+    ret     =   avcodec_receive_frame( dec_ctx, frame );
     if( ret < 0 ) 
     {
         // those two return values are special and mean there is no output
@@ -359,7 +370,9 @@ Decode::get_dec_map_size()
 ********************************************************************************/
 int     Decode::get_dec_map_size()
 {
-    return  dec_map.size();
+    //return  dec_map.size();
+    assert(0);
+    return 0;
 }
 
 
@@ -390,18 +403,21 @@ int     Decode::end()
     frame   =   nullptr;
 
     //
-    for( auto itr : dec_map )    
-        avcodec_free_context( &itr.second );
-    dec_map.clear();
+    //for( auto itr : dec_map )    
+      //  avcodec_free_context( &itr.second );
+    //dec_map.clear();
+
+    avcodec_free_context( &dec_ctx );
     dec_ctx     =   nullptr;
 
     //
-    stream_map.clear();
+    //stream_map.clear();
     stream      =   nullptr;
 
     //
-    cs_index    =   -1;
+    //cs_index    =   -1;
     frame_count =   -1;
+    is_current  =   false;
 
     return  R_SUCCESS;
 }

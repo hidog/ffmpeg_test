@@ -1,7 +1,9 @@
 ﻿#include "sub_decode.h"
-#include "tool.h"
-#include <sstream>
 
+#include "tool.h"
+
+#include <sstream>
+#include <cassert>
 
 extern "C" {
 
@@ -597,12 +599,12 @@ SubDecode::decode_subtitle()
 ********************************************************************************/
 int    SubDecode::decode_subtitle( AVPacket* pkt )
 {
-    AVCodecContext  *dec    =   pkt == nullptr ? dec_map[cs_index] : dec_map[pkt->stream_index];
+    //AVCodecContext  *dec    =   pkt == nullptr ? dec_map[cs_index] : dec_map[pkt->stream_index];
 
     AVSubtitle  subtitle {0};
 
     int     got_sub     =   0;
-    int     ret         =   avcodec_decode_subtitle2( dec, &subtitle, &got_sub, pkt );
+    int     ret         =   avcodec_decode_subtitle2( dec_ctx, &subtitle, &got_sub, pkt );
     
     if( ret >= 0 && got_sub > 0 )
     {
@@ -705,9 +707,9 @@ std::vector<std::string>    SubDecode::get_embedded_subtitle_list()
     av_dict_get_string( stream->metadata, &buf, '=', ',' );
     MYLOG( LOG::L_INFO, "buf = %s\n", buf );
 
-    for( auto itr : stream_map )
+    //for( auto itr : stream_map )
     {
-        AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)itr.second->metadata, "title", NULL, AV_DICT_MATCH_CASE );
+        AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)stream->metadata, "title", NULL, AV_DICT_MATCH_CASE );
         if( dic != nullptr )
         {
             MYLOG( LOG::L_DEBUG, "title %s", dic->value );
@@ -733,10 +735,11 @@ https://www.jianshu.com/p/89f2da631e16
 ********************************************************************************/
 int     SubDecode::sub_info()
 {  
-    for( auto itr : stream_map )
+    //for( auto itr : stream_map )
     {
-        AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)itr.second->metadata, "title", NULL, AV_DICT_MATCH_CASE );
-        MYLOG( LOG::L_DEBUG, "index = %d, title = %s", itr.first, dic->value );
+        AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)stream->metadata, "title", NULL, AV_DICT_MATCH_CASE );
+        //MYLOG( LOG::L_DEBUG, "index = %d, title = %s", itr.first, dic->value );
+        MYLOG( LOG::L_DEBUG, "index = %d, title = %s", subtitle_index, dic->value );
     }
 
     return 0;
@@ -864,6 +867,7 @@ SubDecode::flush_all_stream()
 ********************************************************************************/
 void    SubDecode::flush_all_stream() 
 {
+#if 0
     int     ret     =   0;
     int     got_sub =   0;
 
@@ -892,6 +896,8 @@ void    SubDecode::flush_all_stream()
                 generate_subtitle_image( subtitle );
         }
     }
+#endif
+    assert(0);
 }
 
 
@@ -906,6 +912,7 @@ SubDecode::test_flush()
 ********************************************************************************/
 int    SubDecode::flush()
 {
+#if 0
     AVPacket    pkt;
     pkt.data    =   nullptr;
     pkt.size    =   0;
@@ -934,6 +941,7 @@ int    SubDecode::flush()
                 break;
         }
     }
+#endif
 
     return  1;
 }

@@ -120,6 +120,8 @@ private:
     int      sub_dst_linesize[4]  =   { 0 };
     int      sub_dst_bufsize      =   0;
 
+    int     subtitle_index  =   -1;
+
 #ifdef FFMPEG_TEST
     std::string     output_jpg_root_path    =   "H:\\jpg";
 #endif

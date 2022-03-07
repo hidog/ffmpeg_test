@@ -254,7 +254,13 @@ int     VideoDecodeNV::init_bsf( AVFormatContext* fmt_ctx )
         // 參考 end(), 如果沒改 par_in, 會造成 crash.
         // 參考 av_bsf_alloc, 裡面會 alloc par_in, 所以手動釋放
         avcodec_parameters_free( &v_bsf_ctx->par_in );
-        v_bsf_ctx->par_in   =   fmt_ctx->streams[cs_index]->codecpar;
+        
+        
+        //v_bsf_ctx->par_in   =   fmt_ctx->streams[cs_index]->codecpar;
+        v_bsf_ctx->par_in   =   stream->codecpar; // add decode manager modify this code. need test.
+        
+        
+        
         // avcodec_parameters_copy( v_bsf_ctx->par_in, fmt_ctx->streams[cs_index]->codecpar );  嘗試用 copy, 會 crash.
 
         av_bsf_init( v_bsf_ctx );
