@@ -2,6 +2,8 @@
 #define DECODE_MANAGER_H
 
 #include <map>
+#include <functional>
+#include <string>
 
 
 class Decode;
@@ -31,6 +33,11 @@ public:
 
     VideoDecode*    get_current_video_decoder();
     AudioDecode*    get_current_audio_decoder();
+
+#ifdef FFMPEG_TEST
+    void    set_output_jpg_path( std::string _root_path );
+    void    set_output_audio_pcm_path( std::string _path );
+#endif
 
 private:
 

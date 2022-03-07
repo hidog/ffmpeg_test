@@ -178,4 +178,40 @@ int    DecodeManager::open_decoders( AVFormatContext* fmt_ctx )
 
 
 
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+DecodeManager::set_output_jpg_root()
+********************************************************************************/
+void    DecodeManager::set_output_jpg_path( std::string _path )
+{
+    VideoDecode     *v_ptr  =   nullptr;
+    for( auto itr : video_map )
+    {
+        v_ptr   =   dynamic_cast<VideoDecode*>(itr.second);
+        assert( v_ptr != nullptr );
+        v_ptr->set_output_jpg_path(_path);
+    }
 
+    //s_decoder.set_output_jpg_root(_root_path);
+}
+#endif
+
+
+
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+DecodeManager::set_output_audio_pcm_path()
+********************************************************************************/
+void    DecodeManager::set_output_audio_pcm_path( std::string _path )
+{
+    AudioDecode     *a_ptr  =   nullptr;
+    for( auto itr : audio_map )
+    {
+        a_ptr   =   dynamic_cast<AudioDecode*>(itr.second);
+        assert( a_ptr != nullptr );
+        a_ptr->set_output_audio_pcm_path(_path);
+    }
+}
+#endif

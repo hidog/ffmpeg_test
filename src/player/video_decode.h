@@ -57,7 +57,7 @@ public:
     int     output_jpg_by_QT();
     int     output_jpg_by_openCV();
     int     test_image_process();
-    void    set_output_jpg_root( std::string _root_path );
+    void    set_output_jpg_path( std::string _path );
 #endif
 
 //private:
@@ -79,7 +79,7 @@ protected:
     QImage      overlay_image;  // 用來處理 graphic subtitle, overlay 的 image.
 
 #ifdef FFMPEG_TEST
-    std::string     output_jpg_root_path    =   "H:\\jpg";
+    std::string     output_jpg_path    =   "H:\\jpg";
 #endif
 };
 

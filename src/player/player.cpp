@@ -153,16 +153,22 @@ int     Player::init()
 
 
 
+
+
+
 #ifdef FFMPEG_TEST
 /*******************************************************************************
 Player::set_output_openCV_jpg_root()
 ********************************************************************************/
-void    Player::set_output_jpg_root( std::string _root_path )
+void    Player::set_output_jpg_path( std::string _path )
 {
-    v_decoder.set_output_jpg_root(_root_path);
-    s_decoder.set_output_jpg_root(_root_path);
+    decode_manager->set_output_jpg_path(_path);
+    //v_decoder.set_output_jpg_root(_root_path);
+    //s_decoder.set_output_jpg_root(_root_path);
 }
 #endif
+
+
 
 
 
@@ -174,7 +180,8 @@ Player::set_output_audio_pcm_path()
 ********************************************************************************/
 void    Player::set_output_audio_pcm_path( std::string _path )
 {
-    a_decoder.set_output_audio_pcm_path(_path);
+    decode_manager->set_output_audio_pcm_path(_path);
+    //a_decoder.set_output_audio_pcm_path(_path);
 }
 #endif
 
@@ -391,6 +398,7 @@ frame   =   dc->get_frame();
 ********************************************************************************/
 void    Player::play()
 {
+#if 0
     if( demuxer == nullptr )
         MYLOG( LOG::L_ERROR, "demuxer is null." );
 
@@ -473,6 +481,7 @@ void    Player::play()
     a_decoder.flush();
 
     MYLOG( LOG::L_INFO, "Demuxing succeeded." );
+#endif
 }
 #endif
 
@@ -1133,7 +1142,7 @@ void    player_decode_example()
     player.set( setting );
     player.init();
 
-    player.set_output_jpg_root( "H:\\jpg" );
+    player.set_output_jpg_path( "H:\\jpg" );
     player.set_output_audio_pcm_path( "H:\\test.pcm" );
 
     player.play();

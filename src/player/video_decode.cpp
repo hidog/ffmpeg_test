@@ -559,7 +559,7 @@ int    VideoDecode::output_jpg_by_QT()
     memcpy( img.bits(), video_dst_data[0], video_dst_bufsize );
 
     char    str[1000];
-    sprintf( str, "%s\\%d.jpg", output_jpg_root_path.c_str(), frame_count );
+    sprintf( str, "%s\\%d.jpg", output_jpg_path.c_str(), frame_count );
     if( frame_count % 100 == 0 )
         MYLOG( LOG::L_DEBUG, "save jpg %s", str );
     img.save(str);
@@ -580,7 +580,7 @@ VideoDecode::output_overlay_by_QT()
 int     VideoDecode::output_overlay_by_QT()
 {
     char    str[1000];
-    sprintf( str, "%s\\%d.jpg", output_jpg_root_path.c_str(), frame_count );
+    sprintf( str, "%s\\%d.jpg", output_jpg_path.c_str(), frame_count );
     if( frame_count % 100 == 0 )
         MYLOG( LOG::L_DEBUG, "save jpg %s", str );
     overlay_image.save(str);
@@ -595,11 +595,11 @@ int     VideoDecode::output_overlay_by_QT()
 
 #ifdef FFMPEG_TEST
 /*******************************************************************************
-VideoDecode::set_output_openCV_jpg_root()
+VideoDecode::set_output_jpg_path()
 ********************************************************************************/
-void    VideoDecode::set_output_jpg_root( std::string _root_path )
+void    VideoDecode::set_output_jpg_path( std::string _path )
 {
-    output_jpg_root_path    =   _root_path;
+    output_jpg_path    =   _path;
 }
 #endif
 

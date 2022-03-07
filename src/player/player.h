@@ -85,7 +85,7 @@ public:
 
 #ifdef FFMPEG_TEST
     void    play(); 
-    void    set_output_jpg_root( std::string _root_path );
+    void    set_output_jpg_path( std::string _path );
     void    set_output_audio_pcm_path( std::string _path );
 
     std::function<void(QImage)>     output_video_frame_func;
