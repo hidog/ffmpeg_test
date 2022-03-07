@@ -142,10 +142,7 @@ int    DecodeManager::open_decoders( AVFormatContext* fmt_ctx )
             //stream_map.emplace( std::make_pair(index,stream)  );
         }
     }
-
-    // set
-    //dec_ctx     =   cs_index == -1 ? nullptr : dec_map[cs_index];
-    //stream      =   cs_index == -1 ? nullptr : stream_map[cs_index];
+    video_map[current_video_index]->set_is_current(true);
 
     // open audio
     AudioDecode     *a_ptr  =   nullptr;
@@ -163,14 +160,10 @@ int    DecodeManager::open_decoders( AVFormatContext* fmt_ctx )
                 MYLOG( LOG::L_ERROR, "alloc audio decode fail." );
 
             audio_map.emplace( index, dynamic_cast<Decode*>(a_ptr) );
-
-            // note: dec_ctx, stream is class member. after open codec, they use for current ctx, stream.
             a_ptr->open_codec_context( index, fmt_ctx, AVMEDIA_TYPE_AUDIO );
-
-            //dec_map.emplace(    std::make_pair(index,dec_ctx) ); 
-            //stream_map.emplace( std::make_pair(index,stream)  );
         }
     }
+    audio_map[current_audio_index]->set_is_current(true);
 
     return  R_SUCCESS;
 }
@@ -240,4 +233,85 @@ void    DecodeManager::init_decoders()
         a_ptr   =   dynamic_cast<AudioDecode*>(itr.second);
         a_ptr->init();
     }
+}
+
+
+
+
+
+/*******************************************************************************
+DecodeManager::get_decoder()
+********************************************************************************/
+Decode*     DecodeManager::get_decoder( int stream_index )
+{
+    // video
+    auto    v_itr  =   video_map.find(stream_index);
+    if( v_itr != video_map.end() )
+        return  v_itr->second;
+
+    // audio
+    auto    a_itr  =   audio_map.find(stream_index);
+    if( a_itr != audio_map.end() )
+        return  a_itr->second;
+
+    // subtitle
+    auto    s_itr  =   subtitle_map.find(stream_index);
+    if( s_itr != subtitle_map.end() )
+        return  s_itr->second;
+
+    MYLOG( LOG::L_ERROR, "decode not found." );
+    return  nullptr;
+}
+
+
+
+
+/*******************************************************************************
+DecodeManager::flush_decoders()
+********************************************************************************/
+void    DecodeManager::flush_decoders()
+{
+#if 0
+
+    // flush
+    // subtitle 必須在最前面 flush.
+    if( s_decoder.exist_stream() == true )
+        s_decoder.flush();
+#ifdef RENDER_SUBTITLE
+    /* 
+        在有字幕的情況下, video decoder 需要額外呼叫 subtitle decoer 來處理, 所以需要額外的 code.
+        如果要併入 flush, 設計上並沒有比較好看.
+    */
+    ret     =   v_decoder.send_packet(nullptr);
+    if( ret >= 0 )
+    {       
+        while(true)
+        {
+            ret     =   v_decoder.recv_frame(-1);
+            if( ret <= 0 )
+                break;
+
+            if( v_decoder.output_frame_func != nullptr )
+                v_decoder.output_frame_func();
+            v_decoder.unref_frame();
+        }
+    }
+#else
+    // 理論上只有一個 video stream. 如果不是, 這邊有機會出問題.
+    v_decoder.flush();
+#endif
+
+    a_decoder.flush();
+
+#endif
+
+    // subtitle 必須在最前面 flush.
+    for( auto itr : subtitle_map )
+        itr.second->flush();
+
+    for( auto itr : video_map )
+        itr.second->flush();
+
+    for( auto itr : audio_map )
+        itr.second->flush();
 }

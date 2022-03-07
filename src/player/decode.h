@@ -51,6 +51,7 @@ public:
     bool    find_index( int index );
     int     current_index();
     int     get_dec_map_size();
+    void    set_is_current( bool flag );
 
     int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type );
 
@@ -88,6 +89,7 @@ protected:
     AVFrame         *frame      =   nullptr;
    
     int     frame_count =   -1;
+    bool    is_current  =   false;
 
 };
 

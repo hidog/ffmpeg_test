@@ -419,6 +419,7 @@ flush 過程基本上同 decode, 送 nullptr 進去
 ********************************************************************************/
 int    Decode::flush()
 {
+#if 0
     int     ret =   0;
     char    buf[AV_ERROR_MAX_STRING_SIZE]{0};
 
@@ -462,6 +463,51 @@ int    Decode::flush()
                 break;
         }
     }
+#endif
+
+
+    int     ret =   0;
+    char    buf[AV_ERROR_MAX_STRING_SIZE]{0};
+
+    // submit the packet to the decoder
+    ret =   avcodec_send_packet( dec_ctx, nullptr );
+    if( ret < 0 ) 
+    {
+        auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
+        MYLOG( LOG::L_ERROR, "Error submitting a packet for decoding (%s)", str );
+        return  R_ERROR;
+    }
+    
+    // get all the available frames from the decoder
+    while( ret >= 0 )
+    {
+        ret =   avcodec_receive_frame( dec_ctx, frame );
+        if( ret < 0 ) 
+        {
+            // those two return values are special and mean there is no output
+            // frame available, but there were no errors during decoding
+            if( ret == AVERROR_EOF || ret == AVERROR(EAGAIN) )
+                break; 
+    
+            auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
+            MYLOG( LOG::L_ERROR, "Error during decoding (%s)", str );
+            break; //return  ret;
+        }
+    
+        // write the frame data to output file
+        if( is_current == true )
+        {
+            frame_count++;
+            output_frame_func();
+        }
+    
+        av_frame_unref(frame);
+    
+        if( ret < 0 )
+            break;
+    }
+    
+
 
     return 0;
 }
@@ -476,4 +522,14 @@ Decode::get_decode_context()
 AVCodecContext*  Decode::get_decode_context()
 {
     return  dec_ctx;
+}
+
+
+
+/*******************************************************************************
+Decode::set_is_current()
+********************************************************************************/
+void    Decode::set_is_current( bool flag )
+{
+    is_current  =   flag;
 }

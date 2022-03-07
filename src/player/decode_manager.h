@@ -28,12 +28,16 @@ public:
 
     int     open_decoders( AVFormatContext* fmt_ctx );
     void    init_decoders();
+    void    flush_decoders();
+
+    Decode*     get_decoder( int stream_index );
 
     bool    exist_video_stream();
     bool    exist_audio_stream();
 
     VideoDecode*    get_current_video_decoder();
     AudioDecode*    get_current_audio_decoder();
+
 
 #ifdef FFMPEG_TEST
     void    set_output_jpg_path( std::string _root_path );

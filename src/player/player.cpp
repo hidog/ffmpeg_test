@@ -399,7 +399,6 @@ frame   =   dc->get_frame();
 ********************************************************************************/
 void    Player::play()
 {
-#if 0
     if( demuxer == nullptr )
         MYLOG( LOG::L_ERROR, "demuxer is null." );
 
@@ -415,6 +414,8 @@ void    Player::play()
             break;        
         
         pkt     =   demuxer->get_packet();
+        dc      =   decode_manager->get_decoder( pkt->stream_index );
+#if 0
         // video
         if( v_decoder.find_index(pkt->stream_index) )
             dc  =   dynamic_cast<Decode*>(&v_decoder);        
@@ -430,6 +431,7 @@ void    Player::play()
             demuxer->unref_packet();
             continue;
         }
+#endif
 
         // send
         ret =   dc->send_packet(pkt);
@@ -453,6 +455,8 @@ void    Player::play()
     MYLOG( LOG::L_INFO, "play main loop end. it will flush." );
 
     // flush
+    decode_manager->flush_decoders();
+#if 0
     // subtitle 必須在最前面 flush.
     if( s_decoder.exist_stream() == true )
         s_decoder.flush();
@@ -481,10 +485,12 @@ void    Player::play()
 #endif
     a_decoder.flush();
 
-    MYLOG( LOG::L_INFO, "Demuxing succeeded." );
 #endif
+#endif
+
+    MYLOG( LOG::L_INFO, "Demuxing finish." );
 }
-#endif
+
 
 
 
