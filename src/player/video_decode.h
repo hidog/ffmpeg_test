@@ -28,7 +28,7 @@ public:
 
     virtual int     init() override;
     virtual int     end() override;
-    virtual int     open_codec_context( AVFormatContext *fmt_ctx ) override;
+    //virtual int     open_codec_context( AVFormatContext *fmt_ctx ) override;
 
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
     int     recv_frame( int index ) override;

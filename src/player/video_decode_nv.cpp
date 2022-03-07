@@ -47,7 +47,7 @@ VideoDecodeNV::~VideoDecodeNV()
 
 
 
-
+#if 0
 /*******************************************************************************
 VideoDecodeNV::open_codec_context
 ********************************************************************************/
@@ -74,6 +74,7 @@ int     VideoDecodeNV::open_codec_context( AVFormatContext *fmt_ctx )
 
     return  ret;
 }
+#endif
 
 
 

@@ -68,7 +68,7 @@ void    VideoDecodeHW::list_hw_decoders()
 
 
 
-
+#if 0
 /*******************************************************************************
 VideoDecodeHW::open_codec_context
 ********************************************************************************/
@@ -132,6 +132,7 @@ int     VideoDecodeHW::open_codec_context( AVFormatContext *fmt_ctx )
 
     return  ret;
 }
+#endif
 
 
 

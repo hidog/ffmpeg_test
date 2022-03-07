@@ -59,7 +59,7 @@ VideoDecode::~VideoDecode()
 
 
 
-
+#if 0
 /*******************************************************************************
 VideoDecode::open_codec_context()
 ********************************************************************************/
@@ -69,7 +69,7 @@ int     VideoDecode::open_codec_context( AVFormatContext *fmt_ctx )
     //dec_ctx->thread_count   =   4;
     return  R_SUCCESS;
 }
-
+#endif
 
 
 

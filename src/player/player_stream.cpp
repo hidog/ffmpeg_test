@@ -39,6 +39,9 @@ int    PlayerStream::init()
     // 必須先初始化
     Player::init();
 
+    assert(0);
+
+#if 0
     //
     AudioDecode &a_decoder  =   Player::get_audio_decoder();
 
@@ -57,6 +60,7 @@ int    PlayerStream::init()
     add_audio_frame_cb          =   std::bind( &encode::add_audio_frame, std::placeholders::_1 );
     add_video_frame_cb          =   std::bind( &encode::add_video_frame, std::placeholders::_1 );
     output_live_stream_func     =   std::bind( &PlayerStream::output_live_stream, this, std::placeholders::_1 );
+#endif
 
     return  1;
 }
@@ -89,6 +93,7 @@ PlayerStream::play_QT()
 ********************************************************************************/
 void    PlayerStream::play_QT()
 {
+#if 0
     VideoDecode     &v_decoder  =   Player::get_video_decoder();
     AudioDecode     &a_decoder  =   Player::get_audio_decoder();
     SubDecode       &s_decoder  =   Player::get_subtitle_decoder();
@@ -148,6 +153,7 @@ void    PlayerStream::play_QT()
     //
     flush();
     MYLOG( LOG::L_INFO, "play stream finish.")
+#endif
 }
 
 
@@ -212,6 +218,7 @@ PlayerStream::get_new_v_frame()
 ********************************************************************************/
 AVFrame*    PlayerStream::get_new_v_frame()
 {
+#if 0
     VideoDecode &v_decoder  =   Player::get_video_decoder();
 
     AVFrame*    v_frame     =   nullptr;
@@ -237,6 +244,10 @@ AVFrame*    PlayerStream::get_new_v_frame()
         assert(0);
 
     return  v_frame;
+#endif
+
+    assert(0);
+    return  nullptr;
 }
 
 
@@ -251,6 +262,7 @@ PlayerStream::get_new_a_frame()
 ********************************************************************************/
 AVFrame*    PlayerStream::get_new_a_frame()
 {
+#if 0
     AudioDecode &a_decoder  =   Player::get_audio_decoder();
 
     AVFrame*    a_frame     =   nullptr;
@@ -283,6 +295,10 @@ AVFrame*    PlayerStream::get_new_a_frame()
         assert(0);
 
     return  a_frame;
+#endif
+
+    assert(0);
+    return  nullptr;
 }
 
 

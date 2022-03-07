@@ -12,12 +12,14 @@
 #include <functional>
 
 #include "demux.h"
-#include "audio_decode.h"
-#include "sub_decode.h"
+#include "decode.h"
+#include "decode_manager.h"
 
-#include "video_decode.h"
+
+/*#include "audio_decode.h"
+#include "sub_decode.h"
 #include "video_decode_nv.h"
-#include "video_decode_hw.h"
+#include "video_decode_hw.h"*/
 
 #include <QImage>
 
@@ -97,9 +99,10 @@ protected:
 
     DecodeSetting&  get_setting();
     Demux*          get_demuxer();
-    VideoDecode&    get_video_decoder();
+
+    /*VideoDecode&    get_video_decoder();
     AudioDecode&    get_audio_decoder();
-    SubDecode&      get_subtitle_decoder();
+    SubDecode&      get_subtitle_decoder();*/
 
     std::function<void(Decode*)>    output_live_stream_func =   nullptr;
 
@@ -110,13 +113,14 @@ private:
 
     DecodeSetting   setting;
 
-    Demux           *demuxer    =   nullptr;
-    
-    VideoDecode     v_decoder;
+    Demux           *demuxer        =   nullptr;
+    DecodeManager   *decode_manager =   nullptr;
+
+    //VideoDecode     v_decoder;
     //VideoDecodeNV   v_decoder;
     //VideoDecodeHW   v_decoder;
-    AudioDecode     a_decoder;
-    SubDecode       s_decoder;
+    //AudioDecode     a_decoder;
+    //SubDecode       s_decoder;
 
     // switch subtitle使用
     std::string     new_subtitle_path; 

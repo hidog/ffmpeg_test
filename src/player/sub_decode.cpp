@@ -144,7 +144,7 @@ SubDecode::~SubDecode()
 
 
 
-
+#if 0
 /*******************************************************************************
 SubDecode::open_codec_context()
 ********************************************************************************/
@@ -162,7 +162,7 @@ int     SubDecode::open_codec_context( AVFormatContext *fmt_ctx )
 
     return  R_SUCCESS;
 }
-
+#endif
 
 
 

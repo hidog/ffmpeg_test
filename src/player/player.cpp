@@ -1,6 +1,10 @@
 #include "player.h"
+
 #include "tool.h"
 #include "demux_io.h"
+#include "video_decode.h"
+#include "audio_decode.h"
+
 
 #include <thread>
 
@@ -60,23 +64,31 @@ MediaInfo   Player::get_media_info()
     AVStream*   stream  =   nullptr;
 
     // video
-    info.width      =   v_decoder.get_video_width();
-    info.height     =   v_decoder.get_video_height();
-    info.pix_fmt    =   v_decoder.get_pix_fmt();
-    
-    stream  =   v_decoder.get_stream();
-    if( stream != nullptr )
+    if( decode_manager->exist_video_stream() == true )
     {
-        info.time_num   =   stream->avg_frame_rate.den;
-        info.time_den   =   stream->avg_frame_rate.num;
+        VideoDecode     *v_dec  =   decode_manager->get_current_video_decoder();
+        info.width      =   v_dec->get_video_width();
+        info.height     =   v_dec->get_video_height();
+        info.pix_fmt    =   v_dec->get_pix_fmt();
+    
+        stream  =   v_dec->get_stream();
+        if( stream != nullptr )
+        {
+            info.time_num   =   stream->avg_frame_rate.den;
+            info.time_den   =   stream->avg_frame_rate.num;
+        }
+        else
+            MYLOG( LOG::L_ERROR, "stream is nullptr" );
     }
-    else
-        MYLOG( LOG::L_ERROR, "stream is nullptr" );
 
     // audio
-    info.channel_layout =   a_decoder.get_audio_channel_layout();
-    info.sample_rate    =   a_decoder.get_audio_sample_rate();
-    info.sample_fmt     =   a_decoder.get_audio_sample_format();
+    if( decode_manager->exist_audio_stream() == true )
+    {
+        AudioDecode     *a_dec  =   decode_manager->get_current_audio_decoder();
+        info.channel_layout =   a_dec->get_audio_channel_layout();
+        info.sample_rate    =   a_dec->get_audio_sample_rate();
+        info.sample_fmt     =   a_dec->get_audio_sample_format();
+    }
 
     return  info;
 }
@@ -113,13 +125,15 @@ int     Player::init()
     fmt_ctx =   demuxer->get_format_context();
 
     //
-    ret     =   v_decoder.open_codec_context( fmt_ctx );
+    decode_manager->open_decoders( fmt_ctx );
+
+    /*ret     =   v_decoder.open_codec_context( fmt_ctx );
     ret     =   a_decoder.open_codec_context( fmt_ctx );
     ret     =   s_decoder.open_codec_context( fmt_ctx );
 
     //
     ret     =   v_decoder.init();
-    ret     =   a_decoder.init();    
+    ret     =   a_decoder.init();    */
 
     // handle subtitle
     // 有遇到影片會在這邊卡很久, 或許可以考慮用multi-thread的方式做處理, 以後再說...
@@ -127,8 +141,8 @@ int     Player::init()
 
 #if defined(RENDER_SUBTITLE) || !defined(FFMPEG_TEST)
     // 若有 subtitle, 設置進去 video decoder.
-    if( s_decoder.exist_stream() == true )
-        v_decoder.set_subtitle_decoder( &s_decoder );
+    //if( s_decoder.exist_stream() == true )
+      //  v_decoder.set_subtitle_decoder( &s_decoder );
 #endif
 
     return R_SUCCESS;
@@ -193,6 +207,7 @@ Player::init_subtitle()
 ********************************************************************************/
 void    Player::init_subtitle( AVFormatContext *fmt_ctx )
 {
+#if 0
     int             ret;
     bool            exist_subtitle  =   false;
     SubData         sd;
@@ -247,6 +262,7 @@ void    Player::init_subtitle( AVFormatContext *fmt_ctx )
             s_decoder.set_filter_args( sub_param.first );
         }       
     }
+#endif
 }
 
 
@@ -256,7 +272,9 @@ void    Player::init_subtitle( AVFormatContext *fmt_ctx )
 Player::Player()
 ********************************************************************************/
 Player::Player()
-{}
+{
+    decode_manager  =   new DecodeManager;
+}
 
 
 
@@ -289,7 +307,9 @@ bool    Player::is_set_input_file()
 Player::~Player()
 ********************************************************************************/
 Player::~Player()
-{}
+{
+    delete decode_manager;
+}
 
 
 
@@ -301,8 +321,16 @@ Player::get_video_setting()
 VideoDecodeSetting    Player::get_video_setting()
 {
     VideoDecodeSetting    vs;
-    vs.width    =   v_decoder.get_video_width();
-    vs.height   =   v_decoder.get_video_height();
+    vs.width    =   0;
+    vs.height   =   0;
+
+    if( decode_manager->exist_video_stream() == true )
+    {
+        VideoDecode     *v_ptr  =   decode_manager->get_current_video_decoder();
+        vs.width    =   v_ptr->get_video_width();
+        vs.height   =   v_ptr->get_video_height();
+    }
+
     return  vs;
 }
 
@@ -316,8 +344,15 @@ Player::get_audio_setting()
 AudioDecodeSetting    Player::get_audio_setting()
 {
     AudioDecodeSetting    as;
-    as.channel      =   a_decoder.get_audio_channel();
-    as.sample_rate  =   a_decoder.get_audio_sample_rate();
+    as.channel      =   0;
+    as.sample_rate  =   0;
+
+    if( decode_manager->exist_audio_stream() == true )
+    {
+        AudioDecode     *a_ptr  =   decode_manager->get_current_audio_decoder();
+        as.channel      =   a_ptr->get_audio_channel();
+        as.sample_rate  =   a_ptr->get_audio_sample_rate();
+    }
     return  as;
 }
 
@@ -624,16 +659,19 @@ bool    Player::demux_need_wait()
 {
     if( seek_flag == true )
         return  false;
-    else if( v_decoder.exist_stream() == true && a_decoder.exist_stream() == true )
+    //else if( v_decoder.exist_stream() == true && a_decoder.exist_stream() == true )
+    else if( decode_manager->exist_video_stream() == true && decode_manager->exist_audio_stream() == true )
     {
         if( decode::get_video_size() >= MAX_QUEUE_SIZE && decode::get_audio_size() >= MAX_QUEUE_SIZE )
             return  true;
         else
             return  false;
     }   
-    else if( v_decoder.exist_stream() == true && decode::get_video_size() >= MAX_QUEUE_SIZE )    
+    //else if( v_decoder.exist_stream() == true && decode::get_video_size() >= MAX_QUEUE_SIZE )
+    else if( decode_manager->exist_video_stream() == true )
         return  true;  
-    else if( a_decoder.exist_stream() == true && decode::get_audio_size() >= MAX_QUEUE_SIZE )
+    //else if( a_decoder.exist_stream() == true && decode::get_audio_size() >= MAX_QUEUE_SIZE )
+    else if( decode_manager->exist_audio_stream() == true )
         return  true;
     else
         return  false;
@@ -647,7 +685,13 @@ Player::is_embedded_subtitle()
 ********************************************************************************/
 bool    Player::is_embedded_subtitle()
 {
+#if 0
     return  s_decoder.get_sub_src_type() == SubSourceType::EMBEDDED;
+#endif
+
+    assert(0);
+
+    return  false;
 }
 
 
@@ -660,7 +704,14 @@ Player::is_file_subtitle()
 ********************************************************************************/
 bool    Player::is_file_subtitle()
 {
+#if 0
     return  s_decoder.get_sub_src_type() == SubSourceType::FROM_FILE;
+#endif
+
+    assert(0);
+
+
+    return  false;
 }
 
 
@@ -672,7 +723,11 @@ Player::is_embedded_subtitle()
 ********************************************************************************/
 std::vector<std::string>    Player::get_embedded_subtitle_list()
 {
-    return  s_decoder.get_embedded_subtitle_list();
+    //return  s_decoder.get_embedded_subtitle_list();
+    assert(0);
+
+
+    return  std::vector<std::string>();
 }
 
 
@@ -707,9 +762,11 @@ void    Player::handle_seek()
     decode::clear_video_queue();
     decode::clear_audio_queue();
 
-    v_decoder.flush_for_seek();
-    a_decoder.flush_for_seek();
-    s_decoder.flush_for_seek();
+    assert(0);
+
+    //v_decoder.flush_for_seek();
+    //a_decoder.flush_for_seek();
+    //s_decoder.flush_for_seek();
 
     // run seek.
     AVFormatContext*    fmt_ctx     =   demuxer->get_format_context();
@@ -737,6 +794,8 @@ Player::play_QT()
 ********************************************************************************/
 void    Player::play_QT()
 {
+    assert(0);
+#if 0
     int         ret     =   0;
     AVPacket    *pkt    =   nullptr;
     Decode      *dc     =   nullptr;
@@ -798,6 +857,7 @@ void    Player::play_QT()
     //
     flush();
     MYLOG( LOG::L_INFO, "play finish.")
+#endif
 }
 
 
@@ -807,6 +867,7 @@ Player::decode
 ********************************************************************************/
 int     Player::decode( Decode *dc, AVPacket* pkt )
 {
+#if 0
     // switch subtitle track
     // 寫在這邊是為了方便未來跟 multi-thread decode 結合.
     if( switch_subtitle_flag == true )
@@ -856,6 +917,9 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
             dc->unref_frame();
         }
     }
+#endif
+
+    assert(0);
 
     return  R_SUCCESS;
 }
@@ -876,6 +940,7 @@ flush 過程基本上同 decode, 送 nullptr 進去
 ********************************************************************************/
 int    Player::flush()
 {
+#if 0
     int         ret     =   0;
     VideoData   vdata;
     AudioData   adata;
@@ -924,7 +989,7 @@ int    Player::flush()
         }
     }
     a_decoder.flush_all_stream();  // 多音軌的時候,清除其他音軌的資料
-
+#endif
     return 0;
 }
 
@@ -953,9 +1018,13 @@ int     Player::end()
 {
     clear_setting();
 
+    assert(0);
+
+#if 0
     v_decoder.end();
     a_decoder.end();
     s_decoder.end();
+#endif
 
     stop_flag   =   false;
     seek_flag   =   false;
@@ -998,7 +1067,7 @@ void    Player::switch_subtitle( int index )
 
 
 
-
+#if 0
 /*******************************************************************************
 Player::get_video_decoder()
 ********************************************************************************/
@@ -1006,10 +1075,10 @@ VideoDecode&    Player::get_video_decoder()
 {
     return  v_decoder;
 }
-    
+#endif
 
 
-
+#if 0
 /*******************************************************************************
 Player::get_audio_decoder()
 ********************************************************************************/
@@ -1017,10 +1086,10 @@ AudioDecode&    Player::get_audio_decoder()
 {
     return  a_decoder;
 }
+#endif
 
 
-
-    
+#if 0
 /*******************************************************************************
 Player::get_subtitle_decoder()
 ********************************************************************************/
@@ -1028,7 +1097,7 @@ SubDecode&      Player::get_subtitle_decoder()
 {
     return  s_decoder;
 }
-
+#endif
 
 
 

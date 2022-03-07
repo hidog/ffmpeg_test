@@ -129,6 +129,9 @@
     <ClCompile Include="..\src\maker\video_encode_hw.cpp">
       <Filter>src\maker</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\player\decode_manager.cpp">
+      <Filter>src\player</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -229,6 +232,9 @@
     </ClInclude>
     <ClInclude Include="..\src\maker\video_encode_hw.h">
       <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\player\decode_manager.h">
+      <Filter>src\player</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

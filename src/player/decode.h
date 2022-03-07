@@ -33,7 +33,7 @@ public:
     Decode& operator = ( Decode&& ) = delete;
     
     virtual void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) = 0;
-    virtual int     open_codec_context( AVFormatContext *fmt_ctx ) = 0;
+    //virtual int     open_codec_context( AVFormatContext *fmt_ctx ) = 0;
 
     virtual int     init();
     virtual int     end();  
@@ -52,6 +52,8 @@ public:
     int     current_index();
     int     get_dec_map_size();
 
+    int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type );
+
     AVMediaType     get_decode_context_type();
     AVCodecContext* get_decode_context();
     AVStream*       get_stream();
@@ -64,7 +66,6 @@ public:
 protected:
     AVMediaType     type;
 
-    int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type );
     int     open_all_codec( AVFormatContext *fmt_ctx, AVMediaType type );
 
     // 有空改成 private + protected interface.
