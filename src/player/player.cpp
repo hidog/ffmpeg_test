@@ -851,12 +851,23 @@ void    Player::play_QT()
         //
         if( seek_flag == true )     
         {
-            while( ui_v_seek_lock == false || ui_a_seek_lock == false )
-                SLEEP_10MS;
-            seek_flag   =   false;
-            handle_seek();
-            ui_v_seek_lock = false;
-            ui_a_seek_lock = false;
+            if( decode_manager->exist_video_stream() == true )
+            {
+                while( ui_v_seek_lock == false || ui_a_seek_lock == false )
+                    SLEEP_10MS;
+                seek_flag   =   false;
+                handle_seek();
+                ui_v_seek_lock = false;
+                ui_a_seek_lock = false;
+            }
+            else
+            {
+                while( ui_a_seek_lock == false )
+                    SLEEP_10MS;
+                seek_flag   =   false;
+                handle_seek();
+                ui_a_seek_lock = false;
+            }
         }
 
         //
@@ -867,6 +878,8 @@ void    Player::play_QT()
         //
         pkt     =   demuxer->get_packet();
         dc      =   decode_manager->get_decoder( pkt->stream_index );
+        if( dc == nullptr )  // 音檔附圖片的case,有空修
+            continue;
 
 #if 0
         if( v_decoder.find_index( pkt->stream_index ) == true )

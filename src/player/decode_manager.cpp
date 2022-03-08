@@ -153,7 +153,14 @@ int    DecodeManager::open_decoders( AVFormatContext* fmt_ctx )
     {
         ret  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_VIDEO, index, -1, nullptr, 0 );
 
-        if( ret >= 0 )
+        /*
+            fmt_ctx->streams[index]->avg_frame_rate.den
+            這個地方有點問題
+            如果播放音樂檔案,但裡面有附專輯圖片
+            此時會出問題.
+            暫時先用 avg_frame_rate 處理,未來研究有沒有更好的方式
+        */
+        if( ret >= 0 && fmt_ctx->streams[index]->avg_frame_rate.den != 0 )
         {
             if( current_video_index < 0 )           
                 current_video_index   =   index; // choose first as current.
@@ -327,7 +334,7 @@ Decode*     DecodeManager::get_decoder( int stream_index )
     if( s_itr != subtitle_map.end() )
         return  s_itr->second;
 
-    MYLOG( LOG::L_ERROR, "decode not found." );
+    MYLOG( LOG::L_WARN, "decode not found." );  // 音檔附圖片的case
     return  nullptr;
 }
 

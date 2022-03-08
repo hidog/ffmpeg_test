@@ -40,6 +40,8 @@ public slots:
 
 signals:
 
+    void    update_seekbar_signal( int sec );
+
 private:
 
     QAudioOutput    *audio     =   nullptr;

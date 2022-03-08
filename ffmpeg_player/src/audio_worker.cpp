@@ -187,14 +187,23 @@ seek 的時候, 由 UI 端負責清空資料, 之後等到有資料才繼續播放.
 ********************************************************************************/
 void    AudioWorker::flush_for_seek()
 {
-    bool    &v_start    =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
+    if( only_audio == true )
+    {
+        while( decode::get_audio_size() <= 3 )
+            SLEEP_10MS;
+        a_start     =   true;
+    }
+    else
+    {
+        bool    &v_start    =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
 
-    // 重新等待有資料才播放
-    while( decode::get_audio_size() <= 3 )
-        SLEEP_10MS;
-    a_start     =   true;
-    while( v_start == false )
-        SLEEP_10MS;
+        // 重新等待有資料才播放
+        while( decode::get_audio_size() <= 3 )
+            SLEEP_10MS;
+        a_start     =   true;
+        while( v_start == false )
+            SLEEP_10MS;
+    }
 }
 
 
@@ -230,17 +239,6 @@ void    AudioWorker::audio_play()
         //
         ad  =   decode::get_audio_data();
 
-#if 0
-        while(true)
-        {
-            now         =   std::chrono::steady_clock::now();
-            duration    =   std::chrono::duration_cast<std::chrono::milliseconds>( now - last );
-
-            if( duration.count() >= ad.timestamp - last_ts )
-                break;
-        }
-#endif
-
         remain_bytes    =   ad.bytes;
         ptr             =   ad.pcm; 
 
@@ -271,6 +269,9 @@ void    AudioWorker::audio_play()
                 ptr             +=  wanted_buffer_size;
                 remain_bytes    -=  wanted_buffer_size;
             }
+
+            if( seek_flag == false )
+                emit    update_seekbar_signal( ad.timestamp / 1000 );
         }
 
         last_ts = ad.timestamp;
