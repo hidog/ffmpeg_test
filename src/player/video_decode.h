@@ -53,6 +53,7 @@ public:
     int     video_info(); // 未來增加 nv decode 可以參考這邊
 
 #ifdef FFMPEG_TEST
+    int     flush() override;
     int     output_overlay_by_QT();   // 處理 graphic subtitle
     int     output_jpg_by_QT();
     int     output_jpg_by_openCV();

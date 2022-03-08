@@ -28,11 +28,6 @@ struct AVPacket;
 
 
 
-#ifdef FFMPEG_TEST
-#define RENDER_SUBTITLE  // 是否要將字幕加進video frame內
-#endif
-
-
 // 若有需要, 增加抽象介面.
 class DLL_API Player
 {
@@ -67,7 +62,7 @@ public:
     bool    is_embedded_subtitle();
     bool    is_file_subtitle();
 
-    void    init_subtitle( AVFormatContext *fmt_ctx );
+    //void    init_subtitle( AVFormatContext *fmt_ctx );
     void    handle_seek();    
     void    clear_setting();
     int64_t get_duration_time();

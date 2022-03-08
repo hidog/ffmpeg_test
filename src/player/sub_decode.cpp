@@ -169,6 +169,28 @@ int     SubDecode::open_codec_context( AVFormatContext *fmt_ctx )
 
 
 
+
+/*******************************************************************************
+SubDecode::open_codec_context()
+********************************************************************************/
+int     SubDecode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type )
+{
+    Decode::open_codec_context( stream_index, fmt_ctx, type );
+
+    if( dec_ctx != nullptr )
+    {
+        if( dec_ctx->pix_fmt != AV_PIX_FMT_NONE )
+            is_graphic  =   true;
+        else
+            is_graphic  =   false;
+    }
+
+    return  R_SUCCESS;
+}
+
+
+
+
 /*******************************************************************************
 SubDecode::is_graphic_subtitle()
 ********************************************************************************/
@@ -912,7 +934,9 @@ SubDecode::test_flush()
 ********************************************************************************/
 int    SubDecode::flush()
 {
-#if 0
+    if( dec_ctx == nullptr ) // case: 從外部檔案讀取字幕
+        return  R_SUCCESS;
+
     AVPacket    pkt;
     pkt.data    =   nullptr;
     pkt.size    =   0;
@@ -922,28 +946,29 @@ int    SubDecode::flush()
 
     int     ret, got_sub;
 
-    for( auto dec_itr : dec_map )
+    //for( auto dec_itr : dec_map )
+    //{
+
+    while(true)
     {
-        while(true)
-        {
-            got_sub     =   0;
-            ret         =   avcodec_decode_subtitle2( dec_itr.second, &subtitle, &got_sub, &pkt );
-            if( ret < 0 )
-                MYLOG( LOG::L_ERROR, "error." );            
-            
-            // if need output message, use this flag.
-            //if( got_sub > 0 )
-            //{}
-
-            avsubtitle_free(&subtitle);        
-
-            if( got_sub <= 0 )
-                break;
-        }
+        got_sub     =   0;
+        ret         =   avcodec_decode_subtitle2( dec_ctx, &subtitle, &got_sub, &pkt );
+        if( ret < 0 )
+            MYLOG( LOG::L_ERROR, "error." );            
+        
+        // if need output message, use this flag.
+        //if( got_sub > 0 )
+        //{}
+    
+        avsubtitle_free(&subtitle);        
+    
+        if( got_sub <= 0 )
+            break;
     }
-#endif
 
-    return  1;
+    //}
+
+    return  R_SUCCESS;
 }
 #endif
 

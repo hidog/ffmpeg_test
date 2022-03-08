@@ -511,6 +511,33 @@ int     VideoDecode::recv_frame( int index )
 
 
 
+/*******************************************************************************
+VideoDecode::flush()
+********************************************************************************/
+int     VideoDecode::flush()
+{
+#ifdef RENDER_SUBTITLE
+    int ret =   send_packet(nullptr);
+    if( ret >= 0 )
+    {       
+        while(true)
+        {
+            ret     =   recv_frame(-1);
+            if( ret <= 0 )
+                break;
+
+            if( output_frame_func != nullptr )
+                output_frame_func();
+            unref_frame();
+        }
+    }
+#else
+    Decode::flush();
+#endif
+
+    return  R_SUCCESS;
+}
+
 
 
 

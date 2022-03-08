@@ -44,6 +44,9 @@ public:
     int     recv_frame( int index ) override;
 
     //int     open_codec_context( AVFormatContext *fmt_ctx ) override;
+    int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type ) override;
+
+
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
     bool    exist_stream() override;
     void    flush_for_seek() override;
@@ -68,7 +71,7 @@ public:
 
     QPoint  get_subtitle_image_pos();
     QImage  get_subtitle_image();
-    void    init_graphic_subtitle( SubData sd );
+    void    init_graphic_subtitle( SubData sd );    
 
 #ifdef _DEBUG
     int     resend_to_filter();

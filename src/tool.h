@@ -17,6 +17,9 @@ constexpr int HAVE_FRAME    =   1; // 需要用 1 來判斷是否還有 frame.
 #define SLEEP_10MS std::this_thread::sleep_for( std::chrono::milliseconds(10) )
 #define SLEEP_1MS std::this_thread::sleep_for( std::chrono::milliseconds(1) )
 
+#ifdef FFMPEG_TEST
+#define RENDER_SUBTITLE  // 是否要將字幕加進video frame內
+#endif
 
 enum class LOG
 {

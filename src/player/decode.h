@@ -34,6 +34,7 @@ public:
     
     virtual void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) = 0;
     //virtual int     open_codec_context( AVFormatContext *fmt_ctx ) = 0;
+    virtual int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type );
 
     virtual int     init();
     virtual int     end();  
@@ -52,8 +53,6 @@ public:
     int     current_index();
     int     get_dec_map_size();
     void    set_is_current( bool flag );
-
-    int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type );
 
     AVMediaType     get_decode_context_type();
     AVCodecContext* get_decode_context();
