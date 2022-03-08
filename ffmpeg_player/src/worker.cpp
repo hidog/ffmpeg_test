@@ -178,11 +178,64 @@ Worker::play()
 ********************************************************************************/
 void    Worker::play()
 {
+    if( player->exist_video_stream() == true )
+        play_video_audio();
+    else
+        play_audio();
+}
+
+
+
+
+
+
+/*******************************************************************************
+Worker::play_audio()
+********************************************************************************/
+void    Worker::play_audio()
+{
+    AudioDecodeSetting    as;
+    AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
+    aw->set_only_audio( true );
+
+    // send audio setting to UI
+    as  =   player->get_audio_setting();
+    aw->open_audio_output(as);
+    is_play_end     =   false;
+    aw->start();
+    
+    //
+#ifdef USE_MT
+    player.play_QT_multi_thread();
+#else
+    player->play_QT();
+#endif
+
+    player->end();
+    is_play_end     =   true;
+    
+    // 等待其他兩個thread完成
+    while( aw->isFinished() == false )
+        SLEEP_10MS;
+
+    MYLOG( LOG::L_INFO, "finish decode." );
+}
+
+
+
+
+
+/*******************************************************************************
+Worker::play_video_audio()
+********************************************************************************/
+void    Worker::play_video_audio()
+{
     VideoDecodeSetting    vs;
     AudioDecodeSetting    as;
     AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
     VideoWorker     *vw     =   dynamic_cast<MainWindow*>(parent())->get_video_worker();
-    
+    aw->set_only_audio( false );    
+
     // send video setting to UI
     is_set_video    =   false;
     vs              =   player->get_video_setting();
@@ -218,7 +271,6 @@ void    Worker::play()
 
     MYLOG( LOG::L_INFO, "finish decode." );
 }
-
 
 
 

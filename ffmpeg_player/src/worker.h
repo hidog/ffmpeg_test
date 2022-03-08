@@ -41,6 +41,9 @@ public:
     void    set_ip( std::string _ip );
     void    set_port( std::string _port );
     bool&   get_play_end_state();
+
+    void    play_video_audio();
+    void    play_audio();
     
     // use for output    
     void    set_output( bool enable, std::string _port );

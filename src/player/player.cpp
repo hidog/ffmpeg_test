@@ -701,10 +701,10 @@ bool    Player::demux_need_wait()
             return  false;
     }   
     //else if( v_decoder.exist_stream() == true && decode::get_video_size() >= MAX_QUEUE_SIZE )
-    else if( decode_manager->exist_video_stream() == true )
+    else if( decode_manager->exist_video_stream() == true && decode::get_video_size() >= MAX_QUEUE_SIZE )
         return  true;  
     //else if( a_decoder.exist_stream() == true && decode::get_audio_size() >= MAX_QUEUE_SIZE )
-    else if( decode_manager->exist_audio_stream() == true )
+    else if( decode_manager->exist_audio_stream() == true && decode::get_audio_size() >= MAX_QUEUE_SIZE )
         return  true;
     else
         return  false;
@@ -1177,3 +1177,15 @@ void    player_decode_example()
 
 }
 #endif
+
+
+
+
+
+/*******************************************************************************
+Player::exist_video_stream()
+********************************************************************************/
+bool    Player::exist_video_stream()
+{
+    return  decode_manager->exist_video_stream();
+}

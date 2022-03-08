@@ -56,6 +56,7 @@ public:
     bool    is_set_input_file();
     int     decode( Decode *dc, AVPacket* pkt );
     int     init_demuxer();
+    bool    exist_video_stream();
 
     void    switch_subtitle( std::string path );
     void    switch_subtitle( int index );

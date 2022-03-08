@@ -21,6 +21,7 @@ public:
     void    run() override;
 
     void    open_audio_output( AudioDecodeSetting as );
+    void    audio_play_with_video();
     void    audio_play();
     bool&   get_audio_start_state();
 
@@ -29,6 +30,7 @@ public:
     void    pause();
 
     void    flush_for_seek();    
+    void    set_only_audio( bool flag );
 
 public slots:
 
@@ -46,6 +48,7 @@ private:
     bool    a_start     =   false;
     bool    force_stop  =   false;
     bool    seek_flag   =   false;
+    bool    only_audio  =   false;
 
 };
 
