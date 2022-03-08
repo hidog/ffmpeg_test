@@ -294,6 +294,8 @@ Decode::flush_for_seek()
 ********************************************************************************/
 void    Decode::flush_for_seek()
 {
+    avcodec_flush_buffers( dec_ctx );
+
 #if 0
     int     ret;
 

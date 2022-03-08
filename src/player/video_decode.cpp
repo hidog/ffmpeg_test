@@ -511,6 +511,9 @@ int     VideoDecode::recv_frame( int index )
 
 
 
+
+
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 VideoDecode::flush()
 ********************************************************************************/
@@ -537,7 +540,7 @@ int     VideoDecode::flush()
 
     return  R_SUCCESS;
 }
-
+#endif
 
 
 

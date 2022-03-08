@@ -795,7 +795,7 @@ void    Player::handle_seek()
     decode::clear_video_queue();
     decode::clear_audio_queue();
 
-    assert(0);
+    decode_manager->flush_decoders_for_seek();
 
     //v_decoder.flush_for_seek();
     //a_decoder.flush_for_seek();

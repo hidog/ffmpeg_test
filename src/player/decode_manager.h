@@ -35,6 +35,7 @@ public:
     int     open_decoders( AVFormatContext* fmt_ctx );
     void    init_decoders();
     void    flush_decoders();
+    void    flush_decoders_for_seek();
 
     Decode*     get_decoder( int stream_index );
 

@@ -547,3 +547,21 @@ void    DecodeManager::init_subtitle( AVFormatContext *fmt_ctx, DecodeSetting se
     }
 }
 
+
+
+
+
+/*******************************************************************************
+DecodeManager::flush_decoders_for_seek()
+********************************************************************************/
+void    DecodeManager::flush_decoders_for_seek()
+{
+    for( auto itr : video_map )    
+        itr.second->flush_for_seek();
+    
+    for( auto itr : audio_map )
+        itr.second->flush_for_seek();
+
+    for( auto itr : subtitle_map )
+        itr.second->flush_for_seek();
+}
