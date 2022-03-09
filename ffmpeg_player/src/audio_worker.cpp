@@ -271,7 +271,7 @@ void    AudioWorker::audio_play()
             }
 
             if( seek_flag == false )
-                emit    update_seekbar_signal( ad.timestamp / 1000 );
+                update_seekbar( ad.timestamp/1000 );
         }
 
         last_ts = ad.timestamp;
@@ -341,7 +341,7 @@ void AudioWorker::audio_play_with_video()
     bool    &v_start        =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
     bool    &is_play_end    =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_play_end_state();
 
-    while( decode::get_audio_size() <= 30 )
+    while( decode::get_audio_size() == 0 )
         SLEEP_10MS;
     a_start = true;
     while( v_start == false )
@@ -426,6 +426,9 @@ void AudioWorker::audio_play_with_video()
                 ptr             +=  wanted_buffer_size;
                 remain_bytes    -=  wanted_buffer_size;
             }
+
+            if( seek_flag == false )
+                update_seekbar( ad.timestamp/1000 );
         }
 
         last_ts = ad.timestamp;
@@ -477,6 +480,32 @@ void AudioWorker::audio_play_with_video()
 
     // force stop 需要手動清除 queue.
     decode::clear_audio_queue();
+}
+
+
+
+
+
+/*******************************************************************************
+AudioWorker::stop()
+********************************************************************************/
+void    AudioWorker::update_seekbar( int sec )
+{
+    const int   &v_sec   =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_current_sec();
+    current_sec   =   sec;
+
+    if( current_sec > v_sec )
+        emit    update_seekbar_signal( current_sec );
+}
+
+
+
+/*******************************************************************************
+AudioWorker::stop()
+********************************************************************************/
+const int&  AudioWorker::get_current_sec()
+{
+    return  current_sec;
 }
 
 

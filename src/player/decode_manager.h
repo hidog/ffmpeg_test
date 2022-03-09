@@ -42,6 +42,7 @@ public:
     bool    exist_video_stream();
     bool    exist_audio_stream();
     bool    exist_subtitle_stream();
+    bool    is_video_attachd();
 
     int     get_current_video_index();
     int     get_current_audio_index();

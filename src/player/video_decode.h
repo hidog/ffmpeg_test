@@ -36,6 +36,7 @@ public:
     
     AVFrame*    get_frame() override;
 
+    bool    is_attached();
     int     render_nongraphic_subtitle();
     int     overlap_subtitle_image();
     

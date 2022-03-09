@@ -113,6 +113,37 @@ void    VideoWorker::flush_for_seek()
 
 
 
+
+
+/*******************************************************************************
+VideoWorker::update_seekbar()
+********************************************************************************/
+void    VideoWorker::update_seekbar( int sec )
+{
+    const int   &a_sec   =   dynamic_cast<MainWindow*>(parent())->get_audio_worker()->get_current_sec();
+    current_sec   =   sec;
+
+    if( current_sec > a_sec )
+        emit    update_seekbar_signal( current_sec );
+}
+
+
+
+
+
+/*******************************************************************************
+VideoWorker::update_seekbar()
+********************************************************************************/
+const int&  VideoWorker::get_current_sec()
+{
+    return  current_sec;
+}
+
+
+
+
+
+
 /*******************************************************************************
 VideoWorker::video_play()
 ********************************************************************************/
@@ -124,7 +155,7 @@ void VideoWorker::video_play()
     std::chrono::steady_clock::time_point       last, now;
     std::chrono::duration<int64_t, std::milli>  duration;
 
-    VideoData               *view_data  =   dynamic_cast<MainWindow*>(parent())->get_view_data();    
+    VideoData   *view_data  =   dynamic_cast<MainWindow*>(parent())->get_view_data();    
 
     // init again.
     view_data->index        =   0;
@@ -138,7 +169,7 @@ void VideoWorker::video_play()
         MYLOG( LOG::L_ERROR, "view_data is null." );
 
     //  
-    while( decode::get_video_size() <= 30 )
+    while( decode::get_video_size() == 0 )
         SLEEP_10MS;
 
     v_start     =   true;
@@ -173,7 +204,7 @@ void VideoWorker::video_play()
         emit    recv_video_frame_signal();
 
         if( seek_flag == false )
-            emit    update_seekbar_signal( view_data->timestamp / 1000 );
+            update_seekbar( view_data->timestamp/1000 );
 
         last    =   now;
     };

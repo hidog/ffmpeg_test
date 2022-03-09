@@ -160,7 +160,7 @@ int    DecodeManager::open_decoders( AVFormatContext* fmt_ctx )
             此時會出問題.
             暫時先用 avg_frame_rate 處理,未來研究有沒有更好的方式
         */
-        if( ret >= 0 && fmt_ctx->streams[index]->avg_frame_rate.den != 0 )
+        if( ret >= 0 )
         {
             if( current_video_index < 0 )           
                 current_video_index   =   index; // choose first as current.
@@ -177,6 +177,7 @@ int    DecodeManager::open_decoders( AVFormatContext* fmt_ctx )
             //dec_map.emplace(    std::make_pair(index,dec_ctx) ); 
             //stream_map.emplace( std::make_pair(index,stream)  );
         }
+
     }
     if( current_video_index >= 0 )
         video_map[current_video_index]->set_is_current(true);
@@ -259,6 +260,26 @@ void    DecodeManager::set_output_jpg_path( std::string _path )
 
 
 
+/*******************************************************************************
+DecodeManager::is_video_attach()
+********************************************************************************/
+bool    DecodeManager::is_video_attachd()
+{
+    if( exist_video_stream() == false )
+    {
+        MYLOG( LOG::L_WARN, "no video stream." )
+        return  false;
+    }
+    else
+    {
+        VideoDecode *ptr    =   get_current_video_decoder();
+        assert( ptr != nullptr );
+        return  ptr->is_attached();
+    }
+}
+
+
+
 
 #ifdef FFMPEG_TEST
 /*******************************************************************************
@@ -334,7 +355,7 @@ Decode*     DecodeManager::get_decoder( int stream_index )
     if( s_itr != subtitle_map.end() )
         return  s_itr->second;
 
-    MYLOG( LOG::L_WARN, "decode not found." );  // 音檔附圖片的case
+    MYLOG( LOG::L_ERROR, "decode not found." );  
     return  nullptr;
 }
 

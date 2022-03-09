@@ -695,7 +695,14 @@ bool    Player::demux_need_wait()
     //else if( v_decoder.exist_stream() == true && a_decoder.exist_stream() == true )
     else if( decode_manager->exist_video_stream() == true && decode_manager->exist_audio_stream() == true )
     {
-        if( decode::get_video_size() >= MAX_QUEUE_SIZE && decode::get_audio_size() >= MAX_QUEUE_SIZE )
+        if( decode_manager->is_video_attachd() == true )
+        {
+            if( decode::get_audio_size() >= MAX_QUEUE_SIZE )
+                return  true;
+            else
+                return  false;
+        }
+        else if( decode::get_video_size() >= MAX_QUEUE_SIZE && decode::get_audio_size() >= MAX_QUEUE_SIZE )
             return  true;
         else
             return  false;
@@ -848,10 +855,10 @@ void    Player::play_QT()
             SLEEP_1MS;
         }
 
-        //
+        // note: 如果demux已經結束,就無法seek. 先當known issue.
         if( seek_flag == true )     
         {
-            if( decode_manager->exist_video_stream() == true )
+            if( decode_manager->exist_video_stream() == true && decode_manager->is_video_attachd() == false )
             {
                 while( ui_v_seek_lock == false || ui_a_seek_lock == false )
                     SLEEP_10MS;
@@ -878,8 +885,6 @@ void    Player::play_QT()
         //
         pkt     =   demuxer->get_packet();
         dc      =   decode_manager->get_decoder( pkt->stream_index );
-        if( dc == nullptr )  // 音檔附圖片的case,有空修
-            continue;
 
 #if 0
         if( v_decoder.find_index( pkt->stream_index ) == true )
@@ -1200,5 +1205,5 @@ Player::exist_video_stream()
 ********************************************************************************/
 bool    Player::exist_video_stream()
 {
-    return  decode_manager->exist_video_stream();
+    return  decode_manager->exist_video_stream() == true && decode_manager->is_video_attachd() == false;
 }

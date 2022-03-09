@@ -702,3 +702,19 @@ int     VideoDecode::test_image_process()
     return 0;
 }
 #endif
+
+
+
+
+/*******************************************************************************
+VideoDecode::is_attached()
+
+代表此 stream 是封面之類的
+********************************************************************************/
+bool    VideoDecode::is_attached()
+{
+    if( (stream->disposition & AV_DISPOSITION_ATTACHED_PIC) != 0 )
+        return  true;
+    else
+        return  false;
+}

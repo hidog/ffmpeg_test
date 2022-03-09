@@ -31,6 +31,9 @@ public:
 
     void    flush_for_seek();    
     void    set_only_audio( bool flag );
+    void    update_seekbar( int sec );
+
+    const int&  get_current_sec();
 
 public slots:
 
@@ -51,7 +54,7 @@ private:
     bool    force_stop  =   false;
     bool    seek_flag   =   false;
     bool    only_audio  =   false;
-
+    int     current_sec =   0;
 };
 
 
