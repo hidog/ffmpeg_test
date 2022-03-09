@@ -10,10 +10,12 @@
 #endif
 
 #include <functional>
+#include <memory>
 
 #include "demux.h"
 #include "decode.h"
 #include "decode_manager.h"
+
 
 
 /*#include "audio_decode.h"
@@ -110,7 +112,7 @@ private:
     DecodeSetting   setting;
 
     Demux           *demuxer        =   nullptr;
-    DecodeManager   *decode_manager =   nullptr;
+    std::unique_ptr<DecodeManager>  decode_manager;
 
     //VideoDecode     v_decoder;
     //VideoDecodeNV   v_decoder;

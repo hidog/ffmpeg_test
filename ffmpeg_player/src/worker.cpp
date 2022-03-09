@@ -153,7 +153,7 @@ void    Worker::play_init()
     }
 
     //
-    player->set(setting);
+    player->set( setting );
     player->init();
 
     int     duration    =   static_cast<int>(player->get_duration_time());

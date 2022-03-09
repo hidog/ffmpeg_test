@@ -205,7 +205,7 @@ int    DecodeManager::open_decoders( AVFormatContext* fmt_ctx )
         audio_map[current_audio_index]->set_is_current(true);
 
     // open subtitle
-    SubDecode   *s_ptr  =   nullptr;
+    SubDecode   *s_ptr      =   nullptr;
     for( index = 0; index < fmt_ctx->nb_streams; index++ )
     {
         ret  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_SUBTITLE, index, -1, nullptr, 0 );
@@ -213,14 +213,14 @@ int    DecodeManager::open_decoders( AVFormatContext* fmt_ctx )
         if( ret >= 0 )
         {
             if( current_subtitle_index < 0 )           
-                current_subtitle_index   =   index; // choose first as current.
+                current_subtitle_index   =   index;
 
             s_ptr   =   new SubDecode;
             if( s_ptr == nullptr )
                 MYLOG( LOG::L_ERROR, "alloc subtitle decode fail." );
 
             subtitle_map.emplace( index, s_ptr );
-            s_ptr->open_codec_context( index, fmt_ctx, AVMEDIA_TYPE_SUBTITLE );            
+            s_ptr->open_codec_context( index, fmt_ctx, AVMEDIA_TYPE_SUBTITLE );
         }
     }
     if( current_subtitle_index >= 0 )
@@ -445,6 +445,20 @@ int     DecodeManager::get_current_audio_index()
 
 
 
+
+/*******************************************************************************
+DecodeManager::get_current_subtitle_index()
+********************************************************************************/
+int     DecodeManager::get_current_subtitle_index()
+{
+    return  current_subtitle_index;
+}
+
+
+
+
+
+
 /*******************************************************************************
 DecodeManager::exist_subtitle_stream()
 ********************************************************************************/
@@ -483,6 +497,44 @@ NOTE: 如果需要同時支援 ass file 跟 media file 內的 subtitle,
 void    DecodeManager::set_sub_src_type( SubSourceType type )
 {
     sub_src_type    =   type;
+}
+
+
+
+
+
+/*******************************************************************************
+DecodeManager::switch_subtltle()
+********************************************************************************/
+void    DecodeManager::switch_subtltle( std::string path )
+{
+    SubDecode*  s_ptr   =   get_current_subtitle_decoder();
+    s_ptr->switch_subtltle( path );
+}
+
+
+
+
+/*******************************************************************************
+DecodeManager::switch_subtltle()
+********************************************************************************/
+void    DecodeManager::switch_subtltle( int index )
+{
+    SubDecode*  s_ptr   =   get_current_subtitle_decoder();
+    s_ptr->switch_subtltle( index );  // 這塊要搬走 移動到 decode manager底下
+}
+
+
+
+
+
+
+/*******************************************************************************
+DecodeManager::get_sub_src_type()
+********************************************************************************/
+SubSourceType   DecodeManager::get_sub_src_type()
+{
+    return  sub_src_type;
 }
 
 
@@ -592,4 +644,62 @@ void    DecodeManager::flush_decoders_for_seek()
 
     for( auto itr : subtitle_map )
         itr.second->flush_for_seek();
+}
+
+
+
+/*******************************************************************************
+DecodeManager::get_embedded_subtitle_list().
+********************************************************************************/
+std::vector<std::string>    DecodeManager::get_embedded_subtitle_list()
+{
+    std::vector<std::string>    list;
+
+    /*char    *buf    =   nullptr;
+    av_dict_get_string( stream->metadata, &buf, '=', ',' );
+    MYLOG( LOG::L_INFO, "buf = %s\n", buf );*/
+
+    AVStream    *st     =   nullptr;
+    SubDecode   *s_ptr  =   nullptr;
+    for( auto itr : subtitle_map )
+    {
+        s_ptr   =   itr.second;
+        st      =   s_ptr->get_stream();
+
+        AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)st->metadata, "title", NULL, AV_DICT_MATCH_CASE );
+        if( dic != nullptr )
+        {
+            MYLOG( LOG::L_DEBUG, "title %s", dic->value );
+            list.emplace_back( std::string(dic->value) );
+        }
+        else
+            list.emplace_back( std::string("default") );  // 遇到多字幕都沒有定義 title 再來調整這裡的程式碼...
+    }
+
+    return  list;
+}
+
+
+
+
+
+
+
+
+/*******************************************************************************
+DecodeManager::release().
+********************************************************************************/
+void    DecodeManager::release()
+{
+    for( auto itr : video_map )
+        delete  itr.second;
+    video_map.clear();
+
+    for( auto itr : audio_map )
+        delete  itr.second;
+    audio_map.clear();
+
+    for( auto itr : subtitle_map )
+        delete  itr.second;
+    subtitle_map.clear();
 }

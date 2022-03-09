@@ -294,7 +294,7 @@ Player::Player()
 ********************************************************************************/
 Player::Player()
 {
-    decode_manager  =   new DecodeManager;
+    decode_manager  =   std::make_unique<DecodeManager>();
 }
 
 
@@ -328,9 +328,7 @@ bool    Player::is_set_input_file()
 Player::~Player()
 ********************************************************************************/
 Player::~Player()
-{
-    delete decode_manager;
-}
+{}
 
 
 
@@ -725,13 +723,7 @@ Player::is_embedded_subtitle()
 ********************************************************************************/
 bool    Player::is_embedded_subtitle()
 {
-#if 0
-    return  s_decoder.get_sub_src_type() == SubSourceType::EMBEDDED;
-#endif
-
-    //assert(0);
-
-    return  false;
+    return  decode_manager->get_sub_src_type() == SubSourceType::EMBEDDED;
 }
 
 
@@ -744,14 +736,7 @@ Player::is_file_subtitle()
 ********************************************************************************/
 bool    Player::is_file_subtitle()
 {
-#if 0
-    return  s_decoder.get_sub_src_type() == SubSourceType::FROM_FILE;
-#endif
-
-    assert(0);
-
-
-    return  false;
+    return  decode_manager->get_sub_src_type() == SubSourceType::FROM_FILE;
 }
 
 
@@ -763,11 +748,7 @@ Player::is_embedded_subtitle()
 ********************************************************************************/
 std::vector<std::string>    Player::get_embedded_subtitle_list()
 {
-    //return  s_decoder.get_embedded_subtitle_list();
-    assert(0);
-
-
-    return  std::vector<std::string>();
+    return  decode_manager->get_embedded_subtitle_list();
 }
 
 
@@ -923,15 +904,13 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
     // 寫在這邊是為了方便未來跟 multi-thread decode 結合.
     if( switch_subtitle_flag == true )
     {
-#if 0
         switch_subtitle_flag    =   false;
-        if( s_decoder.get_sub_src_type() == SubSourceType::FROM_FILE )
-            s_decoder.switch_subtltle(new_subtitle_path);
-        else if( s_decoder.get_sub_src_type() == SubSourceType::EMBEDDED )
-            s_decoder.switch_subtltle(new_subtitle_index);
+        if( decode_manager->get_sub_src_type() == SubSourceType::FROM_FILE )
+            decode_manager->switch_subtltle(new_subtitle_path);
+        else if( decode_manager->get_sub_src_type() == SubSourceType::EMBEDDED )
+            decode_manager->switch_subtltle(new_subtitle_index);
         else
             MYLOG( LOG::L_ERROR, "no subtitle.");
-#endif
     }
 
     int ret =   0;
@@ -966,10 +945,14 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
                 adata   =   a_ptr->output_audio_data();
                 decode::add_audio_data(adata);
             }
-            else
+            else if( pkt->stream_index == decode_manager->get_current_subtitle_index() )
+            {
+                // no nothing.
+            }
+            else 
             {
                 // 可以印 log. 目前 graphic subtitle 會跑進這邊, 有空再修正
-                // MYLOG( LOG::L_ERROR, "undefined behavier." );
+                MYLOG( LOG::L_ERROR, "undefined behavier." );
             }
             dc->unref_frame();
         }
@@ -1059,6 +1042,8 @@ void    Player::clear_setting()
 {
     setting.filename.clear();
     setting.subname.clear();
+
+    decode_manager->release();
 }
 
 

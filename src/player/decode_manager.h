@@ -32,6 +32,8 @@ public:
     DecodeManager& operator = ( const DecodeManager& ) = delete;
     DecodeManager& operator = ( DecodeManager&& ) = delete;
 
+    void    release();
+
     int     open_decoders( AVFormatContext* fmt_ctx );
     void    init_decoders();
     void    flush_decoders();
@@ -46,6 +48,7 @@ public:
 
     int     get_current_video_index();
     int     get_current_audio_index();
+    int     get_current_subtitle_index();
 
     VideoDecode*    get_current_video_decoder();
     AudioDecode*    get_current_audio_decoder();
@@ -54,6 +57,12 @@ public:
     void    set_subtitle_file( std::string path );
     void    set_sub_src_type( SubSourceType type );
     void    init_subtitle( AVFormatContext *fmt_ctx, DecodeSetting setting );
+    void    switch_subtltle( std::string path );
+    void    switch_subtltle( int index );
+
+    SubSourceType   get_sub_src_type();
+
+    std::vector<std::string>    get_embedded_subtitle_list();
 
 #ifdef FFMPEG_TEST
     void    set_output_jpg_path( std::string _root_path );
