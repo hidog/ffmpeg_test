@@ -36,8 +36,11 @@ public:
 
     int     open_decoders( AVFormatContext* fmt_ctx );
     void    init_decoders();
-    void    flush_decoders();
+
     void    flush_decoders_for_seek();
+    void    flush_all_sub_stream();
+    void    flush_video();
+    void    flush_audio();
 
     Decode*     get_decoder( int stream_index );
 
@@ -67,6 +70,7 @@ public:
 #ifdef FFMPEG_TEST
     void    set_output_jpg_path( std::string _root_path );
     void    set_output_audio_pcm_path( std::string _path );
+    void    flush_decoders();
 #endif
 
 private:

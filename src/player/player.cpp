@@ -802,7 +802,6 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
             }
             else 
             {
-                // 可以印 log. 目前 graphic subtitle 會跑進這邊, 有空再修正
                 MYLOG( LOG::L_ERROR, "undefined behavier." );
             }
             dc->unref_frame();
@@ -828,56 +827,66 @@ flush 過程基本上同 decode, 送 nullptr 進去
 ********************************************************************************/
 int    Player::flush()
 {
-#if 0
     int         ret     =   0;
     VideoData   vdata;
     AudioData   adata;
 
     // flush subtitle
     // 需要考慮 graphic 的 case
-    s_decoder.flush_all_stream();       
+    decode_manager->flush_all_sub_stream();
+    //s_decoder.flush_all_stream();       
 
     // flush video
-    ret     =   v_decoder.send_packet(nullptr);
-    if( ret >= 0 )
-    {       
-        while(true)
-        {
-            ret     =   v_decoder.recv_frame(-1);
-            if( ret <= 0 )
-                break;
+    if( decode_manager->exist_video_stream() == true )
+    {
+        VideoDecode     *v_ptr  =   decode_manager->get_current_video_decoder();
+        ret     =   v_ptr->send_packet(nullptr);
+        if( ret >= 0 )
+        {       
+            while(true)
+            {
+                ret     =   v_ptr->recv_frame(-1);
+                if( ret <= 0 )
+                    break;
 
-            if( output_live_stream_func != nullptr )
-                output_live_stream_func( &v_decoder );
+                if( output_live_stream_func != nullptr )
+                    output_live_stream_func( v_ptr );
 
-            vdata   =   v_decoder.output_video_data();
-            decode::add_video_data(vdata);  
+                vdata   =   v_ptr->output_video_data();
+                decode::add_video_data(vdata);  
 
-            v_decoder.unref_frame();  
+                v_ptr->unref_frame();  
+            }
         }
+        decode_manager->flush_video();
+        // v_decoder.flush_all_stream();  // 理論上只有一個 video stream, 這邊不影響
     }
-    v_decoder.flush_all_stream();  // 理論上只有一個 video stream, 這邊不影響
 
     // flush audio
-    ret     =   a_decoder.send_packet(nullptr);
-    if( ret >= 0 )
+    if( decode_manager->exist_audio_stream() == true )
     {
-        while(true)
+        AudioDecode     *a_ptr  =   decode_manager->get_current_audio_decoder();
+        ret     =   a_ptr->send_packet(nullptr);
+        if( ret >= 0 )
         {
-            ret     =   a_decoder.recv_frame(-1);
-            if( ret <= 0 )
-                break;
+            while(true)
+            {
+                ret     =   a_ptr->recv_frame(-1);
+                if( ret <= 0 )
+                    break;
 
-            if( output_live_stream_func != nullptr )
-                output_live_stream_func( &a_decoder );
+                if( output_live_stream_func != nullptr )
+                    output_live_stream_func( a_ptr );
 
-            adata   =   a_decoder.output_audio_data();
-            decode::add_audio_data( adata );
-            a_decoder.unref_frame();
+                adata   =   a_ptr->output_audio_data();
+                decode::add_audio_data( adata );
+                a_ptr->unref_frame();
+            }
         }
+        decode_manager->flush_audio();
+        //a_decoder.flush_all_stream();  // 多音軌的時候,清除其他音軌的資料
     }
-    a_decoder.flush_all_stream();  // 多音軌的時候,清除其他音軌的資料
-#endif
+
     return 0;
 }
 

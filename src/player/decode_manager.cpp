@@ -362,47 +362,13 @@ Decode*     DecodeManager::get_decoder( int stream_index )
 
 
 
+
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 DecodeManager::flush_decoders()
 ********************************************************************************/
 void    DecodeManager::flush_decoders()
 {
-#if 0
-
-    // flush
-    // subtitle 必須在最前面 flush.
-    if( s_decoder.exist_stream() == true )
-        s_decoder.flush();
-#ifdef RENDER_SUBTITLE
-    /* 
-        在有字幕的情況下, video decoder 需要額外呼叫 subtitle decoer 來處理, 所以需要額外的 code.
-        如果要併入 flush, 設計上並沒有比較好看.
-    */
-    ret     =   v_decoder.send_packet(nullptr);
-    if( ret >= 0 )
-    {       
-        while(true)
-        {
-            ret     =   v_decoder.recv_frame(-1);
-            if( ret <= 0 )
-                break;
-
-            if( v_decoder.output_frame_func != nullptr )
-                v_decoder.output_frame_func();
-            v_decoder.unref_frame();
-        }
-    }
-#else
-    // 理論上只有一個 video stream. 如果不是, 這邊有機會出問題.
-    v_decoder.flush();
-#endif
-
-    a_decoder.flush();
-
-#endif
-
-
-#ifdef FFMPEG_TEST
     // subtitle 必須在最前面 flush.
     for( auto itr : subtitle_map )
         itr.second->flush();
@@ -412,8 +378,8 @@ void    DecodeManager::flush_decoders()
 
     for( auto itr : audio_map )
         itr.second->flush();
-#endif
 }
+#endif
 
 
 
@@ -682,10 +648,6 @@ std::vector<std::string>    DecodeManager::get_embedded_subtitle_list()
 
 
 
-
-
-
-
 /*******************************************************************************
 DecodeManager::release().
 ********************************************************************************/
@@ -702,4 +664,107 @@ void    DecodeManager::release()
     for( auto itr : subtitle_map )
         delete  itr.second;
     subtitle_map.clear();
+}
+
+
+
+
+/*******************************************************************************
+DecodeManager::flush_all_sub_stream().
+********************************************************************************/
+void    DecodeManager::flush_all_sub_stream()
+{
+    int     ret     =   0;
+    int     got_sub =   0;
+
+    // for subtitle flush, data = null, size = 0. 
+    // 這邊可以省略 pkt 的初始化
+    AVPacket    pkt;
+    pkt.data    =   nullptr;
+    pkt.size    =   0;
+
+    AVSubtitle      subtitle;
+
+    SubDecode       *s_ptr  =   nullptr;
+    AVCodecContext  *ctx    =   nullptr;
+
+
+    for( auto dec : subtitle_map )
+    {
+        while(true)
+        {
+            s_ptr   =   dec.second;
+            ctx     =   s_ptr->get_decode_context();
+            ret     =   avcodec_decode_subtitle2( ctx, &subtitle, &got_sub, &pkt );
+            if( ret < 0 )
+                MYLOG( LOG::L_ERROR, "flush decode subtitle fail." );
+
+            avsubtitle_free(&subtitle);
+
+            if( got_sub <= 0 )
+                break;
+            
+            if( dec.first == current_subtitle_index && subtitle.format == 0 )       
+                s_ptr->generate_subtitle_image( subtitle );
+        }
+    }
+}
+
+
+
+
+
+/*******************************************************************************
+DecodeManager::flush_all_video_stream().
+********************************************************************************/
+void    DecodeManager::flush_video()
+{
+    int     ret;
+    VideoDecode     *v_ptr  =   nullptr;
+
+    for( auto dec : video_map )
+    {
+        if( dec.first == current_video_index )
+            continue;
+
+        v_ptr   =   dec.second;
+        v_ptr->send_packet(nullptr);
+
+        while(true)
+        {
+            ret     =   v_ptr->recv_frame( dec.first );
+            if( ret < 0 )
+                break;
+            v_ptr->unref_frame();
+        }
+    }
+}
+
+
+
+
+/*******************************************************************************
+DecodeManager::flush_all_video_stream().
+********************************************************************************/
+void    DecodeManager::flush_audio()
+{
+    int     ret;
+    AudioDecode     *a_ptr  =   nullptr;
+
+    for( auto dec : audio_map )
+    {
+        if( dec.first == current_audio_index )
+            continue;
+
+        a_ptr   =   dec.second;
+        a_ptr->send_packet(nullptr);
+
+        while(true)
+        {
+            ret     =   a_ptr->recv_frame( dec.first );
+            if( ret < 0 )
+                break;
+            a_ptr->unref_frame();
+        }
+    }
 }
