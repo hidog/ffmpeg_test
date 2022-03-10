@@ -435,17 +435,6 @@ DecodeManager::set_subtitle_file()
 void    DecodeManager::set_subtitle_file( std::string path )
 {
     subtitle_file   =   path;
-
-#if 0
-    SubDecode  *s_ptr  =   nullptr;
-
-    for( auto itr : subtitle_map )
-    {
-        s_ptr   =   itr.second;
-        assert( s_ptr != nullptr );
-        s_ptr->set_subfile(path);
-    }
-#endif
 }
 
 

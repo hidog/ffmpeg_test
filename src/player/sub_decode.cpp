@@ -2,7 +2,6 @@
 
 #include "tool.h"
 
-#include <sstream>
 #include <cassert>
 
 extern "C" {
@@ -26,23 +25,6 @@ SubDecode::SubDecode()
 SubDecode::SubDecode()
     :   Decode(AVMEDIA_TYPE_SUBTITLE)
 {}
-
-
-
-
-
-
-
-#if 0
-/*******************************************************************************
-SubDecode::set_filter_args()
-********************************************************************************/
-void    SubDecode::set_filter_args( std::string args )
-{
-    subtitle_args   =   args;
-}
-#endif
-
 
 
 
@@ -598,41 +580,6 @@ QImage  SubDecode::get_subtitle_image()
 
 
 
-
-#if 0
-/*******************************************************************************
-SubDecode::get_embedded_subtitle_list().
-********************************************************************************/
-std::vector<std::string>    SubDecode::get_embedded_subtitle_list()
-{
-    std::vector<std::string>    list;
-
-    char    *buf    =   nullptr;
-
-    av_dict_get_string( stream->metadata, &buf, '=', ',' );
-    MYLOG( LOG::L_INFO, "buf = %s\n", buf );
-
-    //for( auto itr : stream_map )
-    {
-        AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)stream->metadata, "title", NULL, AV_DICT_MATCH_CASE );
-        if( dic != nullptr )
-        {
-            MYLOG( LOG::L_DEBUG, "title %s", dic->value );
-            list.emplace_back( std::string(dic->value) );
-        }
-        else
-            list.emplace_back( std::string("default") );  // 遇到多字幕都沒有定義 title 再來調整這裡的程式碼...
-    }
-
-    return  list;
-}
-#endif
-
-
-
-
-
-
 /*******************************************************************************
 SubDecode::sub_info()
 
@@ -643,61 +590,12 @@ int     SubDecode::sub_info()
 {  
     AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)stream->metadata, "title", NULL, AV_DICT_MATCH_CASE );
     //MYLOG( LOG::L_DEBUG, "index = %d, title = %s", itr.first, dic->value );
-    MYLOG( LOG::L_DEBUG, "index = %d, title = %s", subtitle_index, dic->value );
+    MYLOG( LOG::L_DEBUG, "title = %s", dic->value );
     return 0;
 }
 
 
 
-
-#if 0
-/*******************************************************************************
-SubDecode::switch_subtltle()
-********************************************************************************/
-void    SubDecode::switch_subtltle( std::string path )
-{
-    set_subfile( path );
-
-    std::string     filename    =   "\\";    
-    filename    +=  sub_file;
-    filename.insert( 2, 1, '\\' );
-
-    std::stringstream   ss;
-    ss << "subtitles='" << filename << "':stream_index=" << 0;
-
-    std::string     desc    =   ss.str();
-
-    open_subtitle_filter( subtitle_args, desc );
-}
-#endif
-
-
-
-#if 0
-/*******************************************************************************
-SubDecode::switch_subtltle()
-********************************************************************************/
-void    SubDecode::switch_subtltle( int index )
-{
-    std::string     desc;
-
-    if( is_graphic_subtitle() == false )
-    {
-        sub_index   =   index;
-
-        std::string     filename    =   "\\";    
-        filename    +=  sub_file;
-        filename.insert( 2, 1, '\\' );
-
-        std::stringstream   ss;
-        ss << "subtitles='" << filename << "':stream_index=" << sub_index;
-
-        desc    =   ss.str();
-
-        open_subtitle_filter( subtitle_args, desc );
-    }
-}
-#endif
 
 
 
@@ -778,13 +676,9 @@ int    SubDecode::flush()
     pkt.data    =   nullptr;
     pkt.size    =   0;
 
-    //AVCodecContext  *dec    =   dec_map[cs_index];
     AVSubtitle      subtitle;
 
     int     ret, got_sub;
-
-    //for( auto dec_itr : dec_map )
-    //{
 
     while(true)
     {
@@ -802,8 +696,6 @@ int    SubDecode::flush()
         if( got_sub <= 0 )
             break;
     }
-
-    //}
 
     return  R_SUCCESS;
 }

@@ -78,7 +78,7 @@ private:
 
     std::map<int,VideoDecode*>  video_map;
     std::map<int,AudioDecode*>  audio_map;
-    std::map<int,SubDecode*>    subtitle_map;
+    std::map<int,SubDecode*>    subtitle_map;   // 實際上都用同一個subtitle decode負責render. 會造成多佔記憶體
 
     int     current_video_index     =   -1;
     int     current_audio_index     =   -1;
