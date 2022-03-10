@@ -2,6 +2,7 @@
 
 #include "audio_decode.h"
 #include "video_decode.h"
+#include "sub_decode.h"
 
 #include <thread>
 
