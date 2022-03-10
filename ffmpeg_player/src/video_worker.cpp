@@ -191,7 +191,7 @@ void VideoWorker::video_play()
             if( duration.count() >= vd.timestamp - view_data->timestamp )
                 break;
 
-            SLEEP_1MS;
+            //SLEEP_1MS;
         }
 
         //MYLOG( LOG::L_DEBUG, "video time stamp = %lld\n", vd.timestamp );

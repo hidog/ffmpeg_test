@@ -433,7 +433,7 @@ void AudioWorker::audio_play_with_video()
             }
         }
 
-        //if( seek_flag == false )
+        if( seek_flag == false )
             update_seekbar( ad.timestamp/1000 );
 
         last_ts = ad.timestamp;
