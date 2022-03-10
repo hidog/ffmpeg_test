@@ -55,6 +55,7 @@ VideoWorker::run()
 ********************************************************************************/
 void VideoWorker::run()  
 {
+    current_sec =   0;
     force_stop  =   false;
     seek_flag   =   false;
     video_play();
@@ -186,7 +187,7 @@ void VideoWorker::video_play()
             now         =   std::chrono::steady_clock::now();
             duration    =   std::chrono::duration_cast<std::chrono::milliseconds>( now - last );
 
-            MYLOG( LOG::L_DEBUG, "duration = %lld, diff = %lld",  duration, vd.timestamp - view_data->timestamp );
+            //MYLOG( LOG::L_DEBUG, "duration = %lld, diff = %lld",  duration, vd.timestamp - view_data->timestamp );
             if( duration.count() >= vd.timestamp - view_data->timestamp )
                 break;
 
