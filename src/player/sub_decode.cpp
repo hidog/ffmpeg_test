@@ -30,59 +30,10 @@ SubDecode::SubDecode()
 
 
 
-/*******************************************************************************
-SubDecode::get_subtitle_param()
-********************************************************************************/
-std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatContext* fmt_ctx, std::string src_file, SubData sd )
-{
-    if( is_graphic_subtitle() == true )
-        MYLOG( LOG::L_ERROR, "cant handle graphic subtitle." );
-
-    std::stringstream   ss;
-    std::string     in_param, out_param;;
-    
-    AVRational  frame_rate  =   av_guess_frame_rate( fmt_ctx, fmt_ctx->streams[sd.video_index], NULL );
-
-    int     sar_num     =   fmt_ctx->streams[sd.video_index]->codecpar->sample_aspect_ratio.num; // old code use fmt_ctx->streams[sd.video_index]->sample_aspect_ratio.num
-    int     sar_den     =   FFMAX( fmt_ctx->streams[sd.video_index]->codecpar->sample_aspect_ratio.den, 1 );
-
-    int     tb_num      =   fmt_ctx->streams[sd.video_index]->time_base.num;
-    int     tb_den      =   fmt_ctx->streams[sd.video_index]->time_base.den;
-
-    ss << "video_size=" << sd.width << "x" << sd.height << ":pix_fmt=" << static_cast<int>(sd.pix_fmt) 
-       << ":time_base=" << tb_num << "/" << tb_den << ":pixel_aspect=" << sar_num << "/" << sar_den;
-
-    if( frame_rate.num != 0 && frame_rate.den != 0 )
-        ss << ":frame_rate=" << frame_rate.num << "/" << frame_rate.den;
-
-    in_param   =   ss.str();
-
-    MYLOG( LOG::L_INFO, "in = %s", in_param.c_str() );
-
-    ss.str("");
-    ss.clear();   
-
-    // make filename param. 留意絕對路徑的格式, 不能亂改, 會造成錯誤.
-    std::string     filename_param  =   "\\";
-    filename_param  +=  src_file;
-    filename_param.insert( 2, 1, '\\' );
-    
-    // 理論上這邊的字串可以精簡...
-    sub_index   =   sd.sub_index;
-    ss << "subtitles='" << filename_param << "':stream_index=" << sub_index;
-    
-    out_param    =   ss.str();
-    //out_param    =   "subtitles='\\D\\:/code/test.mkv':stream_index=0";
-
-    MYLOG( LOG::L_INFO, "out = %s", out_param.c_str() );
-    return  std::make_pair( in_param, out_param );
-}
 
 
 
-
-
-
+#if 0
 /*******************************************************************************
 SubDecode::set_filter_args()
 ********************************************************************************/
@@ -90,6 +41,7 @@ void    SubDecode::set_filter_args( std::string args )
 {
     subtitle_args   =   args;
 }
+#endif
 
 
 
@@ -352,8 +304,8 @@ int     SubDecode::end()
         graph    =   nullptr;
     }
 
-    sub_file.clear();
-    subtitle_args.clear();
+    //sub_file.clear();
+    //subtitle_args.clear();
     sub_src_type    =   SubSourceType::NONE;
     is_graphic      =   false;
 
@@ -365,26 +317,6 @@ int     SubDecode::end()
     return  R_SUCCESS;
 }
 
-
-
-
-
-/*******************************************************************************
-SubDecode::set_subfile()
-********************************************************************************/
-void    SubDecode::set_subfile( std::string path )
-{
-    sub_file    =   path;
-
-#ifdef _WIN32
-    // 斜線會影響執行結果.
-    for( auto &c : sub_file )
-    {
-        if( c == '\\' )
-            c   =   '/';
-    }
-#endif
-}
 
 
 
@@ -666,17 +598,6 @@ QImage  SubDecode::get_subtitle_image()
 
 
 
-/*******************************************************************************
-SubDecode::get_subfile()
-********************************************************************************/
-std::string     SubDecode::get_subfile()
-{
-    return  sub_file;
-}
-
-
-
-
 
 #if 0
 /*******************************************************************************
@@ -729,7 +650,7 @@ int     SubDecode::sub_info()
 
 
 
-
+#if 0
 /*******************************************************************************
 SubDecode::switch_subtltle()
 ********************************************************************************/
@@ -748,11 +669,11 @@ void    SubDecode::switch_subtltle( std::string path )
 
     open_subtitle_filter( subtitle_args, desc );
 }
+#endif
 
 
 
-
-
+#if 0
 /*******************************************************************************
 SubDecode::switch_subtltle()
 ********************************************************************************/
@@ -776,7 +697,7 @@ void    SubDecode::switch_subtltle( int index )
         open_subtitle_filter( subtitle_args, desc );
     }
 }
-
+#endif
 
 
 

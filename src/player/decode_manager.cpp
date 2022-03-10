@@ -5,6 +5,8 @@
 #include "audio_decode.h"
 #include "sub_decode.h"
 
+#include <sstream>
+
 
 extern "C" {
 
@@ -432,6 +434,9 @@ DecodeManager::set_subtitle_file()
 ********************************************************************************/
 void    DecodeManager::set_subtitle_file( std::string path )
 {
+    subtitle_file   =   path;
+
+#if 0
     SubDecode  *s_ptr  =   nullptr;
 
     for( auto itr : subtitle_map )
@@ -440,6 +445,7 @@ void    DecodeManager::set_subtitle_file( std::string path )
         assert( s_ptr != nullptr );
         s_ptr->set_subfile(path);
     }
+#endif
 }
 
 
@@ -465,8 +471,19 @@ DecodeManager::switch_subtltle()
 ********************************************************************************/
 void    DecodeManager::switch_subtltle( std::string path )
 {
+    set_subfile( path );
+
+    std::string     filename    =   "\\";    
+    filename    +=  subtitle_file;
+    filename.insert( 2, 1, '\\' );
+
+    std::stringstream   ss;
+    ss << "subtitles='" << filename << "':stream_index=" << 0;
+
+    std::string     desc    =   ss.str();
+
     SubDecode*  s_ptr   =   get_current_subtitle_decoder();
-    s_ptr->switch_subtltle( path );
+    s_ptr->open_subtitle_filter( subtitle_args, desc );
 }
 
 
@@ -477,8 +494,24 @@ DecodeManager::switch_subtltle()
 ********************************************************************************/
 void    DecodeManager::switch_subtltle( int index )
 {
-    SubDecode*  s_ptr   =   get_current_subtitle_decoder();
-    s_ptr->switch_subtltle( index );  // 這塊要搬走 移動到 decode manager底下
+    SubDecode*      s_ptr   =   get_current_subtitle_decoder();
+    std::string     desc;
+
+    if( s_ptr->is_graphic_subtitle() == false )
+    {
+        subtitle_index   =   index;
+
+        std::string     filename    =   "\\";    
+        filename    +=  subtitle_file;
+        filename.insert( 2, 1, '\\' );
+
+        std::stringstream   ss;
+        ss << "subtitles='" << filename << "':stream_index=" << subtitle_index;
+
+        desc    =   ss.str();
+        s_ptr->open_subtitle_filter( subtitle_args, desc );
+    }
+
 }
 
 
@@ -507,7 +540,6 @@ void    DecodeManager::init_subtitle( AVFormatContext *fmt_ctx, DecodeSetting se
     int             ret;
     bool            exist_subtitle  =   false;
     SubData         sd;
-    std::string     sub_src;
 
     std::pair<std::string,std::string>  sub_param;
 
@@ -542,15 +574,13 @@ void    DecodeManager::init_subtitle( AVFormatContext *fmt_ctx, DecodeSetting se
     // 
     if( exist_subtitle == true )
     {
-        //ret     =   s_decoder.init();
         // note: 如果遇到同時有 audio stream, sub stream, 但沒有 video stream, 會crash. 但理論上不會有這種case.
-
         VideoDecode *v_ptr  =   get_current_video_decoder();
 
         sd.width        =   v_ptr->get_video_width();
         sd.height       =   v_ptr->get_video_height();
         sd.pix_fmt      =   v_ptr->get_pix_fmt();
-        sd.video_index  =   current_video_index; //  v_ptr->current_index();
+        sd.video_index  =   current_video_index;
         sd.sub_index    =   0;
 
         for( auto itr : subtitle_map )
@@ -561,14 +591,13 @@ void    DecodeManager::init_subtitle( AVFormatContext *fmt_ctx, DecodeSetting se
                 s_ptr->init_graphic_subtitle(sd);        
             else
             {
-                sub_src     =   s_ptr->get_subfile();
                 s_ptr->init_sws_ctx( sd );
 
                 // if exist subtitle, open it.
                 // 這邊有執行順序問題, 不能隨便更改執行順序      
-                sub_param   =   s_ptr->get_subtitle_param( fmt_ctx, sub_src, sd );
+                sub_param   =   get_subtitle_param( fmt_ctx, subtitle_file, sd );
                 s_ptr->open_subtitle_filter( sub_param.first, sub_param.second );
-                s_ptr->set_filter_args( sub_param.first );
+                subtitle_args   =   sub_param.first;
             }       
         }
 
@@ -583,6 +612,66 @@ void    DecodeManager::init_subtitle( AVFormatContext *fmt_ctx, DecodeSetting se
 
     }
 }
+
+
+
+
+
+
+
+/*******************************************************************************
+DecodeManager::get_subtitle_param()
+********************************************************************************/
+std::pair<std::string,std::string>  DecodeManager::get_subtitle_param( AVFormatContext* fmt_ctx, std::string src_file, SubData sd )
+{
+    SubDecode   *s_ptr  =   get_current_subtitle_decoder();
+
+    if( s_ptr->is_graphic_subtitle() == true )
+        MYLOG( LOG::L_ERROR, "cant handle graphic subtitle." );
+
+    std::stringstream   ss;
+    std::string     in_param, out_param;;
+    
+    AVRational  frame_rate  =   av_guess_frame_rate( fmt_ctx, fmt_ctx->streams[sd.video_index], NULL );
+
+    int     sar_num     =   fmt_ctx->streams[sd.video_index]->codecpar->sample_aspect_ratio.num; // old code use fmt_ctx->streams[sd.video_index]->sample_aspect_ratio.num
+    int     sar_den     =   FFMAX( fmt_ctx->streams[sd.video_index]->codecpar->sample_aspect_ratio.den, 1 );
+
+    int     tb_num      =   fmt_ctx->streams[sd.video_index]->time_base.num;
+    int     tb_den      =   fmt_ctx->streams[sd.video_index]->time_base.den;
+
+    ss << "video_size=" << sd.width << "x" << sd.height << ":pix_fmt=" << static_cast<int>(sd.pix_fmt) 
+       << ":time_base=" << tb_num << "/" << tb_den << ":pixel_aspect=" << sar_num << "/" << sar_den;
+
+    if( frame_rate.num != 0 && frame_rate.den != 0 )
+        ss << ":frame_rate=" << frame_rate.num << "/" << frame_rate.den;
+
+    in_param   =   ss.str();
+
+    MYLOG( LOG::L_INFO, "in = %s", in_param.c_str() );
+
+    ss.str("");
+    ss.clear();   
+
+    // make filename param. 留意絕對路徑的格式, 不能亂改, 會造成錯誤.
+    std::string     filename_param  =   "\\";
+    filename_param  +=  src_file;
+    filename_param.insert( 2, 1, '\\' );
+    
+    // 理論上這邊的字串可以精簡...
+    subtitle_index   =   sd.sub_index;
+    ss << "subtitles='" << filename_param << "':stream_index=" << subtitle_index;
+    
+    out_param    =   ss.str();
+    //out_param    =   "subtitles='\\D\\:/code/test.mkv':stream_index=0";
+
+    MYLOG( LOG::L_INFO, "out = %s", out_param.c_str() );
+    return  std::make_pair( in_param, out_param );
+}
+
+
+
+
 
 
 
@@ -763,3 +852,26 @@ void    DecodeManager::flush_audio()
         }
     }
 }
+
+
+
+
+
+
+/*******************************************************************************
+DecodeManager::set_subfile()
+********************************************************************************/
+void    DecodeManager::set_subfile( std::string path )
+{
+    subtitle_file    =   path;
+
+#ifdef _WIN32
+    // 斜線會影響執行結果.
+    for( auto &c : subtitle_file )
+    {
+        if( c == '\\' )
+            c   =   '/';
+    }
+#endif
+}
+

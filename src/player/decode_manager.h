@@ -62,10 +62,11 @@ public:
     void    init_subtitle( AVFormatContext *fmt_ctx, DecodeSetting setting );
     void    switch_subtltle( std::string path );
     void    switch_subtltle( int index );
+    void    set_subfile( std::string path );
 
     SubSourceType   get_sub_src_type();
-
-    std::vector<std::string>    get_embedded_subtitle_list();
+    std::pair<std::string,std::string>  get_subtitle_param( AVFormatContext* fmt_ctx, std::string src_file, SubData sd );
+    std::vector<std::string>            get_embedded_subtitle_list();
 
 #ifdef FFMPEG_TEST
     void    set_output_jpg_path( std::string _root_path );
@@ -83,8 +84,10 @@ private:
     int     current_audio_index     =   -1;
     int     current_subtitle_index  =   -1;
 
+    int     subtitle_index   =   0;
     SubSourceType   sub_src_type    =   SubSourceType::NONE;
-
+    std::string     subtitle_file;
+    std::string     subtitle_args;
 };
 
 

@@ -60,9 +60,9 @@ public:
     int     render_subtitle();
     int     init_sws_ctx( SubData sd );
 
-    void    switch_subtltle( std::string path );
-    void    switch_subtltle( int index );
-    void    set_filter_args( std::string args );
+    //void    switch_subtltle( std::string path );
+    //void    switch_subtltle( int index );
+    //void    set_filter_args( std::string args );
     void    set_sub_src_type( SubSourceType type );
     bool    is_video_in_duration( int64_t timestamp );
 
@@ -74,7 +74,6 @@ public:
     int     resend_to_filter();
 #endif
 
-    std::string     get_subfile();
     SubSourceType   get_sub_src_type();
 
     std::pair<std::string,std::string>  get_subtitle_param( AVFormatContext *fmt_ctx, std::string src_file, SubData sd );
@@ -95,8 +94,8 @@ private:
     AVFilterContext     *bf_sink_ctx    =   nullptr;
     AVFilterGraph       *graph          =   nullptr; 
     SwsContext          *sws_ctx        =   nullptr;  
-    std::string         sub_file;
-    std::string         subtitle_args;
+    //std::string         sub_file;
+    //std::string         subtitle_args;
     SubSourceType       sub_src_type    =   SubSourceType::NONE;
 
     // general use
@@ -104,7 +103,7 @@ private:
             video_height;
 
     // non-graphic use
-    int     sub_index   =   0;
+    //int     sub_index   =   0;
     bool    is_graphic  =   false;
 
     // use for generate subtitle image.
