@@ -217,8 +217,7 @@ void    AudioWorker::audio_play()
 {
     MYLOG( LOG::L_INFO, "start play audio" );
 
-    AudioData   ad;
-    bool    &is_play_end    =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_play_end_state();
+    const bool&     is_finish       =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_finish_flag();
 
     while( decode::get_audio_size() <= 30 )
         SLEEP_10MS; 
@@ -232,6 +231,8 @@ void    AudioWorker::audio_play()
     int     remain          =   0;
     int     remain_bytes    =   0;
     uint8_t *ptr            =   nullptr; 
+
+    AudioData   ad;
 
     // 練習使用 lambda operator.
     auto    handle_func    =   [&]() 
@@ -281,7 +282,7 @@ void    AudioWorker::audio_play()
     bool    &ui_a_seek_lock     =   decode::get_a_seek_lock();
 
     last   =   std::chrono::steady_clock::now();
-    while( is_play_end == false && force_stop == false )
+    while( force_stop == false )
     {        
         if( seek_flag == true )
         {
@@ -296,6 +297,9 @@ void    AudioWorker::audio_play()
 
         if( decode::get_audio_size() <= 0 )
         {
+            if( is_finish == true )            
+                break;            
+
             MYLOG( LOG::L_WARN, "audio queue empty." );
             SLEEP_10MS;
             continue;
@@ -303,6 +307,8 @@ void    AudioWorker::audio_play()
 
         handle_func();
     }
+
+    MYLOG( LOG::L_INFO, "play audio finish." );
 
     // flush
     while( decode::get_audio_size() > 0 && force_stop == false )
@@ -316,10 +322,6 @@ void    AudioWorker::audio_play()
 
         handle_func();
     }
-
-    // 等 player 結束, 確保不會再增加資料進去queue
-    while( is_play_end == false )
-        SLEEP_10MS;
 
     // force stop 需要手動清除 queue.
     decode::clear_audio_queue();
@@ -337,9 +339,9 @@ void AudioWorker::audio_play_with_video()
 {
     MYLOG( LOG::L_INFO, "start play audio" );
 
-    AudioData   ad;
-    bool    &v_start        =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
-    bool    &is_play_end    =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_play_end_state();
+    bool            &v_start        =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
+    const bool      &is_finish      =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_finish_flag();
+
 
     while( decode::get_audio_size() == 0 )
         SLEEP_10MS;
@@ -358,6 +360,8 @@ void AudioWorker::audio_play_with_video()
     int     remain          =   0;
     int     remain_bytes    =   0;
     uint8_t *ptr            =   nullptr; 
+
+    AudioData   ad;
 
     // 練習使用 lambda operator.
     auto    handle_func    =   [&]() 
@@ -438,7 +442,7 @@ void AudioWorker::audio_play_with_video()
     bool    &ui_a_seek_lock     =   decode::get_a_seek_lock();
 
     last   =   std::chrono::steady_clock::now();
-    while( is_play_end == false && force_stop == false )
+    while( force_stop == false )
     {        
         if( seek_flag == true )
         {
@@ -453,6 +457,9 @@ void AudioWorker::audio_play_with_video()
 
         if( decode::get_audio_size() <= 0 )
         {
+            if( is_finish == true )
+                break;
+
             MYLOG( LOG::L_WARN, "audio queue empty." );
             SLEEP_10MS;
             continue;
@@ -460,6 +467,8 @@ void AudioWorker::audio_play_with_video()
 
         handle_func();
     }
+
+    MYLOG( LOG::L_INFO, "play audio finish." );
 
     // flush
     while( decode::get_audio_size() > 0 && force_stop == false )
@@ -473,10 +482,6 @@ void AudioWorker::audio_play_with_video()
 
         handle_func();
     }
-
-    // 等 player 結束, 確保不會再增加資料進去queue
-    while( is_play_end == false )
-        SLEEP_10MS;
 
     // force stop 需要手動清除 queue.
     decode::clear_audio_queue();

@@ -34,13 +34,16 @@ public:
     void    play_init();
     void    play();
     void    end();
+
+    const bool&     get_finish_flag();
+
     void    set_src_file( std::string file );
     bool    is_set_src_file();
     void    finish_set_video();
+
     void    set_type( WorkType _t );
     void    set_ip( std::string _ip );
     void    set_port( std::string _port );
-    bool&   get_play_end_state();
 
     void    play_video_audio();
     void    play_audio();
@@ -56,7 +59,9 @@ public slots:
     void    switch_subtitle_slot_str( QString path );
     void    switch_subtitle_slot_int( int index );
     void    stop_slot();
+    void    finish_slot();
     void    seek_slot( int value );
+
 
 signals:
     void    video_setting_signal( VideoDecodeSetting );
@@ -70,7 +75,6 @@ private:
 
     Player  *player     =   nullptr;
     bool    is_set_video    =   false;
-    bool    is_play_end     =   true;
 
     std::string     filename;
     std::string     subname;

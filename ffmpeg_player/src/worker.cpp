@@ -201,7 +201,6 @@ void    Worker::play_audio()
     // send audio setting to UI
     as  =   player->get_audio_setting();
     aw->open_audio_output(as);
-    is_play_end     =   false;
     aw->start();
     
     //
@@ -212,8 +211,7 @@ void    Worker::play_audio()
 #endif
 
     player->end();
-    is_play_end     =   true;
-    
+   
     // 等待其他兩個thread完成
     while( aw->isFinished() == false )
         SLEEP_10MS;
@@ -250,7 +248,6 @@ void    Worker::play_video_audio()
         SLEEP_10MS;
     
     //
-    is_play_end     =   false;
     aw->start();
     vw->start();
     
@@ -260,8 +257,8 @@ void    Worker::play_video_audio()
 #else
     player->play_QT();
 #endif
+
     player->end();
-    is_play_end     =   true;
     
     // 等待其他兩個thread完成
     while( aw->isFinished() == false )
@@ -353,6 +350,25 @@ void    Worker::end()
 }
 
 
+
+
+
+/*******************************************************************************
+Worker::stop_slot()
+********************************************************************************/
+void    Worker::finish_slot()
+{
+    end_lock.lock();
+    if( player != nullptr )
+        player->stop();
+    end_lock.unlock();
+}
+
+
+
+
+
+
 /*******************************************************************************
 Worker::stop_slot()
 ********************************************************************************/
@@ -371,16 +387,6 @@ void    Worker::stop_slot()
 }
 
 
-
-
-
-/*******************************************************************************
-Worker::get_play_end_state()
-********************************************************************************/
-bool&   Worker::get_play_end_state()
-{
-    return  is_play_end;
-}
 
 
 
@@ -476,4 +482,16 @@ void    Worker::seek_slot( int value )
     int     old_value   =   vd->timestamp / 1000;
 
     player->seek( value, old_value );
+}
+
+
+
+
+
+/*******************************************************************************
+Worker::seek_slot()
+********************************************************************************/
+const bool&     Worker::get_finish_flag()
+{
+    return  player->get_finish_flag();
 }

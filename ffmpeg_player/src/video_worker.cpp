@@ -162,8 +162,9 @@ void VideoWorker::video_play()
     view_data->timestamp    =   0;
 
     //
-    bool    &a_start        =   dynamic_cast<MainWindow*>(parent())->get_audio_worker()->get_audio_start_state();
-    bool    &is_play_end    =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_play_end_state();
+    bool            &a_start        =   dynamic_cast<MainWindow*>(parent())->get_audio_worker()->get_audio_start_state();
+    const bool      &is_finish      =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_finish_flag();
+
 
     if( view_data == nullptr )
         MYLOG( LOG::L_ERROR, "view_data is null." );
@@ -213,7 +214,7 @@ void VideoWorker::video_play()
     bool    &ui_v_seek_lock     =   decode::get_v_seek_lock();
 
     last   =   std::chrono::steady_clock::now();
-    while( is_play_end == false && force_stop == false )
+    while( force_stop == false )
     {   
         //
         while( pause_flag == true )
@@ -234,6 +235,9 @@ void VideoWorker::video_play()
         //
         if( decode::get_video_size() <= 0 )
         {
+            if( is_finish == true )
+                break;
+
             MYLOG( LOG::L_WARN, "video queue empty." );
             SLEEP_10MS;
             continue;
@@ -242,6 +246,8 @@ void VideoWorker::video_play()
         handle_func();
     }
 
+    MYLOG( LOG::L_INFO, "play video finish." );
+
     // flush
     while( decode::get_video_size() > 0 && force_stop == false )
     {       
@@ -249,10 +255,6 @@ void VideoWorker::video_play()
             SLEEP_10MS;
         handle_func();
     }
-
-    // 等 player 結束, 確保不會再增加資料進去queue
-    while( is_play_end == false )
-        SLEEP_10MS;
 
     // force stop 的時候需要手動清除資料
     decode::clear_video_queue();

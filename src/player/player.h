@@ -16,13 +16,6 @@
 #include "decode.h"
 #include "decode_manager.h"
 
-
-
-/*#include "audio_decode.h"
-#include "sub_decode.h"
-#include "video_decode_nv.h"
-#include "video_decode_hw.h"*/
-
 #include <QImage>
 
 
@@ -59,6 +52,9 @@ public:
     int     decode( Decode *dc, AVPacket* pkt );
     int     init_demuxer();
     bool    exist_video_stream();
+    
+    const bool&   get_finish_flag();
+
 
     void    switch_subtitle( std::string path );
     void    switch_subtitle( int index );
@@ -98,10 +94,6 @@ protected:
     DecodeSetting&  get_setting();
     Demux*          get_demuxer();
 
-    /*VideoDecode&    get_video_decoder();
-    AudioDecode&    get_audio_decoder();
-    SubDecode&      get_subtitle_decoder();*/
-
     std::function<void(Decode*)>    output_live_stream_func =   nullptr;
 
 private:
@@ -109,20 +101,15 @@ private:
     static constexpr int   MAX_QUEUE_SIZE  =   200;   // queue 太小有機會出問題
     //static constexpr int   MAX_QUEUE_SIZE  =   10;
 
+    bool    is_finish   =   false;
+
     DecodeSetting   setting;
 
-    Demux           *demuxer        =   nullptr;
+    std::unique_ptr<Demux>          demuxer;
     std::unique_ptr<DecodeManager>  decode_manager;
 
-    //VideoDecode     v_decoder;
-    //VideoDecodeNV   v_decoder;
-    //VideoDecodeHW   v_decoder;
-    //AudioDecode     a_decoder;
-    //SubDecode       s_decoder;
-
     // switch subtitle使用
-    std::string     new_subtitle_path; 
-
+    std::string     new_subtitle_path;
     bool    switch_subtitle_flag    =   false;
     int     new_subtitle_index      =   0;
 

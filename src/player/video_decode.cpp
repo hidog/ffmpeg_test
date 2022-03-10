@@ -710,7 +710,6 @@ int     VideoDecode::test_image_process()
 VideoDecode::is_attached()
 
 代表此 stream 是封面之類的
-
 https://www.twblogs.net/a/5bb526732b717773002dc5a2
 ********************************************************************************/
 bool    VideoDecode::is_attached()

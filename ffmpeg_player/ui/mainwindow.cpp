@@ -130,7 +130,9 @@ void MainWindow::set_signal_slot()
 
     connect(    video_worker,       &VideoWorker::recv_video_frame_signal,          this,           &MainWindow::recv_video_frame_slot          );
     connect(    video_worker,       &VideoWorker::update_seekbar_signal,            this,           &MainWindow::update_seekbar_slot            );
+    connect(    video_worker,       &VideoWorker::finished,                         worker,         &Worker::finish_slot                        );   
     connect(    audio_worker,       &AudioWorker::update_seekbar_signal,            this,           &MainWindow::update_seekbar_slot            );
+    connect(    audio_worker,       &AudioWorker::finished,                         worker,         &Worker::finish_slot                        );
 
     connect(    ui->volumeSlider,   &QSlider::valueChanged,                         audio_worker,   &AudioWorker::volume_slot                   );
 
