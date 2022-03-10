@@ -103,7 +103,7 @@ void    VideoWorker::flush_for_seek()
     bool    &a_start    =   dynamic_cast<MainWindow*>(parent())->get_audio_worker()->get_audio_start_state();
 
     // 重新等待有資料才播放
-    while( decode::get_video_size() <= 3 )
+    while( decode::get_video_size() <= 10 )
         SLEEP_10MS;
     v_start     =   true;
     while( a_start == false )
@@ -170,7 +170,7 @@ void VideoWorker::video_play()
         MYLOG( LOG::L_ERROR, "view_data is null." );
 
     //  
-    while( decode::get_video_size() == 0 )
+    while( decode::get_video_size() <= 30 )
         SLEEP_10MS;
 
     v_start     =   true;

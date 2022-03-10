@@ -358,10 +358,21 @@ Worker::stop_slot()
 ********************************************************************************/
 void    Worker::finish_slot()
 {
+    AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
+    VideoWorker     *vw     =   dynamic_cast<MainWindow*>(parent())->get_video_worker();
+
+    if( aw->isFinished() == false || vw->isFinished() == false )
+        return;
+    
     end_lock.lock();
     if( player != nullptr )
         player->stop();
     end_lock.unlock();
+    
+    // note: 音檔帶封面的情況, queue會有資料, 要清除. 未來再讓程式支援顯示封面.
+    decode::clear_audio_queue();
+    decode::clear_video_queue();
+    
 }
 
 

@@ -189,7 +189,7 @@ void    AudioWorker::flush_for_seek()
 {
     if( only_audio == true )
     {
-        while( decode::get_audio_size() <= 3 )
+        while( decode::get_audio_size() <= 10 )
             SLEEP_10MS;
         a_start     =   true;
     }
@@ -343,7 +343,7 @@ void AudioWorker::audio_play_with_video()
     const bool      &is_finish      =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_finish_flag();
 
 
-    while( decode::get_audio_size() == 0 )
+    while( decode::get_audio_size() <= 30 )
         SLEEP_10MS;
     a_start = true;
     while( v_start == false )
