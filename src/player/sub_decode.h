@@ -43,7 +43,6 @@ public:
     int     send_packet( AVPacket *pkt ) override;
     int     recv_frame( int index ) override;
 
-    //int     open_codec_context( AVFormatContext *fmt_ctx ) override;
     int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type ) override;
 
 
@@ -79,7 +78,7 @@ public:
     SubSourceType   get_sub_src_type();
 
     std::pair<std::string,std::string>  get_subtitle_param( AVFormatContext *fmt_ctx, std::string src_file, SubData sd );
-    std::vector<std::string>            get_embedded_subtitle_list();
+    //std::vector<std::string>            get_embedded_subtitle_list();
 
     int     sub_info(); // 目前無作用
 

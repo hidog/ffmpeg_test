@@ -53,9 +53,6 @@ public:
     int     init_demuxer();
     bool    exist_video_stream();
     
-    const bool&   get_finish_flag();
-
-
     void    switch_subtitle( std::string path );
     void    switch_subtitle( int index );
     bool    is_embedded_subtitle();
@@ -100,8 +97,6 @@ private:
 
     static constexpr int   MAX_QUEUE_SIZE  =   200;   // queue 太小有機會出問題
     //static constexpr int   MAX_QUEUE_SIZE  =   10;
-
-    bool    is_finish   =   false;
 
     DecodeSetting   setting;
 

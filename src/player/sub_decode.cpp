@@ -146,29 +146,6 @@ SubDecode::~SubDecode()
 
 
 
-#if 0
-/*******************************************************************************
-SubDecode::open_codec_context()
-********************************************************************************/
-int     SubDecode::open_codec_context( AVFormatContext *fmt_ctx )
-{
-    Decode::open_all_codec( fmt_ctx, type );
-
-    if( dec_ctx != nullptr )
-    {
-        if( dec_ctx->pix_fmt != AV_PIX_FMT_NONE )
-            is_graphic  =   true;
-        else
-            is_graphic  =   false;
-    }
-
-    return  R_SUCCESS;
-}
-#endif
-
-
-
-
 
 /*******************************************************************************
 SubDecode::open_codec_context()
@@ -621,8 +598,6 @@ SubDecode::decode_subtitle()
 ********************************************************************************/
 int    SubDecode::decode_subtitle( AVPacket* pkt )
 {
-    //AVCodecContext  *dec    =   pkt == nullptr ? dec_map[cs_index] : dec_map[pkt->stream_index];
-
     AVSubtitle  subtitle {0};
 
     int     got_sub     =   0;
@@ -703,7 +678,7 @@ std::string     SubDecode::get_subfile()
 
 
 
-
+#if 0
 /*******************************************************************************
 SubDecode::get_embedded_subtitle_list().
 ********************************************************************************/
@@ -730,6 +705,7 @@ std::vector<std::string>    SubDecode::get_embedded_subtitle_list()
 
     return  list;
 }
+#endif
 
 
 
@@ -744,13 +720,9 @@ https://www.jianshu.com/p/89f2da631e16
 ********************************************************************************/
 int     SubDecode::sub_info()
 {  
-    //for( auto itr : stream_map )
-    {
-        AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)stream->metadata, "title", NULL, AV_DICT_MATCH_CASE );
-        //MYLOG( LOG::L_DEBUG, "index = %d, title = %s", itr.first, dic->value );
-        MYLOG( LOG::L_DEBUG, "index = %d, title = %s", subtitle_index, dic->value );
-    }
-
+    AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)stream->metadata, "title", NULL, AV_DICT_MATCH_CASE );
+    //MYLOG( LOG::L_DEBUG, "index = %d, title = %s", itr.first, dic->value );
+    MYLOG( LOG::L_DEBUG, "index = %d, title = %s", subtitle_index, dic->value );
     return 0;
 }
 

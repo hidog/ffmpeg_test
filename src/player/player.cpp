@@ -105,8 +105,6 @@ int     Player::init()
 {
     int     ret{0};
 
-    is_finish   =   false;
-
     // init demux
     ret     =   init_demuxer();
     if( ret != R_SUCCESS )
@@ -686,7 +684,7 @@ void    Player::play_QT()
             SLEEP_1MS;
         }
 
-        // 
+        // NOTE: 如果 demux 已經結束, 此時無法seek.
         if( seek_flag == true )     
         {
             if( decode_manager->exist_video_stream() == true && decode_manager->is_video_attachd() == false )
@@ -711,11 +709,7 @@ void    Player::play_QT()
         //
         ret     =   demuxer->demux();
         if( ret < 0 )
-        {
-            is_finish   =   true;
-            SLEEP_10MS;  // 要等 UI 端播放完畢後才能結束, 不然會造成 demux 完畢後無法 seek
-            continue;
-        }
+            break;
 
         //
         pkt     =   demuxer->get_packet();
@@ -732,16 +726,6 @@ void    Player::play_QT()
     MYLOG( LOG::L_INFO, "play finish.")
 }
 
-
-
-
-/*******************************************************************************
-Player::get_is_finish
-********************************************************************************/
-const bool&   Player::get_finish_flag()
-{
-    return  is_finish;
-}
 
 
 
@@ -910,8 +894,6 @@ Player::end()
 ********************************************************************************/
 int     Player::end()
 {
-    is_finish   =   false;
-
     clear_setting();
 
     stop_flag   =   false;

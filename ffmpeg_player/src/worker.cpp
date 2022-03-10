@@ -201,6 +201,8 @@ void    Worker::play_audio()
     // send audio setting to UI
     as  =   player->get_audio_setting();
     aw->open_audio_output(as);
+
+    is_play_end     =   false;
     aw->start();
     
     //
@@ -211,6 +213,7 @@ void    Worker::play_audio()
 #endif
 
     player->end();
+    is_play_end     =   true;
    
     // 等待其他兩個thread完成
     while( aw->isFinished() == false )
@@ -248,6 +251,7 @@ void    Worker::play_video_audio()
         SLEEP_10MS;
     
     //
+    is_play_end     =   false;
     aw->start();
     vw->start();
     
@@ -259,6 +263,7 @@ void    Worker::play_video_audio()
 #endif
 
     player->end();
+    is_play_end     =   true;
     
     // 等待其他兩個thread完成
     while( aw->isFinished() == false )
@@ -363,11 +368,6 @@ void    Worker::finish_slot()
 
     if( aw->isFinished() == false || vw->isFinished() == false )
         return;
-    
-    end_lock.lock();
-    if( player != nullptr )
-        player->stop();
-    end_lock.unlock();
     
     // note: 音檔帶封面的情況, queue會有資料, 要清除. 未來再讓程式支援顯示封面.
     decode::clear_audio_queue();
@@ -500,9 +500,9 @@ void    Worker::seek_slot( int value )
 
 
 /*******************************************************************************
-Worker::seek_slot()
+Worker::get_play_end_state()
 ********************************************************************************/
-const bool&     Worker::get_finish_flag()
+bool&   Worker::get_play_end_state()
 {
-    return  player->get_finish_flag();
+    return  is_play_end;
 }

@@ -35,7 +35,7 @@ public:
     void    play();
     void    end();
 
-    const bool&     get_finish_flag();
+    bool&   get_play_end_state();
 
     void    set_src_file( std::string file );
     bool    is_set_src_file();
@@ -75,6 +75,7 @@ private:
 
     Player  *player     =   nullptr;
     bool    is_set_video    =   false;
+    bool    is_play_end     =   true;
 
     std::string     filename;
     std::string     subname;
