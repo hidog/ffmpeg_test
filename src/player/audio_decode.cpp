@@ -54,20 +54,6 @@ AudioDecode::~AudioDecode()
 
 
 
-#if 0
-/*******************************************************************************
-AudioDecode::open_codec_context()
-********************************************************************************/
-int     AudioDecode::open_codec_context( AVFormatContext *fmt_ctx )
-{
-    Decode::open_all_codec( fmt_ctx, type );
-    //dec_ctx->thread_count = 4;
-    return  R_SUCCESS;
-}
-#endif
-
-
-
 
 /*******************************************************************************
 AudioDecode::init()

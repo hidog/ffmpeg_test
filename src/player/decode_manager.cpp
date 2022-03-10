@@ -151,15 +151,9 @@ int    DecodeManager::open_decoders( AVFormatContext* fmt_ctx )
     VideoDecode     *v_ptr  =   nullptr;
     for( index = 0; index < fmt_ctx->nb_streams; index++ )
     {
+        // note: video stream 有機會是音檔內的封面圖片
         ret  =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_VIDEO, index, -1, nullptr, 0 );
 
-        /*
-            fmt_ctx->streams[index]->avg_frame_rate.den
-            這個地方有點問題
-            如果播放音樂檔案,但裡面有附專輯圖片
-            此時會出問題.
-            暫時先用 avg_frame_rate 處理,未來研究有沒有更好的方式
-        */
         if( ret >= 0 )
         {
             if( current_video_index < 0 )           
@@ -173,9 +167,6 @@ int    DecodeManager::open_decoders( AVFormatContext* fmt_ctx )
 
             // note: dec_ctx, stream is class member. after open codec, they use for current ctx, stream.
             v_ptr->open_codec_context( index, fmt_ctx, AVMEDIA_TYPE_VIDEO );
-
-            //dec_map.emplace(    std::make_pair(index,dec_ctx) ); 
-            //stream_map.emplace( std::make_pair(index,stream)  );
         }
 
     }
@@ -687,7 +678,6 @@ void    DecodeManager::flush_all_sub_stream()
 
     SubDecode       *s_ptr  =   nullptr;
     AVCodecContext  *ctx    =   nullptr;
-
 
     for( auto dec : subtitle_map )
     {
