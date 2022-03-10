@@ -52,7 +52,7 @@ VideoDecode*    DecodeManager::get_current_video_decoder()
         return  nullptr;
     }
 
-    VideoDecode     *ptr    =   dynamic_cast<VideoDecode*>(itr->second);
+    VideoDecode     *ptr    =   itr->second;
     if( ptr == nullptr )
         MYLOG( LOG::L_ERROR, "get video decode pointer fail." );
 
@@ -76,7 +76,7 @@ AudioDecode*    DecodeManager::get_current_audio_decoder()
         return  nullptr;
     }
 
-    AudioDecode     *ptr    =   dynamic_cast<AudioDecode*>(itr->second);
+    AudioDecode     *ptr    =   itr->second;
     if( ptr == nullptr )
         MYLOG( LOG::L_ERROR, "get audio decode pointer fail." );
 
@@ -101,7 +101,7 @@ SubDecode*      DecodeManager::get_current_subtitle_decoder()
         return  nullptr;
     }
 
-    SubDecode     *ptr    =   dynamic_cast<SubDecode*>(itr->second);
+    SubDecode     *ptr    =   itr->second;
     if( ptr == nullptr )
         MYLOG( LOG::L_ERROR, "get subtitle decode pointer fail." );
 
@@ -232,7 +232,7 @@ void    DecodeManager::set_output_jpg_path( std::string _path )
     VideoDecode     *v_ptr  =   nullptr;
     for( auto itr : video_map )
     {
-        v_ptr   =   dynamic_cast<VideoDecode*>(itr.second);
+        v_ptr   =   itr.second;
         assert( v_ptr != nullptr );
         v_ptr->set_output_jpg_path(_path);
     }
@@ -241,7 +241,7 @@ void    DecodeManager::set_output_jpg_path( std::string _path )
     SubDecode   *s_ptr  =   nullptr;
     for( auto itr : subtitle_map )
     {
-        s_ptr  =   dynamic_cast<SubDecode*>(itr.second);
+        s_ptr  =   itr.second;
         assert( s_ptr != nullptr );
         s_ptr->set_output_jpg_root(_path);
     }
@@ -281,7 +281,7 @@ void    DecodeManager::set_output_audio_pcm_path( std::string _path )
     AudioDecode     *a_ptr  =   nullptr;
     for( auto itr : audio_map )
     {
-        a_ptr   =   dynamic_cast<AudioDecode*>(itr.second);
+        a_ptr   =   itr.second;
         assert( a_ptr != nullptr );
         a_ptr->set_output_audio_pcm_path(_path);
     }
@@ -301,7 +301,7 @@ void    DecodeManager::init_decoders()
     VideoDecode *v_ptr  =   nullptr;
     for( auto itr : video_map )
     {
-        v_ptr   =   dynamic_cast<VideoDecode*>(itr.second);
+        v_ptr   =   itr.second;
         v_ptr->init();
     }
 
@@ -309,7 +309,7 @@ void    DecodeManager::init_decoders()
     AudioDecode *a_ptr  =   nullptr;
     for( auto itr : audio_map )
     {
-        a_ptr   =   dynamic_cast<AudioDecode*>(itr.second);
+        a_ptr   =   itr.second;
         a_ptr->init();
     }
 
@@ -317,7 +317,7 @@ void    DecodeManager::init_decoders()
     SubDecode   *s_ptr  =   nullptr;
     for( auto itr : subtitle_map )
     {
-        s_ptr   =   dynamic_cast<SubDecode*>(itr.second);
+        s_ptr   =   itr.second;
         s_ptr->init();
     }
 }
@@ -436,7 +436,7 @@ void    DecodeManager::set_subtitle_file( std::string path )
 
     for( auto itr : subtitle_map )
     {
-        s_ptr   =   dynamic_cast<SubDecode*>(itr.second);
+        s_ptr   =   itr.second;
         assert( s_ptr != nullptr );
         s_ptr->set_subfile(path);
     }
@@ -555,7 +555,7 @@ void    DecodeManager::init_subtitle( AVFormatContext *fmt_ctx, DecodeSetting se
 
         for( auto itr : subtitle_map )
         {
-            SubDecode   *s_ptr  =   dynamic_cast<SubDecode*>(itr.second);
+            SubDecode   *s_ptr  =   itr.second;
 
             if( s_ptr->is_graphic_subtitle() == true )
                 s_ptr->init_graphic_subtitle(sd);        
@@ -655,6 +655,11 @@ void    DecodeManager::release()
     for( auto itr : subtitle_map )
         delete  itr.second;
     subtitle_map.clear();
+
+    current_video_index     =   -1;
+    current_audio_index     =   -1;
+    current_subtitle_index  =   -1;
+    sub_src_type    =   SubSourceType::NONE;
 }
 
 
