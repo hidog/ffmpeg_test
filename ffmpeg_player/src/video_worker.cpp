@@ -165,15 +165,14 @@ void VideoWorker::video_play()
     bool            &a_start        =   dynamic_cast<MainWindow*>(parent())->get_audio_worker()->get_audio_start_state();
     const bool      &is_finish      =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_finish_flag();
 
-
     if( view_data == nullptr )
         MYLOG( LOG::L_ERROR, "view_data is null." );
 
     //  
     while( decode::get_video_size() <= 30 )
         SLEEP_10MS;
-
     v_start     =   true;
+
     while( a_start == false )
         SLEEP_10MS;
 
@@ -181,6 +180,7 @@ void VideoWorker::video_play()
     auto    handle_func =   [&]() 
     {
         VideoData vd    =   decode::get_video_data();
+        //MYLOG( LOG::L_DEBUG, "timestamp = %lld",  vd.timestamp - view_data->timestamp );
 
         while(true)
         {

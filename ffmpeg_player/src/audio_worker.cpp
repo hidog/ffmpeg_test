@@ -270,10 +270,10 @@ void    AudioWorker::audio_play()
                 ptr             +=  wanted_buffer_size;
                 remain_bytes    -=  wanted_buffer_size;
             }
-
-            if( seek_flag == false )
-                update_seekbar( ad.timestamp/1000 );
         }
+
+        if( seek_flag == false )
+            update_seekbar( ad.timestamp/1000 );
 
         last_ts = ad.timestamp;
     };
@@ -342,10 +342,10 @@ void AudioWorker::audio_play_with_video()
     bool            &v_start        =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
     const bool      &is_finish      =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_finish_flag();
 
-
     while( decode::get_audio_size() <= 30 )
         SLEEP_10MS;
     a_start = true;
+
     while( v_start == false )
         SLEEP_10MS;        
 
@@ -430,10 +430,10 @@ void AudioWorker::audio_play_with_video()
                 ptr             +=  wanted_buffer_size;
                 remain_bytes    -=  wanted_buffer_size;
             }
-
-            if( seek_flag == false )
-                update_seekbar( ad.timestamp/1000 );
         }
+
+        if( seek_flag == false )
+            update_seekbar( ad.timestamp/1000 );
 
         last_ts = ad.timestamp;
     };
