@@ -989,3 +989,15 @@ bool    Player::exist_video_stream()
 {
     return  decode_manager->exist_video_stream() == true && decode_manager->is_video_attachd() == false;
 }
+
+
+
+
+
+/*******************************************************************************
+Player::get_decode_manager()
+********************************************************************************/
+DecodeManager*  Player::get_decode_manager()
+{
+    return  decode_manager.get();
+}

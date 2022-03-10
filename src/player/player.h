@@ -68,6 +68,8 @@ public:
 
     std::vector<std::string>    get_embedded_subtitle_list();
 
+    DecodeManager*  get_decode_manager();
+
 #ifdef USE_MT
     void    play_QT_multi_thread();
     void    video_decode();
