@@ -48,9 +48,7 @@ public:
 
 
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
-    bool    exist_stream() override;
     void    flush_for_seek() override;
-    void    flush_all_stream() override;
 
     int     decode_subtitle( AVPacket* pkt );
     void    generate_subtitle_image( AVSubtitle &subtitle );

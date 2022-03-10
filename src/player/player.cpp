@@ -686,7 +686,7 @@ void    Player::play_QT()
             SLEEP_1MS;
         }
 
-        // note: 如果demux已經結束,就無法seek. 先當known issue.
+        // 
         if( seek_flag == true )     
         {
             if( decode_manager->exist_video_stream() == true && decode_manager->is_video_attachd() == false )
@@ -834,8 +834,7 @@ int    Player::flush()
     // flush subtitle
     // 需要考慮 graphic 的 case
     decode_manager->flush_all_sub_stream();
-    //s_decoder.flush_all_stream();       
-
+   
     // flush video
     if( decode_manager->exist_video_stream() == true )
     {
@@ -859,7 +858,6 @@ int    Player::flush()
             }
         }
         decode_manager->flush_video();
-        // v_decoder.flush_all_stream();  // 理論上只有一個 video stream, 這邊不影響
     }
 
     // flush audio
@@ -884,7 +882,6 @@ int    Player::flush()
             }
         }
         decode_manager->flush_audio();
-        //a_decoder.flush_all_stream();  // 多音軌的時候,清除其他音軌的資料
     }
 
     return 0;
@@ -902,8 +899,6 @@ void    Player::clear_setting()
 {
     setting.filename.clear();
     setting.subname.clear();
-
-    decode_manager->release();
 }
 
 
@@ -927,6 +922,8 @@ int     Player::end()
         MYLOG( LOG::L_ERROR, "demuxer is null." );
     demuxer->end();
     demuxer.release();
+
+    decode_manager->release();
 
     return  R_SUCCESS;
 }
@@ -955,41 +952,6 @@ void    Player::switch_subtitle( int index )
     switch_subtitle_flag    =   true;
     new_subtitle_index      =   index;
 }
-
-
-
-
-#if 0
-/*******************************************************************************
-Player::get_video_decoder()
-********************************************************************************/
-VideoDecode&    Player::get_video_decoder()
-{
-    return  v_decoder;
-}
-#endif
-
-
-#if 0
-/*******************************************************************************
-Player::get_audio_decoder()
-********************************************************************************/
-AudioDecode&    Player::get_audio_decoder()
-{
-    return  a_decoder;
-}
-#endif
-
-
-#if 0
-/*******************************************************************************
-Player::get_subtitle_decoder()
-********************************************************************************/
-SubDecode&      Player::get_subtitle_decoder()
-{
-    return  s_decoder;
-}
-#endif
 
 
 

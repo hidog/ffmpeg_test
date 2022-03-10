@@ -692,19 +692,6 @@ QImage  SubDecode::get_subtitle_image()
 
 
 /*******************************************************************************
-SubDecode::get_subtitle_image()
-********************************************************************************/
-bool    SubDecode::exist_stream()
-{
-    if( sub_file.empty() == false )
-        return  true;
-
-    return  Decode::exist_stream();
-}
-
-
-
-/*******************************************************************************
 SubDecode::get_subfile()
 ********************************************************************************/
 std::string     SubDecode::get_subfile()
@@ -878,49 +865,6 @@ void    SubDecode::set_output_jpg_root( std::string _root_path )
     output_jpg_root_path    =   _root_path;
 }
 #endif
-
-
-
-
-
-
-/*******************************************************************************
-SubDecode::flush_all_stream()
-********************************************************************************/
-void    SubDecode::flush_all_stream() 
-{
-#if 0
-    int     ret     =   0;
-    int     got_sub =   0;
-
-    // for subtitle flush, data = null, size = 0. 
-    // 這邊可以省略 pkt 的初始化
-    AVPacket    pkt;
-    pkt.data    =   nullptr;
-    pkt.size    =   0;
-
-    AVSubtitle      subtitle;
-
-    for( auto dec : dec_map )
-    {
-        while(true)
-        {
-            ret     =   avcodec_decode_subtitle2( dec.second, &subtitle, &got_sub, &pkt );
-            if( ret < 0 )
-                MYLOG( LOG::L_ERROR, "flush decode subtitle fail." );
-
-            avsubtitle_free(&subtitle);
-
-            if( got_sub <= 0 )
-                break;
-            
-            if( dec.first == cs_index && subtitle.format == 0 )       
-                generate_subtitle_image( subtitle );
-        }
-    }
-#endif
-    assert(0);
-}
 
 
 
