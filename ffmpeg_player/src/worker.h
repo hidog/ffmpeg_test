@@ -44,9 +44,6 @@ public:
     void    set_type( WorkType _t );
     void    set_ip( std::string _ip );
     void    set_port( std::string _port );
-
-    void    play_video_audio();
-    void    play_audio();
     
     // use for output    
     void    set_output( bool enable, std::string _port );
@@ -59,7 +56,6 @@ public slots:
     void    switch_subtitle_slot_str( QString path );
     void    switch_subtitle_slot_int( int index );
     void    stop_slot();
-    void    finish_slot();
     void    seek_slot( int value );
 
 

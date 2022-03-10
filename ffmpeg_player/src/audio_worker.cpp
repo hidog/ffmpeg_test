@@ -144,10 +144,7 @@ void AudioWorker::run()
     seek_flag   =   false;
 
     // start play
-    if( only_audio == true )
-        audio_play();
-    else
-        audio_play_with_video();
+    audio_play();
 
     io->close();
     io  =   nullptr;
@@ -155,6 +152,8 @@ void AudioWorker::run()
     audio->stop();
     delete audio;
     audio   =   nullptr;
+
+    current_sec =   0;
 
     MYLOG( LOG::L_INFO, "finish audio play." );
 }
@@ -214,129 +213,7 @@ void    AudioWorker::flush_for_seek()
 /*******************************************************************************
 AudioWorker::audio_play()
 ********************************************************************************/
-void    AudioWorker::audio_play()
-{
-    MYLOG( LOG::L_INFO, "start play audio" );
-
-    bool    &is_play_end    =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_play_end_state();
-
-    while( decode::get_audio_size() <= 30 )
-        SLEEP_10MS; 
-
-    std::chrono::steady_clock::time_point       last, now;
-    std::chrono::duration<int64_t, std::milli>  duration;
-    int64_t last_ts =   0;
-    
-    // 一次寫入4096的效能比較好
-    int     wanted_buffer_size  =   4096; //audio->bufferSize()/2;
-    int     remain          =   0;
-    int     remain_bytes    =   0;
-    uint8_t *ptr            =   nullptr; 
-
-    AudioData   ad;
-
-    // 練習使用 lambda operator.
-    auto    handle_func    =   [&]() 
-    {
-        //
-        ad  =   decode::get_audio_data();
-
-        remain_bytes    =   ad.bytes;
-        ptr             =   ad.pcm; 
-
-        while(true)
-        {
-            //MYLOG( LOG::L_DEBUG, "bytesFree = %d\n", audio->bytesFree() );
-            if( audio->bytesFree() < wanted_buffer_size )
-            {
-                SLEEP_1MS;
-                continue;
-            }
-            else if( remain_bytes <= wanted_buffer_size )
-            {
-                remain  =   io->write( (const char*)ptr, remain_bytes );
-                if( remain != remain_bytes )
-                    MYLOG( LOG::L_WARN, "remain != remain_bytes" );
-                delete [] ad.pcm;
-                ad.pcm      =   nullptr;
-                ad.bytes    =   0;
-                break;
-            }
-            else
-            {
-                remain  =   io->write( (const char*)ptr, wanted_buffer_size );
-                if( remain != wanted_buffer_size )
-                    MYLOG( LOG::L_WARN, "r != wanted_buffer_size" );
-                ptr             +=  wanted_buffer_size;
-                remain_bytes    -=  wanted_buffer_size;
-            }
-        }
-
-        if( seek_flag == false )
-            update_seekbar( ad.timestamp/1000 );
-
-        last_ts = ad.timestamp;
-    };
-
-    // 用 bool 簡單做 sync, 有空再修
-    bool    &ui_a_seek_lock     =   decode::get_a_seek_lock();
-
-    last   =   std::chrono::steady_clock::now();
-    while( is_play_end == false && force_stop == false )
-    {        
-        if( seek_flag == true )
-        {
-            seek_flag   =   false;
-            last        =   std::chrono::steady_clock::time_point();
-            last_ts     =   INT64_MAX;
-            ui_a_seek_lock  =   true;
-            while( ui_a_seek_lock == true )
-                SLEEP_10MS;
-            flush_for_seek();
-        }
-
-        if( decode::get_audio_size() <= 0 )
-        {     
-            MYLOG( LOG::L_WARN, "audio queue empty." );
-            SLEEP_10MS;
-            continue;
-        }
-
-        handle_func();
-    }
-
-    MYLOG( LOG::L_INFO, "play audio finish." );
-
-    // flush
-    while( decode::get_audio_size() > 0 && force_stop == false )
-    {      
-        if( decode::get_audio_size() <= 0 )
-        {
-            MYLOG( LOG::L_WARN, "audio queue empty." );
-            SLEEP_10MS;
-            continue;
-        }
-
-        handle_func();
-    }
-
-    // 等 player 結束, 確保不會再增加資料進去queue
-    while( is_play_end == false )
-        SLEEP_10MS;
-
-    // force stop 需要手動清除 queue.
-    decode::clear_audio_queue();
-}
-
-
-
-
-
-
-/*******************************************************************************
-AudioWorker::audio_play()
-********************************************************************************/
-void AudioWorker::audio_play_with_video()
+void AudioWorker::audio_play()
 {
     MYLOG( LOG::L_INFO, "start play audio" );
 

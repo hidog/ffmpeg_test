@@ -47,6 +47,15 @@ bool&   VideoWorker::get_video_start_state()
 
 
 
+/*******************************************************************************
+VideoWorker::set_no_stream()
+********************************************************************************/
+void    VideoWorker::set_no_stream()
+{
+    v_start =   true;
+}
+
+
 
 
 
@@ -59,6 +68,7 @@ void VideoWorker::run()
     force_stop  =   false;
     seek_flag   =   false;
     video_play();
+    current_sec =   0;
     MYLOG( LOG::L_INFO, "finish video play." );
 }
 

@@ -24,6 +24,7 @@ public:
 
     void    flush_for_seek();    
     void    update_seekbar( int sec );
+    void    set_no_stream();
 
     const int&  get_current_sec();
 
