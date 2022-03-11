@@ -278,6 +278,11 @@ void    Worker::run()
 
         MediaInfo   media_info  =   player->get_media_info();
 
+#if defined(HW_DECODE) || defined(NV_DECODE)
+        if( media_info.pix_fmt == 64 )   // 64 = AV_PIX_FMT_YUV420P10LE
+            MYLOG( LOG::L_ERROR, "hw decode with yuv420p10 and hw encode could not work." );
+#endif
+
         if( output_thr != nullptr )
             MYLOG( LOG::L_ERROR, "output_thr not null." );
         output_thr  =   new std::thread( &Worker::output, this, media_info );
