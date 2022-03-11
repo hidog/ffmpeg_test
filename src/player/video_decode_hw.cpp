@@ -68,11 +68,12 @@ void    VideoDecodeHW::list_hw_decoders()
 
 
 
-#if 0
+
+
 /*******************************************************************************
 VideoDecodeHW::open_codec_context
 ********************************************************************************/
-int     VideoDecodeHW::open_codec_context( AVFormatContext *fmt_ctx )
+int     VideoDecodeHW::open_codec_context(  int stream_index, AVFormatContext *fmt_ctx, AVMediaType type  )
 {
     list_hw_decoders();
 
@@ -81,17 +82,15 @@ int     VideoDecodeHW::open_codec_context( AVFormatContext *fmt_ctx )
 
     // open context
     AVCodec     *dec    =   nullptr;
-    ret     =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &dec, 0);  
+    ret     =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_VIDEO, stream_index, -1, &dec, 0);  
     if( ret < 0 ) 
     {
         MYLOG( LOG::L_ERROR, "Cannot find a video stream in the input file. ret = %d", ret );
         return  R_ERROR;
     }
-     
-    cs_index   =   ret;  // 先寫死 未來再改.
 
     create_hw_decoder( dec );    
-    stream  =   fmt_ctx->streams[cs_index];
+    stream  =   fmt_ctx->streams[stream_index];
 
     ret     =   avcodec_parameters_to_context( dec_ctx, stream->codecpar );
     if( ret < 0 )
@@ -126,13 +125,9 @@ int     VideoDecodeHW::open_codec_context( AVFormatContext *fmt_ctx )
         MYLOG( LOG::L_ERROR, "un handle pix fmt." );
     }
 
-    // 存回 map, 方便之後管理.
-    dec_map.emplace(    std::make_pair(cs_index,dec_ctx) ); 
-    stream_map.emplace( std::make_pair(cs_index,stream)  );  // 寫法有點醜. 得到 stream index 後, 先從 fmt_ctx 取得 stream, 再寫入自己定義的 map.
-
     return  ret;
 }
-#endif
+
 
 
 

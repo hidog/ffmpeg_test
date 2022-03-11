@@ -1,5 +1,8 @@
 #include "video_decode.h"
+
 #include "sub_decode.h"
+#include "video_decode_hw.h"
+#include "video_decode_nv.h"
 #include "../imgprcs/image_process.h"
 
 #include <QPainter>
@@ -702,4 +705,26 @@ bool    VideoDecode::is_attached()
         return  true;
     else
         return  false;
+}
+
+
+
+
+
+
+/*******************************************************************************
+get_video_decoder_instance()
+********************************************************************************/
+VideoDecode*    get_video_decoder_instance()
+{
+#ifdef CPU_DECODE
+    return  new VideoDecode;
+#elif defined( HW_DECODE )
+    return  new VideoDecodeHW;
+#elif defined( NV_DECODE)
+    return  new VideoDecodeNV;
+#else
+    assert(0);
+    return  nullptr;
+#endif
 }

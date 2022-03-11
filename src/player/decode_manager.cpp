@@ -161,7 +161,7 @@ int    DecodeManager::open_decoders( AVFormatContext* fmt_ctx )
             if( current_video_index < 0 )           
                 current_video_index   =   index; // choose first as current.
 
-            v_ptr   =   new VideoDecode;
+            v_ptr   =   get_video_decoder_instance();
             if( v_ptr == nullptr )
                 MYLOG( LOG::L_ERROR, "alloc video decode fail." );
 
@@ -863,4 +863,30 @@ void    DecodeManager::set_subfile( std::string path )
     }
 #endif
 }
+
+
+
+
+
+/*******************************************************************************
+DecodeManager::index_is_available()
+檢查 pkg stream_index 是否合法
+********************************************************************************/
+bool    DecodeManager::index_is_available( int index )
+{
+    auto    sdec    =   subtitle_map.find(index);
+    if( sdec != subtitle_map.end() )
+        return  true;
+
+    auto    adec    =   subtitle_map.find(index);
+    if( adec != subtitle_map.end() )
+        return  true;
+
+    auto    vdec    =   video_map.find(index);
+    if( vdec != video_map.end() )
+        return  true;
+
+    return  false;
+}
+
 

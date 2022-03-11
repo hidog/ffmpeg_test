@@ -43,9 +43,10 @@ public:
     int     init() override;
     int     end() override;
     void    flush_for_seek() override;
-    //int     open_codec_context( AVFormatContext *fmt_ctx ) override;
     int     send_packet( AVPacket *pkt ) override;
     int     recv_frame( int index ) override;
+    int     open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type ) override;
+
     
     AVPixelFormat   get_pix_fmt() override;
 

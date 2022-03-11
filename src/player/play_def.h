@@ -7,6 +7,12 @@
 #include "../IO/io_def.h"
 
 
+//#define CPU_DECODE
+#define HW_DECODE
+//#define NV_DECODE
+
+
+
 
 struct DecodeSetting
 {

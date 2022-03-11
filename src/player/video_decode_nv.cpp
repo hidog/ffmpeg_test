@@ -47,13 +47,13 @@ VideoDecodeNV::~VideoDecodeNV()
 
 
 
-#if 0
+
 /*******************************************************************************
 VideoDecodeNV::open_codec_context
 ********************************************************************************/
-int     VideoDecodeNV::open_codec_context( AVFormatContext *fmt_ctx )
+int     VideoDecodeNV::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type )
 {
-    int     ret     =   VideoDecode::open_codec_context( fmt_ctx );
+    int     ret     =   VideoDecode::open_codec_context( stream_index, fmt_ctx, type );
 
     AVCodecID       codec_id    =   stream->codecpar->codec_id;
     std::string     log_name    =   fmt_ctx->iformat->long_name;
@@ -74,7 +74,7 @@ int     VideoDecodeNV::open_codec_context( AVFormatContext *fmt_ctx )
 
     return  ret;
 }
-#endif
+
 
 
 

@@ -44,6 +44,7 @@ public:
 
     Decode*     get_decoder( int stream_index );
 
+    bool    index_is_available( int index );
     bool    exist_video_stream();
     bool    exist_audio_stream();
     bool    exist_subtitle_stream();

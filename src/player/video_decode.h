@@ -85,6 +85,8 @@ protected:
 };
 
 
+VideoDecode*    get_video_decoder_instance();
+
 
 
 #endif

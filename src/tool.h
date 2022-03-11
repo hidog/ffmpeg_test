@@ -21,6 +21,7 @@ constexpr int HAVE_FRAME    =   1; // 需要用 1 來判斷是否還有 frame.
 #define RENDER_SUBTITLE  // 是否要將字幕加進video frame內
 #endif
 
+
 enum class LOG
 {
     L_DEBUG = 0,
