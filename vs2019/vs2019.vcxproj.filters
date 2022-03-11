@@ -102,14 +102,8 @@
     <ClCompile Include="..\src\player\player_stream.cpp">
       <Filter>src\player</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\player\video_decode_hw.cpp">
-      <Filter>src\player</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\hw\NvDecoder.cpp">
       <Filter>hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\maker\video_encode_hw.cpp">
-      <Filter>src\maker</Filter>
     </ClCompile>
     <ClCompile Include="..\src\hw\NvEncoder.cpp">
       <Filter>hw</Filter>
@@ -119,6 +113,24 @@
     </ClCompile>
     <ClCompile Include="..\src\imgprcs\image_process.cpp">
       <Filter>imgprcs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\player\video_decode_nv.cpp">
+      <Filter>src\player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\player\video_decode_hw.cpp">
+      <Filter>src\player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ffmpeg_example\hw_decode.c">
+      <Filter>ffmpeg_example</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maker\video_encode_nv.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maker\video_encode_hw.cpp">
+      <Filter>src\maker</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\player\decode_manager.cpp">
+      <Filter>src\player</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -194,14 +206,8 @@
     <ClInclude Include="..\src\player\player_stream.h">
       <Filter>src\player</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\player\video_decode_hw.h">
-      <Filter>src\player</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\hw\NvDecoder.h">
       <Filter>hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\maker\video_encode_hw.h">
-      <Filter>src\maker</Filter>
     </ClInclude>
     <ClInclude Include="..\src\hw\NvEncoder.h">
       <Filter>hw</Filter>
@@ -211,6 +217,24 @@
     </ClInclude>
     <ClInclude Include="..\src\imgprcs\image_process.h">
       <Filter>imgprcs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\player\video_decode_nv.h">
+      <Filter>src\player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\player\video_decode_hw.h">
+      <Filter>src\player</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ffmpeg_example\hw_decode.h">
+      <Filter>ffmpeg_example</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\video_encode_nv.h">
+      <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\maker\video_encode_hw.h">
+      <Filter>src\maker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\player\decode_manager.h">
+      <Filter>src\player</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

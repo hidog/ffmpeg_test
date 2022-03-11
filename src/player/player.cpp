@@ -1,6 +1,10 @@
 #include "player.h"
+
 #include "tool.h"
 #include "demux_io.h"
+#include "video_decode.h"
+#include "audio_decode.h"
+
 
 #include <thread>
 
@@ -25,7 +29,7 @@ int     Player::init_demuxer()
         MYLOG( LOG::L_ERROR, "demuxer not null." );
     if( setting.io_type == IO_Type::DEFAULT )
     {
-        demuxer     =   new Demux{};
+        demuxer     =   std::make_unique<Demux>();
         if( setting.filename.empty() == true )
         {
             MYLOG( LOG::L_ERROR, "src file is empty." );
@@ -35,7 +39,7 @@ int     Player::init_demuxer()
     }
     else
     {
-        demuxer     =   new DemuxIO{ setting };
+        demuxer     =   std::make_unique<DemuxIO>(setting);
         if( demuxer == nullptr )
         {
             MYLOG( LOG::L_ERROR, "init demuxer fail." );
@@ -60,23 +64,31 @@ MediaInfo   Player::get_media_info()
     AVStream*   stream  =   nullptr;
 
     // video
-    info.width      =   v_decoder.get_video_width();
-    info.height     =   v_decoder.get_video_height();
-    info.pix_fmt    =   v_decoder.get_pix_fmt();
-    
-    stream  =   v_decoder.get_stream();
-    if( stream != nullptr )
+    if( decode_manager->exist_video_stream() == true )
     {
-        info.time_num   =   stream->avg_frame_rate.den;
-        info.time_den   =   stream->avg_frame_rate.num;
+        VideoDecode     *v_dec  =   decode_manager->get_current_video_decoder();
+        info.width      =   v_dec->get_video_width();
+        info.height     =   v_dec->get_video_height();
+        info.pix_fmt    =   v_dec->get_pix_fmt();
+    
+        stream  =   v_dec->get_stream();
+        if( stream != nullptr )
+        {
+            info.time_num   =   stream->avg_frame_rate.den;
+            info.time_den   =   stream->avg_frame_rate.num;
+        }
+        else
+            MYLOG( LOG::L_ERROR, "stream is nullptr" );
     }
-    else
-        MYLOG( LOG::L_ERROR, "stream is nullptr" );
 
     // audio
-    info.channel_layout =   a_decoder.get_audio_channel_layout();
-    info.sample_rate    =   a_decoder.get_audio_sample_rate();
-    info.sample_fmt     =   a_decoder.get_audio_sample_format();
+    if( decode_manager->exist_audio_stream() == true )
+    {
+        AudioDecode     *a_dec  =   decode_manager->get_current_audio_decoder();
+        info.channel_layout =   a_dec->get_audio_channel_layout();
+        info.sample_rate    =   a_dec->get_audio_sample_rate();
+        info.sample_fmt     =   a_dec->get_audio_sample_format();
+    }
 
     return  info;
 }
@@ -113,26 +125,18 @@ int     Player::init()
     fmt_ctx =   demuxer->get_format_context();
 
     //
-    ret     =   v_decoder.open_codec_context( fmt_ctx );
-    ret     =   a_decoder.open_codec_context( fmt_ctx );
-    ret     =   s_decoder.open_codec_context( fmt_ctx );
-
-    //
-    ret     =   v_decoder.init();
-    ret     =   a_decoder.init();    
+    decode_manager->open_decoders( fmt_ctx );
+    decode_manager->init_decoders();
 
     // handle subtitle
     // 有遇到影片會在這邊卡很久, 或許可以考慮用multi-thread的方式做處理, 以後再說...
-    init_subtitle(fmt_ctx);
-
-#if defined(RENDER_SUBTITLE) || !defined(FFMPEG_TEST)
-    // 若有 subtitle, 設置進去 video decoder.
-    if( s_decoder.exist_stream() == true )
-        v_decoder.set_subtitle_decoder( &s_decoder );
-#endif
+    decode_manager->init_subtitle( fmt_ctx, setting );
 
     return R_SUCCESS;
 }
+
+
+
 
 
 
@@ -143,12 +147,13 @@ int     Player::init()
 /*******************************************************************************
 Player::set_output_openCV_jpg_root()
 ********************************************************************************/
-void    Player::set_output_jpg_root( std::string _root_path )
+void    Player::set_output_jpg_path( std::string _path )
 {
-    v_decoder.set_output_jpg_root(_root_path);
-    s_decoder.set_output_jpg_root(_root_path);
+    decode_manager->set_output_jpg_path(_path);
 }
 #endif
+
+
 
 
 
@@ -160,9 +165,10 @@ Player::set_output_audio_pcm_path()
 ********************************************************************************/
 void    Player::set_output_audio_pcm_path( std::string _path )
 {
-    a_decoder.set_output_audio_pcm_path(_path);
+    decode_manager->set_output_audio_pcm_path(_path);
 }
 #endif
+
 
 
 
@@ -183,80 +189,20 @@ Player::get_muxer
 ********************************************************************************/
 Demux*  Player::get_demuxer()
 {
-    return  demuxer;
+    return  demuxer.get();
 }
 
 
 
+
+
 /*******************************************************************************
-Player::init_subtitle()
+Player::Player()
 ********************************************************************************/
-void    Player::init_subtitle( AVFormatContext *fmt_ctx )
+Player::Player()
 {
-    int             ret;
-    bool            exist_subtitle  =   false;
-    SubData         sd;
-    std::string     sub_src;
-
-    std::pair<std::string,std::string>  sub_param;
-
-    if( s_decoder.exist_stream() == true )
-    {
-        exist_subtitle  =   true;
-        s_decoder.set_subfile( setting.filename );
-        s_decoder.set_sub_src_type( SubSourceType::EMBEDDED );
-    }
-    else
-    {
-        if( setting.subname.empty() == false )
-        {
-            exist_subtitle  =   true;
-            s_decoder.set_subfile( setting.subname );
-            s_decoder.set_sub_src_type( SubSourceType::FROM_FILE );
-        }
-        else
-        {
-            exist_subtitle  =   false;
-            s_decoder.set_sub_src_type( SubSourceType::NONE );
-        }
-    }
-
-    //
-    if( exist_subtitle == true )
-    {
-        ret     =   s_decoder.init();
-
-        sd.width        =   v_decoder.get_video_width();
-        sd.height       =   v_decoder.get_video_height();
-        sd.pix_fmt      =   v_decoder.get_pix_fmt();
-        sd.video_index  =   v_decoder.current_index();
-        sd.sub_index    =   0;
-
-        if( s_decoder.is_graphic_subtitle() == true )
-            s_decoder.init_graphic_subtitle(sd);        
-        else
-        {
-            sub_src     =   s_decoder.get_subfile();
-
-            s_decoder.init_sws_ctx( sd );
-
-            // if exist subtitle, open it.
-            // 這邊有執行順序問題, 不能隨便更改執行順序      
-            sub_param   =   s_decoder.get_subtitle_param( fmt_ctx, sub_src, sd );
-            s_decoder.open_subtitle_filter( sub_param.first, sub_param.second );
-            s_decoder.set_filter_args( sub_param.first );
-        }       
-    }
+    decode_manager  =   std::make_unique<DecodeManager>();
 }
-
-
-
-
-/*******************************************************************************
-Player::Player()
-********************************************************************************/
-Player::Player()
-{}
 
 
 
@@ -301,8 +247,16 @@ Player::get_video_setting()
 VideoDecodeSetting    Player::get_video_setting()
 {
     VideoDecodeSetting    vs;
-    vs.width    =   v_decoder.get_video_width();
-    vs.height   =   v_decoder.get_video_height();
+    vs.width    =   0;
+    vs.height   =   0;
+
+    if( decode_manager->exist_video_stream() == true )
+    {
+        VideoDecode     *v_ptr  =   decode_manager->get_current_video_decoder();
+        vs.width    =   v_ptr->get_video_width();
+        vs.height   =   v_ptr->get_video_height();
+    }
+
     return  vs;
 }
 
@@ -316,8 +270,15 @@ Player::get_audio_setting()
 AudioDecodeSetting    Player::get_audio_setting()
 {
     AudioDecodeSetting    as;
-    as.channel      =   a_decoder.get_audio_channel();
-    as.sample_rate  =   a_decoder.get_audio_sample_rate();
+    as.channel      =   0;
+    as.sample_rate  =   0;
+
+    if( decode_manager->exist_audio_stream() == true )
+    {
+        AudioDecode     *a_ptr  =   decode_manager->get_current_audio_decoder();
+        as.channel      =   a_ptr->get_audio_channel();
+        as.sample_rate  =   a_ptr->get_audio_sample_rate();
+    }
     return  as;
 }
 
@@ -371,21 +332,7 @@ void    Player::play()
             break;        
         
         pkt     =   demuxer->get_packet();
-        // video
-        if( v_decoder.find_index(pkt->stream_index) )
-            dc  =   dynamic_cast<Decode*>(&v_decoder);        
-        // audio
-        else if( a_decoder.find_index(pkt->stream_index) )
-            dc  =   dynamic_cast<Decode*>(&a_decoder);
-        // subtitle
-        else if( s_decoder.find_index( pkt->stream_index ) == true )
-            dc  =   dynamic_cast<Decode*>(&s_decoder);
-        else        
-        {
-            MYLOG( LOG::L_ERROR, "stream type not handle.");
-            demuxer->unref_packet();
-            continue;
-        }
+        dc      =   decode_manager->get_decoder( pkt->stream_index );
 
         // send
         ret =   dc->send_packet(pkt);
@@ -398,7 +345,7 @@ void    Player::play()
                 if( ret <= 0 )
                     break;
             
-                if( dc->output_frame_func != nullptr && pkt->stream_index == dc->current_index() )
+                if( dc->output_frame_func != nullptr && dc->get_is_current() == true )
                     dc->output_frame_func();
                 dc->unref_frame();
             }
@@ -409,35 +356,8 @@ void    Player::play()
     MYLOG( LOG::L_INFO, "play main loop end. it will flush." );
 
     // flush
-    // subtitle 必須在最前面 flush.
-    if( s_decoder.exist_stream() == true )
-        s_decoder.flush();
-#ifdef RENDER_SUBTITLE
-    /* 
-        在有字幕的情況下, video decoder 需要額外呼叫 subtitle decoer 來處理, 所以需要額外的 code.
-        如果要併入 flush, 設計上並沒有比較好看.
-    */
-    ret     =   v_decoder.send_packet(nullptr);
-    if( ret >= 0 )
-    {       
-        while(true)
-        {
-            ret     =   v_decoder.recv_frame(-1);
-            if( ret <= 0 )
-                break;
-
-            if( v_decoder.output_frame_func != nullptr )
-                v_decoder.output_frame_func();
-            v_decoder.unref_frame();
-        }
-    }
-#else
-    // 理論上只有一個 video stream. 如果不是, 這邊有機會出問題.
-    v_decoder.flush();
-#endif
-    a_decoder.flush();
-
-    MYLOG( LOG::L_INFO, "Demuxing succeeded." );
+    decode_manager->flush_decoders();
+    MYLOG( LOG::L_INFO, "Demuxing finish." )
 }
 #endif
 
@@ -618,26 +538,33 @@ Player::demux_need_wait()
 
 為了避免 queue 被塞爆,量過大的時候會停下來等 UI 端消化.
 要考慮只有video or audio stream.
-
 ********************************************************************************/
 bool    Player::demux_need_wait()
 {
     if( seek_flag == true )
         return  false;
-    else if( v_decoder.exist_stream() == true && a_decoder.exist_stream() == true )
+    else if( decode_manager->exist_video_stream() == true && decode_manager->exist_audio_stream() == true )
     {
-        if( decode::get_video_size() >= MAX_QUEUE_SIZE && decode::get_audio_size() >= MAX_QUEUE_SIZE )
+        if( decode_manager->is_video_attachd() == true ) // 處理音樂檔案內有封面的case
+        {
+            if( decode::get_audio_size() >= MAX_QUEUE_SIZE )
+                return  true;
+            else
+                return  false;
+        }
+        else if( decode::get_video_size() >= MAX_QUEUE_SIZE && decode::get_audio_size() >= MAX_QUEUE_SIZE )
             return  true;
         else
             return  false;
     }   
-    else if( v_decoder.exist_stream() == true && decode::get_video_size() >= MAX_QUEUE_SIZE )    
+    else if( decode_manager->exist_video_stream() == true && decode::get_video_size() >= MAX_QUEUE_SIZE )
         return  true;  
-    else if( a_decoder.exist_stream() == true && decode::get_audio_size() >= MAX_QUEUE_SIZE )
+    else if( decode_manager->exist_audio_stream() == true && decode::get_audio_size() >= MAX_QUEUE_SIZE )
         return  true;
     else
         return  false;
 }
+
 
 
 
@@ -647,7 +574,7 @@ Player::is_embedded_subtitle()
 ********************************************************************************/
 bool    Player::is_embedded_subtitle()
 {
-    return  s_decoder.get_sub_src_type() == SubSourceType::EMBEDDED;
+    return  decode_manager->get_sub_src_type() == SubSourceType::EMBEDDED;
 }
 
 
@@ -660,7 +587,7 @@ Player::is_file_subtitle()
 ********************************************************************************/
 bool    Player::is_file_subtitle()
 {
-    return  s_decoder.get_sub_src_type() == SubSourceType::FROM_FILE;
+    return  decode_manager->get_sub_src_type() == SubSourceType::FROM_FILE;
 }
 
 
@@ -672,7 +599,7 @@ Player::is_embedded_subtitle()
 ********************************************************************************/
 std::vector<std::string>    Player::get_embedded_subtitle_list()
 {
-    return  s_decoder.get_embedded_subtitle_list();
+    return  decode_manager->get_embedded_subtitle_list();
 }
 
 
@@ -707,9 +634,7 @@ void    Player::handle_seek()
     decode::clear_video_queue();
     decode::clear_audio_queue();
 
-    v_decoder.flush_for_seek();
-    a_decoder.flush_for_seek();
-    s_decoder.flush_for_seek();
+    decode_manager->flush_decoders_for_seek();
 
     // run seek.
     AVFormatContext*    fmt_ctx     =   demuxer->get_format_context();
@@ -758,36 +683,36 @@ void    Player::play_QT()
             SLEEP_1MS;
         }
 
-        //
+        // NOTE: 如果 demux 已經結束, 此時無法seek.
         if( seek_flag == true )     
         {
-            while( ui_v_seek_lock == false || ui_a_seek_lock == false )
-                SLEEP_10MS;
-            seek_flag   =   false;
-            handle_seek();
-            ui_v_seek_lock = false;
-            ui_a_seek_lock = false;
+            if( decode_manager->exist_video_stream() == true && decode_manager->is_video_attachd() == false )
+            {
+                while( ui_v_seek_lock == false || ui_a_seek_lock == false )
+                    SLEEP_10MS;
+                seek_flag   =   false;
+                handle_seek();
+                ui_v_seek_lock = false;
+                ui_a_seek_lock = false;
+            }
+            else
+            {
+                while( ui_a_seek_lock == false )
+                    SLEEP_10MS;
+                seek_flag   =   false;
+                handle_seek();
+                ui_a_seek_lock = false;
+            }
         }
 
         //
         ret     =   demuxer->demux();
-        if( ret < 0 )        
+        if( ret < 0 )
             break;
 
         //
         pkt     =   demuxer->get_packet();
-        if( v_decoder.find_index( pkt->stream_index ) == true )
-            dc  =   dynamic_cast<Decode*>(&v_decoder);
-        else if( a_decoder.find_index( pkt->stream_index ) == true )
-            dc  =   dynamic_cast<Decode*>(&a_decoder);
-        else if( s_decoder.find_index( pkt->stream_index ) == true )
-            dc  =   dynamic_cast<Decode*>(&s_decoder);  
-        else
-        {
-            MYLOG( LOG::L_ERROR, "stream type not handle.");
-            demuxer->unref_packet();
-            continue;
-        }
+        dc      =   decode_manager->get_decoder( pkt->stream_index );
 
         //
         decode( dc, pkt );       
@@ -802,6 +727,8 @@ void    Player::play_QT()
 
 
 
+
+
 /*******************************************************************************
 Player::decode
 ********************************************************************************/
@@ -812,10 +739,10 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
     if( switch_subtitle_flag == true )
     {
         switch_subtitle_flag    =   false;
-        if( s_decoder.get_sub_src_type() == SubSourceType::FROM_FILE )
-            s_decoder.switch_subtltle(new_subtitle_path);
-        else if( s_decoder.get_sub_src_type() == SubSourceType::EMBEDDED )
-            s_decoder.switch_subtltle(new_subtitle_index);
+        if( decode_manager->get_sub_src_type() == SubSourceType::FROM_FILE )
+            decode_manager->switch_subtltle(new_subtitle_path);
+        else if( decode_manager->get_sub_src_type() == SubSourceType::EMBEDDED )
+            decode_manager->switch_subtltle(new_subtitle_index);
         else
             MYLOG( LOG::L_ERROR, "no subtitle.");
     }
@@ -838,20 +765,27 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
             if( output_live_stream_func != nullptr )
                 output_live_stream_func( dc );
 
-            if( pkt->stream_index == v_decoder.current_index() )
+            //if( pkt->stream_index == v_decoder.current_index() )
+            if( pkt->stream_index == decode_manager->get_current_video_index() )
             {
-                vdata   =   v_decoder.output_video_data();
+                VideoDecode *v_ptr  =   decode_manager->get_current_video_decoder();
+                vdata   =   v_ptr->output_video_data();
                 decode::add_video_data(vdata);                
             }
-            else if( pkt->stream_index == a_decoder.current_index() )
+            //else if( pkt->stream_index == a_decoder.current_index() )
+            else if( pkt->stream_index == decode_manager->get_current_audio_index() )
             {
-                adata   =   a_decoder.output_audio_data();
+                AudioDecode *a_ptr  =   decode_manager->get_current_audio_decoder();
+                adata   =   a_ptr->output_audio_data();
                 decode::add_audio_data(adata);
             }
-            else
+            else if( decode_manager->index_is_available( pkt->stream_index ) )
             {
-                // 可以印 log. 目前 graphic subtitle 會跑進這邊, 有空再修正
-                // MYLOG( LOG::L_ERROR, "undefined behavier." );
+                // no nothing.
+            }
+            else 
+            {
+                MYLOG( LOG::L_ERROR, "undefined behavier." );
             }
             dc->unref_frame();
         }
@@ -882,48 +816,56 @@ int    Player::flush()
 
     // flush subtitle
     // 需要考慮 graphic 的 case
-    s_decoder.flush_all_stream();       
-
+    decode_manager->flush_all_sub_stream();
+   
     // flush video
-    ret     =   v_decoder.send_packet(nullptr);
-    if( ret >= 0 )
-    {       
-        while(true)
-        {
-            ret     =   v_decoder.recv_frame(-1);
-            if( ret <= 0 )
-                break;
+    if( decode_manager->exist_video_stream() == true )
+    {
+        VideoDecode     *v_ptr  =   decode_manager->get_current_video_decoder();
+        ret     =   v_ptr->send_packet(nullptr);
+        if( ret >= 0 )
+        {       
+            while(true)
+            {
+                ret     =   v_ptr->recv_frame(-1);
+                if( ret <= 0 )
+                    break;
 
-            if( output_live_stream_func != nullptr )
-                output_live_stream_func( &v_decoder );
+                if( output_live_stream_func != nullptr )
+                    output_live_stream_func( v_ptr );
 
-            vdata   =   v_decoder.output_video_data();
-            decode::add_video_data(vdata);  
+                vdata   =   v_ptr->output_video_data();
+                decode::add_video_data(vdata);  
 
-            v_decoder.unref_frame();  
+                v_ptr->unref_frame();  
+            }
         }
+        decode_manager->flush_video();
     }
-    v_decoder.flush_all_stream();  // 理論上只有一個 video stream, 這邊不影響
 
     // flush audio
-    ret     =   a_decoder.send_packet(nullptr);
-    if( ret >= 0 )
+    if( decode_manager->exist_audio_stream() == true )
     {
-        while(true)
+        AudioDecode     *a_ptr  =   decode_manager->get_current_audio_decoder();
+        ret     =   a_ptr->send_packet(nullptr);
+        if( ret >= 0 )
         {
-            ret     =   a_decoder.recv_frame(-1);
-            if( ret <= 0 )
-                break;
+            while(true)
+            {
+                ret     =   a_ptr->recv_frame(-1);
+                if( ret <= 0 )
+                    break;
 
-            if( output_live_stream_func != nullptr )
-                output_live_stream_func( &a_decoder );
+                if( output_live_stream_func != nullptr )
+                    output_live_stream_func( a_ptr );
 
-            adata   =   a_decoder.output_audio_data();
-            decode::add_audio_data( adata );
-            a_decoder.unref_frame();
+                adata   =   a_ptr->output_audio_data();
+                decode::add_audio_data( adata );
+                a_ptr->unref_frame();
+            }
         }
+        decode_manager->flush_audio();
     }
-    a_decoder.flush_all_stream();  // 多音軌的時候,清除其他音軌的資料
 
     return 0;
 }
@@ -953,10 +895,6 @@ int     Player::end()
 {
     clear_setting();
 
-    v_decoder.end();
-    a_decoder.end();
-    s_decoder.end();
-
     stop_flag   =   false;
     seek_flag   =   false;
 
@@ -964,8 +902,9 @@ int     Player::end()
     if( demuxer == nullptr )
         MYLOG( LOG::L_ERROR, "demuxer is null." );
     demuxer->end();
-    delete demuxer;
-    demuxer =   nullptr;
+    demuxer.release();
+
+    decode_manager->release();
 
     return  R_SUCCESS;
 }
@@ -998,41 +937,6 @@ void    Player::switch_subtitle( int index )
 
 
 
-
-/*******************************************************************************
-Player::get_video_decoder()
-********************************************************************************/
-VideoDecode&    Player::get_video_decoder()
-{
-    return  v_decoder;
-}
-    
-
-
-
-/*******************************************************************************
-Player::get_audio_decoder()
-********************************************************************************/
-AudioDecode&    Player::get_audio_decoder()
-{
-    return  a_decoder;
-}
-
-
-
-    
-/*******************************************************************************
-Player::get_subtitle_decoder()
-********************************************************************************/
-SubDecode&      Player::get_subtitle_decoder()
-{
-    return  s_decoder;
-}
-
-
-
-
-
 /*******************************************************************************
 Player::seek()
 ********************************************************************************/
@@ -1055,8 +959,8 @@ void    player_decode_example()
     DecodeSetting   setting;
     setting.io_type     =   IO_Type::DEFAULT;
     //setting.io_type     =   IO_Type::SRT_IO;
-    setting.filename   =   "D:\\test.mp4";     // 使用 D:\\code\\test.mkv 會出錯. 已增加程式碼處理這個問題.
-    //setting.subname    =   "H:\\test.ass";   
+    setting.filename   =   "D:\\test_video\\test.mkv";     // 使用 D:\\code\\test.mkv 會出錯. 已增加程式碼處理這個問題.
+    //setting.subname    =   "D:\\test.ass";   
     //setting.srt_port    =   "1234";
 
     Player  player;  
@@ -1064,11 +968,35 @@ void    player_decode_example()
     player.set( setting );
     player.init();
 
-    player.set_output_jpg_root( "H:\\jpg" );
-    player.set_output_audio_pcm_path( "H:\\test.pcm" );
+    player.set_output_jpg_path( "F:\\jpg" );
+    player.set_output_audio_pcm_path( "F:\\test.pcm" );
 
     player.play();
     player.end();
 
 }
 #endif
+
+
+
+
+
+/*******************************************************************************
+Player::exist_video_stream()
+********************************************************************************/
+bool    Player::exist_video_stream()
+{
+    return  decode_manager->exist_video_stream() == true && decode_manager->is_video_attachd() == false;
+}
+
+
+
+
+
+/*******************************************************************************
+Player::get_decode_manager()
+********************************************************************************/
+DecodeManager*  Player::get_decode_manager()
+{
+    return  decode_manager.get();
+}

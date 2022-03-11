@@ -52,10 +52,9 @@ protected:
     void    set_jpg_root_path( std::string path );
 #endif
 
+    // note: ¦³ªÅ°µ protected interface.
     int     src_width   =   0;
     int     src_height  =   0;
-
-private:
 
 #ifdef FFMPEG_TEST
     uint8_t*    video_data[4]       =   { nullptr };

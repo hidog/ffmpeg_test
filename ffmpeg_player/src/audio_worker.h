@@ -29,6 +29,10 @@ public:
     void    pause();
 
     void    flush_for_seek();    
+    void    set_only_audio( bool flag );
+    void    update_seekbar( int sec );
+
+    const int&  get_current_sec();
 
 public slots:
 
@@ -38,6 +42,8 @@ public slots:
 
 signals:
 
+    void    update_seekbar_signal( int sec );
+
 private:
 
     QAudioOutput    *audio     =   nullptr;
@@ -46,7 +52,8 @@ private:
     bool    a_start     =   false;
     bool    force_stop  =   false;
     bool    seek_flag   =   false;
-
+    bool    only_audio  =   false;
+    int     current_sec =   0;
 };
 
 

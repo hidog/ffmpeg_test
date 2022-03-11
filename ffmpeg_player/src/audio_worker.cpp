@@ -30,6 +30,16 @@ AudioWorker::~AudioWorker()
 
 
 
+/*******************************************************************************
+AudioWorker::set_only_audio()
+********************************************************************************/
+void    AudioWorker::set_only_audio( bool flag )
+{
+    only_audio  =   flag;
+}
+
+
+
 
 /*******************************************************************************
 AudioWorker::open_audio_output()
@@ -129,6 +139,7 @@ void AudioWorker::run()
         return;
     }
 
+    current_sec =   0;
     force_stop  =   false;
     seek_flag   =   false;
 
@@ -141,6 +152,8 @@ void AudioWorker::run()
     audio->stop();
     delete audio;
     audio   =   nullptr;
+
+    current_sec =   0;
 
     MYLOG( LOG::L_INFO, "finish audio play." );
 }
@@ -174,16 +187,24 @@ seek 的時候, 由 UI 端負責清空資料, 之後等到有資料才繼續播放.
 ********************************************************************************/
 void    AudioWorker::flush_for_seek()
 {
-    bool    &v_start    =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
+    if( only_audio == true )
+    {
+        while( decode::get_audio_size() <= 10 )
+            SLEEP_10MS;
+        a_start     =   true;
+    }
+    else
+    {
+        bool    &v_start    =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
 
-    // 重新等待有資料才播放
-    while( decode::get_audio_size() <= 3 )
-        SLEEP_10MS;
-    a_start     =   true;
-    while( v_start == false )
-        SLEEP_10MS;
+        // 重新等待有資料才播放
+        while( decode::get_audio_size() <= 3 )
+            SLEEP_10MS;
+        a_start     =   true;
+        while( v_start == false )
+            SLEEP_10MS;
+    }
 }
-
 
 
 
@@ -196,13 +217,13 @@ void AudioWorker::audio_play()
 {
     MYLOG( LOG::L_INFO, "start play audio" );
 
-    AudioData   ad;
     bool    &v_start        =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
     bool    &is_play_end    =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_play_end_state();
 
     while( decode::get_audio_size() <= 30 )
         SLEEP_10MS;
     a_start = true;
+
     while( v_start == false )
         SLEEP_10MS;        
 
@@ -217,6 +238,8 @@ void AudioWorker::audio_play()
     int     remain          =   0;
     int     remain_bytes    =   0;
     uint8_t *ptr            =   nullptr; 
+
+    AudioData   ad;
 
     // 練習使用 lambda operator.
     auto    handle_func    =   [&]() 
@@ -287,6 +310,9 @@ void AudioWorker::audio_play()
             }
         }
 
+        if( seek_flag == false )
+            update_seekbar( ad.timestamp/1000 );
+
         last_ts = ad.timestamp;
     };
 
@@ -317,6 +343,8 @@ void AudioWorker::audio_play()
         handle_func();
     }
 
+    MYLOG( LOG::L_INFO, "play audio finish." );
+
     // flush
     while( decode::get_audio_size() > 0 && force_stop == false )
     {      
@@ -336,6 +364,32 @@ void AudioWorker::audio_play()
 
     // force stop 需要手動清除 queue.
     decode::clear_audio_queue();
+}
+
+
+
+
+
+/*******************************************************************************
+AudioWorker::stop()
+********************************************************************************/
+void    AudioWorker::update_seekbar( int sec )
+{
+    const int   &v_sec   =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_current_sec();
+    current_sec   =   sec;
+
+    if( current_sec > v_sec )
+        emit    update_seekbar_signal( current_sec );
+}
+
+
+
+/*******************************************************************************
+AudioWorker::stop()
+********************************************************************************/
+const int&  AudioWorker::get_current_sec()
+{
+    return  current_sec;
 }
 
 

@@ -23,6 +23,10 @@ public:
     void    pause();
 
     void    flush_for_seek();    
+    void    update_seekbar( int sec );
+    void    set_no_stream();
+
+    const int&  get_current_sec();
 
 public slots:
 
@@ -39,8 +43,8 @@ private:
     QMutex      *video_mtx  =   nullptr;    // ¸ò mainwindows ¦@¥Î
     bool        force_stop  =   false;
     bool        pause_flag  =   false;
-
     bool        seek_flag   =   false;
+    int         current_sec =   0;
 };
 
 

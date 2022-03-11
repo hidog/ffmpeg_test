@@ -56,20 +56,6 @@ AudioDecode::~AudioDecode()
 
 
 /*******************************************************************************
-AudioDecode::open_codec_context()
-********************************************************************************/
-int     AudioDecode::open_codec_context( AVFormatContext *fmt_ctx )
-{
-    Decode::open_all_codec( fmt_ctx, type );
-    //dec_ctx->thread_count = 4;
-    return  R_SUCCESS;
-}
-
-
-
-
-
-/*******************************************************************************
 AudioDecode::init()
 
 av_get_channel_layout_nb_channels   轉成聲道數

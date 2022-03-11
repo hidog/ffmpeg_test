@@ -1,4 +1,9 @@
 #include "player_stream.h"
+
+#include "audio_decode.h"
+#include "video_decode.h"
+#include "sub_decode.h"
+
 #include <thread>
 
 extern "C" {
@@ -40,13 +45,14 @@ int    PlayerStream::init()
     Player::init();
 
     //
-    AudioDecode &a_decoder  =   Player::get_audio_decoder();
+    AudioDecode     *a_ptr  =   get_decode_manager()->get_current_audio_decoder();
+    //AudioDecode &a_decoder  =   Player::get_audio_decoder();
 
     is_live_stream      =   true;
-    AVSampleFormat  audio_fmt   =   static_cast<AVSampleFormat>(a_decoder.get_audio_sample_format());
+    AVSampleFormat  audio_fmt   =   static_cast<AVSampleFormat>(a_ptr->get_audio_sample_format());
 
-    int   audio_channel     =   a_decoder.get_audio_channel();
-    int   nb_sample         =   a_decoder.get_audio_nb_sample();
+    int   audio_channel     =   a_ptr->get_audio_channel();
+    int   nb_sample         =   a_ptr->get_audio_nb_sample();
     int   bytes_per_sample  =   av_get_bytes_per_sample(audio_fmt);
 
     audio_pts_count     =   av_samples_get_buffer_size( NULL, audio_channel, nb_sample, audio_fmt, 0 );
@@ -89,15 +95,16 @@ PlayerStream::play_QT()
 ********************************************************************************/
 void    PlayerStream::play_QT()
 {
-    VideoDecode     &v_decoder  =   Player::get_video_decoder();
-    AudioDecode     &a_decoder  =   Player::get_audio_decoder();
-    SubDecode       &s_decoder  =   Player::get_subtitle_decoder();
     Demux           *demuxer    =   Player::get_demuxer();
     assert( demuxer != nullptr );
 
     // 目前先不處理字幕圖的live stream.
-    if( is_live_stream == true && s_decoder.exist_stream() == true && s_decoder.is_graphic_subtitle() == true )
+    if( is_live_stream == true && 
+        get_decode_manager()->exist_subtitle_stream() == true && 
+        get_decode_manager()->get_current_subtitle_decoder()->is_graphic_subtitle() == true )
+    {
         MYLOG( LOG::L_ERROR, "un hanlde." )
+    }
 
     int         ret     =   0;
     AVPacket    *pkt    =   nullptr;
@@ -126,18 +133,7 @@ void    PlayerStream::play_QT()
 
         //
         pkt     =   demuxer->get_packet();
-        if( v_decoder.find_index( pkt->stream_index ) == true )
-            dc  =   dynamic_cast<Decode*>(&v_decoder);
-        else if( a_decoder.find_index( pkt->stream_index ) == true )
-            dc  =   dynamic_cast<Decode*>(&a_decoder);
-        else if( s_decoder.find_index( pkt->stream_index ) == true )
-            dc  =   dynamic_cast<Decode*>(&s_decoder);  
-        else
-        {
-            MYLOG( LOG::L_ERROR, "stream type not handle.");
-            demuxer->unref_packet();
-            continue;
-        }
+        dc      =   get_decode_manager()->get_decoder( pkt->stream_index );
 
         //
         decode( dc, pkt );       
@@ -212,7 +208,7 @@ PlayerStream::get_new_v_frame()
 ********************************************************************************/
 AVFrame*    PlayerStream::get_new_v_frame()
 {
-    VideoDecode &v_decoder  =   Player::get_video_decoder();
+    VideoDecode     *v_ptr  =   get_decode_manager()->get_current_video_decoder();
 
     AVFrame*    v_frame     =   nullptr;
     int         ret         =   0;
@@ -224,9 +220,9 @@ AVFrame*    PlayerStream::get_new_v_frame()
     v_frame->pts  =   0;
 
     //
-    v_frame->format   =   v_decoder.get_pix_fmt();
-    v_frame->width    =   v_decoder.get_video_width();
-    v_frame->height   =   v_decoder.get_video_height();
+    v_frame->format   =   v_ptr->get_pix_fmt();
+    v_frame->width    =   v_ptr->get_video_width();
+    v_frame->height   =   v_ptr->get_video_height();
 
     ret     =   av_frame_get_buffer( v_frame, 0 );
     if( ret < 0 ) 
@@ -251,7 +247,7 @@ PlayerStream::get_new_a_frame()
 ********************************************************************************/
 AVFrame*    PlayerStream::get_new_a_frame()
 {
-    AudioDecode &a_decoder  =   Player::get_audio_decoder();
+    AudioDecode     *a_ptr  =   get_decode_manager()->get_current_audio_decoder();
 
     AVFrame*    a_frame     =   nullptr;
     int         ret         =   0;
@@ -263,11 +259,11 @@ AVFrame*    PlayerStream::get_new_a_frame()
     a_frame->pts  =   0;
 
     //
-    a_frame->nb_samples       =     a_decoder.get_audio_nb_sample();
-    a_frame->format           =     a_decoder.get_audio_sample_format();
-    a_frame->channel_layout   =     a_decoder.get_audio_channel_layout();
-    a_frame->channels         =     a_decoder.get_audio_channel();
-    a_frame->sample_rate      =     a_decoder.get_audio_sample_rate();
+    a_frame->nb_samples       =     a_ptr->get_audio_nb_sample();
+    a_frame->format           =     a_ptr->get_audio_sample_format();
+    a_frame->channel_layout   =     a_ptr->get_audio_channel_layout();
+    a_frame->channels         =     a_ptr->get_audio_channel();
+    a_frame->sample_rate      =     a_ptr->get_audio_sample_rate();
 
     // 以 vorbis 來講,他會變動 sample 個數,暫時不支援這個壓縮格式
     if( a_frame->nb_samples == 0 )

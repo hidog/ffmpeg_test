@@ -1,7 +1,8 @@
 ﻿#include "sub_decode.h"
-#include "tool.h"
-#include <sstream>
 
+#include "tool.h"
+
+#include <cassert>
 
 extern "C" {
 
@@ -24,71 +25,6 @@ SubDecode::SubDecode()
 SubDecode::SubDecode()
     :   Decode(AVMEDIA_TYPE_SUBTITLE)
 {}
-
-
-
-
-/*******************************************************************************
-SubDecode::get_subtitle_param()
-********************************************************************************/
-std::pair<std::string,std::string>  SubDecode::get_subtitle_param( AVFormatContext* fmt_ctx, std::string src_file, SubData sd )
-{
-    if( is_graphic_subtitle() == true )
-        MYLOG( LOG::L_ERROR, "cant handle graphic subtitle." );
-
-    std::stringstream   ss;
-    std::string     in_param, out_param;;
-    
-    AVRational  frame_rate  =   av_guess_frame_rate( fmt_ctx, fmt_ctx->streams[sd.video_index], NULL );
-
-    int     sar_num     =   fmt_ctx->streams[sd.video_index]->codecpar->sample_aspect_ratio.num; // old code use fmt_ctx->streams[sd.video_index]->sample_aspect_ratio.num
-    int     sar_den     =   FFMAX( fmt_ctx->streams[sd.video_index]->codecpar->sample_aspect_ratio.den, 1 );
-
-    int     tb_num      =   fmt_ctx->streams[sd.video_index]->time_base.num;
-    int     tb_den      =   fmt_ctx->streams[sd.video_index]->time_base.den;
-
-    ss << "video_size=" << sd.width << "x" << sd.height << ":pix_fmt=" << static_cast<int>(sd.pix_fmt) 
-       << ":time_base=" << tb_num << "/" << tb_den << ":pixel_aspect=" << sar_num << "/" << sar_den;
-
-    if( frame_rate.num != 0 && frame_rate.den != 0 )
-        ss << ":frame_rate=" << frame_rate.num << "/" << frame_rate.den;
-
-    in_param   =   ss.str();
-
-    MYLOG( LOG::L_INFO, "in = %s", in_param.c_str() );
-
-    ss.str("");
-    ss.clear();   
-
-    // make filename param. 留意絕對路徑的格式, 不能亂改, 會造成錯誤.
-    std::string     filename_param  =   "\\";
-    filename_param  +=  src_file;
-    filename_param.insert( 2, 1, '\\' );
-    
-    // 理論上這邊的字串可以精簡...
-    sub_index   =   sd.sub_index;
-    ss << "subtitles='" << filename_param << "':stream_index=" << sub_index;
-    
-    out_param    =   ss.str();
-    //out_param    =   "subtitles='\\D\\:/code/test.mkv':stream_index=0";
-
-    MYLOG( LOG::L_INFO, "out = %s", out_param.c_str() );
-    return  std::make_pair( in_param, out_param );
-}
-
-
-
-
-
-
-/*******************************************************************************
-SubDecode::set_filter_args()
-********************************************************************************/
-void    SubDecode::set_filter_args( std::string args )
-{
-    subtitle_args   =   args;
-}
-
 
 
 
@@ -148,9 +84,9 @@ SubDecode::~SubDecode()
 /*******************************************************************************
 SubDecode::open_codec_context()
 ********************************************************************************/
-int     SubDecode::open_codec_context( AVFormatContext *fmt_ctx )
+int     SubDecode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type )
 {
-    Decode::open_all_codec( fmt_ctx, type );
+    Decode::open_codec_context( stream_index, fmt_ctx, type );
 
     if( dec_ctx != nullptr )
     {
@@ -162,7 +98,6 @@ int     SubDecode::open_codec_context( AVFormatContext *fmt_ctx )
 
     return  R_SUCCESS;
 }
-
 
 
 
@@ -351,8 +286,8 @@ int     SubDecode::end()
         graph    =   nullptr;
     }
 
-    sub_file.clear();
-    subtitle_args.clear();
+    //sub_file.clear();
+    //subtitle_args.clear();
     sub_src_type    =   SubSourceType::NONE;
     is_graphic      =   false;
 
@@ -364,26 +299,6 @@ int     SubDecode::end()
     return  R_SUCCESS;
 }
 
-
-
-
-
-/*******************************************************************************
-SubDecode::set_subfile()
-********************************************************************************/
-void    SubDecode::set_subfile( std::string path )
-{
-    sub_file    =   path;
-
-#ifdef _WIN32
-    // 斜線會影響執行結果.
-    for( auto &c : sub_file )
-    {
-        if( c == '\\' )
-            c   =   '/';
-    }
-#endif
-}
 
 
 
@@ -597,12 +512,10 @@ SubDecode::decode_subtitle()
 ********************************************************************************/
 int    SubDecode::decode_subtitle( AVPacket* pkt )
 {
-    AVCodecContext  *dec    =   pkt == nullptr ? dec_map[cs_index] : dec_map[pkt->stream_index];
-
     AVSubtitle  subtitle {0};
 
     int     got_sub     =   0;
-    int     ret         =   avcodec_decode_subtitle2( dec, &subtitle, &got_sub, pkt );
+    int     ret         =   avcodec_decode_subtitle2( dec_ctx, &subtitle, &got_sub, pkt );
     
     if( ret >= 0 && got_sub > 0 )
     {
@@ -668,64 +581,6 @@ QImage  SubDecode::get_subtitle_image()
 
 
 /*******************************************************************************
-SubDecode::get_subtitle_image()
-********************************************************************************/
-bool    SubDecode::exist_stream()
-{
-    if( sub_file.empty() == false )
-        return  true;
-
-    return  Decode::exist_stream();
-}
-
-
-
-/*******************************************************************************
-SubDecode::get_subfile()
-********************************************************************************/
-std::string     SubDecode::get_subfile()
-{
-    return  sub_file;
-}
-
-
-
-
-
-
-/*******************************************************************************
-SubDecode::get_embedded_subtitle_list().
-********************************************************************************/
-std::vector<std::string>    SubDecode::get_embedded_subtitle_list()
-{
-    std::vector<std::string>    list;
-
-    char    *buf    =   nullptr;
-
-    av_dict_get_string( stream->metadata, &buf, '=', ',' );
-    MYLOG( LOG::L_INFO, "buf = %s\n", buf );
-
-    for( auto itr : stream_map )
-    {
-        AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)itr.second->metadata, "title", NULL, AV_DICT_MATCH_CASE );
-        if( dic != nullptr )
-        {
-            MYLOG( LOG::L_DEBUG, "title %s", dic->value );
-            list.emplace_back( std::string(dic->value) );
-        }
-        else
-            list.emplace_back( std::string("default") );  // 遇到多字幕都沒有定義 title 再來調整這裡的程式碼...
-    }
-
-    return  list;
-}
-
-
-
-
-
-
-/*******************************************************************************
 SubDecode::sub_info()
 
 https://www.jianshu.com/p/89f2da631e16
@@ -733,65 +588,13 @@ https://www.jianshu.com/p/89f2da631e16
 ********************************************************************************/
 int     SubDecode::sub_info()
 {  
-    for( auto itr : stream_map )
-    {
-        AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)itr.second->metadata, "title", NULL, AV_DICT_MATCH_CASE );
-        MYLOG( LOG::L_DEBUG, "index = %d, title = %s", itr.first, dic->value );
-    }
-
+    AVDictionaryEntry   *dic   =   av_dict_get( (const AVDictionary*)stream->metadata, "title", NULL, AV_DICT_MATCH_CASE );
+    //MYLOG( LOG::L_DEBUG, "index = %d, title = %s", itr.first, dic->value );
+    MYLOG( LOG::L_DEBUG, "title = %s", dic->value );
     return 0;
 }
 
 
-
-
-
-/*******************************************************************************
-SubDecode::switch_subtltle()
-********************************************************************************/
-void    SubDecode::switch_subtltle( std::string path )
-{
-    set_subfile( path );
-
-    std::string     filename    =   "\\";    
-    filename    +=  sub_file;
-    filename.insert( 2, 1, '\\' );
-
-    std::stringstream   ss;
-    ss << "subtitles='" << filename << "':stream_index=" << 0;
-
-    std::string     desc    =   ss.str();
-
-    open_subtitle_filter( subtitle_args, desc );
-}
-
-
-
-
-
-/*******************************************************************************
-SubDecode::switch_subtltle()
-********************************************************************************/
-void    SubDecode::switch_subtltle( int index )
-{
-    std::string     desc;
-
-    if( is_graphic_subtitle() == false )
-    {
-        sub_index   =   index;
-
-        std::string     filename    =   "\\";    
-        filename    +=  sub_file;
-        filename.insert( 2, 1, '\\' );
-
-        std::stringstream   ss;
-        ss << "subtitles='" << filename << "':stream_index=" << sub_index;
-
-        desc    =   ss.str();
-
-        open_subtitle_filter( subtitle_args, desc );
-    }
-}
 
 
 
@@ -859,46 +662,6 @@ void    SubDecode::set_output_jpg_root( std::string _root_path )
 
 
 
-/*******************************************************************************
-SubDecode::flush_all_stream()
-********************************************************************************/
-void    SubDecode::flush_all_stream() 
-{
-    int     ret     =   0;
-    int     got_sub =   0;
-
-    // for subtitle flush, data = null, size = 0. 
-    // 這邊可以省略 pkt 的初始化
-    AVPacket    pkt;
-    pkt.data    =   nullptr;
-    pkt.size    =   0;
-
-    AVSubtitle      subtitle;
-
-    for( auto dec : dec_map )
-    {
-        while(true)
-        {
-            ret     =   avcodec_decode_subtitle2( dec.second, &subtitle, &got_sub, &pkt );
-            if( ret < 0 )
-                MYLOG( LOG::L_ERROR, "flush decode subtitle fail." );
-
-            avsubtitle_free(&subtitle);
-
-            if( got_sub <= 0 )
-                break;
-            
-            if( dec.first == cs_index && subtitle.format == 0 )       
-                generate_subtitle_image( subtitle );
-        }
-    }
-}
-
-
-
-
-
-
 
 #ifdef FFMPEG_TEST
 /*******************************************************************************
@@ -906,36 +669,35 @@ SubDecode::test_flush()
 ********************************************************************************/
 int    SubDecode::flush()
 {
+    if( dec_ctx == nullptr ) // case: 從外部檔案讀取字幕
+        return  R_SUCCESS;
+
     AVPacket    pkt;
     pkt.data    =   nullptr;
     pkt.size    =   0;
 
-    //AVCodecContext  *dec    =   dec_map[cs_index];
     AVSubtitle      subtitle;
 
     int     ret, got_sub;
 
-    for( auto dec_itr : dec_map )
+    while(true)
     {
-        while(true)
-        {
-            got_sub     =   0;
-            ret         =   avcodec_decode_subtitle2( dec_itr.second, &subtitle, &got_sub, &pkt );
-            if( ret < 0 )
-                MYLOG( LOG::L_ERROR, "error." );            
-            
-            // if need output message, use this flag.
-            //if( got_sub > 0 )
-            //{}
-
-            avsubtitle_free(&subtitle);        
-
-            if( got_sub <= 0 )
-                break;
-        }
+        got_sub     =   0;
+        ret         =   avcodec_decode_subtitle2( dec_ctx, &subtitle, &got_sub, &pkt );
+        if( ret < 0 )
+            MYLOG( LOG::L_ERROR, "error." );            
+        
+        // if need output message, use this flag.
+        //if( got_sub > 0 )
+        //{}
+    
+        avsubtitle_free(&subtitle);        
+    
+        if( got_sub <= 0 )
+            break;
     }
 
-    return  1;
+    return  R_SUCCESS;
 }
 #endif
 

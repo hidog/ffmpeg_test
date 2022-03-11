@@ -7,6 +7,19 @@
 #include "../IO/io_def.h"
 
 
+#define CPU_DECODE
+//#define HW_DECODE
+//#define NV_DECODE
+
+
+
+
+#ifdef FFMPEG_TEST
+#define RENDER_SUBTITLE  // 是否要將字幕加進video frame內
+#endif
+
+
+
 
 struct DecodeSetting
 {

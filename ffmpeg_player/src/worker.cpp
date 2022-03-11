@@ -153,7 +153,7 @@ void    Worker::play_init()
     }
 
     //
-    player->set(setting);
+    player->set( setting );
     player->init();
 
     int     duration    =   static_cast<int>(player->get_duration_time());
@@ -182,24 +182,35 @@ void    Worker::play()
     AudioDecodeSetting    as;
     AudioWorker     *aw     =   dynamic_cast<MainWindow*>(parent())->get_audio_worker();
     VideoWorker     *vw     =   dynamic_cast<MainWindow*>(parent())->get_video_worker();
-    
-    // send video setting to UI
-    is_set_video    =   false;
-    vs              =   player->get_video_setting();
-    emit video_setting_signal(vs);
+
+    if( player->exist_video_stream() == true )
+    {
+        aw->set_only_audio( false );    
+
+        // send video setting to UI
+        is_set_video    =   false;
+        vs              =   player->get_video_setting();
+        emit video_setting_signal(vs);
+
+        // wait for setting video.
+        while( is_set_video == false )
+            SLEEP_10MS;
+    }
+    else
+        aw->set_only_audio( true );
     
     // send audio setting to UI
     as  =   player->get_audio_setting();
     aw->open_audio_output(as);
-    
-    // wait for setting video.
-    while( is_set_video == false )
-        SLEEP_10MS;
-    
+
     //
     is_play_end     =   false;
     aw->start();
-    vw->start();
+
+    if( player->exist_video_stream() == true )    
+        vw->start();
+    else
+        vw->set_no_stream();
     
     //
 #ifdef USE_MT
@@ -207,18 +218,21 @@ void    Worker::play()
 #else
     player->play_QT();
 #endif
+
     player->end();
     is_play_end     =   true;
     
     // 等待其他兩個thread完成
     while( aw->isFinished() == false )
         SLEEP_10MS;
-    while( vw->isFinished() == false )
+    while( vw->isFinished() == false && player->exist_video_stream() == true )
         SLEEP_10MS;
+
+    if( player->exist_video_stream() == false )
+        decode::clear_video_queue(); // 音檔有封面的時候,要清掉
 
     MYLOG( LOG::L_INFO, "finish decode." );
 }
-
 
 
 
@@ -264,6 +278,11 @@ void    Worker::run()
 
         MediaInfo   media_info  =   player->get_media_info();
 
+#if defined(HW_DECODE) || defined(NV_DECODE)
+        if( media_info.pix_fmt == 64 )   // 64 = AV_PIX_FMT_YUV420P10LE
+            MYLOG( LOG::L_ERROR, "hw decode with yuv420p10 and hw encode could not work." );
+#endif
+
         if( output_thr != nullptr )
             MYLOG( LOG::L_ERROR, "output_thr not null." );
         output_thr  =   new std::thread( &Worker::output, this, media_info );
@@ -301,6 +320,10 @@ void    Worker::end()
 }
 
 
+
+
+
+
 /*******************************************************************************
 Worker::stop_slot()
 ********************************************************************************/
@@ -319,16 +342,6 @@ void    Worker::stop_slot()
 }
 
 
-
-
-
-/*******************************************************************************
-Worker::get_play_end_state()
-********************************************************************************/
-bool&   Worker::get_play_end_state()
-{
-    return  is_play_end;
-}
 
 
 
@@ -424,4 +437,16 @@ void    Worker::seek_slot( int value )
     int     old_value   =   vd->timestamp / 1000;
 
     player->seek( value, old_value );
+}
+
+
+
+
+
+/*******************************************************************************
+Worker::get_play_end_state()
+********************************************************************************/
+bool&   Worker::get_play_end_state()
+{
+    return  is_play_end;
 }
