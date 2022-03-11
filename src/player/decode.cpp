@@ -357,3 +357,14 @@ void    Decode::set_is_current( bool flag )
 {
     is_current  =   flag;
 }
+
+
+
+
+/*******************************************************************************
+Decode::get_is_current()
+********************************************************************************/
+bool    Decode::get_is_current()
+{
+    return  is_current;
+}
