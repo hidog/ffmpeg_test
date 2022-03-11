@@ -435,6 +435,15 @@ DecodeManager::set_subtitle_file()
 void    DecodeManager::set_subtitle_file( std::string path )
 {
     subtitle_file   =   path;
+
+#ifdef _WIN32
+    // 斜線會影響執行結果.
+    for( auto &c : subtitle_file )
+    {
+        if( c == '\\' )
+            c   =   '/';
+    }
+#endif
 }
 
 
