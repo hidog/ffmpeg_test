@@ -132,8 +132,8 @@ void    output_by_io( MediaInfo media_info, std::string _port, MakerInterface* m
     v_setting.time_base.num     =   media_info.time_num;
     v_setting.time_base.den     =   media_info.time_den;
 
-    v_setting.gop_size      =   5;
-    v_setting.max_b_frames  =   0;
+    v_setting.gop_size      =   15;
+    v_setting.max_b_frames  =   3;
 
     v_setting.src_width     =   media_info.width;
     v_setting.src_height    =   media_info.height;
