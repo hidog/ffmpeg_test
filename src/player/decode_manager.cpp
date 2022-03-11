@@ -764,6 +764,9 @@ void    DecodeManager::flush_all_sub_stream()
 
     for( auto dec : subtitle_map )
     {
+        if( dec.first == file_subtitle_index ) // ¦r¹õÀÉ¤£»Ý­nflush.
+            continue;
+
         while(true)
         {
             s_ptr   =   dec.second;
@@ -805,8 +808,8 @@ void    DecodeManager::flush_video()
 
         while(true)
         {
-            ret     =   v_ptr->recv_frame( dec.first );
-            if( ret < 0 )
+            ret     =   v_ptr->recv_frame(-1);
+            if( ret <= 0 )
                 break;
             v_ptr->unref_frame();
         }
@@ -834,8 +837,8 @@ void    DecodeManager::flush_audio()
 
         while(true)
         {
-            ret     =   a_ptr->recv_frame( dec.first );
-            if( ret < 0 )
+            ret     =   a_ptr->recv_frame(-1);
+            if( ret <= 0 )
                 break;
             a_ptr->unref_frame();
         }
