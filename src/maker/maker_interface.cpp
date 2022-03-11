@@ -122,8 +122,8 @@ void    output_by_io( MediaInfo media_info, std::string _port, MakerInterface* m
     setting.has_subtitle    =   false;
 
     VideoEncodeSetting  v_setting;
-    v_setting.code_id   =   AV_CODEC_ID_H264;
-    //v_setting.code_id   =   AV_CODEC_ID_H265;
+    //v_setting.code_id   =   AV_CODEC_ID_H264;
+    v_setting.code_id   =   AV_CODEC_ID_H265;
 
     v_setting.width     =   media_info.width;
     v_setting.height    =   media_info.height;
@@ -133,7 +133,7 @@ void    output_by_io( MediaInfo media_info, std::string _port, MakerInterface* m
     v_setting.time_base.den     =   media_info.time_den;
 
     v_setting.gop_size      =   15;
-    v_setting.max_b_frames  =   3;
+    v_setting.max_b_frames  =   5;
 
     v_setting.src_width     =   media_info.width;
     v_setting.src_height    =   media_info.height;

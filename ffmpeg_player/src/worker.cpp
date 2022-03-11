@@ -274,13 +274,14 @@ void    Worker::run()
     // 目前暫不支援從 live stream output.
     if( is_output == true && wtype == WorkType::DEFAULT )
     {
-#if defined(HW_DECODE) || defined(NV_DECODE)
-        MYLOG( LOG::L_WARN, "hw decode with yuv420p10 and hw encode could not work." );
-#endif
-
         encode::set_is_finish(false);
 
         MediaInfo   media_info  =   player->get_media_info();
+
+#if defined(HW_DECODE) || defined(NV_DECODE)
+        if( media_info.pix_fmt == 64 )   // 64 = AV_PIX_FMT_YUV420P10LE
+            MYLOG( LOG::L_ERROR, "hw decode with yuv420p10 and hw encode could not work." );
+#endif
 
         if( output_thr != nullptr )
             MYLOG( LOG::L_ERROR, "output_thr not null." );
