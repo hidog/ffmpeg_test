@@ -76,9 +76,9 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
 
     // 底下參數未開放外部設置,之後思考要不要開放    
 #ifdef FFMPEG_TEST
-    ctx->bit_rate   =   3000000;
+    //ctx->bit_rate   =   3000000;
 #else
-    ctx->bit_rate   =   3000000;
+    //ctx->bit_rate   =   3000000;
 #endif
 
     if( codec->id == AV_CODEC_ID_H264 || codec->id == AV_CODEC_ID_H265 )
@@ -91,7 +91,7 @@ void    VideoEncode::init( int st_idx, VideoEncodeSetting setting, bool need_glo
 #endif
     }
 
-    //av_opt_set_int( ctx, "crf", 50, AV_OPT_SEARCH_CHILDREN );  // 固定品質
+    av_opt_set_int( ctx, "crf", 20, AV_OPT_SEARCH_CHILDREN );  // 固定品質
 
 
     src_width   =   setting.src_width;

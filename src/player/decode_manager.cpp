@@ -570,7 +570,7 @@ void    DecodeManager::init_subtitle( AVFormatContext *fmt_ctx, DecodeSetting se
     }
 
     // 
-    if( exist_subtitle == true )
+    if( exist_subtitle == true && exist_video_stream() == true )
     {
         // note: 如果遇到同時有 audio stream, sub stream, 但沒有 video stream, 會crash. 但理論上不會有這種case.
         VideoDecode *v_ptr  =   get_current_video_decoder();

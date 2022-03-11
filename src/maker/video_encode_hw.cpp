@@ -137,7 +137,7 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
 #ifdef FFMPEG_TEST
     //ctx->bit_rate   =   3000000;
 #else
-    ctx->bit_rate   =   8000000;
+    //ctx->bit_rate   =   3000000;
 #endif
 
     /*
@@ -148,13 +148,13 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
 #ifdef FFMPEG_TEST
         av_opt_set( ctx->priv_data, "preset", "slow",    0 );
 #else
-        //av_opt_set( ctx->priv_data, "preset", "ultrafast",   0 );
-        //av_opt_set( ctx->priv_data, "tune",   "zerolatency", 0 );
+        av_opt_set( ctx->priv_data, "preset", "ultrafast",   0 );
+        av_opt_set( ctx->priv_data, "tune",   "zerolatency", 0 );
 #endif
     }
 
     // 類似CRF的參數
-    //av_opt_set( ctx, "cq", "20", AV_OPT_SEARCH_CHILDREN );  // 固定品質的設定
+    av_opt_set( ctx, "cq", "20", AV_OPT_SEARCH_CHILDREN );  // 固定品質的設定
 
 
     src_width   =   setting.src_width;
