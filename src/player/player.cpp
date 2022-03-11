@@ -780,7 +780,7 @@ int     Player::decode( Decode *dc, AVPacket* pkt )
                 adata   =   a_ptr->output_audio_data();
                 decode::add_audio_data(adata);
             }
-            else if( decode_manager->index_in_range( pkt->stream_index ) )
+            else if( decode_manager->index_is_available( pkt->stream_index ) )
             {
                 // no nothing.
             }
