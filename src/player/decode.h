@@ -47,6 +47,7 @@ public:
 
     int     get_frame_count();
     void    set_is_current( bool flag );
+    bool    get_is_current();
 
     AVMediaType     get_decode_context_type();
     AVCodecContext* get_decode_context();

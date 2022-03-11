@@ -345,8 +345,7 @@ void    Player::play()
                 if( ret <= 0 )
                     break;
             
-                //if( dc->output_frame_func != nullptr && pkt->stream_index == dc->current_index() )
-                if( dc->output_frame_func != nullptr )
+                if( dc->output_frame_func != nullptr && dc->get_is_current() == true )
                     dc->output_frame_func();
                 dc->unref_frame();
             }
@@ -961,7 +960,7 @@ void    player_decode_example()
     setting.io_type     =   IO_Type::DEFAULT;
     //setting.io_type     =   IO_Type::SRT_IO;
     setting.filename   =   "D:\\test_video\\test.mkv";     // 使用 D:\\code\\test.mkv 會出錯. 已增加程式碼處理這個問題.
-    //setting.subname    =   "D:\\test_video\\test.mkv";   
+    //setting.subname    =   "D:\\test.ass";   
     //setting.srt_port    =   "1234";
 
     Player  player;  
