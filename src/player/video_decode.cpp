@@ -1,5 +1,8 @@
 #include "video_decode.h"
+
 #include "sub_decode.h"
+#include "video_decode_hw.h"
+#include "video_decode_nv.h"
 #include "../imgprcs/image_process.h"
 
 #include <QPainter>
@@ -52,22 +55,6 @@ VideoDecode::~VideoDecode()
 VideoDecode::~VideoDecode()
 {
     end();
-}
-
-
-
-
-
-
-
-/*******************************************************************************
-VideoDecode::open_codec_context()
-********************************************************************************/
-int     VideoDecode::open_codec_context( AVFormatContext *fmt_ctx )
-{
-    Decode::open_all_codec( fmt_ctx, type );
-    //dec_ctx->thread_count   =   4;
-    return  R_SUCCESS;
 }
 
 
@@ -198,8 +185,9 @@ int     VideoDecode::end()
 {
     if( frame_count > 0 && dec_ctx != nullptr )
     {
+        int     num     =   stream->avg_frame_rate.num == 0 ? 1 : stream->avg_frame_rate.num;
         MYLOG( LOG::L_INFO, "video decode %d frames.", frame_count );  // 實際上是 frame_count + 1 張
-        int64_t     duration_time   =   1000LL * frame_count * stream->r_frame_rate.den / stream->r_frame_rate.num; // ms
+        int64_t     duration_time   =   1000LL * frame_count * stream->avg_frame_rate.den / num; // ms
         int64_t     ms              =   duration_time % 1000;
         int64_t     sec             =   duration_time / 1000 % 60;
         int64_t     minute          =   duration_time / 1000 / 60 % 60;
@@ -513,6 +501,36 @@ int     VideoDecode::recv_frame( int index )
 
 
 
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoDecode::flush()
+********************************************************************************/
+int     VideoDecode::flush()
+{
+#ifdef RENDER_SUBTITLE
+    int ret =   send_packet(nullptr);
+    if( ret >= 0 )
+    {       
+        while(true)
+        {
+            ret     =   recv_frame(-1);
+            if( ret <= 0 )
+                break;
+
+            if( output_frame_func != nullptr )
+                output_frame_func();
+            unref_frame();
+        }
+    }
+#else
+    Decode::flush();
+#endif
+
+    return  R_SUCCESS;
+}
+#endif
+
+
 
 
 /*******************************************************************************
@@ -559,7 +577,7 @@ int    VideoDecode::output_jpg_by_QT()
     memcpy( img.bits(), video_dst_data[0], video_dst_bufsize );
 
     char    str[1000];
-    sprintf( str, "%s\\%d.jpg", output_jpg_root_path.c_str(), frame_count );
+    sprintf( str, "%s\\%d.jpg", output_jpg_path.c_str(), frame_count );
     if( frame_count % 100 == 0 )
         MYLOG( LOG::L_DEBUG, "save jpg %s", str );
     img.save(str);
@@ -580,7 +598,7 @@ VideoDecode::output_overlay_by_QT()
 int     VideoDecode::output_overlay_by_QT()
 {
     char    str[1000];
-    sprintf( str, "%s\\%d.jpg", output_jpg_root_path.c_str(), frame_count );
+    sprintf( str, "%s\\%d.jpg", output_jpg_path.c_str(), frame_count );
     if( frame_count % 100 == 0 )
         MYLOG( LOG::L_DEBUG, "save jpg %s", str );
     overlay_image.save(str);
@@ -595,11 +613,11 @@ int     VideoDecode::output_overlay_by_QT()
 
 #ifdef FFMPEG_TEST
 /*******************************************************************************
-VideoDecode::set_output_openCV_jpg_root()
+VideoDecode::set_output_jpg_path()
 ********************************************************************************/
-void    VideoDecode::set_output_jpg_root( std::string _root_path )
+void    VideoDecode::set_output_jpg_path( std::string _path )
 {
-    output_jpg_root_path    =   _root_path;
+    output_jpg_path    =   _path;
 }
 #endif
 
@@ -672,3 +690,42 @@ int     VideoDecode::test_image_process()
     return 0;
 }
 #endif
+
+
+
+
+/*******************************************************************************
+VideoDecode::is_attached()
+
+代表此 stream 是封面之類的
+https://www.twblogs.net/a/5bb526732b717773002dc5a2
+********************************************************************************/
+bool    VideoDecode::is_attached()
+{
+    if( (stream->disposition & AV_DISPOSITION_ATTACHED_PIC) != 0 )
+        return  true;
+    else
+        return  false;
+}
+
+
+
+
+
+
+/*******************************************************************************
+get_video_decoder_instance()
+********************************************************************************/
+VideoDecode*    get_video_decoder_instance()
+{
+#ifdef CPU_DECODE
+    return  new VideoDecode;
+#elif defined( HW_DECODE )
+    return  new VideoDecodeHW;
+#elif defined( NV_DECODE)
+    return  new VideoDecodeNV;
+#else
+    assert(0);
+    return  nullptr;
+#endif
+}

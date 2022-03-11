@@ -44,9 +44,9 @@ protected:
     Mux*    muxer  =   nullptr;
 
     AudioEncode     a_encoder;
-    VideoEncode     v_encoder;
+    //VideoEncode     v_encoder;
     //VideoEncodeNV   v_encoder;
-    //VideoEncodeHW   v_encoder;
+    VideoEncodeHW   v_encoder;
     SubEncode       s_encoder;
 
     EncodeSetting   setting;

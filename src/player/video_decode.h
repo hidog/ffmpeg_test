@@ -28,7 +28,6 @@ public:
 
     virtual int     init() override;
     virtual int     end() override;
-    virtual int     open_codec_context( AVFormatContext *fmt_ctx ) override;
 
     void    output_decode_info( AVCodec *dec, AVCodecContext *dec_ctx ) override;
     int     recv_frame( int index ) override;
@@ -36,6 +35,7 @@ public:
     
     AVFrame*    get_frame() override;
 
+    bool    is_attached();
     int     render_nongraphic_subtitle();
     int     overlap_subtitle_image();
     
@@ -53,11 +53,12 @@ public:
     int     video_info(); // 未來增加 nv decode 可以參考這邊
 
 #ifdef FFMPEG_TEST
+    int     flush() override;
     int     output_overlay_by_QT();   // 處理 graphic subtitle
     int     output_jpg_by_QT();
     int     output_jpg_by_openCV();
     int     test_image_process();
-    void    set_output_jpg_root( std::string _root_path );
+    void    set_output_jpg_path( std::string _path );
 #endif
 
 //private:
@@ -79,10 +80,12 @@ protected:
     QImage      overlay_image;  // 用來處理 graphic subtitle, overlay 的 image.
 
 #ifdef FFMPEG_TEST
-    std::string     output_jpg_root_path    =   "H:\\jpg";
+    std::string     output_jpg_path    =   "H:\\jpg";
 #endif
 };
 
+
+VideoDecode*    get_video_decoder_instance();
 
 
 

@@ -51,9 +51,9 @@ VideoDecodeNV::~VideoDecodeNV()
 /*******************************************************************************
 VideoDecodeNV::open_codec_context
 ********************************************************************************/
-int     VideoDecodeNV::open_codec_context( AVFormatContext *fmt_ctx )
+int     VideoDecodeNV::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type )
 {
-    int     ret     =   VideoDecode::open_codec_context( fmt_ctx );
+    int     ret     =   VideoDecode::open_codec_context( stream_index, fmt_ctx, type );
 
     AVCodecID       codec_id    =   stream->codecpar->codec_id;
     std::string     log_name    =   fmt_ctx->iformat->long_name;
@@ -74,6 +74,7 @@ int     VideoDecodeNV::open_codec_context( AVFormatContext *fmt_ctx )
 
     return  ret;
 }
+
 
 
 
@@ -253,7 +254,13 @@ int     VideoDecodeNV::init_bsf( AVFormatContext* fmt_ctx )
         // 參考 end(), 如果沒改 par_in, 會造成 crash.
         // 參考 av_bsf_alloc, 裡面會 alloc par_in, 所以手動釋放
         avcodec_parameters_free( &v_bsf_ctx->par_in );
-        v_bsf_ctx->par_in   =   fmt_ctx->streams[cs_index]->codecpar;
+        
+        
+        //v_bsf_ctx->par_in   =   fmt_ctx->streams[cs_index]->codecpar;
+        v_bsf_ctx->par_in   =   stream->codecpar; // add decode manager modify this code. need test.
+        
+        
+        
         // avcodec_parameters_copy( v_bsf_ctx->par_in, fmt_ctx->streams[cs_index]->codecpar );  嘗試用 copy, 會 crash.
 
         av_bsf_init( v_bsf_ctx );
@@ -482,7 +489,6 @@ int     VideoDecodeNV::flush()
     int     ret =   0;
     char    buf[AV_ERROR_MAX_STRING_SIZE]{0};
 
-
     // submit the packet to the decoder
     ret =   send_packet( nullptr );
     if( ret < 0 ) 
@@ -495,24 +501,14 @@ int     VideoDecodeNV::flush()
     while( ret >= 0 )
     {
         ret =   recv_frame( -1 );  // flush 階段必須傳入 < 0 的值
-        if( ret < 0 ) 
-        {
-            // those two return values are special and mean there is no output
-            // frame available, but there were no errors during decoding
-            if( ret == AVERROR_EOF || ret == AVERROR(EAGAIN) )
-                break; 
-    
-            auto str    =   av_make_error_string( buf, AV_ERROR_MAX_STRING_SIZE, ret );
-            MYLOG( LOG::L_ERROR, "Error during decoding (%s)", str );
+        if( ret <= 0 ) 
             break; //return  ret;
-        }
     
         // write the frame data to output file
         output_frame_func();     
         av_frame_unref(frame);
     }
     
-
     return 0;
 }
 #endif

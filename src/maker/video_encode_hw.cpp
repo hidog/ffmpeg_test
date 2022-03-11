@@ -135,9 +135,9 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
 
     // 同時設 cq 跟 bitrate 會互相干擾, 不要同時設
 #ifdef FFMPEG_TEST
-    ctx->bit_rate   =   3000000;
+    //ctx->bit_rate   =   3000000;
 #else
-    ctx->bit_rate   =   3000000;
+    //ctx->bit_rate   =   3000000;
 #endif
 
     /*
@@ -154,7 +154,7 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
     }
 
     // 類似CRF的參數
-    // av_opt_set( ctx, "cq", "50", AV_OPT_SEARCH_CHILDREN );  // 固定品質的設定
+    av_opt_set( ctx, "cq", "20", AV_OPT_SEARCH_CHILDREN );  // 固定品質的設定
 
 
     src_width   =   setting.src_width;

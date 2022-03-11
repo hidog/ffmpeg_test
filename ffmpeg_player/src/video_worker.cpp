@@ -47,6 +47,15 @@ bool&   VideoWorker::get_video_start_state()
 
 
 
+/*******************************************************************************
+VideoWorker::set_no_stream()
+********************************************************************************/
+void    VideoWorker::set_no_stream()
+{
+    v_start =   true;
+}
+
+
 
 
 
@@ -55,9 +64,11 @@ VideoWorker::run()
 ********************************************************************************/
 void VideoWorker::run()  
 {
+    current_sec =   0;
     force_stop  =   false;
     seek_flag   =   false;
     video_play();
+    current_sec =   0;
     MYLOG( LOG::L_INFO, "finish video play." );
 }
 
@@ -103,12 +114,43 @@ void    VideoWorker::flush_for_seek()
     bool    &a_start    =   dynamic_cast<MainWindow*>(parent())->get_audio_worker()->get_audio_start_state();
 
     // 重新等待有資料才播放
-    while( decode::get_video_size() <= 3 )
+    while( decode::get_video_size() <= 10 )
         SLEEP_10MS;
     v_start     =   true;
     while( a_start == false )
         SLEEP_10MS;
 }
+
+
+
+
+
+
+/*******************************************************************************
+VideoWorker::update_seekbar()
+********************************************************************************/
+void    VideoWorker::update_seekbar( int sec )
+{
+    const int   &a_sec   =   dynamic_cast<MainWindow*>(parent())->get_audio_worker()->get_current_sec();
+    current_sec   =   sec;
+
+    if( current_sec > a_sec )
+        emit    update_seekbar_signal( current_sec );
+}
+
+
+
+
+
+/*******************************************************************************
+VideoWorker::update_seekbar()
+********************************************************************************/
+const int&  VideoWorker::get_current_sec()
+{
+    return  current_sec;
+}
+
+
 
 
 
@@ -124,7 +166,7 @@ void VideoWorker::video_play()
     std::chrono::steady_clock::time_point       last, now;
     std::chrono::duration<int64_t, std::milli>  duration;
 
-    VideoData               *view_data  =   dynamic_cast<MainWindow*>(parent())->get_view_data();    
+    VideoData   *view_data  =   dynamic_cast<MainWindow*>(parent())->get_view_data();    
 
     // init again.
     view_data->index        =   0;
@@ -140,8 +182,8 @@ void VideoWorker::video_play()
     //  
     while( decode::get_video_size() <= 30 )
         SLEEP_10MS;
-
     v_start     =   true;
+
     while( a_start == false )
         SLEEP_10MS;
 
@@ -158,6 +200,8 @@ void VideoWorker::video_play()
             //MYLOG( LOG::L_DEBUG, "duration = %lld, diff = %lld",  duration, vd.timestamp - view_data->timestamp );
             if( duration.count() >= vd.timestamp - view_data->timestamp )
                 break;
+
+            //SLEEP_1MS;
         }
 
         //MYLOG( LOG::L_DEBUG, "video time stamp = %lld\n", vd.timestamp );
@@ -171,7 +215,7 @@ void VideoWorker::video_play()
         emit    recv_video_frame_signal();
 
         if( seek_flag == false )
-            emit    update_seekbar_signal( view_data->timestamp / 1000 );
+            update_seekbar( view_data->timestamp/1000 );
 
         last    =   now;
     };
@@ -208,6 +252,8 @@ void VideoWorker::video_play()
 
         handle_func();
     }
+
+    MYLOG( LOG::L_INFO, "play video finish." );
 
     // flush
     while( decode::get_video_size() > 0 && force_stop == false )

@@ -10,25 +10,17 @@
 #endif
 
 #include <functional>
+#include <memory>
 
 #include "demux.h"
-#include "audio_decode.h"
-#include "sub_decode.h"
-
-#include "video_decode.h"
-#include "video_decode_nv.h"
-#include "video_decode_hw.h"
+#include "decode.h"
+#include "decode_manager.h"
 
 #include <QImage>
 
 
 struct AVPacket;
 
-
-
-#ifdef FFMPEG_TEST
-#define RENDER_SUBTITLE  // 是否要將字幕加進video frame內
-#endif
 
 
 // 若有需要, 增加抽象介面.
@@ -59,13 +51,14 @@ public:
     bool    is_set_input_file();
     int     decode( Decode *dc, AVPacket* pkt );
     int     init_demuxer();
-
+    bool    exist_video_stream();
+    
     void    switch_subtitle( std::string path );
     void    switch_subtitle( int index );
     bool    is_embedded_subtitle();
     bool    is_file_subtitle();
 
-    void    init_subtitle( AVFormatContext *fmt_ctx );
+    //void    init_subtitle( AVFormatContext *fmt_ctx );
     void    handle_seek();    
     void    clear_setting();
     int64_t get_duration_time();
@@ -75,6 +68,8 @@ public:
 
     std::vector<std::string>    get_embedded_subtitle_list();
 
+    DecodeManager*  get_decode_manager();
+
 #ifdef USE_MT
     void    play_QT_multi_thread();
     void    video_decode();
@@ -83,7 +78,7 @@ public:
 
 #ifdef FFMPEG_TEST
     void    play(); 
-    void    set_output_jpg_root( std::string _root_path );
+    void    set_output_jpg_path( std::string _path );
     void    set_output_audio_pcm_path( std::string _path );
 
     std::function<void(QImage)>     output_video_frame_func;
@@ -97,9 +92,6 @@ protected:
 
     DecodeSetting&  get_setting();
     Demux*          get_demuxer();
-    VideoDecode&    get_video_decoder();
-    AudioDecode&    get_audio_decoder();
-    SubDecode&      get_subtitle_decoder();
 
     std::function<void(Decode*)>    output_live_stream_func =   nullptr;
 
@@ -110,17 +102,11 @@ private:
 
     DecodeSetting   setting;
 
-    Demux           *demuxer    =   nullptr;
-    
-    VideoDecode     v_decoder;
-    //VideoDecodeNV   v_decoder;
-    //VideoDecodeHW   v_decoder;
-    AudioDecode     a_decoder;
-    SubDecode       s_decoder;
+    std::unique_ptr<Demux>          demuxer;
+    std::unique_ptr<DecodeManager>  decode_manager;
 
     // switch subtitle使用
-    std::string     new_subtitle_path; 
-
+    std::string     new_subtitle_path;
     bool    switch_subtitle_flag    =   false;
     int     new_subtitle_index      =   0;
 
