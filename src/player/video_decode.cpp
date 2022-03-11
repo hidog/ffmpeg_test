@@ -185,8 +185,9 @@ int     VideoDecode::end()
 {
     if( frame_count > 0 && dec_ctx != nullptr )
     {
+        int     num     =   stream->avg_frame_rate.num == 0 ? 1 : stream->avg_frame_rate.num;
         MYLOG( LOG::L_INFO, "video decode %d frames.", frame_count );  // 實際上是 frame_count + 1 張
-        int64_t     duration_time   =   1000LL * frame_count * stream->avg_frame_rate.den / (stream->avg_frame_rate.num == 0 ? 1 : 0); // ms
+        int64_t     duration_time   =   1000LL * frame_count * stream->avg_frame_rate.den / num; // ms
         int64_t     ms              =   duration_time % 1000;
         int64_t     sec             =   duration_time / 1000 % 60;
         int64_t     minute          =   duration_time / 1000 / 60 % 60;
