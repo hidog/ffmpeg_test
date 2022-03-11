@@ -14,6 +14,13 @@
 
 
 
+#ifdef FFMPEG_TEST
+#define RENDER_SUBTITLE  // 是否要將字幕加進video frame內
+#endif
+
+
+
+
 struct DecodeSetting
 {
     IO_Type         io_type;
