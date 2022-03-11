@@ -28,16 +28,16 @@ void    maker_encode_example()
     setting.io_type =   IO_Type::DEFAULT;
 
     // rmvb 是 variable bitrate. 目前還無法使用
-    setting.filename    =   "H:\\output.mkv";
-    setting.extension   =   "matroska";
-    //setting.filename    =   "H:\\output.mp4";
-    //setting.extension   =   "mp4";
+    //setting.filename    =   "F:\\output.mkv";
+    //setting.extension   =   "matroska";
+    setting.filename    =   "F:\\output.mp4";
+    setting.extension   =   "mp4";
     //setting.filename    =   "H:\\test.avi"; 
     //setting.extension   =   "avi";
-    setting.has_subtitle    =   true;
+    setting.has_subtitle    =   false;
 
     VideoEncodeSetting  v_setting;
-    v_setting.load_jpg_root_path    =   "H:\\jpg";
+    v_setting.load_jpg_root_path    =   "F:\\jpg";
     //v_setting.code_id   =   AV_CODEC_ID_H264;
     v_setting.code_id   =   AV_CODEC_ID_H265;
     //v_setting.code_id   =   AV_CODEC_ID_MPEG1VIDEO;
@@ -69,9 +69,9 @@ void    maker_encode_example()
 
 
     AudioEncodeSetting  a_setting;
-    a_setting.load_pcm_path     =   "H:\\test.pcm";
-    //a_setting.code_id     =   AV_CODEC_ID_MP3;
-    a_setting.code_id       =   AV_CODEC_ID_AAC;
+    a_setting.load_pcm_path     =   "F:\\test.pcm";
+    a_setting.code_id     =   AV_CODEC_ID_MP3;
+    //a_setting.code_id       =   AV_CODEC_ID_AAC;
     //a_setting.code_id       =   AV_CODEC_ID_AC3;
     //a_setting.code_id     =   AV_CODEC_ID_MP2;
     //a_setting.code_id       =   AV_CODEC_ID_VORBIS;
