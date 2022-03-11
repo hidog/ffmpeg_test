@@ -345,7 +345,7 @@ void    Player::play()
                 if( ret <= 0 )
                     break;
             
-                if( dc->output_frame_func != nullptr && dc->set_is_current )
+                if( dc->output_frame_func != nullptr && dc->get_is_current() == true )
                     dc->output_frame_func();
                 dc->unref_frame();
             }
