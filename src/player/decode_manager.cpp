@@ -878,8 +878,8 @@ bool    DecodeManager::index_is_available( int index )
     if( sdec != subtitle_map.end() )
         return  true;
 
-    auto    adec    =   subtitle_map.find(index);
-    if( adec != subtitle_map.end() )
+    auto    adec    =   audio_map.find(index);
+    if( adec != audio_map.end() )
         return  true;
 
     auto    vdec    =   video_map.find(index);
