@@ -10,6 +10,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ffmpeg_player", "..\ffmpeg_
 		{75ED5682-CDFE-4CB6-9E5F-B852EF5607FB} = {75ED5682-CDFE-4CB6-9E5F-B852EF5607FB}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "music_player", "..\music_player\music_player.vcxproj", "{AEE3C7A7-ED44-361D-B5A2-970A1B0F15DB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug_cmd|x64 = Debug_cmd|x64
@@ -49,6 +51,20 @@ Global
 		{F2C2F93C-637C-3237-BACA-82C04A94353C}.Release|x64.ActiveCfg = Release|x64
 		{F2C2F93C-637C-3237-BACA-82C04A94353C}.Release|x64.Build.0 = Release|x64
 		{F2C2F93C-637C-3237-BACA-82C04A94353C}.Release|x86.ActiveCfg = Release|x64
+		{AEE3C7A7-ED44-361D-B5A2-970A1B0F15DB}.Debug_cmd|x64.ActiveCfg = Debug|x64
+		{AEE3C7A7-ED44-361D-B5A2-970A1B0F15DB}.Debug_cmd|x64.Build.0 = Debug|x64
+		{AEE3C7A7-ED44-361D-B5A2-970A1B0F15DB}.Debug_cmd|x86.ActiveCfg = Debug|x64
+		{AEE3C7A7-ED44-361D-B5A2-970A1B0F15DB}.Debug_cmd|x86.Build.0 = Debug|x64
+		{AEE3C7A7-ED44-361D-B5A2-970A1B0F15DB}.Debug|x64.ActiveCfg = Debug|x64
+		{AEE3C7A7-ED44-361D-B5A2-970A1B0F15DB}.Debug|x64.Build.0 = Debug|x64
+		{AEE3C7A7-ED44-361D-B5A2-970A1B0F15DB}.Debug|x86.ActiveCfg = Debug|x64
+		{AEE3C7A7-ED44-361D-B5A2-970A1B0F15DB}.Release_cmd|x64.ActiveCfg = Release|x64
+		{AEE3C7A7-ED44-361D-B5A2-970A1B0F15DB}.Release_cmd|x64.Build.0 = Release|x64
+		{AEE3C7A7-ED44-361D-B5A2-970A1B0F15DB}.Release_cmd|x86.ActiveCfg = Debug|x64
+		{AEE3C7A7-ED44-361D-B5A2-970A1B0F15DB}.Release_cmd|x86.Build.0 = Debug|x64
+		{AEE3C7A7-ED44-361D-B5A2-970A1B0F15DB}.Release|x64.ActiveCfg = Release|x64
+		{AEE3C7A7-ED44-361D-B5A2-970A1B0F15DB}.Release|x64.Build.0 = Release|x64
+		{AEE3C7A7-ED44-361D-B5A2-970A1B0F15DB}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
