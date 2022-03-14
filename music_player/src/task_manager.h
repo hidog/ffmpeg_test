@@ -10,8 +10,7 @@
 enum class TaskType
 {
     NONE    =   0,
-    SCAN_ALL,
-    SCAN
+    SCAN,
 };
 
 
@@ -32,15 +31,12 @@ public:
     TaskManager& operator = ( TaskManager&& ) = delete;
 
     void    run() override;
-
-    void    set_scan_all_task( QString path );
     void    set_scan_task( QString path );
-
+    QFileInfoList&&     get_file_list();
 
 public slots:
 
     void    cancel_slot();
-
 
 signals:
 

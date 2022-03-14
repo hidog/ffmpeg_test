@@ -41,9 +41,8 @@ private:
 
 	void	set_connect();
 
-    Ui::FileWidget *ui;
-
-	FileModel	*model;
+    Ui::FileWidget *ui  =   nullptr;
+	FileModel	*model  =   nullptr;
 	QString		root_path;
 };
 

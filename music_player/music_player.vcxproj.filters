@@ -37,6 +37,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\all_model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\allwidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\file_model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -66,6 +72,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="src\all_model.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="ui\allwidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
     <QtMoc Include="src\file_model.h">
       <Filter>Header Files</Filter>
     </QtMoc>
@@ -104,6 +116,10 @@
     
     
     
+    
+    
+    
+    
     <CustomBuild Include="debug\moc_predefs.h.cbt">
       <Filter>Generated Files</Filter>
     </CustomBuild>
@@ -115,8 +131,12 @@
     
     
     
+    
   </ItemGroup>
   <ItemGroup>
+    <QtUic Include="ui\allwidget.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
     <QtUic Include="ui\filewidget.ui">
       <Filter>Form Files</Filter>
     </QtUic>

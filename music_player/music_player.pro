@@ -17,9 +17,11 @@ SOURCES += \
 	src/music_worker.cpp \
 	src/play_worker.cpp \
 	src/myslider.cpp \
+	src/all_model.cpp \
     ui/lockdialog.cpp \
 	ui/mainwindow.cpp \
 	ui/filewidget.cpp \
+	ui/allwidget.cpp \	
     main.cpp
 
 
@@ -29,14 +31,17 @@ HEADERS += \
 	src/music_worker.h \
 	src/play_worker.h \
 	src/myslider.h \
+	src/all_model.h \
     ui/lockdialog.h \
     ui/mainwindow.h \
-	ui/filewidget.h
+	ui/filewidget.h \
+	ui/allwidget.h
 
 FORMS += \
     ui/lockdialog.ui \
     ui/mainwindow.ui \
-	ui/filewidget.ui
+	ui/filewidget.ui \
+	ui/allwidget.ui
 	
 INCLUDEPATH   +=  ../src ui src
 

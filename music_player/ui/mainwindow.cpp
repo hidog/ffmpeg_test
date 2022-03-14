@@ -4,10 +4,13 @@
 #include <QComboBox>
 #include <QFileDialog>
 #include <QDebug>
+#include <QTabWidget>
 
 #include "src/play_worker.h"
 #include "src/music_worker.h"
 #include "src/file_model.h"
+#include "src/all_model.h"
+#include "ui/filewidget.h"
 #include "tool.h"
 
 
@@ -72,8 +75,17 @@ void    MainWindow::set_connect()
 
     connect(    &lock_dialog,      &LockDialog::cancel_signal,  &task_manager,   &TaskManager::cancel_slot );
 
-    FileModel   *model  =   ui->fileWT->get_model();
-    connect(    model,      &FileModel::play_signal,  this,   &MainWindow::play_slot );
+    //
+    FileWidget  *f_widget   =   dynamic_cast<FileWidget*>(ui->tabWidget->widget(1));
+    assert( f_widget != nullptr );
+    FileModel   *f_model      =   f_widget->get_model();
+    connect(    f_model,      &FileModel::play_signal,  this,   &MainWindow::play_slot );
+
+    //
+    AllWidget  *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
+    assert( a_widget != nullptr );
+    AllModel   *a_model      =   a_widget->get_model();
+    connect(    a_model,      &AllModel::play_signal,  this,   &MainWindow::play_slot );
 }
 
 
@@ -90,7 +102,7 @@ void    MainWindow::open_slot()
     QString     dir     =   QFileDialog::getExistingDirectory( this, tr("open music folder"), "D:\\", 
                                                                QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
 
-    qDebug() << dir;
+    root_path   =   dir;
 
     if( task_manager.isRunning() == true )
     {
@@ -102,13 +114,11 @@ void    MainWindow::open_slot()
         return;
     
     // note: need stop play music.
-    //lock_dialog.set_task_name( "scan" );
-    //lock_dialog.show();
+    lock_dialog.set_task_name( "scan" );
+    lock_dialog.show();
 
-    //task_manager.set_scan_all_task(dir);
-    //task_manager.start();
-
-    ui->fileWT->set_root_path( dir );
+    task_manager.set_scan_task(dir);
+    task_manager.start();   
 }
 
 
@@ -120,6 +130,19 @@ MainWindow::task_finish_slot()
 ********************************************************************************/
 void    MainWindow::task_finish_slot()
 {
+    QFileInfoList   list    =   task_manager.get_file_list();
+    if( list.empty() == true )  // 可能是取消掃描.
+        return;
+
+    AllWidget  *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
+    assert( a_widget != nullptr );
+    a_widget->set_file_list( std::move(list) );
+
+    //
+    FileWidget  *f_widget   =   dynamic_cast<FileWidget*>(ui->tabWidget->widget(1));
+    assert( f_widget != nullptr );
+    f_widget->set_root_path( root_path );
+
     lock_dialog.hide();
 }
 

@@ -1,4 +1,4 @@
-#include "file_model.h"
+#include "all_model.h"
 
 #include <QDebug>
 #include <QFileIconProvider>
@@ -8,21 +8,13 @@
 
 
 /*******************************************************************************
-FileModel::FileModel()
+AllModel::AllModel()
 ********************************************************************************/
-FileModel::FileModel( QObject *parent ) :
+AllModel::AllModel( QObject *parent ) :
 	QAbstractTableModel( parent )
 {
     head_list << "*" << "*" << "*" << "*" << "name" << "duration" << "size" << "title" << "artist" << "album" << "full path";
-	
 	last_index	=	createIndex( 0, 0 );
-	
-	//dir.setSorting( QDir::Name | QDir::DirsFirst );
-	//dir.setFilter( QDir::NoDot | QDir::Dirs | QDir::Files );
-
-    /*QStringList     filters;
-    filters << "*.mp3" << "*.flac" << "";
-    dir.setNameFilters(filters);*/
 }
 
 
@@ -30,9 +22,9 @@ FileModel::FileModel( QObject *parent ) :
 
 
 /*******************************************************************************
-FileModel::~FileModel()
+AllModel::~AllModel()
 ********************************************************************************/
-FileModel::~FileModel()
+AllModel::~AllModel()
 {}
 
 
@@ -42,9 +34,9 @@ FileModel::~FileModel()
 
 
 /*******************************************************************************
-FileModel::refresh_slot()
+AllModel::refresh_slot()
 ********************************************************************************/
-void	FileModel::refresh_slot()
+void	AllModel::refresh_slot()
 {}
 
 
@@ -53,9 +45,9 @@ void	FileModel::refresh_slot()
 
 
 /*******************************************************************************
-FileModel::get_header_count()
+AllModel::get_header_count()
 ********************************************************************************/
-int		FileModel::get_header_count()
+int		AllModel::get_header_count()
 {
 	return	head_list.size();
 }
@@ -66,9 +58,9 @@ int		FileModel::get_header_count()
 
 
 /*******************************************************************************
-FileModel::rowCount()
+AllModel::rowCount()
 ********************************************************************************/
-int		FileModel::rowCount( const QModelIndex &parent ) const 
+int		AllModel::rowCount( const QModelIndex &parent ) const 
 { 
 	return	file_list.size();
 }
@@ -79,9 +71,9 @@ int		FileModel::rowCount( const QModelIndex &parent ) const
 
 
 /*******************************************************************************
-FileModel::columnCount()
+AllModel::columnCount()
 ********************************************************************************/
-int		FileModel::columnCount( const QModelIndex &parent ) const 
+int		AllModel::columnCount( const QModelIndex &parent ) const 
 { 
     return	head_list.size();
 }
@@ -92,11 +84,10 @@ int		FileModel::columnCount( const QModelIndex &parent ) const
 
 
 
-
 /*******************************************************************************
-FileModel::refresh_singal()
+AllModel::refresh_singal()
 ********************************************************************************/
-void	FileModel::refresh_singal( int row )
+void	AllModel::refresh_singal( int row )
 {
 	int		col		=	head_list.size();
 
@@ -113,14 +104,9 @@ void	FileModel::refresh_singal( int row )
 
 
 /*******************************************************************************
-FileModel::refresh_view()
-
-這邊會紀錄上一次的file_size
-取max, 避免有網格沒更新到.
-(例如從數量多的folder移動到數量少的)
-P.S. 畫面更新沒測試過,有空在測試,包含效能的影響.
+AllModel::refresh_view()
 ********************************************************************************/
-void	FileModel::refresh_view()
+void	AllModel::refresh_view()
 {
 	int		row		=	file_list.size() > last_index.row() ? file_list.size() : last_index.row();
 	int		col		=	head_list.size();
@@ -140,69 +126,14 @@ void	FileModel::refresh_view()
 
 
 
-
-
 /*******************************************************************************
-FileModel::get_file_list()
+AllModel::enter_dir_slot()
 ********************************************************************************/
-void	FileModel::get_file_list()
-{
-	// get relative path.
-	QString		relative_path	=	QDir(root_path).relativeFilePath( dir.path() );  //dir.relativeFilePath( root_path );
-	if( relative_path[0] == '.' )
-		relative_path[0]	=	'/';
-	else
-		relative_path.push_front('/');
-
-	if( *(relative_path.end()-1) != '/' )
-		relative_path.push_back('/');
-
-	emit path_change_signal( relative_path );
-
-	//
-    QStringList     name_filters;
-    name_filters << "*.mp3" << "*.flac" << "";    
-
-	QFileInfoList   list1    =   dir.entryInfoList( QDir::NoDot|QDir::Dirs, QDir::Name  );
-	QFileInfoList   list2    =   dir.entryInfoList( name_filters, QDir::Files, QDir::Name  );
-
-    file_list.clear();
-    file_list.append(list1);
-    file_list.append(list2);
-
-	if( dir.path() == root_path )
-		file_list.removeAt(0);
-}
-
-
-
-
-
-
-
-/*******************************************************************************
-FileModel::enter_dir_slot()
-********************************************************************************/
-void	FileModel::double_clicked_slot( const QModelIndex &index )
+void	AllModel::double_clicked_slot( const QModelIndex &index )
 {
  	int			row		=	index.row();
 	QFileInfo	info	=	file_list[row];
-	QString		path	=	info.fileName();
-
-	if( info.isDir() )
-	{
-		if( path == QString("..") )
-			dir.cdUp();
-		else
-			dir.cd(path);
-
-		get_file_list();
-		refresh_view();
-	}
-    else
-    {
-        emit play_signal(info.absoluteFilePath());
-    }
+    emit play_signal(info.absoluteFilePath());    
 }
 
 
@@ -212,65 +143,56 @@ void	FileModel::double_clicked_slot( const QModelIndex &index )
 
 
 /*******************************************************************************
-FileModel::text_data()
+AllModel::text_data()
 ********************************************************************************/
-QVariant	FileModel::text_data( const QModelIndex &index, int role ) const
+QVariant	AllModel::text_data( const QModelIndex &index, int role ) const
 {
-	int		col		=	index.column();
-	int		row		=	index.row();
+	int		col =   index.column();
+	int		row =   index.row();
 
-	QFileInfo	info		=	file_list[row];
+	QFileInfo	info    =   file_list[row];
 	QVariant	result;
 
 	// handle DisplayRole only.
 	if( role != Qt::DisplayRole )
 		assert(false);
 
+    assert( info.isFile() == true );
+
 	switch( col )
 	{
 		case 4:
 			result	=	info.fileName();
 			break;
-		case 5:
-            if( info.isFile() == true )            
-                result  =   QString("00:00:00");            
+		case 5:        
+            result  =   QString("00:00:00");            
 			break;		
 		case 6:
-            if( info.isFile() == true )
+        {
+            qint64      filesize    =   info.size();
+            double      view_size   =   0;
+            QString     unit_str    =   QString("bytes");
+            if( filesize > 1048576 )  // 1024*1024
             {
-                qint64      filesize    =   info.size();
-                double      view_size   =   0;
-                QString     unit_str    =   QString("bytes");
-                if( filesize > 1048576 )  // 1024*1024
-                {
-                    view_size   =   1.0 * filesize / 1048576;
-                    unit_str    =   "MB";
-                }
-                else if( filesize > 1024 )
-                {
-                    view_size  =   1.0 * filesize / 1024;
-                    unit_str    =   "KB";
-                }
-                result  =   QString("%1 %2").arg(view_size, 0, 'f', 1 ).arg(unit_str);
+                view_size   =   1.0 * filesize / 1048576;
+                unit_str    =   "MB";
             }
+            else if( filesize > 1024 )
+            {
+                view_size  =   1.0 * filesize / 1024;
+                unit_str    =   "KB";
+            }
+            result  =   QString("%1 %2").arg(view_size, 0, 'f', 1 ).arg(unit_str);            
 			break;
+        }
 		case 7:
-			if( info.isFile() == true )
-            {
-                // title
-            }
+            // title
 			break;
         case 8:
-            if( info.isFile() == true )
-            {
-                // artist
-            }
+            // artist
             break;
         case 9:
-            if( info.isFile() == true )
-            {
-                // album
-            }
+            // album
             break;
         case 10:
 			result	=	info.absoluteFilePath();
@@ -287,9 +209,9 @@ QVariant	FileModel::text_data( const QModelIndex &index, int role ) const
 
 
 /*******************************************************************************
-FileModel::icon_data()
+AllModel::icon_data()
 ********************************************************************************/
-QVariant	FileModel::icon_data( const QModelIndex &index, int role ) const
+QVariant	AllModel::icon_data( const QModelIndex &index, int role ) const
 {
 	int		col		=	index.column();
 	int		row		=	index.row();
@@ -321,9 +243,9 @@ QVariant	FileModel::icon_data( const QModelIndex &index, int role ) const
 
 
 /*******************************************************************************
-FileModel::data()
+AllModel::data()
 ********************************************************************************/
-QVariant	FileModel::data( const QModelIndex &index, int role ) const
+QVariant	AllModel::data( const QModelIndex &index, int role ) const
 {
 	int		col		=	index.column();
 	int		row		=	index.row();
@@ -344,8 +266,8 @@ QVariant	FileModel::data( const QModelIndex &index, int role ) const
 			break;
 		/*case Qt::TextColorRole:
             if( col < 3 )
-                var	=	QVariant(); //status_vec[row].color;
-			break;*/
+                var	=	QVariant(); //status_vec[row].color;*/
+			break;
 	}
 
 	return var;
@@ -357,9 +279,9 @@ QVariant	FileModel::data( const QModelIndex &index, int role ) const
 
 
 /*******************************************************************************
-FileModel::get_font_color()
+AllModel::get_font_color()
 ********************************************************************************/
-QVariant	FileModel::get_font_color( const QModelIndex &index, int role ) const
+QVariant	AllModel::get_font_color( const QModelIndex &index, int role ) const
 {
 	int		col		=	index.column();
 	int		row		=	index.row();
@@ -386,59 +308,10 @@ QVariant	FileModel::get_font_color( const QModelIndex &index, int role ) const
 
 
 
-
-
 /*******************************************************************************
-FileModel::set_root_path()
+AllModel::headerData()
 ********************************************************************************/
-void    FileModel::set_root_path( QString path )
-{
-    root_path   =   path;
-    dir.setPath( root_path );
-}
-
-
-
-
-
-
-/*******************************************************************************
-FileModel::init_file_list()
-********************************************************************************/
-void    FileModel::init_file_list()
-{
-	get_file_list();
-	refresh_view();
-}
-
-
-
-
-
-
-
-
-/*******************************************************************************
-FileModel::path_change_slot()
-********************************************************************************/
-void	FileModel::path_change_slot( const QString &new_path )
-{
-	dir.cd( root_path + new_path );
-	get_file_list();
-	refresh_view();
-}
-
-
-
-
-
-
-
-
-/*******************************************************************************
-FileModel::headerData()
-********************************************************************************/
-QVariant	FileModel::headerData( int section, Qt::Orientation orientation, int role ) const
+QVariant	AllModel::headerData( int section, Qt::Orientation orientation, int role ) const
 {
 	if ( role == Qt::DisplayRole )
 	{
@@ -448,3 +321,14 @@ QVariant	FileModel::headerData( int section, Qt::Orientation orientation, int ro
 	return QVariant();
 }
 
+
+
+
+/*******************************************************************************
+AllModel::set_file_list()
+********************************************************************************/
+void    AllModel::set_file_list( QFileInfoList&& list )
+{
+    file_list   =   std::move(list);
+	refresh_view();
+}
