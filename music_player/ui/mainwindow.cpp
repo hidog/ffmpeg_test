@@ -192,6 +192,25 @@ MainWindow::play_slot()
 ********************************************************************************/
 void    MainWindow::play_slot( QString path )
 {
-    play_worker->set_src_file( path.toStdString() );
-    play_worker->start();
+    if( play_worker->isRunning() == true )    
+        play_worker->stop_slot();    
+
+    int count   =   0;
+    while( play_worker->isRunning() == true )
+    {
+        SLEEP_10MS;
+        count++;
+        if( count >= 300 )
+            break;
+    }
+
+    if( count >= 300 )
+    {
+        MYLOG( LOG::L_WARN, "time out!" );
+    }
+    else
+    {
+        play_worker->set_src_file( path.toStdString() );
+        play_worker->start();
+    }
 }
