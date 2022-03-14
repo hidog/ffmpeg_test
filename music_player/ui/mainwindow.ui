@@ -38,6 +38,16 @@
      <string>OPEN</string>
     </property>
    </widget>
+   <widget class="FileWidget" name="fileWT" native="true">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>100</y>
+      <width>1451</width>
+      <height>751</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

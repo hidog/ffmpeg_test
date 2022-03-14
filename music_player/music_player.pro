@@ -13,19 +13,24 @@ CONFIG -= app_bundle
 
 SOURCES += \
 	src/task_manager.cpp \
+	src.file_model.cpp \
     ui/lockdialog.cpp \
 	ui/mainwindow.cpp \
+	ui/filewidget.cpp \
     main.cpp
 
 
 HEADERS += \
 	src/task_manager.h \
+	src/file_model.h \
     ui/lockdialog.h \
-    ui/mainwindow.h
+    ui/mainwindow.h \
+	ui/filewidget.h
 
 FORMS += \
     ui/lockdialog.ui \
-    ui/mainwindow.ui
+    ui/mainwindow.ui \
+	ui/filewidget.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
