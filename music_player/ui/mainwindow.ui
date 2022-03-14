@@ -145,43 +145,46 @@
       <normaloff>img/previous.png</normaloff>img/previous.png</iconset>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_5">
+   <widget class="QPushButton" name="nextButton">
     <property name="geometry">
      <rect>
-      <x>630</x>
+      <x>270</x>
       <y>10</y>
-      <width>80</width>
-      <height>20</height>
+      <width>21</width>
+      <height>21</height>
      </rect>
     </property>
-    <property name="text">
-     <string>next</string>
+    <property name="icon">
+     <iconset>
+      <normaloff>img/next.png</normaloff>img/next.png</iconset>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_6">
+   <widget class="QPushButton" name="randomButton">
     <property name="geometry">
      <rect>
-      <x>720</x>
+      <x>330</x>
       <y>10</y>
-      <width>80</width>
-      <height>20</height>
+      <width>21</width>
+      <height>21</height>
      </rect>
     </property>
-    <property name="text">
-     <string>random</string>
+    <property name="icon">
+     <iconset>
+      <normaloff>img/random.png</normaloff>img/random.png</iconset>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_7">
+   <widget class="QPushButton" name="repeatButton">
     <property name="geometry">
      <rect>
-      <x>810</x>
+      <x>300</x>
       <y>10</y>
-      <width>80</width>
-      <height>20</height>
+      <width>21</width>
+      <height>21</height>
      </rect>
     </property>
-    <property name="text">
-     <string>repeat</string>
+    <property name="icon">
+     <iconset>
+      <normaloff>img/repeat.png</normaloff>img/repeat.png</iconset>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_8">

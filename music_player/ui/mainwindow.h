@@ -52,6 +52,7 @@ public slots:
     void    stop_button_slot();
     void    pause_button_slot();
     void    previous_button_slot();
+    void    next_button_slot();
 
     void    play_slot( QString path );
 

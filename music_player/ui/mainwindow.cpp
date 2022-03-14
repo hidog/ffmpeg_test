@@ -65,7 +65,8 @@ void    MainWindow::set_connect()
     connect(    ui->playButton,     &QPushButton::clicked,    this,   &MainWindow::play_button_slot  );    
     connect(    ui->stopButton,     &QPushButton::clicked,    this,   &MainWindow::stop_button_slot  );    
     connect(    ui->pauseButton,    &QPushButton::clicked,    this,   &MainWindow::pause_button_slot  );    
-    connect(    ui->previousButton,    &QPushButton::clicked,    this,   &MainWindow::previous_button_slot  );    
+    connect(    ui->previousButton,    &QPushButton::clicked,    this,   &MainWindow::previous_button_slot  );  
+    connect(    ui->nextButton,    &QPushButton::clicked,    this,   &MainWindow::next_button_slot  );
 
     connect(    ui->volumeSlider,     &QSlider::valueChanged,    music_worker.get(),   &MusicWorker::volume_slot  );
 
@@ -280,6 +281,10 @@ void    MainWindow::stop_button_slot()
 
 
 
+
+
+
+
 /*******************************************************************************
 MainWindow::previous_button_slot()
 ********************************************************************************/
@@ -288,8 +293,10 @@ void    MainWindow::previous_button_slot()
     if( is_pause() == true )
     {
         music_worker->pause();
-        music_worker->stop();
+        play_worker->stop_slot();
     }
+
+    wait_worker_stop();
 
     bool    flag    =   false;
 
@@ -317,6 +324,49 @@ void    MainWindow::previous_button_slot()
     }
 }
 
+
+
+
+
+
+/*******************************************************************************
+MainWindow::next_button_slot()
+********************************************************************************/
+void    MainWindow::next_button_slot()
+{
+    if( is_pause() == true )
+    {
+        music_worker->pause();
+        play_worker->stop_slot();
+    }
+
+    wait_worker_stop();
+
+    bool    flag    =   false;
+
+    if( ui->tabWidget->currentIndex() == 0 )
+    {
+        AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
+        assert( a_widget != nullptr );
+        AllModel    *a_model    =   a_widget->get_model();
+        flag    =   a_model->next();
+    }
+    else if( ui->tabWidget->currentIndex() == 1 )
+    {}
+    else
+        assert(0);
+
+    if( flag == true )
+    {
+        QIcon   icon( QString("./img/play_2.png") );
+        ui->playButton->setIcon(icon);
+    }
+    else
+    {
+        QIcon   icon( QString("./img/play_1.png") );
+        ui->playButton->setIcon(icon);
+    }
+}
 
 
 

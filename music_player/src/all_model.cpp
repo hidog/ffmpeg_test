@@ -397,6 +397,26 @@ bool    AllModel::previous()
 
 
 
+/*******************************************************************************
+AllModel::next()
+********************************************************************************/
+bool    AllModel::next()
+{
+    if( file_list.empty() == true )
+        return false;
+
+    play_index =   play_index < file_list.size() ? play_index+1 : file_list.size()-1;
+    assert( play_index >= 0 );
+
+    QFileInfo	info	=	file_list[play_index];
+    emit play_signal(info.absoluteFilePath());
+    refresh_current();
+    return  true;
+}
+
+
+
+
 
 /*******************************************************************************
 AllModel::set_mainwindow()

@@ -42,6 +42,8 @@ public:
 
     bool    play();
     bool    previous();
+    bool    next();
+
     void    set_mainwindow( MainWindow *mw );
 
 	QVariant	data( const QModelIndex &index, int role = Qt::DisplayRole ) const override;
