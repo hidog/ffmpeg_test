@@ -48,7 +48,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QSlider" name="volumeSlider">
+   <widget class="MySlider" name="volumeSlider">
     <property name="geometry">
      <rect>
       <x>1359</x>
@@ -67,7 +67,7 @@
      <enum>Qt::Horizontal</enum>
     </property>
     <property name="tickPosition">
-     <enum>QSlider::TicksAbove</enum>
+     <enum>QSlider::NoTicks</enum>
     </property>
    </widget>
   </widget>
@@ -87,8 +87,12 @@
   <customwidget>
    <class>FileWidget</class>
    <extends>QWidget</extends>
-   <header>filewidget.h</header>
-   <container>1</container>
+   <header location="global">filewidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>MySlider</class>
+   <extends>QSlider</extends>
+   <header location="global">myslider.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

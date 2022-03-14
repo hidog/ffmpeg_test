@@ -22,11 +22,12 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    set_connect();
     lock_dialog.hide();
 
     music_worker    =   std::make_unique<MusicWorker>(this);
     play_worker     =   std::make_unique<PlayWorker>(this);
+
+    set_connect();
 }
 
 
@@ -62,6 +63,7 @@ MainWindow::set_connect()
 void    MainWindow::set_connect()
 {
     connect(    ui->openButton,     &QPushButton::clicked,    this,   &MainWindow::open_slot  );
+    connect(    ui->volumeSlider,     &QSlider::valueChanged,    music_worker.get(),   &MusicWorker::volume_slot  );
 
     connect(    &task_manager,      &QThread::finished,   this,   &MainWindow::task_finish_slot  );
     connect(    &task_manager,      &QThread::finished,   &lock_dialog,   &LockDialog::finish_slot  );

@@ -16,6 +16,7 @@ SOURCES += \
 	src/file_model.cpp \
 	src/music_worker.cpp \
 	src/play_worker.cpp \
+	src/myslider.cpp \
     ui/lockdialog.cpp \
 	ui/mainwindow.cpp \
 	ui/filewidget.cpp \
@@ -27,6 +28,7 @@ HEADERS += \
 	src/file_model.h \
 	src/music_worker.h \
 	src/play_worker.h \
+	src/myslider.h \
     ui/lockdialog.h \
     ui/mainwindow.h \
 	ui/filewidget.h
@@ -36,7 +38,7 @@ FORMS += \
     ui/mainwindow.ui \
 	ui/filewidget.ui
 	
-INCLUDEPATH   +=  ../src
+INCLUDEPATH   +=  ../src ui src
 
 Debug:LIBS    +=  -L../ -lffmpeg_kernelD
 Release:LIBS  +=  -L../ -lffmpeg_kernel
