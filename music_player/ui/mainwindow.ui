@@ -117,17 +117,18 @@
       <normaloff>img/stop.png</normaloff>img/stop.png</iconset>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_3">
+   <widget class="QPushButton" name="pauseButton">
     <property name="geometry">
      <rect>
-      <x>430</x>
+      <x>210</x>
       <y>10</y>
-      <width>80</width>
-      <height>20</height>
+      <width>21</width>
+      <height>21</height>
      </rect>
     </property>
-    <property name="text">
-     <string>pause</string>
+    <property name="icon">
+     <iconset>
+      <normaloff>img/pause.png</normaloff>img/pause.png</iconset>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_4">

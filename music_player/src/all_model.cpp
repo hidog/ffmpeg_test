@@ -230,12 +230,18 @@ QVariant	AllModel::icon_data( const QModelIndex &index, int role ) const
 	QVariant			result;
 
     QIcon   play_icon(QString("./img/play_2.png"));
+    QIcon   pause_icon(QString("./img/pause.png"));
 
 	switch( col )
 	{
     case 0:
-        if( last_play_index == row && main_window->is_playing() == true )
-            result  =   play_icon;
+        if( last_play_index == row )
+        {
+            if( main_window->is_playing() == true )
+                result  =   play_icon;
+            if( main_window->is_pause() == true )
+                result  =   pause_icon;
+        }
         break;
     case 3:
     	result	=	icon_pv.icon(info);
@@ -350,10 +356,10 @@ void    AllModel::set_file_list( QFileInfoList&& list )
 /*******************************************************************************
 AllModel::play()
 ********************************************************************************/
-void    AllModel::play()
+bool    AllModel::play()
 {
     if( file_list.empty() == true )
-        return;
+        return false;
 
     if( last_play_index >= file_list.size() )
         last_play_index =   0;
@@ -364,6 +370,8 @@ void    AllModel::play()
     emit play_signal(info.absoluteFilePath());
 
     refresh_view();
+
+    return  true;
 }
 
 

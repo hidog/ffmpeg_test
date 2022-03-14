@@ -402,6 +402,28 @@ void    MusicWorker::pause()
 
 
 /*******************************************************************************
+MusicWorker::is_pause()
+********************************************************************************/
+bool    MusicWorker::is_pause()
+{
+    if( audio != nullptr )
+    {
+        QAudio::State    st  =   audio->state();
+        if( st == QAudio::SuspendedState )
+            return  true;
+        else
+            return  false;
+    }
+    else
+        return  false;
+}
+
+
+
+
+
+
+/*******************************************************************************
 MusicWorker::get_timestamp()
 ********************************************************************************/
 int64_t     MusicWorker::get_timestamp()

@@ -27,12 +27,10 @@ public:
     int     get_volume();
     void    stop();
     void    pause();
-
+    bool    is_pause();
     void    flush_for_seek();    
 
-
     int64_t     get_timestamp();
-
     const int&  get_current_sec();
 
 public slots:

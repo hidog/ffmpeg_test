@@ -40,7 +40,7 @@ public:
 	int		rowCount( const QModelIndex &parent = QModelIndex() ) const ;
 	int		columnCount( const QModelIndex &parent = QModelIndex() ) const ;
 
-    void    play();
+    bool    play();
     void    set_mainwindow( MainWindow *mw );
 
 	QVariant	data( const QModelIndex &index, int role = Qt::DisplayRole ) const override;

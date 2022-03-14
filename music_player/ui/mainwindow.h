@@ -17,6 +17,8 @@ QT_END_NAMESPACE
 
 class MusicWorker;
 class PlayWorker;
+class QCloseEvent;
+class QKeyEvent;
 
 
 
@@ -28,20 +30,26 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    void    closeEvent(QCloseEvent *event) override;
-
     void    set_connect();
     int     volume();
     bool    is_playing();
+    bool    is_pause();
 
     MusicWorker*    get_music_worker();
     PlayWorker*     get_play_worker();
+
+    void    closeEvent(QCloseEvent *event) override;
+    void    keyPressEvent(QKeyEvent *event) override;
+
+    void    wait_worker_stop();
 
 public slots:
 
     void    open_slot();
     void    task_finish_slot();
     void    play_button_slot();
+    void    stop_button_slot();
+    void    pause_button_slot();
 
     void    play_slot( QString path );
 
