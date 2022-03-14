@@ -24,7 +24,7 @@ HEADERS += \
     ui/mainwindow.h
 
 FORMS += \
-    lockdialog.ui \
+    ui/lockdialog.ui \
     ui/mainwindow.ui
 
 # Default rules for deployment.

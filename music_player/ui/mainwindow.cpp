@@ -5,6 +5,8 @@
 #include <QFileDialog>
 #include <QDebug>
 
+#include "../../src/tool.h"
+
 
 
 
@@ -18,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     set_connect();
+    lock_dialog.hide();
 }
 
 
@@ -35,6 +38,17 @@ MainWindow::~MainWindow()
 
 
 
+/*******************************************************************************
+MainWindow::closeEvent()
+********************************************************************************/
+void    MainWindow::closeEvent( QCloseEvent *event ) 
+{
+    lock_dialog.close();
+}
+
+
+
+
 
 /*******************************************************************************
 MainWindow::set_connect()
@@ -42,6 +56,9 @@ MainWindow::set_connect()
 void    MainWindow::set_connect()
 {
     connect(    ui->openButton,     &QPushButton::clicked,    this,   &MainWindow::open_slot  );
+    connect(    &task_manager,      &QThread::finished,   this,   &MainWindow::task_finish_slot  );
+    connect(    &task_manager,      &TaskManager::progress_signal,  &lock_dialog,   &LockDialog::progress_slot );  
+    connect(    &task_manager,      &TaskManager::message_singal,  &lock_dialog,   &LockDialog::message_slot );  
 }
 
 
@@ -59,4 +76,29 @@ void    MainWindow::open_slot()
                                                                QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
 
     qDebug() << dir;
+
+    if( task_manager.isRunning() == true )
+    {
+        MYLOG( LOG::L_WARN, "task is running." );
+        return;
+    }
+    
+    // note: need stop play music.
+    lock_dialog.set_task_name( "scan" );
+    lock_dialog.show();
+
+    task_manager.set_scan_task(dir);
+    task_manager.start();
+}
+
+
+
+
+
+/*******************************************************************************
+MainWindow::task_finish_slot()
+********************************************************************************/
+void    MainWindow::task_finish_slot()
+{
+    lock_dialog.hide();
 }

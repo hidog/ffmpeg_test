@@ -154,7 +154,16 @@
       
       
     </QtMoc>
-    <ClInclude Include="src\task_manager.h" />
+    <QtMoc Include="src\task_manager.h">
+      
+      
+      
+      
+      
+      
+      
+      
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     
@@ -179,9 +188,11 @@
     </CustomBuild>
     
     
+    
+    
   </ItemGroup>
   <ItemGroup>
-    <QtUic Include="lockdialog.ui">
+    <QtUic Include="ui\lockdialog.ui">
       
       
       
