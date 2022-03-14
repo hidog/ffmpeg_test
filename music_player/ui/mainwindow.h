@@ -32,6 +32,7 @@ public:
 
     void    set_connect();
     int     volume();
+    bool    is_playing();
 
     MusicWorker*    get_music_worker();
     PlayWorker*     get_play_worker();
@@ -40,6 +41,8 @@ public slots:
 
     void    open_slot();
     void    task_finish_slot();
+    void    play_button_slot();
+
     void    play_slot( QString path );
 
 private:
@@ -52,6 +55,7 @@ private:
     std::unique_ptr<PlayWorker>         play_worker;
 
     QString     root_path;
+
 };
 
 

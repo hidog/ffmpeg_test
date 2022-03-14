@@ -17,6 +17,9 @@ namespace boost{
 
 
 
+class MainWindow;
+
+
 
 
 class AllModel : public QAbstractTableModel
@@ -36,6 +39,9 @@ public:
 
 	int		rowCount( const QModelIndex &parent = QModelIndex() ) const ;
 	int		columnCount( const QModelIndex &parent = QModelIndex() ) const ;
+
+    void    play();
+    void    set_mainwindow( MainWindow *mw );
 
 	QVariant	data( const QModelIndex &index, int role = Qt::DisplayRole ) const override;
 	QVariant	headerData( int section, Qt::Orientation orientation, int role ) const override;
@@ -61,7 +67,9 @@ private:
     QFileInfoList   file_list;
 	QModelIndex		last_index;
 
+    int     last_play_index     =   0;
 
+    MainWindow  *main_window    =   nullptr;
 };
 
 

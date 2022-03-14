@@ -66,12 +66,14 @@ AllWidget::set_connect()
 ********************************************************************************/
 void	AllWidget::set_connect()
 {
-	connect(	model,				SIGNAL(refresh_signal()),							this,		SLOT(refresh_view_slot())						);
-	connect(	model,				SIGNAL(path_change_signal(QString)),				this,		SLOT(path_change_slot(QString))					);
-    connect(	ui->allTView,		SIGNAL(doubleClicked(const QModelIndex&)),			model,		SLOT(double_clicked_slot(const QModelIndex&))	);
-
-	connect(	ui->allTView->horizontalHeader(),		SIGNAL(sectionResized(int,int,int)),		this,		SLOT(header_resize_slot(int,int,int))		);
+	connect(	model,				&AllModel::refresh_signal,			this,		&AllWidget::refresh_view_slot					);
+    connect(	ui->allTView,		&QTableView::doubleClicked,			model,		&AllModel::double_clicked_slot	);
+	connect(	ui->allTView->horizontalHeader(),		&QHeaderView::sectionResized,		this,		&AllWidget::header_resize_slot		);
 }
+
+
+
+
 
 
 

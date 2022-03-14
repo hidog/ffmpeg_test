@@ -4,6 +4,7 @@
 #include <QFileIconProvider>
 #include <QColor>
 
+#include "../ui/mainwindow.h"
 
 
 
@@ -14,6 +15,7 @@ AllModel::AllModel( QObject *parent ) :
 	QAbstractTableModel( parent )
 {
     head_list << "*" << "*" << "*" << "*" << "name" << "duration" << "size" << "title" << "artist" << "album" << "full path";
+               // play  new  favorite  icon
 	last_index	=	createIndex( 0, 0 );
 }
 
@@ -133,6 +135,7 @@ void	AllModel::double_clicked_slot( const QModelIndex &index )
 {
  	int			row		=	index.row();
 	QFileInfo	info	=	file_list[row];
+    last_play_index     =   row;
     emit play_signal(info.absoluteFilePath());    
 }
 
@@ -213,6 +216,10 @@ AllModel::icon_data()
 ********************************************************************************/
 QVariant	AllModel::icon_data( const QModelIndex &index, int role ) const
 {
+    // handle DecorationRole only.
+	if( role != Qt::DecorationRole )
+		assert(false);
+
 	int		col		=	index.column();
 	int		row		=	index.row();
 
@@ -222,13 +229,15 @@ QVariant	AllModel::icon_data( const QModelIndex &index, int role ) const
 	QFileIconProvider	icon_pv;
 	QVariant			result;
 
-	// handle DecorationRole only.
-	if( role != Qt::DecorationRole )
-		assert(false);
+    QIcon   play_icon(QString("./img/play_2.png"));
 
 	switch( col )
 	{
     case 0:
+        if( last_play_index == row && main_window->is_playing() == true )
+            result  =   play_icon;
+        break;
+    case 3:
     	result	=	icon_pv.icon(info);
     	break;
 	}
@@ -264,10 +273,12 @@ QVariant	AllModel::data( const QModelIndex &index, int role ) const
 		case Qt::DecorationRole:
 			var	=	icon_data( index, role );		
 			break;
-		/*case Qt::TextColorRole:
-            if( col < 3 )
-                var	=	QVariant(); //status_vec[row].color;*/
+		case Qt::TextColorRole:
 			break;
+        case Qt::BackgroundColorRole:
+            if( last_play_index == row && main_window->is_playing() == true )
+                var     =   QColor( 0, 0, 255, 30 );
+            break;
 	}
 
 	return var;
@@ -331,4 +342,39 @@ void    AllModel::set_file_list( QFileInfoList&& list )
 {
     file_list   =   std::move(list);
 	refresh_view();
+}
+
+
+
+
+/*******************************************************************************
+AllModel::play()
+********************************************************************************/
+void    AllModel::play()
+{
+    if( file_list.empty() == true )
+        return;
+
+    if( last_play_index >= file_list.size() )
+        last_play_index =   0;
+
+    assert( last_play_index >= 0 );
+
+	QFileInfo	info	=	file_list[last_play_index];
+    emit play_signal(info.absoluteFilePath());
+
+    refresh_view();
+}
+
+
+
+
+
+
+/*******************************************************************************
+AllModel::set_mainwindow()
+********************************************************************************/
+void    AllModel::set_mainwindow( MainWindow *mw )
+{
+    main_window     =   mw;
 }

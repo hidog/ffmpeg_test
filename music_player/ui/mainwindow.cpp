@@ -30,6 +30,11 @@ MainWindow::MainWindow(QWidget *parent)
     music_worker    =   std::make_unique<MusicWorker>(this);
     play_worker     =   std::make_unique<PlayWorker>(this);
 
+    AllWidget  *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
+    assert( a_widget != nullptr );
+    AllModel   *a_model      =   a_widget->get_model();
+    a_model->set_mainwindow( this );
+
     set_connect();
 }
 
@@ -66,6 +71,7 @@ MainWindow::set_connect()
 void    MainWindow::set_connect()
 {
     connect(    ui->openButton,     &QPushButton::clicked,    this,   &MainWindow::open_slot  );
+    connect(    ui->playButton,     &QPushButton::clicked,    this,   &MainWindow::play_button_slot  );    
     connect(    ui->volumeSlider,     &QSlider::valueChanged,    music_worker.get(),   &MusicWorker::volume_slot  );
 
     connect(    &task_manager,      &QThread::finished,   this,   &MainWindow::task_finish_slot  );
@@ -132,7 +138,10 @@ void    MainWindow::task_finish_slot()
 {
     QFileInfoList   list    =   task_manager.get_file_list();
     if( list.empty() == true )  // 可能是取消掃描.
+    {
+        lock_dialog.hide();
         return;
+    }
 
     AllWidget  *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
     assert( a_widget != nullptr );
@@ -213,4 +222,42 @@ void    MainWindow::play_slot( QString path )
         play_worker->set_src_file( path.toStdString() );
         play_worker->start();
     }
+}
+
+
+
+
+
+
+/*******************************************************************************
+MainWindow::play_button_slot()
+********************************************************************************/
+void    MainWindow::play_button_slot()
+{
+    if( ui->tabWidget->currentIndex() == 0 )
+    {
+        AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
+        assert( a_widget != nullptr );
+        AllModel    *a_model    =   a_widget->get_model();
+        a_model->play();
+    }
+    else if( ui->tabWidget->currentIndex() == 1 )
+    {}
+    else
+        assert(0);
+
+    QIcon   icon( QString("./img/play_2.png") );
+    ui->playButton->setIcon(icon);
+}
+
+
+
+
+
+/*******************************************************************************
+MainWindow::is_playing()
+********************************************************************************/
+bool    MainWindow::is_playing()
+{
+    return  play_worker->isRunning();
 }

@@ -70,7 +70,7 @@ TaskManager::scan_folder()
 ********************************************************************************/
 void    TaskManager::scan_folder( QString path )
 {
-    SLEEP_1MS;
+    SLEEP_1US;
 
     QDir    dir(path);
 
@@ -120,7 +120,11 @@ int     TaskManager::get_all_file_count( QString path )
     QFileInfoList   d_list    =   dir.entryInfoList( QDir::Dirs|QDir::NoDotAndDotDot );    
     int     count   =   d_list.count();
     for( auto& info : d_list )    
+    {
+        if( stop_flag == true )
+            break;
         count   +=  get_all_file_count( info.absoluteFilePath() );
+    }
     return  count;
 }
 
