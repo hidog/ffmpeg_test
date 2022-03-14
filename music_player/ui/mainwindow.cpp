@@ -87,13 +87,18 @@ void    MainWindow::open_slot()
         MYLOG( LOG::L_WARN, "task is running." );
         return;
     }
+
+    if( dir.isEmpty() == true )
+        return;
     
     // note: need stop play music.
-    lock_dialog.set_task_name( "scan" );
-    lock_dialog.show();
+    //lock_dialog.set_task_name( "scan" );
+    //lock_dialog.show();
 
-    task_manager.set_scan_task(dir);
-    task_manager.start();
+    //task_manager.set_scan_all_task(dir);
+    //task_manager.start();
+
+    ui->fileWT->set_root_path( dir );
 }
 
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>525</width>
-    <height>654</height>
+    <width>1160</width>
+    <height>700</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,80 +18,6 @@
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
       <widget class="QComboBox" name="pathCBox"/>
-     </item>
-     <item>
-      <widget class="QFrame" name="frame">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>40</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>30</height>
-        </size>
-       </property>
-       <property name="baseSize">
-        <size>
-         <width>0</width>
-         <height>30</height>
-        </size>
-       </property>
-       <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
-       </property>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <item>
-         <widget class="QPushButton" name="addButton">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>25</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>80</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Add</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="refreshButton">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>25</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Refresh</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
      </item>
      <item>
       <widget class="QTableView" name="fileTView">
@@ -113,23 +39,23 @@
        <property name="sortingEnabled">
         <bool>true</bool>
        </property>
-       <attribute name="horizontalHeaderDefaultSectionSize">
+       <attribute name="horizontalHeaderMinimumSectionSize">
         <number>30</number>
        </attribute>
-       <attribute name="horizontalHeaderMinimumSectionSize">
+       <attribute name="horizontalHeaderDefaultSectionSize">
         <number>30</number>
        </attribute>
        <attribute name="verticalHeaderVisible">
         <bool>false</bool>
+       </attribute>
+       <attribute name="verticalHeaderMinimumSectionSize">
+        <number>30</number>
        </attribute>
        <attribute name="verticalHeaderDefaultSectionSize">
         <number>30</number>
        </attribute>
        <attribute name="verticalHeaderHighlightSections">
         <bool>false</bool>
-       </attribute>
-       <attribute name="verticalHeaderMinimumSectionSize">
-        <number>30</number>
        </attribute>
       </widget>
      </item>

@@ -31,9 +31,9 @@ TaskManager::~TaskManager()
 /*******************************************************************************
 TaskManager::set_task_type()
 ********************************************************************************/
-void    TaskManager::set_scan_task( QString path )
+void    TaskManager::set_scan_all_task( QString path )
 {
-    type        =   TaskType::SCAN;
+    type        =   TaskType::SCAN_ALL;
     scan_path   =   path;
 }
 
@@ -49,11 +49,14 @@ void    TaskManager::run()
 
     switch( type )
     {
-    case TaskType::SCAN:
+    case TaskType::SCAN_ALL:
+        file_list.clear();
         scan_count      =   0;
         last_pg_value   =   0;
         all_file_count  =   get_all_file_count(scan_path);
         scan_folder( scan_path );
+        break;
+    case TaskType::SCAN:
         break;
     default:
         assert(0);
@@ -73,7 +76,7 @@ void    TaskManager::scan_folder( QString path )
 
     QDir    dir(path);
 
-    dir.setFilter( QDir::Dirs | QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot );
+    dir.setFilter( QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot );
     QFileInfoList   list    =   dir.entryInfoList();
 
     int         progress_value  =   0;
@@ -87,8 +90,7 @@ void    TaskManager::scan_folder( QString path )
         if( stop_flag == true )
             break;
 
-        //emit message_sig( QString("scan item %1").arg(info.fileName()) );
-        //qDebug() << "path = " << info.absoluteFilePath();
+        file_list.append( info );
 
         scan_count++;
         progress_value  =   100.0 * scan_count / all_file_count;

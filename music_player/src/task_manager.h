@@ -2,13 +2,18 @@
 #define TASK_MANAGER_H
 
 #include <QThread>
+#include <QFileInfo>
+
+
 
 
 enum class TaskType
 {
     NONE    =   0,
-    SCAN,
+    SCAN_ALL,
+    SCAN
 };
+
 
 
 
@@ -28,6 +33,7 @@ public:
 
     void    run() override;
 
+    void    set_scan_all_task( QString path );
     void    set_scan_task( QString path );
 
 
@@ -55,6 +61,8 @@ private:
     int         all_file_count  =   0;
     int         scan_count      =   0;
     int         last_pg_value   =   0;
+
+    QFileInfoList   file_list;
 
 };
 
