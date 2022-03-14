@@ -29,11 +29,12 @@ FileWidget::FileWidget(QWidget *parent) :
 	//header_width_vec[0]	=	;	don't set icon width.
 	//ui->fileTView->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::Fixed );  need set after refresh.
 	header_width_vec[4]	=	300;
-	header_width_vec[5]	=	80;
-	header_width_vec[6]	=	70;
+	header_width_vec[5]	=	70;
+	header_width_vec[6]	=	60;
 	header_width_vec[7] =	60;
-    header_width_vec[8] =   100;
-    header_width_vec[9] =   100;
+    header_width_vec[8] =   60;
+    header_width_vec[9] =   60;
+    header_width_vec[10] =   500;
 
 	set_connect();
 }
@@ -65,10 +66,9 @@ FileWidget::set_connect()
 ********************************************************************************/
 void	FileWidget::set_connect()
 {
-	connect(	ui->fileTView,		SIGNAL(doubleClicked(const QModelIndex&)),			this,		SLOT(double_clicked_slot(const QModelIndex&))	);
-	connect(	this,				SIGNAL(enter_dir_signal(const QModelIndex&)),		model,		SLOT(enter_dir_slot(const QModelIndex&))		);
 	connect(	model,				SIGNAL(refresh_signal()),							this,		SLOT(refresh_view_slot())						);
 	connect(	model,				SIGNAL(path_change_signal(QString)),				this,		SLOT(path_change_slot(QString))					);
+    connect(	ui->fileTView,		SIGNAL(doubleClicked(const QModelIndex&)),			model,		SLOT(double_clicked_slot(const QModelIndex&))	);
 
 	connect(	ui->fileTView->horizontalHeader(),		SIGNAL(sectionResized(int,int,int)),		this,		SLOT(header_resize_slot(int,int,int))		);
 }
@@ -139,22 +139,6 @@ void	FileWidget::path_change_slot( QString path )
 
 
 
-
-
-/*******************************************************************************
-FileWidget::double_clicked_slot()
-********************************************************************************/
-void	FileWidget::double_clicked_slot( const QModelIndex &index )
-{
-	emit enter_dir_signal(index);		
-}
-
-
-
-
-
-
-
 /*******************************************************************************
 FileWidget::~FileWidget()
 ********************************************************************************/
@@ -180,3 +164,13 @@ void	FileWidget::set_root_path( QString path )
 }
 
 
+
+
+
+/*******************************************************************************
+FileWidget::set_root_path()
+********************************************************************************/
+FileModel*  FileWidget::get_model()
+{
+    return  model;    
+}

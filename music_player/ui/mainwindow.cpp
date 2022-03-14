@@ -7,6 +7,7 @@
 
 #include "src/play_worker.h"
 #include "src/music_worker.h"
+#include "src/file_model.h"
 #include "tool.h"
 
 
@@ -69,6 +70,8 @@ void    MainWindow::set_connect()
 
     connect(    &lock_dialog,      &LockDialog::cancel_signal,  &task_manager,   &TaskManager::cancel_slot );
 
+    FileModel   *model  =   ui->fileWT->get_model();
+    connect(    model,      &FileModel::play_signal,  this,   &MainWindow::play_slot );
 }
 
 
@@ -153,4 +156,17 @@ MainWindow::get_play_worker()
 PlayWorker*     MainWindow::get_play_worker()
 {
     return  play_worker.get();
+}
+
+
+
+
+
+/*******************************************************************************
+MainWindow::play_slot()
+********************************************************************************/
+void    MainWindow::play_slot( QString path )
+{
+    play_worker->set_src_file( path.toStdString() );
+    play_worker->start();
 }

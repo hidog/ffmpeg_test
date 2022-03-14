@@ -26,17 +26,14 @@ public:
     ~FileWidget();
 
 	void	set_root_path( QString path );
-
+    FileModel*  get_model();
 
 public slots:
-	void	double_clicked_slot( const QModelIndex &index );
 	void	header_resize_slot( int index, int old_size, int new_size );
 	void	path_change_slot( QString path );
     void	refresh_view_slot();
 
 signals:
-	void	enter_dir_signal( const QModelIndex & );
-
     
 private:
 

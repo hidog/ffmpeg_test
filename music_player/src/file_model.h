@@ -46,14 +46,14 @@ public:
 	QVariant	get_font_color( const QModelIndex &index, int role ) const;
 
 public slots:
-	void	enter_dir_slot( const QModelIndex &index );
+	void	double_clicked_slot( const QModelIndex &index );
 	void	path_change_slot( const QString &new_path );
 	void	refresh_slot();
 
 signals:
 	void	refresh_signal();
 	void	path_change_signal(QString);
-
+    void    play_signal(QString);
 
 private:
 

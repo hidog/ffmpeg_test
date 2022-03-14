@@ -13,7 +13,7 @@ FileModel::FileModel()
 FileModel::FileModel( QObject *parent ) :
 	QAbstractTableModel( parent )
 {
-    head_list << "*" << "*" << "*" << "*" << "name" << "duration" << "size" << "title" << "artist" << "album";
+    head_list << "*" << "*" << "*" << "*" << "name" << "duration" << "size" << "title" << "artist" << "album" << "full path";
 	
 	last_index	=	createIndex( 0, 0 );
 	
@@ -183,7 +183,7 @@ void	FileModel::get_file_list()
 /*******************************************************************************
 FileModel::enter_dir_slot()
 ********************************************************************************/
-void	FileModel::enter_dir_slot( const QModelIndex &index )
+void	FileModel::double_clicked_slot( const QModelIndex &index )
 {
  	int			row		=	index.row();
 	QFileInfo	info	=	file_list[row];
@@ -199,6 +199,10 @@ void	FileModel::enter_dir_slot( const QModelIndex &index )
 		get_file_list();
 		refresh_view();
 	}
+    else
+    {
+        emit play_signal(info.absoluteFilePath());
+    }
 }
 
 
@@ -228,11 +232,11 @@ QVariant	FileModel::text_data( const QModelIndex &index, int role ) const
 			result	=	info.fileName();
 			break;
 		case 5:
-            if( info.isDir() == false )            
+            if( info.isFile() == true )            
                 result  =   QString("00:00:00");            
 			break;		
 		case 6:
-            if( info.isDir() == false )
+            if( info.isFile() == true )
             {
                 qint64      filesize    =   info.size();
                 double      view_size   =   0;
@@ -251,22 +255,25 @@ QVariant	FileModel::text_data( const QModelIndex &index, int role ) const
             }
 			break;
 		case 7:
-			if( info.isDir() == false )
+			if( info.isFile() == true )
             {
                 // title
             }
 			break;
         case 8:
-            if( info.isFile() == false )
+            if( info.isFile() == true )
             {
                 // artist
             }
             break;
         case 9:
-            if( info.isFile() == false )
+            if( info.isFile() == true )
             {
                 // album
             }
+            break;
+        case 10:
+			result	=	info.absoluteFilePath();
             break;
 	}
 

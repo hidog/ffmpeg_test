@@ -43,6 +43,7 @@ public slots:
 
     void    open_slot();
     void    task_finish_slot();
+    void    play_slot( QString path );
 
 private:
     Ui::MainWindow *ui;
