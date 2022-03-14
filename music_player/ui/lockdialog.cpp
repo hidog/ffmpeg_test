@@ -1,6 +1,8 @@
 #include "lockdialog.h"
 #include "ui_lockdialog.h"
 
+#include <QShowEvent>
+
 
 
 
@@ -13,6 +15,8 @@ LockDialog::LockDialog(QWidget *parent) :
     ui(new Ui::lockdialog)
 {
     ui->setupUi(this);
+
+    set_connect();
 }
 
 
@@ -60,10 +64,53 @@ void    LockDialog::set_task_name( QString name )
 
 
 
+
 /*******************************************************************************
 LockDialog::message_slot()
 ********************************************************************************/
 void    LockDialog::message_slot( QString msg )
 {
-    ui->messageBrowser->append( msg );
+    ui->messageBrowser->setText( msg );
 }
+
+
+
+
+
+
+/*******************************************************************************
+LockDialog::set_connect()
+********************************************************************************/
+void    LockDialog::set_connect()
+{
+    connect(    ui->cancelButton,      &QPushButton::clicked,  this,   &LockDialog::cancel_slot );
+}
+
+
+
+
+
+/*******************************************************************************
+LockDialog::cancel_slot()
+********************************************************************************/
+void    LockDialog::cancel_slot()
+{
+    emit cancel_signal();
+    ui->messageBrowser->clear();
+    ui->progressBar->setValue(0);
+}
+
+
+
+
+
+/*******************************************************************************
+LockDialog::cancel_slot()
+********************************************************************************/
+void    LockDialog::finish_slot()
+{
+    ui->messageBrowser->clear();
+    ui->progressBar->setValue(0);
+}
+
+

@@ -56,9 +56,14 @@ MainWindow::set_connect()
 void    MainWindow::set_connect()
 {
     connect(    ui->openButton,     &QPushButton::clicked,    this,   &MainWindow::open_slot  );
+
     connect(    &task_manager,      &QThread::finished,   this,   &MainWindow::task_finish_slot  );
+    connect(    &task_manager,      &QThread::finished,   &lock_dialog,   &LockDialog::finish_slot  );
     connect(    &task_manager,      &TaskManager::progress_signal,  &lock_dialog,   &LockDialog::progress_slot );  
-    connect(    &task_manager,      &TaskManager::message_singal,  &lock_dialog,   &LockDialog::message_slot );  
+    connect(    &task_manager,      &TaskManager::message_singal,  &lock_dialog,   &LockDialog::message_slot );
+
+    connect(    &lock_dialog,      &LockDialog::cancel_signal,  &task_manager,   &TaskManager::cancel_slot );
+
 }
 
 
