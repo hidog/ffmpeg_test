@@ -87,18 +87,18 @@ int		AllModel::columnCount( const QModelIndex &parent ) const
 
 
 /*******************************************************************************
-AllModel::refresh_singal()
+AllModel::refresh_current()
 ********************************************************************************/
-void	AllModel::refresh_singal( int row )
+void    AllModel::refresh_current()
 {
-	int		col		=	head_list.size();
+    int		col		=	head_list.size();
 
-	QModelIndex		left_top		=	createIndex( row, 0 );
-	QModelIndex		right_bottom	=	createIndex( row, col );
+	QModelIndex		left_top		=	createIndex( play_index, 0 );
+	QModelIndex		right_bottom	=	createIndex( play_index, col );
 
 	emit dataChanged( left_top, right_bottom );
+    emit show_row_signal( play_index );
 }
-
 
 
 
@@ -110,6 +110,7 @@ AllModel::refresh_view()
 ********************************************************************************/
 void	AllModel::refresh_view()
 {
+    // note: 檔案可能增加減少 這邊沒處理到減少的部分 需要修改 !
 	int		row		=	file_list.size() > last_index.row() ? file_list.size() : last_index.row();
 	int		col		=	head_list.size();
 
@@ -120,7 +121,6 @@ void	AllModel::refresh_view()
 	emit refresh_signal();
 
 	last_index	=	createIndex( file_list.size(), col );
-
 }
 
 
@@ -135,8 +135,10 @@ void	AllModel::double_clicked_slot( const QModelIndex &index )
 {
  	int			row		=	index.row();
 	QFileInfo	info	=	file_list[row];
-    last_play_index     =   row;
-    emit play_signal(info.absoluteFilePath());    
+
+    play_index  =   row;
+    emit play_signal(info.absoluteFilePath());
+    refresh_current();
 }
 
 
@@ -235,7 +237,7 @@ QVariant	AllModel::icon_data( const QModelIndex &index, int role ) const
 	switch( col )
 	{
     case 0:
-        if( last_play_index == row )
+        if( play_index == row )
         {
             if( main_window->is_playing() == true )
                 result  =   play_icon;
@@ -282,7 +284,7 @@ QVariant	AllModel::data( const QModelIndex &index, int role ) const
 		case Qt::TextColorRole:
 			break;
         case Qt::BackgroundColorRole:
-            if( last_play_index == row && main_window->is_playing() == true )
+            if( play_index == row && main_window->is_playing() == true )
                 var     =   QColor( 0, 0, 255, 30 );
             break;
 	}
@@ -361,19 +363,36 @@ bool    AllModel::play()
     if( file_list.empty() == true )
         return false;
 
-    if( last_play_index >= file_list.size() )
-        last_play_index =   0;
+    if( play_index >= file_list.size() )
+        play_index =   0;
 
-    assert( last_play_index >= 0 );
+    assert( play_index >= 0 );
 
-	QFileInfo	info	=	file_list[last_play_index];
+	QFileInfo	info	=	file_list[play_index];
     emit play_signal(info.absoluteFilePath());
-
-    refresh_view();
-
+    refresh_current();
     return  true;
 }
 
+
+
+
+/*******************************************************************************
+AllModel::previous()
+********************************************************************************/
+bool    AllModel::previous()
+{
+    if( file_list.empty() == true )
+        return false;
+
+    play_index =   play_index > 0 ? play_index-1 : 0;
+    assert( play_index >= 0 );
+
+    QFileInfo	info	=	file_list[play_index];
+    emit play_signal(info.absoluteFilePath());
+    refresh_current();
+    return  true;
+}
 
 
 

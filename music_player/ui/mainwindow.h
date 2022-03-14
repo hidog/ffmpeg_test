@@ -34,6 +34,7 @@ public:
     int     volume();
     bool    is_playing();
     bool    is_pause();
+    void    refresh_current();
 
     MusicWorker*    get_music_worker();
     PlayWorker*     get_play_worker();
@@ -50,6 +51,7 @@ public slots:
     void    play_button_slot();
     void    stop_button_slot();
     void    pause_button_slot();
+    void    previous_button_slot();
 
     void    play_slot( QString path );
 

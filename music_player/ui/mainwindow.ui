@@ -131,17 +131,18 @@
       <normaloff>img/pause.png</normaloff>img/pause.png</iconset>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_4">
+   <widget class="QPushButton" name="previousButton">
     <property name="geometry">
      <rect>
-      <x>520</x>
+      <x>240</x>
       <y>10</y>
-      <width>80</width>
-      <height>20</height>
+      <width>21</width>
+      <height>21</height>
      </rect>
     </property>
-    <property name="text">
-     <string>previous</string>
+    <property name="icon">
+     <iconset>
+      <normaloff>img/previous.png</normaloff>img/previous.png</iconset>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_5">

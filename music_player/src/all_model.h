@@ -34,13 +34,14 @@ public:
     void    set_file_list( QFileInfoList&& list );
 
 	void	refresh_view();
-	void	refresh_singal( int row );
+    void    refresh_current();
 	int		get_header_count();
 
 	int		rowCount( const QModelIndex &parent = QModelIndex() ) const ;
 	int		columnCount( const QModelIndex &parent = QModelIndex() ) const ;
 
     bool    play();
+    bool    previous();
     void    set_mainwindow( MainWindow *mw );
 
 	QVariant	data( const QModelIndex &index, int role = Qt::DisplayRole ) const override;
@@ -58,6 +59,7 @@ signals:
 	void	refresh_signal();
 	void	path_change_signal(QString);
     void    play_signal(QString);
+    void    show_row_signal( int row );
 
 private:
 
@@ -67,7 +69,7 @@ private:
     QFileInfoList   file_list;
 	QModelIndex		last_index;
 
-    int     last_play_index     =   0;
+    int     play_index     =   0;
 
     MainWindow  *main_window    =   nullptr;
 };

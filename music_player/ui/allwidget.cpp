@@ -58,6 +58,15 @@ void	AllWidget::header_resize_slot( int index, int old_size, int new_size )
 
 
 
+/*******************************************************************************
+AllWidget::show_row_slot()
+********************************************************************************/
+void    AllWidget::show_row_slot( int row )
+{
+    ui->allTView->selectRow(row);
+}
+
+
 
 
 
@@ -66,8 +75,10 @@ AllWidget::set_connect()
 ********************************************************************************/
 void	AllWidget::set_connect()
 {
-	connect(	model,				&AllModel::refresh_signal,			this,		&AllWidget::refresh_view_slot					);
+	connect(	model,				&AllModel::refresh_signal,			this,		&AllWidget::refresh_view_slot	);
+	connect(	model,				&AllModel::show_row_signal,			this,		&AllWidget::show_row_slot	);
     connect(	ui->allTView,		&QTableView::doubleClicked,			model,		&AllModel::double_clicked_slot	);
+
 	connect(	ui->allTView->horizontalHeader(),		&QHeaderView::sectionResized,		this,		&AllWidget::header_resize_slot		);
 }
 
@@ -94,7 +105,6 @@ void	AllWidget::refresh_view_slot()
 
 	for( i = 1; i < header_width_vec.size(); i++ )
 		ui->allTView->setColumnWidth( i, header_width_vec[i] );
-
 }
 
 
