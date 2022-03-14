@@ -61,6 +61,14 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>FileWidget</class>
+   <extends>QWidget</extends>
+   <header>filewidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets> 
  <resources/>
  <connections/>
 </ui>

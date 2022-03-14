@@ -7,11 +7,11 @@
 #include <QTimer>
 
 //#include "../src/git_control.h"
-#include "../src/tools.h"
-#include "../src/git_cmd/git_status.h"
-#include "../src/tools.h"
+//#include "../src/tools.h"
+//#include "../src/git_cmd/git_status.h"
+//#include "../src/tools.h"
 
-#include <boost/thread.hpp>
+//#include <boost/thread.hpp>
 
 
 
@@ -41,6 +41,7 @@ FileModel::FileModel( QObject *parent ) :
 ********************************************************************/
 FileModel::~FileModel()
 {
+#if 0
 	if( thr != NULL )
 	{
 		file_loop	=	false;
@@ -54,6 +55,7 @@ FileModel::~FileModel()
 		delete	timer;
 		timer	=	NULL;
 	}
+#endif
 }
 
 
@@ -64,6 +66,7 @@ FileModel::~FileModel()
 ********************************************************************/
 void	FileModel::refresh_slot()
 {
+#if 0
 	//qDebug() << __FUNCTION__;
 
 	//
@@ -82,6 +85,7 @@ void	FileModel::refresh_slot()
     // start loop to get all file status.
 	file_loop	=	true;
 	thr			=	new boost::thread( &FileModel::update_file_status, this );
+#endif
 }
 
 
@@ -163,6 +167,7 @@ void	FileModel::refresh_view()
 ********************************************************************/
 void	FileModel::get_file_list()
 {
+#if 0
 	// 
 	if( thr != NULL )
 	{
@@ -197,6 +202,7 @@ void	FileModel::get_file_list()
     // start loop to get all file status.
 	file_loop	=	true;
 	thr			=	new boost::thread( &FileModel::update_file_status, this );
+#endif
 }
 
 
@@ -210,6 +216,7 @@ void	FileModel::get_file_list()
 ********************************************************************/
 void	FileModel::update_file_status()
 {
+#if 0
 	//
 	file_loop_fisish	=	false;
 
@@ -242,6 +249,7 @@ void	FileModel::update_file_status()
 
 	//
 	file_loop_fisish	=	true;
+#endif
 }
 
 
@@ -254,6 +262,7 @@ QFileInfoList 	FileModel::get_add_selected_list( const QModelIndexList index_lis
 {
 	QFileInfoList	list;
 	list.clear();
+#if 0
 
 	int			row	=	0;
 	QFileInfo	info;
@@ -269,7 +278,7 @@ QFileInfoList 	FileModel::get_add_selected_list( const QModelIndexList index_lis
 				list.push_back( info );
 		}
 	}
-
+#endif
 	return	list;
 }
 
@@ -280,6 +289,7 @@ QFileInfoList 	FileModel::get_add_selected_list( const QModelIndexList index_lis
 ********************************************************************/
 void	FileModel::enter_dir_slot( const QModelIndex &index )
 {
+#if 0
 	int			row		=	index.row();
 	QFileInfo	info	=	file_list[row];
 	QString		path	=	info.fileName();
@@ -296,6 +306,7 @@ void	FileModel::enter_dir_slot( const QModelIndex &index )
 
 		refresh_view();
 	}
+#endif
 }
 
 
@@ -310,7 +321,7 @@ QVariant	FileModel::text_data( const QModelIndex &index, int role ) const
 
 	QFileInfo	info		=	file_list[row];
 	QVariant	result;
-	GitStatus	git_status;
+	//GitStatus	git_status;
 
 	// handle DisplayRole only.
 	if( role != Qt::DisplayRole )
@@ -323,7 +334,8 @@ QVariant	FileModel::text_data( const QModelIndex &index, int role ) const
 			break;
 		case 2:
 			if( info.isDir() == false )
-				result	=	status_vec[row].status;
+				result	=	QString("dir");
+				//result	=	status_vec[row].status;
 			else
 				result	=	QString("dir");
 			break;		
@@ -331,11 +343,13 @@ QVariant	FileModel::text_data( const QModelIndex &index, int role ) const
 			if( info.isDir() == true )
 				result	=	QString("dir");
 			else
-				result	=	get_extension( info.fileName() );		
+				result	=	QString("dir");
+				//result	=	get_extension( info.fileName() );		
 			break;
 		case 4:
 			if( info.isDir() == false )
-				result	=	get_filesize_str( info.size() );
+				//result	=	get_filesize_str( info.size() );
+				result	=	QString("dir");
 			else
 				result	=	QString("");
 			break;
@@ -404,7 +418,7 @@ QVariant	FileModel::data( const QModelIndex &index, int role ) const
 			break;
 		case Qt::TextColorRole:
             if( col < 3 )
-                var	=	status_vec[row].color;
+                var	=	QVariant(); //status_vec[row].color;
 			break;
 	}
 
@@ -423,7 +437,7 @@ QVariant	FileModel::get_font_color( const QModelIndex &index, int role ) const
 
 	QFileInfo	info	=	file_list[row];
 	QVariant	result;
-	GitStatus	git_status;
+	//GitStatus	git_status;
 
 	// handle DisplayRole only.
 	if( role != Qt::TextColorRole )
@@ -433,7 +447,7 @@ QVariant	FileModel::get_font_color( const QModelIndex &index, int role ) const
 	{
 		case 1:
 		case 2:
-			result	=	git_status.get_file_color( dir.path(), info.fileName() );			
+			//result	=	git_status.get_file_color( dir.path(), info.fileName() );			
 			break;		
 	}
 

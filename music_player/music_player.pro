@@ -13,7 +13,7 @@ CONFIG -= app_bundle
 
 SOURCES += \
 	src/task_manager.cpp \
-	src.file_model.cpp \
+	src/file_model.cpp \
     ui/lockdialog.cpp \
 	ui/mainwindow.cpp \
 	ui/filewidget.cpp \

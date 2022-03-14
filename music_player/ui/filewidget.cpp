@@ -1,8 +1,8 @@
 ﻿#include "filewidget.h"
 #include "ui_filewidget.h"
 
-#include "../model/file_model.h"
-#include "adddialog.h"
+#include "../src/file_model.h"
+//#include "adddialog.h"
 
 #include <QDebug>
 #include <QMenu>
@@ -136,6 +136,7 @@ void	FileWidget::set_connect()
 ********************************************************************/
 void    FileWidget::add_slot()
 {
+#if 0
 	QItemSelectionModel	*selecteds		=	ui->fileTView->selectionModel();
 	QModelIndexList 	row_list_tmp	=	selecteds->selectedIndexes();
 	QModelIndexList		row_list;
@@ -167,6 +168,7 @@ void    FileWidget::add_slot()
 
 	AddDialog	*add_dialog		=	new AddDialog( root_path, add_list, this );
 	add_dialog->show();
+#endif
 }
 
 

@@ -7,8 +7,9 @@
 #include <QString>
 #include <QDir>
 #include <QColor>
-#include "../src/def.h"
-#include "../src/git_cmd/git_status.h"
+
+//#include "../src/def.h"
+//#include "../src/git_cmd/git_status.h"
 
 
 #define	REFRESH_TIMEOUT		3000
@@ -78,7 +79,7 @@ private:
     
     QDir            dir;
     QFileInfoList   file_list;
-	FileStatusVec		status_vec;
+	//FileStatusVec		status_vec;
 
 	QModelIndex		last_index;
     

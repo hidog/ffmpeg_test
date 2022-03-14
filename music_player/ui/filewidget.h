@@ -5,8 +5,9 @@
 #include <string>
 #include <QDir>
 #include <QMenu>
+#include <vector>
 
-#include <boost/container/vector.hpp>
+
 
 using namespace std;
 
@@ -58,7 +59,7 @@ private:
 
 	void	set_right_menu();
 
-	boost::container::vector<int>	header_width_vec;
+	std::vector<int>	header_width_vec;
 
 	void	set_connect();
 
