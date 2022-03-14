@@ -1,6 +1,6 @@
 QT       += core gui
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimediawidgets
 
 CONFIG += c++11
 
@@ -26,7 +26,7 @@ HEADERS += \
 	src/task_manager.h \
 	src/file_model.h \
 	src/music_worker.h \
-	src/play_worker \
+	src/play_worker.h \
     ui/lockdialog.h \
     ui/mainwindow.h \
 	ui/filewidget.h
@@ -35,6 +35,8 @@ FORMS += \
     ui/lockdialog.ui \
     ui/mainwindow.ui \
 	ui/filewidget.ui
+	
+INCLUDEPATH   +=  ../src
 
 Debug:LIBS    +=  -L../ -lffmpeg_kernelD
 Release:LIBS  +=  -L../ -lffmpeg_kernel

@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <memory>
 
 #include "src/task_manager.h"
 #include "ui/lockdialog.h"
@@ -13,6 +14,11 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
+
+
+
+class MusicWorker;
+class PlayWorker;
 
 
 
@@ -28,6 +34,10 @@ public:
     void    closeEvent(QCloseEvent *event) override;
 
     void    set_connect();
+    int     volume();
+
+    MusicWorker*    get_music_worker();
+    PlayWorker*     get_play_worker();
 
 public slots:
 
@@ -39,6 +49,9 @@ private:
 
     LockDialog      lock_dialog;
     TaskManager     task_manager;
+
+    std::unique_ptr<MusicWorker>     music_worker;
+    std::unique_ptr<PlayWorker>      play_worker;
 
 };
 

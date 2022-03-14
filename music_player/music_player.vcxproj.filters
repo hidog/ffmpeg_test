@@ -78,14 +78,16 @@
     <QtMoc Include="src\music_worker.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <ClInclude Include="src\play_worker">
+    <QtMoc Include="src\play_worker.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
+    </QtMoc>
     <QtMoc Include="src\task_manager.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
+    
+    
     
     
     

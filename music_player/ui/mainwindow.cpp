@@ -5,7 +5,9 @@
 #include <QFileDialog>
 #include <QDebug>
 
-#include "../../src/tool.h"
+#include "src/play_worker.h"
+#include "src/music_worker.h"
+#include "tool.h"
 
 
 
@@ -21,6 +23,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     set_connect();
     lock_dialog.hide();
+
+    music_worker    =   std::make_unique<MusicWorker>(this);
+    play_worker     =   std::make_unique<PlayWorker>(this);
 }
 
 
@@ -111,4 +116,41 @@ MainWindow::task_finish_slot()
 void    MainWindow::task_finish_slot()
 {
     lock_dialog.hide();
+}
+
+
+
+
+
+/*******************************************************************************
+MainWindow::get_music_worker()
+********************************************************************************/
+MusicWorker*    MainWindow::get_music_worker()
+{
+    return  music_worker.get();
+}
+
+
+
+
+
+/*******************************************************************************
+MainWindow::volume()
+********************************************************************************/
+int     MainWindow::volume()
+{
+    return  ui->volumeSlider->value();
+}
+
+
+
+
+
+
+/*******************************************************************************
+MainWindow::get_play_worker()
+********************************************************************************/
+PlayWorker*     MainWindow::get_play_worker()
+{
+    return  play_worker.get();
 }

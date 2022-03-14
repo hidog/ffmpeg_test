@@ -1,19 +1,19 @@
-#include "audio_worker.h"
+#include "music_worker.h"
 
 #include <QDebug>
 
-#include "video_worker.h"
-#include "worker.h"
-#include "mainwindow.h"
+
+#include "play_worker.h"
+#include "ui/mainwindow.h"
 
 
 
 
 
 /*******************************************************************************
-AudioWorker::AudioWorker()
+MusicWorker::MusicWorker()
 ********************************************************************************/
-AudioWorker::AudioWorker( QObject *parent )
+MusicWorker::MusicWorker( QObject *parent )
     :   QThread(parent)
 {}
 
@@ -21,30 +21,20 @@ AudioWorker::AudioWorker( QObject *parent )
 
 
 /*******************************************************************************
-AudioWorker::~AudioWorker()
+MusicWorker::~MusicWorker()
 ********************************************************************************/
-AudioWorker::~AudioWorker()
+MusicWorker::~MusicWorker()
 {}
 
 
 
 
 
-/*******************************************************************************
-AudioWorker::set_only_audio()
-********************************************************************************/
-void    AudioWorker::set_only_audio( bool flag )
-{
-    only_audio  =   flag;
-}
-
-
-
 
 /*******************************************************************************
-AudioWorker::open_audio_output()
+MusicWorker::open_audio_output()
 ********************************************************************************/
-void    AudioWorker::open_audio_output( AudioDecodeSetting as )
+void    MusicWorker::open_audio_output( AudioDecodeSetting as )
 {
     QAudioFormat    format;
 
@@ -80,11 +70,11 @@ void    AudioWorker::open_audio_output( AudioDecodeSetting as )
     audio->stop();
     //audio->setBufferSize( 1000000 );  // 遇到影片檔必須開大buffer不然會出問題. 這是一個解法,目前用分批寫入的方式解決
 
-    MainWindow  *mw     =   dynamic_cast<MainWindow*>(parent());
-    if( mw == nullptr )
+    MainWindow  *main_window     =   dynamic_cast<MainWindow*>(parent());
+    if( main_window == nullptr )
         MYLOG( LOG::L_ERROR, "mw is nullptr");
 
-    int     volume      =   mw->volume();
+    int     volume      =   main_window->volume();
     volume_slot(volume);
 
     if( io != nullptr )
@@ -98,9 +88,9 @@ void    AudioWorker::open_audio_output( AudioDecodeSetting as )
 
 
 /*******************************************************************************
-AudioWorker::get_audio_start_state()
+MusicWorker::get_audio_start_state()
 ********************************************************************************/
-bool&   AudioWorker::get_audio_start_state()
+bool&   MusicWorker::get_audio_start_state()
 {
     return  a_start;
 }
@@ -109,10 +99,11 @@ bool&   AudioWorker::get_audio_start_state()
 
 
 
+
 /*******************************************************************************
-AudioWorker::handleStateChanged()
+MusicWorker::handleStateChanged()
 ********************************************************************************/
-void    AudioWorker::handleStateChanged( QAudio::State state )
+void    MusicWorker::handleStateChanged( QAudio::State state )
 {
     MYLOG( LOG::L_DEBUG, "state = %d", state );
 }
@@ -123,9 +114,9 @@ void    AudioWorker::handleStateChanged( QAudio::State state )
 
 
 /*******************************************************************************
-AudioWorker::audio_play()
+MusicWorker::audio_play()
 ********************************************************************************/
-void AudioWorker::run()  
+void    MusicWorker::run()  
 {
     if( io == nullptr )
     {
@@ -139,6 +130,7 @@ void AudioWorker::run()
         return;
     }
 
+    timestamp   =   0;
     current_sec =   0;
     force_stop  =   false;
     seek_flag   =   false;
@@ -166,9 +158,9 @@ void AudioWorker::run()
 
 
 /*******************************************************************************
-AudioWorker::seek_slot()
+MusicWorker::seek_slot()
 ********************************************************************************/
-void    AudioWorker::seek_slot( int sec )
+void    MusicWorker::seek_slot( int sec )
 {
     seek_flag   =   true;
     a_start     =   false;
@@ -179,53 +171,32 @@ void    AudioWorker::seek_slot( int sec )
 
 
 /*******************************************************************************
-AudioWorker::flush_for_seek()
-
-seek 的時候, 由 UI 端負責清空資料, 之後等到有資料才繼續播放.
-由 player 清空的話, 會遇到 queue 是否為空的判斷不好寫, 
-沒寫好會造成 handle_func crash.
+MusicWorker::flush_for_seek()
 ********************************************************************************/
-void    AudioWorker::flush_for_seek()
+void    MusicWorker::flush_for_seek()
 {
-    if( only_audio == true )
-    {
-        while( decode::get_audio_size() <= 10 )
-            SLEEP_10MS;
-        a_start     =   true;
-    }
-    else
-    {
-        bool    &v_start    =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
-
-        // 重新等待有資料才播放
-        while( decode::get_audio_size() <= 3 )
-            SLEEP_10MS;
-        a_start     =   true;
-        while( v_start == false )
-            SLEEP_10MS;
-    }
+    while( decode::get_audio_size() <= 10 )
+        SLEEP_10MS;
+    a_start     =   true;
 }
 
 
 
 
 
+
 /*******************************************************************************
-AudioWorker::audio_play()
+MusicWorker::audio_play()
 ********************************************************************************/
-void AudioWorker::audio_play()
+void    MusicWorker::audio_play()
 {
     MYLOG( LOG::L_INFO, "start play audio" );
 
-    bool    &v_start        =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_video_start_state();
-    bool    &is_play_end    =   dynamic_cast<MainWindow*>(parent())->get_worker()->get_play_end_state();
+    bool    &is_play_end    =   dynamic_cast<MainWindow*>(parent())->get_play_worker()->get_play_end_state();
 
-    while( decode::get_audio_size() <= 30 )
+    while( decode::get_audio_size() <= 10 )
         SLEEP_10MS;
-    a_start = true;
-
-    while( v_start == false )
-        SLEEP_10MS;        
+    a_start = true;    
 
     std::chrono::steady_clock::time_point       last, now;
     std::chrono::duration<int64_t, std::milli>  duration;
@@ -251,35 +222,9 @@ void AudioWorker::audio_play()
         {
             now         =   std::chrono::steady_clock::now();
             duration    =   std::chrono::duration_cast<std::chrono::milliseconds>( now - last );
-
             if( duration.count() >= ad.timestamp - last_ts )
                 break;
         }
-        
-#if 0
-        // 測試用的 a/v sync 程式, live stream 的時候比較容易發生不同步.
-        // 這邊是容許值範圍外會讓影音同步.
-        // 這邊有點醜, 需要把函數搬出去.
-        static volatile VideoData    *view_data  =   dynamic_cast<MainWindow*>(parent())->get_view_data();
-        assert( view_data != nullptr );
-        if( ad.timestamp < view_data->timestamp - 100 )
-        {
-            MYLOG( LOG::L_WARN, "trigger a/v sync. skip audio" );
-            // skip this audio data.
-            do {
-                delete [] ad.pcm;
-                ad.pcm      =   nullptr;
-                ad.bytes    =   0;
-                ad  =   decode::get_audio_data();
-            } while( ad.timestamp <= view_data->timestamp + 100 );
-        }
-        else if( ad.timestamp > view_data->timestamp + 100 )
-        {
-            MYLOG( LOG::L_WARN, "trigger a/v sync. wait video. ad = %lld, vd = %lld", ad.timestamp, view_data->timestamp );
-            while( ad.timestamp >= view_data->timestamp - 100 )
-                SLEEP_1MS;
-        }
-#endif
 
         remain_bytes    =   ad.bytes;
         ptr             =   ad.pcm; 
@@ -311,9 +256,12 @@ void AudioWorker::audio_play()
         }
 
         if( seek_flag == false )
-            update_seekbar( ad.timestamp/1000 );
+        {
+            emit update_seekbar_signal( ad.timestamp/1000 );
+            timestamp   =   ad.timestamp;
+        }
 
-        last_ts = ad.timestamp;
+        last_ts =   ad.timestamp;
     };
 
     // 用 bool 簡單做 sync, 有空再修
@@ -371,23 +319,9 @@ void AudioWorker::audio_play()
 
 
 /*******************************************************************************
-AudioWorker::stop()
+MusicWorker::stop()
 ********************************************************************************/
-void    AudioWorker::update_seekbar( int sec )
-{
-    const int   &v_sec   =   dynamic_cast<MainWindow*>(parent())->get_video_worker()->get_current_sec();
-    current_sec   =   sec;
-
-    if( current_sec > v_sec )
-        emit    update_seekbar_signal( current_sec );
-}
-
-
-
-/*******************************************************************************
-AudioWorker::stop()
-********************************************************************************/
-const int&  AudioWorker::get_current_sec()
+const int&  MusicWorker::get_current_sec()
 {
     return  current_sec;
 }
@@ -396,11 +330,10 @@ const int&  AudioWorker::get_current_sec()
 
 
 
-
 /*******************************************************************************
-AudioWorker::stop()
+MusicWorker::stop()
 ********************************************************************************/
-void    AudioWorker::stop()
+void    MusicWorker::stop()
 {
     force_stop  =   true;
 }
@@ -411,9 +344,9 @@ void    AudioWorker::stop()
 
 
 /*******************************************************************************
-AudioWorker::volume_slot()
+MusicWorker::volume_slot()
 ********************************************************************************/
-void    AudioWorker::volume_slot( int value )
+void    MusicWorker::volume_slot( int value )
 {
     if( audio != nullptr )
     {
@@ -429,10 +362,11 @@ void    AudioWorker::volume_slot( int value )
 
 
 
+
 /*******************************************************************************
-AudioWorker::get_volume()
+MusicWorker::get_volume()
 ********************************************************************************/
-int     AudioWorker::get_volume()
+int     MusicWorker::get_volume()
 {
     if( audio != nullptr )
     {
@@ -447,9 +381,9 @@ int     AudioWorker::get_volume()
 
 
 /*******************************************************************************
-AudioWorker::pause()
+MusicWorker::pause()
 ********************************************************************************/
-void    AudioWorker::pause()
+void    MusicWorker::pause()
 {
     if( audio != nullptr )
     {
@@ -461,4 +395,16 @@ void    AudioWorker::pause()
         else
             MYLOG( LOG::L_ERROR, "not handle");
     }
+}
+
+
+
+
+
+/*******************************************************************************
+MusicWorker::get_timestamp()
+********************************************************************************/
+int64_t     MusicWorker::get_timestamp()
+{
+    return  timestamp;
 }

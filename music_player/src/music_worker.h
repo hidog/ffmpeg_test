@@ -1,5 +1,5 @@
-#ifndef AUDIO_WORKER_H
-#define AUDIO_WORKER_H
+#ifndef MUSIC_WORKER_H
+#define MUSIC_WORKER_H
 
 #include <QThread>
 #include <QAudioOutput>
@@ -9,14 +9,14 @@
 #include "tool.h"
 
 
-class AudioWorker : public QThread
+class MusicWorker : public QThread
 {
     Q_OBJECT
 
 public:
 
-    AudioWorker( QObject *parent );
-    ~AudioWorker();
+    MusicWorker( QObject *parent );
+    ~MusicWorker();
     
     void    run() override;
 
@@ -29,8 +29,9 @@ public:
     void    pause();
 
     void    flush_for_seek();    
-    void    set_only_audio( bool flag );
-    void    update_seekbar( int sec );
+
+
+    int64_t     get_timestamp();
 
     const int&  get_current_sec();
 
@@ -49,10 +50,11 @@ private:
     QAudioOutput    *audio     =   nullptr;
     QIODevice       *io        =   nullptr;
 
+    int64_t     timestamp   =   0;;
+
     bool    a_start     =   false;
     bool    force_stop  =   false;
     bool    seek_flag   =   false;
-    bool    only_audio  =   false;
     int     current_sec =   0;
 };
 
