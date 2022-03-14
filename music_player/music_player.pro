@@ -12,13 +12,19 @@ CONFIG -= app_bundle
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    main.cpp \
-    ui/mainwindow.cpp
+	src/task_manager.cpp \
+    ui/lockdialog.cpp \
+	ui/mainwindow.cpp \
+    main.cpp
+
 
 HEADERS += \
+	src/task_manager.h \
+    ui/lockdialog.h \
     ui/mainwindow.h
 
 FORMS += \
+    lockdialog.ui \
     ui/mainwindow.ui
 
 # Default rules for deployment.
