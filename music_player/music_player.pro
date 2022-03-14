@@ -14,6 +14,8 @@ CONFIG -= app_bundle
 SOURCES += \
 	src/task_manager.cpp \
 	src/file_model.cpp \
+	src/music_worker.cpp \
+	src/play_worker.cpp \
     ui/lockdialog.cpp \
 	ui/mainwindow.cpp \
 	ui/filewidget.cpp \
@@ -23,6 +25,8 @@ SOURCES += \
 HEADERS += \
 	src/task_manager.h \
 	src/file_model.h \
+	src/music_worker.h \
+	src/play_worker \
     ui/lockdialog.h \
     ui/mainwindow.h \
 	ui/filewidget.h
@@ -31,6 +35,9 @@ FORMS += \
     ui/lockdialog.ui \
     ui/mainwindow.ui \
 	ui/filewidget.ui
+
+Debug:LIBS    +=  -L../ -lffmpeg_kernelD
+Release:LIBS  +=  -L../ -lffmpeg_kernel
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

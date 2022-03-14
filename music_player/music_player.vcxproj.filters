@@ -52,6 +52,12 @@
     <ClCompile Include="ui\mainwindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\music_worker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\play_worker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\task_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -69,11 +75,19 @@
     <QtMoc Include="ui\mainwindow.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="src\music_worker.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <ClInclude Include="src\play_worker">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <QtMoc Include="src\task_manager.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
+    
+    
     
     
     
