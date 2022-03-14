@@ -79,11 +79,16 @@ void    PlayWorker::play()
 
     is_play_end     =   true;
     
-    // 等待其他兩個thread完成
-    while( mw->isFinished() == false )
-        SLEEP_10MS;
+    //while( mw->isRunning() == true )
+      //  SLEEP_10MS;
+    //mw->wait( QDeadlineTimer(QDeadlineTimer::Forever) );
+    bool flag   =   mw->wait( 100000 );
+    if( flag == false )
+    {
+        MYLOG( LOG::L_ERROR, "timeout." )
+    }
 
-    MYLOG( LOG::L_INFO, "finish decode." );
+    MYLOG( LOG::L_INFO, "finish decode." )
 }
 
 

@@ -33,7 +33,7 @@ public:
 
     void    set_file_list( QFileInfoList&& list );
 
-	void	refresh_view();
+	void	refresh_list();
     void    refresh_current();
 	int		get_header_count();
 
@@ -69,7 +69,6 @@ private:
     
     QDir            dir;
     QFileInfoList   file_list;
-	QModelIndex		last_index;
 
     int     play_index     =   0;
 

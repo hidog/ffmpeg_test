@@ -16,7 +16,6 @@ AllModel::AllModel( QObject *parent ) :
 {
     head_list << "*" << "*" << "*" << "*" << "name" << "duration" << "size" << "title" << "artist" << "album" << "full path";
                // play  new  favorite  icon
-	last_index	=	createIndex( 0, 0 );
 }
 
 
@@ -108,10 +107,9 @@ void    AllModel::refresh_current()
 /*******************************************************************************
 AllModel::refresh_view()
 ********************************************************************************/
-void	AllModel::refresh_view()
+void	AllModel::refresh_list()
 {
-    // note: 檔案可能增加減少 這邊沒處理到減少的部分 需要修改 !
-	int		row		=	file_list.size() > last_index.row() ? file_list.size() : last_index.row();
+	int		row		=	file_list.size();
 	int		col		=	head_list.size();
 
 	QModelIndex		left_top		=	createIndex( 0, 0 );
@@ -119,8 +117,6 @@ void	AllModel::refresh_view()
 
 	emit dataChanged( left_top, right_bottom );
 	emit refresh_signal();
-
-	last_index	=	createIndex( file_list.size(), col );
 }
 
 
@@ -349,7 +345,7 @@ AllModel::set_file_list()
 void    AllModel::set_file_list( QFileInfoList&& list )
 {
     file_list   =   std::move(list);
-	refresh_view();
+	refresh_list();
 }
 
 

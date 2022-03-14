@@ -53,6 +53,9 @@ public slots:
     void    pause_button_slot();
     void    previous_button_slot();
     void    next_button_slot();
+    void    repeat_button_slot();
+    void    random_button_slot();
+    void    favorite_button_slot();
 
     void    play_slot( QString path );
 
@@ -64,6 +67,10 @@ private:
 
     std::unique_ptr<MusicWorker>        music_worker;
     std::unique_ptr<PlayWorker>         play_worker;
+
+    bool    repeat_flag     =   false;
+    bool    random_flag     =   false;
+    bool    favorite_flag   =   false;
 
     QString     root_path;
 

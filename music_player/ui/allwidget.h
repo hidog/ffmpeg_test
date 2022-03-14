@@ -33,7 +33,7 @@ public:
 
 public slots:
 	void	header_resize_slot( int index, int old_size, int new_size );
-    void	refresh_view_slot();
+    void	refresh_list_slot();
     void    show_row_slot( int row );
 
 signals:    

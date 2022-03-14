@@ -57,16 +57,19 @@ void    MusicWorker::open_audio_output( AudioDecodeSetting as )
     }
 
     //
-    if( audio != nullptr )
+    /*if( audio != nullptr )
     {
         io->close();
         audio->stop();
         delete audio;
-    }
+    }*/
 
     //
-    audio   =   new QAudioOutput( info, format );
-    connect( audio, SIGNAL(stateChanged(QAudio::State)), this, SLOT(handleStateChanged(QAudio::State)) );
+    if( audio == nullptr )
+    {
+        audio   =   new QAudioOutput( info, format );
+        connect( audio, SIGNAL(stateChanged(QAudio::State)), this, SLOT(handleStateChanged(QAudio::State)) );
+    }
     audio->stop();
     //audio->setBufferSize( 1000000 );  // 遇到影片檔必須開大buffer不然會出問題. 這是一個解法,目前用分批寫入的方式解決
 
@@ -77,8 +80,8 @@ void    MusicWorker::open_audio_output( AudioDecodeSetting as )
     int     volume      =   main_window->volume();
     volume_slot(volume);
 
-    if( io != nullptr )
-        MYLOG( LOG::L_ERROR, "io is not null." );
+    //if( io != nullptr )
+      //  MYLOG( LOG::L_ERROR, "io is not null." );
 
     io  =   audio->start();
 }
@@ -138,12 +141,14 @@ void    MusicWorker::run()
     // start play
     audio_play();
 
+#if 0
     io->close();
     io  =   nullptr;
 
     audio->stop();
     delete audio;
     audio   =   nullptr;
+#endif
 
     current_sec =   0;
 
@@ -218,13 +223,13 @@ void    MusicWorker::audio_play()
         //
         ad  =   decode::get_audio_data();
 
-        while(true)
+        /*while(true)
         {
             now         =   std::chrono::steady_clock::now();
             duration    =   std::chrono::duration_cast<std::chrono::milliseconds>( now - last );
             if( duration.count() >= ad.timestamp - last_ts )
                 break;
-        }
+        }*/
 
         remain_bytes    =   ad.bytes;
         ptr             =   ad.pcm; 
@@ -234,7 +239,10 @@ void    MusicWorker::audio_play()
             //MYLOG( LOG::L_DEBUG, "bytesFree = %d\n", audio->bytesFree() );
 
             if( audio->bytesFree() < wanted_buffer_size )
+            {
+                SLEEP_1US;
                 continue;
+            }
             else if( remain_bytes <= wanted_buffer_size )
             {
                 remain  =   io->write( (const char*)ptr, remain_bytes );

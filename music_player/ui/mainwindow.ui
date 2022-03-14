@@ -187,17 +187,18 @@
       <normaloff>img/repeat.png</normaloff>img/repeat.png</iconset>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_8">
+   <widget class="QPushButton" name="favoriteButton">
     <property name="geometry">
      <rect>
-      <x>920</x>
+      <x>360</x>
       <y>10</y>
-      <width>80</width>
-      <height>20</height>
+      <width>21</width>
+      <height>21</height>
      </rect>
     </property>
-    <property name="text">
-     <string>select all</string>
+    <property name="icon">
+     <iconset>
+      <normaloff>img/favorite.png</normaloff>img/favorite.png</iconset>
     </property>
    </widget>
    <widget class="QPushButton" name="copyToButton">

@@ -75,7 +75,7 @@ AllWidget::set_connect()
 ********************************************************************************/
 void	AllWidget::set_connect()
 {
-	connect(	model,				&AllModel::refresh_signal,			this,		&AllWidget::refresh_view_slot	);
+	connect(	model,				&AllModel::refresh_signal,			this,		&AllWidget::refresh_list_slot	);
 	connect(	model,				&AllModel::show_row_signal,			this,		&AllWidget::show_row_slot	);
     connect(	ui->allTView,		&QTableView::doubleClicked,			model,		&AllModel::double_clicked_slot	);
 
@@ -94,7 +94,7 @@ void	AllWidget::set_connect()
 /*******************************************************************************
 AllWidget::refresh_view_slot()
 ********************************************************************************/
-void	AllWidget::refresh_view_slot()
+void	AllWidget::refresh_list_slot()
 {
 	int		i;
 

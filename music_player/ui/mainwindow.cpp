@@ -67,6 +67,9 @@ void    MainWindow::set_connect()
     connect(    ui->pauseButton,    &QPushButton::clicked,    this,   &MainWindow::pause_button_slot  );    
     connect(    ui->previousButton,    &QPushButton::clicked,    this,   &MainWindow::previous_button_slot  );  
     connect(    ui->nextButton,    &QPushButton::clicked,    this,   &MainWindow::next_button_slot  );
+    connect(    ui->repeatButton,    &QPushButton::clicked,    this,   &MainWindow::repeat_button_slot  );
+    connect(    ui->randomButton,    &QPushButton::clicked,    this,   &MainWindow::random_button_slot  );
+    connect(    ui->favoriteButton,    &QPushButton::clicked,    this,   &MainWindow::favorite_button_slot  );
 
     connect(    ui->volumeSlider,     &QSlider::valueChanged,    music_worker.get(),   &MusicWorker::volume_slot  );
 
@@ -229,10 +232,14 @@ void    MainWindow::play_button_slot()
         AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
         assert( a_widget != nullptr );
         AllModel    *a_model    =   a_widget->get_model();
-        flag    =   a_model->play();
+
+        if( random_flag == false )
+            flag    =   a_model->play();
+        else
+            assert(0);
     }
     else if( ui->tabWidget->currentIndex() == 1 )
-    {}
+        assert(0);
     else
         assert(0);
 
@@ -323,6 +330,66 @@ void    MainWindow::previous_button_slot()
         ui->playButton->setIcon(icon);
     }
 }
+
+
+
+
+
+
+/*******************************************************************************
+MainWindow::repeat_button_slot()
+********************************************************************************/
+void    MainWindow::repeat_button_slot()
+{
+    QIcon   ic1( QString("./img/repeat.png") );
+    QIcon   ic2( QString("./img/repeat_s.png") );
+
+    repeat_flag     =   !repeat_flag;
+    if( repeat_flag == true )
+        ui->repeatButton->setIcon(ic2);
+    else
+        ui->repeatButton->setIcon(ic1);
+}
+
+
+
+
+
+
+/*******************************************************************************
+MainWindow::random_button_slot()
+********************************************************************************/
+void    MainWindow::random_button_slot()
+{
+    QIcon   ic1( QString("./img/random.png") );
+    QIcon   ic2( QString("./img/random_s.png") );
+
+    random_flag     =   !random_flag;
+    if( random_flag == true )
+        ui->randomButton->setIcon(ic2);
+    else
+        ui->randomButton->setIcon(ic1);
+}
+
+
+
+
+
+/*******************************************************************************
+MainWindow::favorite_button_slot()
+********************************************************************************/
+void    MainWindow::favorite_button_slot()
+{
+    QIcon   ic1( QString("./img/favorite.png") );
+    QIcon   ic2( QString("./img/favorite_s.png") );
+
+    favorite_flag     =   !favorite_flag;
+    if( favorite_flag == true )
+        ui->favoriteButton->setIcon(ic2);
+    else
+        ui->favoriteButton->setIcon(ic1);
+}
+
 
 
 
@@ -436,32 +503,13 @@ void    MainWindow::wait_worker_stop()
 {
     int     count   =   0;
 
-    while( play_worker->isRunning() == true )
-    {
-        SLEEP_10MS;
-        count++;
-        if( count >= 300 )
-            break;
-    }
-    if( count >= 300 )
-    {
-        MYLOG( LOG::L_WARN, "time out." );
-        play_worker->terminate();
-    }
+    bool    fw_flag     =   play_worker->wait( 3000 );
+    if( fw_flag == false )
+        MYLOG( LOG::L_ERROR, "time out.");
 
-    count   =   0;
-    while( music_worker->isRunning() == true )
-    {
-        SLEEP_10MS;
-        count++;
-        if( count >= 300 )
-            break;
-    }
-    if( count >= 300 )
-    {
-        MYLOG( LOG::L_WARN, "time out." );
-        music_worker->terminate();
-    }
+    bool    mw_flag     =   music_worker->wait( 3000 );
+    if( mw_flag == false )
+        MYLOG( LOG::L_ERROR, "time out.");
 }
 
 
