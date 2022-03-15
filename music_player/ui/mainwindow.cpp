@@ -12,6 +12,7 @@
 #include "src/file_model.h"
 #include "src/all_model.h"
 #include "ui/filewidget.h"
+#include "src/myslider.h"
 #include "tool.h"
 
 
@@ -55,6 +56,72 @@ MainWindow::~MainWindow()
 
 
 
+/*******************************************************************************
+MainWindow::finish_slot()
+********************************************************************************/
+void    MainWindow::finish_slot()
+{
+    ui->seekSlider->setSliderPosition(0);
+    ui->seekSlider->setValue(0);
+
+    play_worker->end();
+
+    disconnect( seek_connect[0] );
+    disconnect( seek_connect[1] );
+
+    if( finish_behavior == FinishBehavior::STOP )
+        return;
+
+    // continue play.
+    bool    flag    =   false;
+
+    AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
+    assert( a_widget != nullptr );
+    AllModel    *a_model    =   a_widget->get_model();
+
+    if( ui->tabWidget->currentIndex() == 0 )
+    {
+        switch(finish_behavior)
+        {
+        case FinishBehavior::USER:
+            flag    =   a_model->play_user();
+            break;
+        case FinishBehavior::NONE:
+            flag    =   a_model->play_next();
+            break;
+        case FinishBehavior::NEXT:
+            flag    =   a_model->next();
+            break;
+        case FinishBehavior::PREVIOUS:
+            flag    =   a_model->previous();
+            break;
+        default:
+            assert(0);
+        }
+
+    }
+    else if( ui->tabWidget->currentIndex() == 1 )
+        assert(0);
+    else
+        assert(0);
+
+    if( flag == true )
+    {
+        QIcon   icon( QString("./img/play_2.png") );
+        ui->playButton->setIcon(icon);
+    }
+    else
+    {
+        QIcon   icon( QString("./img/play_1.png") );
+        ui->playButton->setIcon(icon);
+        a_model->refresh_current();
+    }
+
+}
+
+
+
+
 
 /*******************************************************************************
 MainWindow::set_connect()
@@ -71,6 +138,12 @@ void    MainWindow::set_connect()
     connect(    ui->randomButton,    &QPushButton::clicked,    this,   &MainWindow::random_button_slot  );
     connect(    ui->favoriteButton,    &QPushButton::clicked,    this,   &MainWindow::favorite_button_slot  );
 
+    connect(    play_worker.get(),      &PlayWorker::duration_signal,    this,           &MainWindow::duration_slot );
+
+
+    finish_connect  =   connect(    play_worker.get(),      &QThread::finished,    this,           &MainWindow::finish_slot );
+
+
     connect(    ui->volumeSlider,     &QSlider::valueChanged,    music_worker.get(),   &MusicWorker::volume_slot  );
 
     connect(    &task_manager,      &QThread::finished,   this,   &MainWindow::task_finish_slot  );
@@ -79,6 +152,8 @@ void    MainWindow::set_connect()
     connect(    &task_manager,      &TaskManager::message_singal,  &lock_dialog,   &LockDialog::message_slot );
 
     connect(    &lock_dialog,      &LockDialog::cancel_signal,  &task_manager,   &TaskManager::cancel_slot );
+
+    connect(    music_worker.get(),       &MusicWorker::update_seekbar_signal,            this,           &MainWindow::update_seekbar_slot            );
 
     //
     FileWidget  *f_widget   =   dynamic_cast<FileWidget*>(ui->tabWidget->widget(1));
@@ -93,6 +168,67 @@ void    MainWindow::set_connect()
     connect(    a_model,      &AllModel::play_signal,  this,   &MainWindow::play_slot );
 }
 
+
+
+
+
+
+
+
+/*******************************************************************************
+MainWindow::update_seekbar()
+********************************************************************************/
+void    MainWindow::update_seekbar_slot( int sec )
+{
+    if( ui->seekSlider->is_mouse_press() == true )
+        return;
+
+    int     max     =   ui->seekSlider->maximum();
+    int     min     =   ui->seekSlider->minimum();
+
+    sec     =   sec > max ? max : sec;
+    sec     =   sec < min ? min : sec;
+
+    ui->seekSlider->setSliderPosition(sec);
+
+    // update time 
+    // 先放在這邊 未來有需求再把程式碼搬走
+    int     s   =   sec % 60;
+    int     m   =   sec / 60 % 60;
+    int     h   =   sec / 60 / 60;
+
+    int     ts  =   total_time % 60;
+    int     tm  =   total_time / 60 % 60;
+    int     th  =   total_time / 60 / 60;
+
+    // 有空再來修這邊的排版
+    QLatin1Char qc('0');
+    QString     str =   QString("%1:%2:%3 / %4:%5:%6").arg(h,2,10,qc).arg(m,2,10,qc).arg(s,2,10,qc).arg(th,2,10,qc).arg(tm,2,10,qc).arg(ts,2,10,qc);
+    ui->timeLabel->setText(str);
+}
+
+
+
+
+
+
+
+
+
+
+/*******************************************************************************
+MainWindow::duration_slot()
+********************************************************************************/
+void    MainWindow::duration_slot( int du )
+{
+    total_time  =   du;
+    ui->seekSlider->setMaximum(du);
+
+    // 因為設置影片長度的時候會觸發 value 事件, 造成 lock. 
+    // 暫時用設置完才 connect 跟 disconnect 的作法.
+    seek_connect[0]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     play_worker.get(),         &PlayWorker::seek_slot            );
+    seek_connect[1]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     music_worker.get(),   &MusicWorker::seek_slot       );
+}
 
 
 
@@ -200,6 +336,8 @@ MainWindow::play_slot()
 ********************************************************************************/
 void    MainWindow::play_slot( QString path )
 {
+    //is_stop_flag    =   false;
+
     if( play_worker->isRunning() == true )
         play_worker->stop_slot();    
 
@@ -222,17 +360,22 @@ void    MainWindow::play_button_slot()
     if( is_pause() == true )
     {
         music_worker->pause();
+        refresh_current();
         return;
     }
 
+    if( is_playing() == true )
+        return;
+
+    finish_behavior =   FinishBehavior::NONE;
     bool    flag    =   false;
+
+    AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
+    assert( a_widget != nullptr );
+    AllModel    *a_model    =   a_widget->get_model();
 
     if( ui->tabWidget->currentIndex() == 0 )
     {
-        AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
-        assert( a_widget != nullptr );
-        AllModel    *a_model    =   a_widget->get_model();
-
         if( random_flag == false )
             flag    =   a_model->play();
         else
@@ -252,6 +395,7 @@ void    MainWindow::play_button_slot()
     {
         QIcon   icon( QString("./img/play_1.png") );
         ui->playButton->setIcon(icon);
+        music_worker->close_io();
     }
 }
 
@@ -275,8 +419,13 @@ MainWindow::stop_button_slot()
 ********************************************************************************/
 void    MainWindow::stop_button_slot()
 {
+    if( is_playing() == false )
+        return;
+
     if( is_pause() == true )
         music_worker->pause();
+
+    finish_behavior =   FinishBehavior::STOP;
 
     play_worker->stop_slot();
     QIcon   icon( QString("./img/play_1.png") );
@@ -284,9 +433,29 @@ void    MainWindow::stop_button_slot()
 
     wait_worker_stop();
     refresh_current();
+    music_worker->close_io();
 }
 
 
+
+
+/*******************************************************************************
+MainWindow::stop()
+********************************************************************************/
+void    MainWindow::stop_for_user_click()
+{
+    assert( is_playing() == true );
+
+    if( is_pause() == true )
+        music_worker->pause();
+
+    play_worker->stop_slot();
+    QIcon   icon( QString("./img/play_1.png") );
+    ui->playButton->setIcon(icon);
+
+    //wait_worker_stop();
+    //refresh_current();
+}
 
 
 
@@ -297,21 +466,27 @@ MainWindow::previous_button_slot()
 ********************************************************************************/
 void    MainWindow::previous_button_slot()
 {
-    if( is_pause() == true )
-    {
-        music_worker->pause();
-        play_worker->stop_slot();
-    }
+    if( is_playing() == false )
+        return;
 
+    finish_behavior =   FinishBehavior::PREVIOUS;
+
+    if( is_pause() == true )    
+        music_worker->pause();
+    
+    play_worker->stop_slot();   
+
+#if 0
     wait_worker_stop();
 
     bool    flag    =   false;
 
+    AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
+    assert( a_widget != nullptr );
+    AllModel    *a_model    =   a_widget->get_model();
+
     if( ui->tabWidget->currentIndex() == 0 )
     {
-        AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
-        assert( a_widget != nullptr );
-        AllModel    *a_model    =   a_widget->get_model();
         flag    =   a_model->previous();
     }
     else if( ui->tabWidget->currentIndex() == 1 )
@@ -328,7 +503,9 @@ void    MainWindow::previous_button_slot()
     {
         QIcon   icon( QString("./img/play_1.png") );
         ui->playButton->setIcon(icon);
+        music_worker->close_io();
     }
+#endif
 }
 
 
@@ -401,21 +578,27 @@ MainWindow::next_button_slot()
 ********************************************************************************/
 void    MainWindow::next_button_slot()
 {
-    if( is_pause() == true )
-    {
-        music_worker->pause();
-        play_worker->stop_slot();
-    }
+    if( is_playing() == false )
+        return;
 
+    finish_behavior =   FinishBehavior::NEXT;
+
+    if( is_pause() == true )    
+        music_worker->pause();
+    
+    play_worker->stop_slot();
+
+#if 0
     wait_worker_stop();
 
     bool    flag    =   false;
 
+    AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
+    assert( a_widget != nullptr );
+    AllModel    *a_model    =   a_widget->get_model();
+
     if( ui->tabWidget->currentIndex() == 0 )
     {
-        AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
-        assert( a_widget != nullptr );
-        AllModel    *a_model    =   a_widget->get_model();
         flag    =   a_model->next();
     }
     else if( ui->tabWidget->currentIndex() == 1 )
@@ -432,7 +615,9 @@ void    MainWindow::next_button_slot()
     {
         QIcon   icon( QString("./img/play_1.png") );
         ui->playButton->setIcon(icon);
+        music_worker->close_io();
     }
+#endif
 }
 
 
@@ -448,6 +633,16 @@ void    MainWindow::pause_button_slot()
     refresh_current();
 }
 
+
+
+
+/*******************************************************************************
+MainWindow::set_finish_behavior()
+********************************************************************************/
+void    MainWindow::set_finish_behavior( FinishBehavior fb )
+{
+    finish_behavior =   fb;
+}
 
 
 
@@ -486,8 +681,9 @@ MainWindow::closeEvent()
 ********************************************************************************/
 void    MainWindow::closeEvent( QCloseEvent *event )
 {
+    disconnect( finish_connect );
+    finish_behavior =   FinishBehavior::STOP;
     lock_dialog.close();
-
     play_worker->stop_slot();    
     wait_worker_stop();
 }
@@ -503,11 +699,11 @@ void    MainWindow::wait_worker_stop()
 {
     int     count   =   0;
 
-    bool    fw_flag     =   play_worker->wait( 3000 );
+    bool    fw_flag     =   play_worker->wait( 30000 );
     if( fw_flag == false )
         MYLOG( LOG::L_ERROR, "time out.");
 
-    bool    mw_flag     =   music_worker->wait( 3000 );
+    bool    mw_flag     =   music_worker->wait( 30000 );
     if( mw_flag == false )
         MYLOG( LOG::L_ERROR, "time out.");
 }

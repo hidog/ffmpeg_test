@@ -159,6 +159,27 @@ void    MusicWorker::run()
 
 
 
+/*******************************************************************************
+MusicWorker::seek_slot()
+********************************************************************************/
+void    MusicWorker::close_io()
+{
+    if( io != nullptr )
+    {
+        io->close();
+        io  =   nullptr;
+    }
+
+    if( audio != nullptr )
+    {
+        audio->stop();
+        delete audio;
+        audio   =   nullptr;
+    }
+}
+
+
+
 
 
 

@@ -132,13 +132,38 @@ void	AllModel::double_clicked_slot( const QModelIndex &index )
  	int			row		=	index.row();
 	QFileInfo	info	=	file_list[row];
 
-    play_index  =   row;
-    emit play_signal(info.absoluteFilePath());
-    refresh_current();
+    if( main_window->is_playing() == false )
+    {
+        main_window->set_finish_behavior( FinishBehavior::NONE );
+        play_index  =   row;
+        emit play_signal(info.absoluteFilePath());
+        refresh_current();
+    }
+    else
+    {
+        main_window->stop_for_user_click();
+        main_window->set_finish_behavior( FinishBehavior::USER );
+        play_index  =   row;    
+    }
 }
 
 
 
+
+
+/*******************************************************************************
+AllModel::play_user()
+********************************************************************************/
+bool    AllModel::play_user()
+{
+    assert( play_index < file_list.size() && play_index >= 0 );       
+	QFileInfo	info	=	file_list[play_index];
+    assert( main_window->is_playing() == false );
+    main_window->set_finish_behavior( FinishBehavior::NONE );
+    emit play_signal(info.absoluteFilePath());
+    refresh_current();
+    return  true;
+}
 
 
 
@@ -369,6 +394,30 @@ bool    AllModel::play()
     refresh_current();
     return  true;
 }
+
+
+
+/*******************************************************************************
+AllModel::play()
+********************************************************************************/
+bool    AllModel::play_next()
+{
+    if( file_list.empty() == true )
+        return false;
+
+    play_index++;
+
+    if( play_index >= file_list.size() )
+        return  false;
+
+    assert( play_index >= 0 );
+
+	QFileInfo	info	=	file_list[play_index];
+    emit play_signal(info.absoluteFilePath());
+    refresh_current();
+    return  true;
+}
+
 
 
 

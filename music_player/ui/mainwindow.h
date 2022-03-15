@@ -21,6 +21,16 @@ class QCloseEvent;
 class QKeyEvent;
 
 
+enum class FinishBehavior
+{
+    NONE,
+    STOP,
+    NEXT,
+    PREVIOUS,
+    USER,
+};
+
+
 
 class MainWindow : public QMainWindow
 {
@@ -32,9 +42,11 @@ public:
 
     void    set_connect();
     int     volume();
+    void    stop_for_user_click();
     bool    is_playing();
     bool    is_pause();
     void    refresh_current();
+    void    set_finish_behavior( FinishBehavior fb );
 
     MusicWorker*    get_music_worker();
     PlayWorker*     get_play_worker();
@@ -58,6 +70,11 @@ public slots:
     void    favorite_button_slot();
 
     void    play_slot( QString path );
+    void    duration_slot( int du );
+    void    update_seekbar_slot( int sec );
+
+    void    finish_slot();
+
 
 private:
     Ui::MainWindow *ui;
@@ -74,6 +91,11 @@ private:
 
     QString     root_path;
 
+    int     total_time  =   0;
+    QMetaObject::Connection     seek_connect[2];
+    QMetaObject::Connection     finish_connect;
+
+    FinishBehavior  finish_behavior     =   FinishBehavior::NONE;
 };
 
 

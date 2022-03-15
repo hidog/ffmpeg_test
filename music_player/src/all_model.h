@@ -43,6 +43,8 @@ public:
     bool    play();
     bool    previous();
     bool    next();
+    bool    play_next();
+    bool    play_user();
 
     void    set_mainwindow( MainWindow *mw );
 

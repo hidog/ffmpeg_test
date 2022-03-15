@@ -184,3 +184,4 @@ bool&   PlayWorker::get_play_end_state()
 {
     return  is_play_end;
 }
+

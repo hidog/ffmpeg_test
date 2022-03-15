@@ -28,7 +28,8 @@ public:
     void    stop();
     void    pause();
     bool    is_pause();
-    void    flush_for_seek();    
+    void    flush_for_seek();
+    void    close_io();
 
     int64_t     get_timestamp();
     const int&  get_current_sec();
