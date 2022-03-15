@@ -491,12 +491,14 @@ bool    AllModel::play_random( bool is_favorite )
 /*******************************************************************************
 AllModel::play()
 ********************************************************************************/
-bool    AllModel::play_next()
+bool    AllModel::play_next( bool is_repeat )
 {
     if( file_list.empty() == true )
         return false;
 
     play_index++;
+    if( is_repeat == true && play_index == file_list.size() )
+        play_index  =   0;
 
     if( play_index >= file_list.size() )
         return  false;
@@ -536,12 +538,16 @@ bool    AllModel::previous()
 /*******************************************************************************
 AllModel::next()
 ********************************************************************************/
-bool    AllModel::next()
+bool    AllModel::next( bool repeat_flag )
 {
     if( file_list.empty() == true )
         return false;
 
-    play_index =   play_index < file_list.size()-1 ? play_index+1 : file_list.size()-1;
+    if( repeat_flag == true )
+        play_index  =   (play_index + 1) % file_list.size();
+    else
+        play_index  =   play_index < file_list.size()-1 ? play_index+1 : file_list.size()-1;
+
     assert( play_index >= 0 );
 
     QFileInfo	info	=	file_list[play_index];

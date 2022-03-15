@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+Ôªø#include "mainwindow.h"
 #include "ui_mainwindow.h"
 
 #include <QComboBox>
@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QTabWidget>
 #include <QKeyEvent>
+#include <QMessageBox>
 
 #include "src/play_worker.h"
 #include "src/music_worker.h"
@@ -32,12 +33,12 @@ MainWindow::MainWindow(QWidget *parent)
     music_worker    =   std::make_unique<MusicWorker>(this);
     play_worker     =   std::make_unique<PlayWorker>(this);
 
-    AllWidget  *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
-    assert( a_widget != nullptr );
-    AllModel   *a_model      =   a_widget->get_model();
+    AllModel   *a_model      =   get_all_model();
     a_model->set_mainwindow( this );
 
     set_connect();
+
+    load_setting();
 }
 
 
@@ -70,17 +71,18 @@ void    MainWindow::finish_slot()
     disconnect( seek_connect[1] );
 
     // continue play.
-    bool    flag    =   false;
-
-    AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
-    assert( a_widget != nullptr );
-    AllModel    *a_model    =   a_widget->get_model();
+    bool        flag        =   false;
+    AllModel    *a_model    =   get_all_model();
 
     if( random_flag == true && 
         finish_behavior != FinishBehavior::STOP && 
         finish_behavior != FinishBehavior::USER )
     {
-        if( a_model->is_status_all_played() == false )
+        bool    is_all_played   =   a_model->is_status_all_played();
+        if( is_all_played == true && repeat_flag == true )
+            a_model->clear_played_state();
+
+        if( is_all_played == false )
             flag    =   a_model->play_random( favorite_flag );
         else 
             flag    =   false;
@@ -98,10 +100,10 @@ void    MainWindow::finish_slot()
                 flag    =   a_model->play_user();
                 break;
             case FinishBehavior::NONE:
-                flag    =   a_model->play_next();
+                flag    =   a_model->play_next( repeat_flag );
                 break;
             case FinishBehavior::NEXT:
-                flag    =   a_model->next();
+                flag    =   a_model->next( repeat_flag );
                 break;
             case FinishBehavior::PREVIOUS:
                 flag    =   a_model->previous();
@@ -179,9 +181,7 @@ void    MainWindow::set_connect()
     connect(    f_model,      &FileModel::play_signal,  this,   &MainWindow::play_slot );
 
     //
-    AllWidget  *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
-    assert( a_widget != nullptr );
-    AllModel   *a_model      =   a_widget->get_model();
+    AllModel   *a_model      =   get_all_model();
     connect(    a_model,      &AllModel::play_signal,  this,   &MainWindow::play_slot );
 }
 
@@ -209,7 +209,7 @@ void    MainWindow::update_seekbar_slot( int sec )
     ui->seekSlider->setSliderPosition(sec);
 
     // update time 
-    // •˝©Ò¶b≥o√‰ •º®”¶≥ª›®D¶Aß‚µ{¶°ΩX∑h®´
+    // ÂÖàÊîæÂú®ÈÄôÈÇä Êú™‰æÜÊúâÈúÄÊ±ÇÂÜçÊääÁ®ãÂºèÁ¢ºÊê¨Ëµ∞
     int     s   =   sec % 60;
     int     m   =   sec / 60 % 60;
     int     h   =   sec / 60 / 60;
@@ -218,7 +218,7 @@ void    MainWindow::update_seekbar_slot( int sec )
     int     tm  =   total_time / 60 % 60;
     int     th  =   total_time / 60 / 60;
 
-    // ¶≥™≈¶A®”≠◊≥o√‰™∫±∆™©
+    // ÊúâÁ©∫ÂÜç‰æÜ‰øÆÈÄôÈÇäÁöÑÊéíÁâà
     QLatin1Char qc('0');
     QString     str =   QString("%1:%2:%3 / %4:%5:%6").arg(h,2,10,qc).arg(m,2,10,qc).arg(s,2,10,qc).arg(th,2,10,qc).arg(tm,2,10,qc).arg(ts,2,10,qc);
     ui->timeLabel->setText(str);
@@ -241,8 +241,8 @@ void    MainWindow::duration_slot( int du )
     total_time  =   du;
     ui->seekSlider->setMaximum(du);
 
-    // ¶]¨∞≥]∏mºv§˘™¯´◊™∫Æ…≠‘∑|ƒ≤µo value ®∆•Û, ≥y¶® lock. 
-    // º»Æ…•Œ≥]∏mßπ§~ connect ∏Ú disconnect ™∫ß@™k.
+    // Âõ†ÁÇ∫Ë®≠ÁΩÆÂΩ±ÁâáÈï∑Â∫¶ÁöÑÊôÇÂÄôÊúÉËß∏Áôº value ‰∫ã‰ª∂, ÈÄ†Êàê lock. 
+    // Êö´ÊôÇÁî®Ë®≠ÁΩÆÂÆåÊâç connect Ë∑ü disconnect ÁöÑ‰ΩúÊ≥ï.
     seek_connect[0]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     play_worker.get(),         &PlayWorker::seek_slot            );
     seek_connect[1]    =   connect(    ui->seekSlider,     &QSlider::valueChanged,     music_worker.get(),   &MusicWorker::seek_slot       );
 }
@@ -252,14 +252,12 @@ void    MainWindow::duration_slot( int du )
 
 
 
-/*******************************************************************************
-MainWindow::set_connect()
-********************************************************************************/
-void    MainWindow::open_slot()
-{
-    QString     dir     =   QFileDialog::getExistingDirectory( this, tr("open music folder"), "D:\\", 
-                                                               QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
 
+/*******************************************************************************
+MainWindow::open()
+********************************************************************************/
+void    MainWindow::open( QString dir )
+{
     root_path   =   dir;
 
     if( task_manager.isRunning() == true )
@@ -276,10 +274,29 @@ void    MainWindow::open_slot()
     lock_dialog.show();
 
     task_manager.set_scan_task(dir);
-    task_manager.start();   
+    task_manager.start(); 
 }
 
 
+
+
+/*******************************************************************************
+MainWindow::set_connect()
+********************************************************************************/
+void    MainWindow::open_slot()
+{
+    if( root_path.isEmpty() == false )
+    {
+        QMessageBox::StandardButton  result  =   QMessageBox::warning( this, "music player", QString::fromLocal8Bit("ÊúÉÊ∏ÖÈô§Ë≥áÊñô,ÊòØÂê¶ÁπºÁ∫å?"), 
+                                                                       QMessageBox::Yes|QMessageBox::No, QMessageBox::No );
+        if( result == QMessageBox::No )
+            return;
+    }
+
+    QString     dir     =   QFileDialog::getExistingDirectory( this, tr("open music folder"), "D:\\", 
+                                                               QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
+    open(dir);  
+}
 
 
 
@@ -289,7 +306,7 @@ MainWindow::task_finish_slot()
 void    MainWindow::task_finish_slot()
 {
     QFileInfoList   list    =   task_manager.get_file_list();
-    if( list.empty() == true )  // •iØ‡¨O®˙Æ¯±Ω¥y.
+    if( list.empty() == true )  // ÂèØËÉΩÊòØÂèñÊ∂àÊéÉÊèè.
     {
         lock_dialog.hide();
         return;
@@ -385,11 +402,8 @@ void    MainWindow::play_button_slot()
         return;
 
     finish_behavior =   FinishBehavior::NONE;
-    bool    flag    =   false;
-
-    AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
-    assert( a_widget != nullptr );
-    AllModel    *a_model    =   a_widget->get_model();
+    bool        flag        =   false;
+    AllModel    *a_model    =   get_all_model();
 
     if( ui->tabWidget->currentIndex() == 0 )
         flag    =   a_model->play( random_flag, favorite_flag );
@@ -521,9 +535,7 @@ MainWindow::clear_play_status()
 ********************************************************************************/
 void    MainWindow::clear_play_status()
 {
-    AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
-    assert( a_widget != nullptr );
-    AllModel    *a_model    =   a_widget->get_model();
+    AllModel    *a_model    =   get_all_model();
     a_model->clear_played_state();
 }
 
@@ -626,9 +638,7 @@ MainWindow::pause_button_slot()
 ********************************************************************************/
 void    MainWindow::refresh_current()
 {
-    AllWidget  *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
-    assert( a_widget != nullptr );
-    AllModel   *a_model      =   a_widget->get_model();
+    AllModel   *a_model      =   get_all_model();
     a_model->refresh_current();
 }
 
@@ -654,6 +664,8 @@ MainWindow::closeEvent()
 ********************************************************************************/
 void    MainWindow::closeEvent( QCloseEvent *event )
 {
+    save_setting();
+
     disconnect( finish_connect );
     finish_behavior =   FinishBehavior::STOP;
     lock_dialog.close();
@@ -710,4 +722,78 @@ void    MainWindow::keyPressEvent( QKeyEvent *event )
             break;
         }
     }
+}
+
+
+
+
+/*******************************************************************************
+MainWindow::get_all_model()
+********************************************************************************/
+AllModel*   MainWindow::get_all_model()
+{
+    AllWidget  *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
+    assert( a_widget != nullptr );
+    AllModel   *a_model      =   a_widget->get_model();
+    return  a_model;
+}
+
+
+
+
+
+/*******************************************************************************
+MainWindow::save_setting()
+********************************************************************************/
+void    MainWindow::save_setting()
+{
+    AllModel   *a_model   =   get_all_model();
+
+    QFile   file( "setting.txt" );
+    if( file.open(QIODevice::WriteOnly|QIODevice::Text) == false )
+    {
+        MYLOG( LOG::L_ERROR, "open file fail." )
+    }
+
+    // start
+    QTextStream     out(&file);
+
+    // volume
+    int     volume  =   ui->volumeSlider->value();
+    out << volume << Qt::endl;
+
+    // root path
+    out << root_path << Qt::endl;
+
+    // end
+    file.close();
+}
+
+
+
+
+
+
+/*******************************************************************************
+MainWindow::load_setting()
+********************************************************************************/
+void    MainWindow::load_setting()
+{
+    QFile   file( "setting.txt" );
+    if( file.open(QIODevice::ReadOnly|QIODevice::Text) == false )
+        return;
+
+    // start.
+    QTextStream     in(&file);
+
+    // volume
+    int     volume  =   in.readLine().toInt();
+    ui->volumeSlider->setValue(volume);
+
+    // root path.
+    QString     dir =   in.readLine();
+    open(dir);
+
+    // end
+    file.close();
 }

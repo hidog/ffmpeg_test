@@ -45,8 +45,8 @@ public:
     bool    play( bool is_random, bool is_favorite );
     bool    play_random( bool is_favorite );
     bool    previous();
-    bool    next();
-    bool    play_next();
+    bool    next( bool repeat_flag );
+    bool    play_next( bool is_repeat );
     bool    play_user();
     bool    is_status_all_played();
 

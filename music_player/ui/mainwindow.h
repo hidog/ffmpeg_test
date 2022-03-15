@@ -19,6 +19,7 @@ class MusicWorker;
 class PlayWorker;
 class QCloseEvent;
 class QKeyEvent;
+class AllModel;
 
 
 enum class FinishBehavior
@@ -32,6 +33,8 @@ enum class FinishBehavior
 
 
 
+
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -39,6 +42,8 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+    void    open( QString dir );
 
     void    set_connect();
     int     volume();
@@ -51,8 +56,13 @@ public:
     void    wait_worker_start();
     void    clear_play_status();
 
+    void    save_setting();
+    void    load_setting();
+
     MusicWorker*    get_music_worker();
     PlayWorker*     get_play_worker();
+
+    AllModel*       get_all_model();
 
     void    closeEvent(QCloseEvent *event) override;
     void    keyPressEvent(QKeyEvent *event) override;
