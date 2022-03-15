@@ -452,9 +452,6 @@ void    MainWindow::stop_for_user_click()
     play_worker->stop_slot();
     QIcon   icon( QString("./img/play_1.png") );
     ui->playButton->setIcon(icon);
-
-    //wait_worker_stop();
-    //refresh_current();
 }
 
 
@@ -475,37 +472,6 @@ void    MainWindow::previous_button_slot()
         music_worker->pause();
     
     play_worker->stop_slot();   
-
-#if 0
-    wait_worker_stop();
-
-    bool    flag    =   false;
-
-    AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
-    assert( a_widget != nullptr );
-    AllModel    *a_model    =   a_widget->get_model();
-
-    if( ui->tabWidget->currentIndex() == 0 )
-    {
-        flag    =   a_model->previous();
-    }
-    else if( ui->tabWidget->currentIndex() == 1 )
-    {}
-    else
-        assert(0);
-
-    if( flag == true )
-    {
-        QIcon   icon( QString("./img/play_2.png") );
-        ui->playButton->setIcon(icon);
-    }
-    else
-    {
-        QIcon   icon( QString("./img/play_1.png") );
-        ui->playButton->setIcon(icon);
-        music_worker->close_io();
-    }
-#endif
 }
 
 
@@ -587,37 +553,6 @@ void    MainWindow::next_button_slot()
         music_worker->pause();
     
     play_worker->stop_slot();
-
-#if 0
-    wait_worker_stop();
-
-    bool    flag    =   false;
-
-    AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
-    assert( a_widget != nullptr );
-    AllModel    *a_model    =   a_widget->get_model();
-
-    if( ui->tabWidget->currentIndex() == 0 )
-    {
-        flag    =   a_model->next();
-    }
-    else if( ui->tabWidget->currentIndex() == 1 )
-    {}
-    else
-        assert(0);
-
-    if( flag == true )
-    {
-        QIcon   icon( QString("./img/play_2.png") );
-        ui->playButton->setIcon(icon);
-    }
-    else
-    {
-        QIcon   icon( QString("./img/play_1.png") );
-        ui->playButton->setIcon(icon);
-        music_worker->close_io();
-    }
-#endif
 }
 
 
