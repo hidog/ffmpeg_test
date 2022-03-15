@@ -49,13 +49,13 @@ public:
     void    set_finish_behavior( FinishBehavior fb );
     void    wait_worker_stop();
     void    wait_worker_start();
+    void    clear_play_status();
 
     MusicWorker*    get_music_worker();
     PlayWorker*     get_play_worker();
 
     void    closeEvent(QCloseEvent *event) override;
     void    keyPressEvent(QKeyEvent *event) override;
-
 
 public slots:
 

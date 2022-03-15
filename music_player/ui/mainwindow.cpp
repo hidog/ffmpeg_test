@@ -76,7 +76,9 @@ void    MainWindow::finish_slot()
     assert( a_widget != nullptr );
     AllModel    *a_model    =   a_widget->get_model();
 
-    if( random_flag == true )
+    if( random_flag == true && 
+        finish_behavior != FinishBehavior::STOP && 
+        finish_behavior != FinishBehavior::USER )
     {
         if( a_model->is_status_all_played() == false )
             flag    =   a_model->play_random( favorite_flag );
@@ -505,7 +507,26 @@ void    MainWindow::repeat_button_slot()
         ui->repeatButton->setIcon(ic2);
     else
         ui->repeatButton->setIcon(ic1);
+
+    clear_play_status();
 }
+
+
+
+
+
+
+/*******************************************************************************
+MainWindow::clear_play_status()
+********************************************************************************/
+void    MainWindow::clear_play_status()
+{
+    AllWidget   *a_widget   =   dynamic_cast<AllWidget*>(ui->tabWidget->widget(0));
+    assert( a_widget != nullptr );
+    AllModel    *a_model    =   a_widget->get_model();
+    a_model->clear_played_state();
+}
+
 
 
 
@@ -525,6 +546,8 @@ void    MainWindow::random_button_slot()
         ui->randomButton->setIcon(ic2);
     else
         ui->randomButton->setIcon(ic1);
+
+    clear_play_status();
 }
 
 

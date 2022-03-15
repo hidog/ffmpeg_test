@@ -96,8 +96,8 @@ void    AllModel::refresh_current()
 
 	QModelIndex		left_top		=	createIndex( play_index, 0 );
 	QModelIndex		right_bottom	=	createIndex( play_index, col );
-
 	emit dataChanged( left_top, right_bottom );
+
     emit show_row_signal( play_index );
 }
 
