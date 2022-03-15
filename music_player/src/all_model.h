@@ -42,6 +42,7 @@ public:
 
 	void	refresh_list();
     void    refresh_current();
+    void    refresh_index( int col, int row );
 	int		get_header_count();
 
 	int		rowCount( const QModelIndex &parent = QModelIndex() ) const ;
@@ -71,7 +72,9 @@ public:
 
 public slots:
 	void	double_clicked_slot( const QModelIndex &index );
+    void	clicked_slot( const QModelIndex &index );
 	void	refresh_slot();
+
 
 signals:
 	void	refresh_signal();

@@ -82,6 +82,7 @@ void	AllWidget::set_connect()
 	connect(	model,				&AllModel::refresh_signal,			this,		&AllWidget::refresh_list_slot	);
 	connect(	model,				&AllModel::show_row_signal,			this,		&AllWidget::show_row_slot	);
     connect(	ui->allTView,		&QTableView::doubleClicked,			model,		&AllModel::double_clicked_slot	);
+    connect(	ui->allTView,		&QTableView::clicked,			    model,		&AllModel::clicked_slot	);
 
 	connect(	ui->allTView->horizontalHeader(),		&QHeaderView::sectionResized,		this,		&AllWidget::header_resize_slot		);
 }

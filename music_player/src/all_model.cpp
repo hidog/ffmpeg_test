@@ -86,6 +86,19 @@ int		AllModel::columnCount( const QModelIndex &parent ) const
 
 
 
+/*******************************************************************************
+AllModel::refresh_current()
+********************************************************************************/
+void    AllModel::refresh_index( int col, int row )
+{
+    QModelIndex		left_top		=	createIndex( col, row );
+	QModelIndex		right_bottom	=	createIndex( col, row );
+
+	emit dataChanged( left_top, right_bottom );
+}
+
+
+
 
 /*******************************************************************************
 AllModel::refresh_current()
@@ -97,7 +110,6 @@ void    AllModel::refresh_current()
 	QModelIndex		left_top		=	createIndex( play_index, 0 );
 	QModelIndex		right_bottom	=	createIndex( play_index, col );
 	emit dataChanged( left_top, right_bottom );
-
     emit show_row_signal( play_index );
 }
 
@@ -127,7 +139,7 @@ void	AllModel::refresh_list()
 
 
 /*******************************************************************************
-AllModel::enter_dir_slot()
+AllModel::double_clicked_slot()
 ********************************************************************************/
 void	AllModel::double_clicked_slot( const QModelIndex &index )
 {
@@ -146,6 +158,24 @@ void	AllModel::double_clicked_slot( const QModelIndex &index )
         main_window->stop_for_user_click();
         main_window->set_finish_behavior( FinishBehavior::USER );
         play_index  =   row;    
+    }
+}
+
+
+
+
+/*******************************************************************************
+AllModel::clicked_slot()
+********************************************************************************/
+void	AllModel::clicked_slot( const QModelIndex &index )
+{
+ 	int     row		=	index.row();
+    int     col     =   index.column();
+
+    if( col == 2 )
+    {
+        status_vec[row].is_favorite =  !status_vec[row].is_favorite;
+        refresh_index( col, row );
     }
 }
 
