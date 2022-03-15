@@ -14,7 +14,9 @@ struct PlayStatus
 {
     bool    is_played;
     bool    is_favorite;
-    PlayStatus() : is_played{false}, is_favorite{false} {}
+    bool    is_new;
+    PlayStatus() : is_played{false}, is_new{false}, is_favorite{false} {}
+    PlayStatus( bool ft ) : is_played{false}, is_new{false}, is_favorite{ft} {}
 };
 
 
@@ -34,6 +36,9 @@ public:
 	~AllModel();
 
     void    set_file_list( QFileInfoList&& list );
+    void    set_from_file( QStringList&& list, QList<int>&& file );
+    void    compare_with_file();    
+    void    clear_from_file_data();
 
 	void	refresh_list();
     void    refresh_current();
@@ -61,6 +66,9 @@ public:
 	QVariant	icon_data( const QModelIndex &index, int role ) const;
 	QVariant	get_font_color( const QModelIndex &index, int role ) const;
 
+    const QFileInfoList&    get_file_list();
+    const std::vector<PlayStatus>&   get_status_vec();
+
 public slots:
 	void	double_clicked_slot( const QModelIndex &index );
 	void	refresh_slot();
@@ -73,16 +81,18 @@ signals:
 
 private:
 
+    MainWindow      *main_window    =   nullptr;
     QStringList     head_list;
-    
-    QDir            dir;
-    QFileInfoList   file_list;
 
+    QDir    dir;
     int     play_index     =   0;
 
-    MainWindow  *main_window    =   nullptr;
+    QFileInfoList   file_list;
+    std::vector<PlayStatus>     status_vec;
 
-    std::vector<PlayStatus> status_vec;
+    QStringList     list_from_file;
+    QList<int>      vec_from_file;
+
 };
 
 

@@ -293,6 +293,12 @@ void    MainWindow::open_slot()
             return;
     }
 
+    // add stop play here.
+    stop_button_slot();
+
+    AllModel    *a_model    =   get_all_model();
+    a_model->clear_from_file_data();
+
     QString     dir     =   QFileDialog::getExistingDirectory( this, tr("open music folder"), "D:\\", 
                                                                QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
     open(dir);  
@@ -749,24 +755,57 @@ void    MainWindow::save_setting()
 {
     AllModel   *a_model   =   get_all_model();
 
-    QFile   file( "setting.txt" );
-    if( file.open(QIODevice::WriteOnly|QIODevice::Text) == false )
+    // ======================= setting =========================
+    QFile   file_setting( "setting.txt" );
+    if( file_setting.open(QIODevice::WriteOnly|QIODevice::Text) == false )
     {
         MYLOG( LOG::L_ERROR, "open file fail." )
     }
 
     // start
-    QTextStream     out(&file);
+    QTextStream     out_setting(&file_setting);
+    out_setting.setCodec("UTF-8");
 
     // volume
     int     volume  =   ui->volumeSlider->value();
-    out << volume << Qt::endl;
+    out_setting << volume << Qt::endl;
 
     // root path
-    out << root_path << Qt::endl;
+    out_setting << root_path << Qt::endl;
 
     // end
-    file.close();
+    file_setting.close();
+    
+    // ======================= file list ============================
+
+    // save file list.
+    QFile   file_data( "data.txt" );
+    if( file_data.open(QIODevice::WriteOnly|QIODevice::Text) == false )
+    {
+        MYLOG( LOG::L_ERROR, "open file fail." )
+    }
+
+    // start
+    QTextStream     out_data(&file_data);
+    out_data.setCodec("UTF-8");
+    
+    const QFileInfoList             &file_list  =   a_model->get_file_list();
+    const std::vector<PlayStatus>   &status_vec =   a_model->get_status_vec();    
+
+    assert( file_list.size() == status_vec.size() );
+
+    int     size    =   file_list.size();
+    for( int i = 0; i < size; i++ )
+    {
+        out_data << file_list[i].absoluteFilePath() << Qt::endl;
+        if( status_vec[i].is_favorite == true )
+            out_data << 1 << Qt::endl;
+        else
+            out_data << 0 << Qt::endl;
+    }
+
+    // end
+    file_data.close();
 }
 
 
@@ -779,21 +818,60 @@ MainWindow::load_setting()
 ********************************************************************************/
 void    MainWindow::load_setting()
 {
-    QFile   file( "setting.txt" );
-    if( file.open(QIODevice::ReadOnly|QIODevice::Text) == false )
+    // ======================= file list ============================
+    QFile   file_data( "data.txt" );
+    if( file_data.open(QIODevice::ReadOnly|QIODevice::Text) == false )
         return;
 
     // start.
-    QTextStream     in(&file);
+    QTextStream     in_data(&file_data);
+    in_data.setCodec("UTF-8");
+
+    QStringList     list_from_file;
+    QString         filepath;
+    int             favorite;
+
+    QList<int>      vec_from_file;  
+
+    do {
+        filepath    =   in_data.readLine();
+        if( filepath.isEmpty() == true )
+            break;
+
+        list_from_file.push_back(filepath);
+
+        favorite    =   in_data.readLine().toInt();
+        vec_from_file.push_back(favorite);
+    } while( in_data.atEnd() == false );
+
+    // end
+    file_data.close();
+
+    AllModel    *a_model    =   get_all_model();
+    a_model->set_from_file( std::move(list_from_file), std::move(vec_from_file) );
+
+    // ======================= setting =========================
+    QFile   file_setting( "setting.txt" );
+    if( file_setting.open(QIODevice::ReadOnly|QIODevice::Text) == false )
+        return;
+
+    // start.
+    QTextStream     in_setting(&file_setting);
+    in_setting.setCodec("UTF-8");
 
     // volume
-    int     volume  =   in.readLine().toInt();
+    int     volume  =   in_setting.readLine().toInt();
     ui->volumeSlider->setValue(volume);
 
     // root path.
-    QString     dir =   in.readLine();
+    /*
+        有先後順序問題,必須在 set_from_file 後才能open
+    */
+    QString     dir =   in_setting.readLine();
     open(dir);
 
     // end
-    file.close();
+    file_setting.close();
+
+
 }

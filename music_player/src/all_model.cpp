@@ -16,7 +16,7 @@ AllModel::AllModel()
 AllModel::AllModel( QObject *parent ) :
 	QAbstractTableModel( parent )
 {
-    head_list << "*" << "*" << "*" << "*" << "name" << "duration" << "size" << "title" << "artist" << "album" << "full path";
+    head_list << "*" << "N" << "F" << "*" << "name" << "duration" << "size" << "title" << "artist" << "album" << "full path";
                // play  new  favorite  icon
 }
 
@@ -257,6 +257,7 @@ QVariant	AllModel::icon_data( const QModelIndex &index, int role ) const
 
     QIcon   play_icon(QString("./img/play_2.png"));
     QIcon   pause_icon(QString("./img/pause.png"));
+    QIcon   new_icon(QString("./img/new.png"));
 
 	switch( col )
 	{
@@ -268,6 +269,10 @@ QVariant	AllModel::icon_data( const QModelIndex &index, int role ) const
             if( main_window->is_pause() == true )
                 result  =   pause_icon;
         }
+        break;
+    case 1:
+        if( status_vec[row].is_new == true )        
+            result  =   new_icon;
         break;
     case 3:
     	result	=	icon_pv.icon(info);
@@ -374,8 +379,79 @@ void    AllModel::set_file_list( QFileInfoList&& list )
 {
     file_list   =   std::move(list);
     status_vec.resize( file_list.size() );
+
+    if( list_from_file.isEmpty() == false )
+        compare_with_file();
+
 	refresh_list();
 }
+
+
+
+
+/*******************************************************************************
+AllModel::clear_from_file_data()
+********************************************************************************/
+void    AllModel::clear_from_file_data()
+{
+    list_from_file.clear();
+    vec_from_file.clear();
+}
+
+
+
+
+/*******************************************************************************
+AllModel::compare_with_file()
+********************************************************************************/
+void    AllModel::compare_with_file()
+{
+    int     i, j;
+    bool    find        =   false;
+    bool    find_new    =   false;
+
+    for( i = 0; i < file_list.size(); i++ )
+    {
+        find    =   false;
+        for( j = 0; j < list_from_file.size(); j++ )
+        {
+            if( file_list[i].absoluteFilePath() == list_from_file[j] )
+            {
+                find    =   true;
+                break;
+            }
+        }
+
+        if( find == false )
+        {
+            find_new    =   true;
+            status_vec[i].is_new    =   true;
+        }
+        else
+        {
+            status_vec[i].is_favorite   =   vec_from_file[j] == 1 ? true : false;
+            // 刪除資料 加快搜尋速度
+            list_from_file.removeAt(j);
+            vec_from_file.removeAt(j);
+        }
+    }
+
+    // sort new
+    int     insert_index    =   0;
+    if( find_new == true )
+    {
+        for( i = 0; i < file_list.size(); i++ )
+        {
+            if( status_vec[i].is_new == true )
+            {
+                std::swap( status_vec[i], status_vec[insert_index] );
+                std::swap( file_list[i],  file_list[insert_index]  );
+                insert_index++;
+            }
+        }
+    }
+}
+
 
 
 
@@ -566,4 +642,41 @@ AllModel::set_mainwindow()
 void    AllModel::set_mainwindow( MainWindow *mw )
 {
     main_window     =   mw;
+}
+
+
+
+
+
+/*******************************************************************************
+AllModel::get_file_list()
+********************************************************************************/
+const QFileInfoList&    AllModel::get_file_list()
+{
+    return  file_list;
+}
+
+
+
+
+/*******************************************************************************
+AllModel::get_status_vec()
+********************************************************************************/
+const std::vector<PlayStatus>&   AllModel::get_status_vec()
+{
+    return  status_vec;
+}
+
+
+
+
+
+
+/*******************************************************************************
+AllModel::set_from_file()
+********************************************************************************/
+void    AllModel::set_from_file( QStringList&& list, QList<int>&& vec )
+{
+    list_from_file  =   std::move(list);
+    vec_from_file   =   std::move(vec);
 }
