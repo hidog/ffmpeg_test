@@ -1,5 +1,7 @@
 #include "all_model.h"
 
+#include <random>
+
 #include <QDebug>
 #include <QFileIconProvider>
 #include <QColor>
@@ -156,6 +158,7 @@ AllModel::play_user()
 ********************************************************************************/
 bool    AllModel::play_user()
 {
+    clear_played_state();
     assert( play_index < file_list.size() && play_index >= 0 );       
 	QFileInfo	info	=	file_list[play_index];
     assert( main_window->is_playing() == false );
@@ -370,8 +373,67 @@ AllModel::set_file_list()
 void    AllModel::set_file_list( QFileInfoList&& list )
 {
     file_list   =   std::move(list);
+    status_vec.resize( file_list.size() );
 	refresh_list();
 }
+
+
+
+
+
+/*******************************************************************************
+AllModel::clear_played_state()
+********************************************************************************/
+void    AllModel::clear_played_state()
+{
+    for( auto &itr : status_vec )
+        itr.is_played   =   false;
+}
+
+
+
+
+
+/*******************************************************************************
+AllModel::get_random_index()
+********************************************************************************/
+int    AllModel::get_random_index( bool is_favorite )
+{
+    std::random_device rd;
+    std::uniform_int_distribution<int> dist( 0, file_list.size()-1 );
+
+    int     idx  =   dist(rd);
+
+    if( is_favorite == false )
+    {
+        while( status_vec[idx].is_played == true )
+            idx     =   (idx+1) % file_list.size();
+    }
+    else
+    {
+        while( status_vec[idx].is_played == true && status_vec[idx].is_favorite == false )
+            idx     =   (idx+1) % file_list.size();
+    }    
+
+    status_vec[idx].is_played   =   true;
+    return  idx;
+}
+
+
+
+/*******************************************************************************
+AllModel::is_status_all_played()
+********************************************************************************/
+bool    AllModel::is_status_all_played()
+{
+    for( auto &itr : status_vec )
+    {
+        if( itr.is_played == false )
+            return  false;
+    }
+    return  true;
+}
+
 
 
 
@@ -379,13 +441,19 @@ void    AllModel::set_file_list( QFileInfoList&& list )
 /*******************************************************************************
 AllModel::play()
 ********************************************************************************/
-bool    AllModel::play()
+bool    AllModel::play( bool is_random, bool is_favorite )
 {
     if( file_list.empty() == true )
         return false;
 
     if( play_index >= file_list.size() )
         play_index =   0;
+
+    if( is_random == true )
+    {
+        clear_played_state();
+        play_index  =   get_random_index( is_favorite );
+    }
 
     assert( play_index >= 0 );
 
@@ -394,6 +462,29 @@ bool    AllModel::play()
     refresh_current();
     return  true;
 }
+
+
+
+
+/*******************************************************************************
+AllModel::play()
+********************************************************************************/
+bool    AllModel::play_random( bool is_favorite )
+{
+    if( file_list.empty() == true )
+        return false;
+
+    play_index  =   get_random_index( is_favorite );    
+
+    assert( play_index >= 0 );
+
+	QFileInfo	info	=	file_list[play_index];
+    emit play_signal(info.absoluteFilePath());
+    refresh_current();
+    return  true;
+}
+
+
 
 
 
@@ -450,7 +541,7 @@ bool    AllModel::next()
     if( file_list.empty() == true )
         return false;
 
-    play_index =   play_index < file_list.size() ? play_index+1 : file_list.size()-1;
+    play_index =   play_index < file_list.size()-1 ? play_index+1 : file_list.size()-1;
     assert( play_index >= 0 );
 
     QFileInfo	info	=	file_list[play_index];

@@ -7,13 +7,15 @@
 #include <QDir>
 #include <QColor>
 
+#include <vector>
 
 
-
-
-namespace boost{
-	class	thread;
-} // end namespace boost
+struct PlayStatus
+{
+    bool    is_played;
+    bool    is_favorite;
+    PlayStatus() : is_played{false}, is_favorite{false} {}
+};
 
 
 
@@ -40,12 +42,16 @@ public:
 	int		rowCount( const QModelIndex &parent = QModelIndex() ) const ;
 	int		columnCount( const QModelIndex &parent = QModelIndex() ) const ;
 
-    bool    play();
+    bool    play( bool is_random, bool is_favorite );
+    bool    play_random( bool is_favorite );
     bool    previous();
     bool    next();
     bool    play_next();
     bool    play_user();
+    bool    is_status_all_played();
 
+    void    clear_played_state();
+    int     get_random_index( bool is_favorite );
     void    set_mainwindow( MainWindow *mw );
 
 	QVariant	data( const QModelIndex &index, int role = Qt::DisplayRole ) const override;
@@ -75,6 +81,8 @@ private:
     int     play_index     =   0;
 
     MainWindow  *main_window    =   nullptr;
+
+    std::vector<PlayStatus> status_vec;
 };
 
 

@@ -55,6 +55,15 @@ void    PlayWorker::play_init()
 
 
 
+/*******************************************************************************
+PlayWorker::get_stop_flag()
+********************************************************************************/
+bool    PlayWorker::get_stop_flag()
+{
+    return  player->get_stop_flag();
+}
+
+
 
 
 

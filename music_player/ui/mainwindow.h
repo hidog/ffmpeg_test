@@ -47,6 +47,8 @@ public:
     bool    is_pause();
     void    refresh_current();
     void    set_finish_behavior( FinishBehavior fb );
+    void    wait_worker_stop();
+    void    wait_worker_start();
 
     MusicWorker*    get_music_worker();
     PlayWorker*     get_play_worker();
@@ -54,7 +56,6 @@ public:
     void    closeEvent(QCloseEvent *event) override;
     void    keyPressEvent(QKeyEvent *event) override;
 
-    void    wait_worker_stop();
 
 public slots:
 

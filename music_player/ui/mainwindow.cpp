@@ -69,9 +69,6 @@ void    MainWindow::finish_slot()
     disconnect( seek_connect[0] );
     disconnect( seek_connect[1] );
 
-    if( finish_behavior == FinishBehavior::STOP )
-        return;
-
     // continue play.
     bool    flag    =   false;
 
@@ -79,36 +76,49 @@ void    MainWindow::finish_slot()
     assert( a_widget != nullptr );
     AllModel    *a_model    =   a_widget->get_model();
 
-    if( ui->tabWidget->currentIndex() == 0 )
+    if( random_flag == true )
     {
-        switch(finish_behavior)
-        {
-        case FinishBehavior::USER:
-            flag    =   a_model->play_user();
-            break;
-        case FinishBehavior::NONE:
-            flag    =   a_model->play_next();
-            break;
-        case FinishBehavior::NEXT:
-            flag    =   a_model->next();
-            break;
-        case FinishBehavior::PREVIOUS:
-            flag    =   a_model->previous();
-            break;
-        default:
-            assert(0);
-        }
-
+        if( a_model->is_status_all_played() == false )
+            flag    =   a_model->play_random( favorite_flag );
+        else 
+            flag    =   false;
     }
-    else if( ui->tabWidget->currentIndex() == 1 )
-        assert(0);
     else
-        assert(0);
+    {
+        if( ui->tabWidget->currentIndex() == 0 )
+        {
+            switch(finish_behavior)
+            {
+            case FinishBehavior::STOP:
+                flag    =   false;
+                break;
+            case FinishBehavior::USER:
+                flag    =   a_model->play_user();
+                break;
+            case FinishBehavior::NONE:
+                flag    =   a_model->play_next();
+                break;
+            case FinishBehavior::NEXT:
+                flag    =   a_model->next();
+                break;
+            case FinishBehavior::PREVIOUS:
+                flag    =   a_model->previous();
+                break;
+            default:
+                assert(0);
+            }
+        }
+        else if( ui->tabWidget->currentIndex() == 1 )
+            assert(0);
+        else
+            assert(0);
+    }
 
     if( flag == true )
     {
         QIcon   icon( QString("./img/play_2.png") );
         ui->playButton->setIcon(icon);
+        wait_worker_start();
     }
     else
     {
@@ -117,7 +127,12 @@ void    MainWindow::finish_slot()
         a_model->refresh_current();
     }
 
+    MYLOG( LOG::L_DEBUG, "finish finish_slot" );
 }
+
+
+
+
 
 
 
@@ -375,12 +390,7 @@ void    MainWindow::play_button_slot()
     AllModel    *a_model    =   a_widget->get_model();
 
     if( ui->tabWidget->currentIndex() == 0 )
-    {
-        if( random_flag == false )
-            flag    =   a_model->play();
-        else
-            assert(0);
-    }
+        flag    =   a_model->play( random_flag, favorite_flag );
     else if( ui->tabWidget->currentIndex() == 1 )
         assert(0);
     else
@@ -465,6 +475,8 @@ void    MainWindow::previous_button_slot()
 {
     if( is_playing() == false )
         return;
+    if( play_worker->get_stop_flag() == true )
+        return;
 
     finish_behavior =   FinishBehavior::PREVIOUS;
 
@@ -472,6 +484,7 @@ void    MainWindow::previous_button_slot()
         music_worker->pause();
     
     play_worker->stop_slot();   
+    wait_worker_stop();
 }
 
 
@@ -538,13 +551,14 @@ void    MainWindow::favorite_button_slot()
 
 
 
-
 /*******************************************************************************
 MainWindow::next_button_slot()
 ********************************************************************************/
 void    MainWindow::next_button_slot()
 {
     if( is_playing() == false )
+        return;
+    if( play_worker->get_stop_flag() == true )
         return;
 
     finish_behavior =   FinishBehavior::NEXT;
@@ -553,6 +567,7 @@ void    MainWindow::next_button_slot()
         music_worker->pause();
     
     play_worker->stop_slot();
+    wait_worker_stop();
 }
 
 
@@ -628,17 +643,30 @@ void    MainWindow::closeEvent( QCloseEvent *event )
 
 
 /*******************************************************************************
+MainWindow::wait_for_start()
+********************************************************************************/
+void    MainWindow::wait_worker_start()
+{
+    while( play_worker->isRunning() == false )
+        SLEEP_10MS;
+    while( music_worker->isRunning() == false )
+        SLEEP_10MS;
+}
+
+
+
+
+
+/*******************************************************************************
 MainWindow::wait_worker_stop()
 ********************************************************************************/
 void    MainWindow::wait_worker_stop()
 {
-    int     count   =   0;
-
-    bool    fw_flag     =   play_worker->wait( 30000 );
+    bool    fw_flag     =   play_worker->wait( 3000 );
     if( fw_flag == false )
         MYLOG( LOG::L_ERROR, "time out.");
 
-    bool    mw_flag     =   music_worker->wait( 30000 );
+    bool    mw_flag     =   music_worker->wait( 3000 );
     if( mw_flag == false )
         MYLOG( LOG::L_ERROR, "time out.");
 }

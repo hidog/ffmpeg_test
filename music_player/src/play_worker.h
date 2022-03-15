@@ -29,6 +29,7 @@ public:
     bool&   get_play_end_state();
     void    set_src_file( std::string file );
     bool    is_set_src_file();
+    bool    get_stop_flag();
 
 public slots:
 
