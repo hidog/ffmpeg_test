@@ -258,6 +258,8 @@ QVariant	AllModel::icon_data( const QModelIndex &index, int role ) const
     QIcon   play_icon(QString("./img/play_2.png"));
     QIcon   pause_icon(QString("./img/pause.png"));
     QIcon   new_icon(QString("./img/new.png"));
+    QIcon   fvt_e_icon(QString("./img/favorite_e.png"));
+    QIcon   fvt_s_icon(QString("./img/favorite_s.png"));
 
 	switch( col )
 	{
@@ -273,6 +275,12 @@ QVariant	AllModel::icon_data( const QModelIndex &index, int role ) const
     case 1:
         if( status_vec[row].is_new == true )        
             result  =   new_icon;
+        break;
+    case 2:
+        if( status_vec[row].is_favorite == true )
+            result  =   fvt_s_icon;
+        else
+            result  =   fvt_e_icon;
         break;
     case 3:
     	result	=	icon_pv.icon(info);
@@ -315,6 +323,8 @@ QVariant	AllModel::data( const QModelIndex &index, int role ) const
         case Qt::BackgroundColorRole:
             if( play_index == row && main_window->is_playing() == true )
                 var     =   QColor( 0, 0, 255, 30 );
+            else if( status_vec[row].is_new == true )
+                var     =   QColor( 255, 0, 0, 30 );
             break;
 	}
 
