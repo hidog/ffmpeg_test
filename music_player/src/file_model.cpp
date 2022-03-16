@@ -602,5 +602,7 @@ FileModel::get_cd_index()
 ********************************************************************************/
 int     FileModel::get_cd_index()
 {
-    return  cd_select_index;
+    int     tmp     =   cd_select_index;
+    cd_select_index =   0;
+    return  tmp;
 }
