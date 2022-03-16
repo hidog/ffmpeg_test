@@ -530,17 +530,18 @@ int    AllModel::get_random_index( bool is_favorite )
     std::random_device rd;
     std::uniform_int_distribution<int> dist( 0, file_vec.size()-1 );
 
-    int     idx  =   dist(rd);
+    int     idx     =   dist(rd);
+    int     size    =   file_vec.size();
 
     if( is_favorite == false )
     {
         while( status_vec[idx].is_played == true )
-            idx     =   (idx+1) % file_vec.size();
+            idx     =   (idx+1) % size;
     }
     else
     {
-        while( status_vec[idx].is_played == true && status_vec[idx].is_favorite == false )
-            idx     =   (idx+1) % file_vec.size();
+        while( status_vec[idx].is_played == true || status_vec[idx].is_favorite == false )
+            idx     =   (idx+1) % size;
     }    
 
     status_vec[idx].is_played   =   true;
@@ -552,12 +553,20 @@ int    AllModel::get_random_index( bool is_favorite )
 /*******************************************************************************
 AllModel::is_status_all_played()
 ********************************************************************************/
-bool    AllModel::is_status_all_played()
+bool    AllModel::is_status_all_played( bool is_favorite )
 {
     for( auto &itr : status_vec )
     {
-        if( itr.is_played == false )
-            return  false;
+        if( is_favorite == false )
+        {
+            if( itr.is_played == false )
+                return  false;
+        }
+        else
+        {
+            if( itr.is_played == false && itr.is_favorite == true )
+                return  false;
+        }
     }
     return  true;
 }

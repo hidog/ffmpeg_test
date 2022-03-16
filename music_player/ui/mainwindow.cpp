@@ -82,9 +82,12 @@ void    MainWindow::finish_slot()
         finish_behavior != FinishBehavior::STOP && 
         finish_behavior != FinishBehavior::USER )
     {
-        bool    is_all_played   =   a_model->is_status_all_played();
+        bool    is_all_played   =   a_model->is_status_all_played( favorite_flag );
         if( is_all_played == true && repeat_flag == true )
+        {
             a_model->clear_played_state();
+            is_all_played   =   false;
+        }
 
         if( is_all_played == false )
             flag    =   a_model->play_random( favorite_flag );

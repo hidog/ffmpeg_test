@@ -55,7 +55,7 @@ public:
     bool    next( bool repeat_flag );
     bool    play_next( bool is_repeat );
     bool    play_user();
-    bool    is_status_all_played();
+    bool    is_status_all_played( bool is_favorite );
 
     void    clear_played_state();
     int     get_random_index( bool is_favorite );
