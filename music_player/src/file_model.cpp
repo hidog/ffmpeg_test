@@ -278,7 +278,10 @@ QVariant	FileModel::text_data( const QModelIndex &index, int role ) const
 	switch( col )
 	{
 		case 4:
-			result	=	info.fileName();            
+            if( info.fileName() == QString("..") )
+                result  =   QString::fromLocal8Bit("¦^¤W¤@¼h");
+            else
+			    result	=	info.fileName();            
 			break;
 		case 5:
             if( info.isFile() == true )            
