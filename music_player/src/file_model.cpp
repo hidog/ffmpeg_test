@@ -4,6 +4,9 @@
 #include <QFileIconProvider>
 #include <QColor>
 
+#include "mainwindow.h"
+#include "all_model.h"
+
 
 
 
@@ -13,16 +16,7 @@ FileModel::FileModel()
 FileModel::FileModel( QObject *parent ) :
 	QAbstractTableModel( parent )
 {
-    head_list << "*" << "*" << "*" << "*" << "name" << "duration" << "size" << "title" << "artist" << "album" << "full path";
-	
-	last_index	=	createIndex( 0, 0 );
-	
-	//dir.setSorting( QDir::Name | QDir::DirsFirst );
-	//dir.setFilter( QDir::NoDot | QDir::Dirs | QDir::Files );
-
-    /*QStringList     filters;
-    filters << "*.mp3" << "*.flac" << "";
-    dir.setNameFilters(filters);*/
+    head_list << "*" << "N" << "F" << "*" << "name" << "duration" << "size" << "title" << "artist" << "album" << "full path";
 }
 
 
@@ -201,7 +195,8 @@ void	FileModel::double_clicked_slot( const QModelIndex &index )
 	}
     else
     {
-        emit play_signal(info.absoluteFilePath());
+        QString   full_path     =   info.absoluteFilePath();
+        all_model->play_by_path( full_path );
     }
 }
 
@@ -448,3 +443,27 @@ QVariant	FileModel::headerData( int section, Qt::Orientation orientation, int ro
 	return QVariant();
 }
 
+
+
+
+
+
+/*******************************************************************************
+FileModel::set_mainwindow()
+********************************************************************************/
+void    FileModel::set_mainwindow( MainWindow *mw )
+{
+    main_window     =   mw;
+}
+
+
+
+
+/*******************************************************************************
+FileModel::set_allmodel()
+********************************************************************************/
+void    FileModel::set_allmodel( AllModel* am )
+{
+    assert( all_model == nullptr );
+    all_model   =   am;
+}

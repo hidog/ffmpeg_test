@@ -7,6 +7,8 @@
 #include <QColor>
 
 #include "../ui/mainwindow.h"
+#include "../../src/tool.h"
+
 
 
 
@@ -560,6 +562,47 @@ bool    AllModel::is_status_all_played()
     return  true;
 }
 
+
+
+
+/*******************************************************************************
+AllModel::play_by_path()
+********************************************************************************/
+bool    AllModel::play_by_path( QString path )
+{
+    if( file_vec.empty() == true )
+        return false;
+
+    int     i   =   0;
+    for( i = 0; i < file_vec.size(); i++ )
+    {
+        if( file_vec[i].absoluteFilePath() == path )
+            break;        
+    }
+
+    if( i >= file_vec.size() )
+    {
+        MYLOG( LOG::L_WARN, "not found." );
+        return  false;
+    }
+
+    play_index  =   i;
+
+    //
+	QFileInfo	info	=	file_vec[play_index];
+
+    if( main_window->is_playing() == false )
+    {
+        main_window->set_finish_behavior( FinishBehavior::NONE );
+        emit play_signal(info.absoluteFilePath());
+        refresh_current();
+    }
+    else
+    {
+        main_window->stop_for_user_click();
+        main_window->set_finish_behavior( FinishBehavior::USER );
+    }
+}
 
 
 

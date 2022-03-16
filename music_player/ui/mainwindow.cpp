@@ -36,6 +36,10 @@ MainWindow::MainWindow(QWidget *parent)
     AllModel   *a_model      =   get_all_model();
     a_model->set_mainwindow( this );
 
+    FileModel   *f_model      =   get_file_model();
+    f_model->set_mainwindow( this );
+    f_model->set_allmodel( a_model );
+
     set_connect();
 
     load_setting();
@@ -89,33 +93,26 @@ void    MainWindow::finish_slot()
     }
     else
     {
-        if( ui->tabWidget->currentIndex() == 0 )
+        switch(finish_behavior)
         {
-            switch(finish_behavior)
-            {
-            case FinishBehavior::STOP:
-                flag    =   false;
-                break;
-            case FinishBehavior::USER:
-                flag    =   a_model->play_user();
-                break;
-            case FinishBehavior::NONE:
-                flag    =   a_model->play_next( repeat_flag );
-                break;
-            case FinishBehavior::NEXT:
-                flag    =   a_model->next( repeat_flag );
-                break;
-            case FinishBehavior::PREVIOUS:
-                flag    =   a_model->previous();
-                break;
-            default:
-                assert(0);
-            }
+        case FinishBehavior::STOP:
+            flag    =   false;
+            break;
+        case FinishBehavior::USER:
+            flag    =   a_model->play_user();
+            break;
+        case FinishBehavior::NONE:
+            flag    =   a_model->play_next( repeat_flag );
+            break;
+        case FinishBehavior::NEXT:
+            flag    =   a_model->next( repeat_flag );
+            break;
+        case FinishBehavior::PREVIOUS:
+            flag    =   a_model->previous();
+            break;
+        default:
+            assert(0);
         }
-        else if( ui->tabWidget->currentIndex() == 1 )
-            assert(0);
-        else
-            assert(0);
     }
 
     if( flag == true )
@@ -168,14 +165,7 @@ void    MainWindow::set_connect()
 
     connect(    &lock_dialog,       &LockDialog::cancel_signal,     &task_manager,  &TaskManager::cancel_slot       );
 
-
     finish_connect  =   connect(    play_worker.get(),  &QThread::finished,     this,   &MainWindow::finish_slot );
-
-    //
-    FileWidget  *f_widget   =   dynamic_cast<FileWidget*>(ui->tabWidget->widget(1));
-    assert( f_widget != nullptr );
-    FileModel   *f_model      =   f_widget->get_model();
-    connect(    f_model,      &FileModel::play_signal,  this,   &MainWindow::play_slot );
 
     //
     AllModel   *a_model      =   get_all_model();
@@ -361,7 +351,6 @@ void    MainWindow::copyto( QString src, QString dst )
     const QVector<QFileInfo>    f_vec   =   all_model->get_file_vec();
     const QVector<PlayStatus>   p_vec   =   all_model->get_status_vec();
 
-
     task_manager.set_copyto_task( src, dst, f_vec, p_vec );
     task_manager.start(); 
 }
@@ -444,7 +433,6 @@ MainWindow::play_slot()
 void    MainWindow::play_slot( QString path )
 {
     //is_stop_flag    =   false;
-
     if( play_worker->isRunning() == true )
         play_worker->stop_slot();    
 
@@ -474,16 +462,9 @@ void    MainWindow::play_button_slot()
     if( is_playing() == true )
         return;
 
-    finish_behavior =   FinishBehavior::NONE;
-    bool        flag        =   false;
+    finish_behavior         =   FinishBehavior::NONE;
     AllModel    *a_model    =   get_all_model();
-
-    if( ui->tabWidget->currentIndex() == 0 )
-        flag    =   a_model->play( random_flag, favorite_flag );
-    else if( ui->tabWidget->currentIndex() == 1 )
-        assert(0);
-    else
-        assert(0);
+    bool        flag        =   a_model->play( random_flag, favorite_flag );
 
     if( flag == true )
     {
@@ -666,7 +647,7 @@ void    MainWindow::next_button_slot()
 {
     if( is_playing() == false )
         return;
-    if( play_worker->get_stop_flag() == true )
+    if( play_worker->get_stop_flag() == true )  // 重要 這邊刪除會造成很難解的mult-thread crash issue.
         return;
 
     finish_behavior =   FinishBehavior::NEXT;
@@ -810,6 +791,21 @@ AllModel*   MainWindow::get_all_model()
     AllModel   *a_model      =   a_widget->get_model();
     return  a_model;
 }
+
+
+
+
+/*******************************************************************************
+MainWindow::get_file_model()
+********************************************************************************/
+FileModel*  MainWindow::get_file_model()
+{
+    FileWidget  *f_widget   =   dynamic_cast<FileWidget*>(ui->tabWidget->widget(1));
+    assert( f_widget != nullptr );
+    FileModel   *f_model      =   f_widget->get_model();
+    return  f_model;
+}
+
 
 
 

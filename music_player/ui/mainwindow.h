@@ -20,6 +20,8 @@ class PlayWorker;
 class QCloseEvent;
 class QKeyEvent;
 class AllModel;
+class FileModel;
+
 
 
 enum class FinishBehavior
@@ -64,6 +66,7 @@ public:
     PlayWorker*     get_play_worker();
 
     AllModel*       get_all_model();
+    FileModel*      get_file_model();
 
     void    closeEvent(QCloseEvent *event) override;
     void    keyPressEvent(QKeyEvent *event) override;

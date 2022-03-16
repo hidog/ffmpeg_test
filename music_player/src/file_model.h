@@ -17,6 +17,10 @@ namespace boost{
 
 
 
+class MainWindow;
+class AllModel;
+
+
 
 
 class FileModel : public QAbstractTableModel
@@ -34,6 +38,8 @@ public:
 	void	refresh_singal( int row );
 	void	get_file_list();
 	int		get_header_count();
+    void    set_mainwindow( MainWindow *mw );
+    void    set_allmodel( AllModel* am );
 
 	int		rowCount( const QModelIndex &parent = QModelIndex() ) const ;
 	int		columnCount( const QModelIndex &parent = QModelIndex() ) const ;
@@ -53,9 +59,9 @@ public slots:
 signals:
 	void	refresh_signal();
 	void	path_change_signal(QString);
-    void    play_signal(QString);
 
 private:
+    MainWindow      *main_window    =   nullptr;
 
     QStringList     head_list;
     QString         root_path;
@@ -63,6 +69,8 @@ private:
     QDir            dir;
     QFileInfoList   file_list;
 	QModelIndex		last_index;
+
+    AllModel    *all_model  =   nullptr;
 
 };
 

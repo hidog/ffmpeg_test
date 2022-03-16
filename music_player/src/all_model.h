@@ -48,6 +48,7 @@ public:
 	int		rowCount( const QModelIndex &parent = QModelIndex() ) const ;
 	int		columnCount( const QModelIndex &parent = QModelIndex() ) const ;
 
+    bool    play_by_path( QString path );
     bool    play( bool is_random, bool is_favorite );
     bool    play_random( bool is_favorite );
     bool    previous();
