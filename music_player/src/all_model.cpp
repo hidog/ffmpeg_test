@@ -179,6 +179,8 @@ void	AllModel::clicked_slot( const QModelIndex &index )
         status_vec[row].is_favorite =  !status_vec[row].is_favorite;
         refresh_index( col, row );
     }
+
+    emit update_status_signal();
 }
 
 
@@ -287,11 +289,11 @@ QVariant	AllModel::icon_data( const QModelIndex &index, int role ) const
 	QFileIconProvider	icon_pv;
 	QVariant			result;
 
-    QIcon   play_icon(QString("./img/play_2.png"));
-    QIcon   pause_icon(QString("./img/pause.png"));
-    QIcon   new_icon(QString("./img/new.png"));
-    QIcon   fvt_e_icon(QString("./img/favorite_e.png"));
-    QIcon   fvt_s_icon(QString("./img/favorite_s.png"));
+    static QIcon   play_icon(QString("./img/play_2.png"));
+    static QIcon   pause_icon(QString("./img/pause.png"));
+    static QIcon   new_icon(QString("./img/new.png"));
+    static QIcon   fvt_e_icon(QString("./img/favorite_e.png"));
+    static QIcon   fvt_s_icon(QString("./img/favorite_s.png"));
 
 	switch( col )
 	{
@@ -792,4 +794,37 @@ bool    AllModel::is_now_play_by_path( QString path )
 {
     QString     current_path    =   file_vec[play_index].absoluteFilePath();
     return  current_path == path;
+}
+
+
+
+
+
+/*******************************************************************************
+AllModel::get_status_vec()
+********************************************************************************/
+QVector<PlayStatus>   AllModel::get_status_vec( const QFileInfoList& list )
+{
+    if( list.isEmpty() == true )
+        return  QVector<PlayStatus>();
+
+    QVector<PlayStatus>     vec;
+    vec.resize(list.size());
+
+    int     index       =   0;
+    int     push_index  =   0;
+    for( auto itr = list.begin(); itr != list.end(); ++itr )
+    {
+        index   =   file_vec.indexOf( *itr );
+        if( index == -1 )
+        {
+            MYLOG( LOG::L_WARN, "file not found." );
+            continue;
+        }
+
+        vec[push_index] =   status_vec[index];
+        push_index++;        
+    }
+
+    return  vec;
 }

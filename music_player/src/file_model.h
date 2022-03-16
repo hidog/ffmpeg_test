@@ -7,6 +7,8 @@
 #include <QDir>
 #include <QColor>
 
+#include "all_model.h"
+
 
 
 
@@ -35,11 +37,14 @@ public:
     void    set_root_path( QString path );
     void    init_file_list();
 	void	refresh_view();
-	void	refresh_singal( int row );
+	void	refresh_row( int row );
+    void    refresh_current();
+
 	void	get_file_list();
 	int		get_header_count();
     void    set_mainwindow( MainWindow *mw );
     void    set_allmodel( AllModel* am );
+    void    update_status_vec( const QFileInfoList& list );
 
 	int		rowCount( const QModelIndex &parent = QModelIndex() ) const ;
 	int		columnCount( const QModelIndex &parent = QModelIndex() ) const ;
@@ -55,6 +60,7 @@ public slots:
 	void	double_clicked_slot( const QModelIndex &index );
 	void	path_change_slot( const QString &new_path );
 	void	refresh_slot();
+    void    update_vec_slot();
 
 signals:
 	void	refresh_signal();
@@ -62,6 +68,8 @@ signals:
 
 private:
     MainWindow      *main_window    =   nullptr;
+
+    int     file_start_index; // 取得目錄的時候, 檔案起始位置
 
     QStringList     head_list;
     QString         root_path;
@@ -72,6 +80,7 @@ private:
 
     AllModel    *all_model  =   nullptr;
 
+    QVector<PlayStatus>     status_vec;
 };
 
 

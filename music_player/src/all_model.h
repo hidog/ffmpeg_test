@@ -72,17 +72,20 @@ public:
     const QVector<QFileInfo>&    get_file_vec();
     const QVector<PlayStatus>&   get_status_vec();
 
+    QVector<PlayStatus>     get_status_vec( const QFileInfoList& list );
+
+
 public slots:
 	void	double_clicked_slot( const QModelIndex &index );
     void	clicked_slot( const QModelIndex &index );
 	void	refresh_slot();
-
 
 signals:
 	void	refresh_signal();
 	void	path_change_signal(QString);
     void    play_signal(QString);
     void    show_row_signal( int row );
+    void    update_status_signal();
 
 private:
 

@@ -171,8 +171,12 @@ void    MainWindow::set_connect()
     finish_connect  =   connect(    play_worker.get(),  &QThread::finished,     this,   &MainWindow::finish_slot );
 
     //
-    AllModel   *a_model      =   get_all_model();
+    AllModel   *a_model     =   get_all_model();
     connect(    a_model,      &AllModel::play_signal,   this,   &MainWindow::play_slot );
+
+    FileModel   *f_model    =   get_file_model();
+    connect(    a_model,       &AllModel::update_status_signal,     f_model,  &FileModel::update_vec_slot       );
+
 }
 
 

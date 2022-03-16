@@ -90,7 +90,7 @@ int		FileModel::columnCount( const QModelIndex &parent ) const
 /*******************************************************************************
 FileModel::refresh_singal()
 ********************************************************************************/
-void	FileModel::refresh_singal( int row )
+void	FileModel::refresh_row( int row )
 {
 	int		col		=	head_list.size();
 
@@ -126,7 +126,6 @@ void	FileModel::refresh_view()
 	emit refresh_signal();
 
 	last_index	=	createIndex( file_list.size(), col );
-
 }
 
 
@@ -160,15 +159,50 @@ void	FileModel::get_file_list()
 	QFileInfoList   list1    =   dir.entryInfoList( QDir::NoDot|QDir::Dirs, QDir::Name  );
 	QFileInfoList   list2    =   dir.entryInfoList( name_filters, QDir::Files, QDir::Name  );
 
+    if( dir.path() == root_path )
+		list1.removeAt(0);  
+
     file_list.clear();
     file_list.append(list1);
     file_list.append(list2);
 
-	if( dir.path() == root_path )
-		file_list.removeAt(0);
+    file_start_index    =   list1.size();
+    update_status_vec( list2 ); 
 }
 
 
+
+
+
+/*******************************************************************************
+FileModel::update_status_vec()
+********************************************************************************/
+void    FileModel::update_status_vec( const QFileInfoList& list )
+{
+    if( list.isEmpty() == true )
+    {
+        status_vec.clear();
+        return;
+    }
+    status_vec  =   all_model->get_status_vec( list );
+    qDebug() << status_vec.size();
+}
+
+
+
+
+
+/*******************************************************************************
+FileModel::update_vec_slot()
+********************************************************************************/
+void    FileModel::update_vec_slot()
+{
+    QStringList     name_filters;
+    name_filters << "*.mp3" << "*.flac" << "";    
+
+	QFileInfoList   list     =   dir.entryInfoList( name_filters, QDir::Files, QDir::Name  );
+    update_status_vec( list ); 
+}
 
 
 
@@ -197,9 +231,9 @@ void	FileModel::double_clicked_slot( const QModelIndex &index )
     {
         QString   full_path     =   info.absoluteFilePath();
         all_model->play_by_path( full_path );
+        refresh_row( row );
     }
 }
-
 
 
 
@@ -299,17 +333,29 @@ QVariant	FileModel::icon_data( const QModelIndex &index, int role ) const
 	if( role != Qt::DecorationRole )
 		assert(false);
 
-    QIcon   play_icon(QString("./img/play_2.png"));
+    static QIcon   play_icon(QString("./img/play_2.png"));
+    static QIcon   fvt_e_icon(QString("./img/favorite_e.png"));
+    static QIcon   fvt_s_icon(QString("./img/favorite_s.png"));
 
 	switch( col )
 	{
     case 0:
-        if( info.isFile() )
+        if( info.isFile() == true && main_window->is_playing() == true )
         {
             QString     path    =   info.absoluteFilePath();
             bool        flag    =   all_model->is_now_play_by_path( path );
             if( flag == true )
                 return  play_icon;
+        }
+        break;
+    case 2:
+        if( info.isFile() == true )
+        {
+            int     index   =   row - file_start_index;
+            if( status_vec[index].is_favorite == true )
+                result  =   fvt_s_icon;
+            else
+                result  =   fvt_e_icon;
         }
         break;
     case 3:
@@ -481,3 +527,6 @@ void    FileModel::set_allmodel( AllModel* am )
     assert( all_model == nullptr );
     all_model   =   am;
 }
+
+
+
