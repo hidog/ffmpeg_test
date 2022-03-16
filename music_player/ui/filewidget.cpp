@@ -97,6 +97,8 @@ void	FileWidget::refresh_view_slot()
 	for( i = 1; i < header_width_vec.size(); i++ )
 		ui->fileTView->setColumnWidth( i, header_width_vec[i] );
 
+    int cd_idx  =   model->get_cd_index();
+    ui->fileTView->selectRow(cd_idx);
 }
 
 

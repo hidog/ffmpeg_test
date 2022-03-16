@@ -220,7 +220,17 @@ void	FileModel::double_clicked_slot( const QModelIndex &index )
 	if( info.isDir() )
 	{
 		if( path == QString("..") )
+        {
+            // 要更新 tab widget select項目.
+            QString cur_path    =   dir.dirName();
+
 			dir.cdUp();
+
+            QStringList cd_list =   dir.entryList(QDir::NoDot|QDir::Dirs, QDir::Name);
+            cd_select_index     =   cd_list.indexOf(cur_path);
+            if( cd_select_index < 0 )
+                cd_select_index =   0;
+        }
 		else
 			dir.cd(path);
 
@@ -581,3 +591,13 @@ void    FileModel::jump_slot()
 }
 
 
+
+
+
+/*******************************************************************************
+FileModel::get_cd_index()
+********************************************************************************/
+int     FileModel::get_cd_index()
+{
+    return  cd_select_index;
+}

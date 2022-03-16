@@ -45,6 +45,7 @@ public:
     void    set_mainwindow( MainWindow *mw );
     void    set_allmodel( AllModel* am );
     void    update_status_vec( const QFileInfoList& list );
+    int     get_cd_index();
 
 	int		rowCount( const QModelIndex &parent = QModelIndex() ) const ;
 	int		columnCount( const QModelIndex &parent = QModelIndex() ) const ;
@@ -71,7 +72,8 @@ signals:
 private:
     MainWindow      *main_window    =   nullptr;
 
-    int     file_start_index; // 取得目錄的時候, 檔案起始位置
+    int     file_start_index    =   0;  // 取得目錄的時候, 檔案起始位置
+    int     cd_select_index     =   0;  // 回到上一頁後, 選擇的項目
 
     QStringList     head_list;
     QString         root_path;
