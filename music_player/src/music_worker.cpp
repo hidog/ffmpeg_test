@@ -42,13 +42,13 @@ void    MusicWorker::open_audio_output( AudioDecodeSetting as )
     format.setSampleRate(as.sample_rate);
     //format.setChannelCount(as.channel);
     format.setChannelCount(2);  // 目前強制兩聲道,未來改成可以多聲道或單聲道
-    //format.setSampleSize(16);
-    format.setSampleSize(as.sample_size);
+    format.setSampleSize(16);
+    //format.setSampleSize(as.sample_size);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
     //format.setSampleType(QAudioFormat::UnSignedInt);
-    //format.setSampleType(QAudioFormat::SignedInt);   // 用unsigned int 在調整音量的時候會爆音
-    format.setSampleType( static_cast<QAudioFormat::SampleType>(as.sample_type) );
+    format.setSampleType(QAudioFormat::SignedInt);   // 用unsigned int 在調整音量的時候會爆音
+    //format.setSampleType( static_cast<QAudioFormat::SampleType>(as.sample_type) );
 
     //
     QAudioDeviceInfo info { QAudioDeviceInfo::defaultOutputDevice() };

@@ -94,7 +94,7 @@ int     AudioDecode::init()
     }
 
     swr_ctx     =   swr_alloc_set_opts( swr_ctx,
-                                        av_get_default_channel_layout(2), dst_fmt,      sample_rate,     // output
+                                        av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16,      sample_rate,     // output
                                         channel_layout,                   sample_fmt,   sample_rate,     // input 
                                         NULL, NULL );
     swr_init(swr_ctx);
@@ -364,7 +364,7 @@ AudioData   AudioDecode::output_audio_data()
     ad.timestamp    =   0;
 
 
-    int         byte_count  =   av_samples_get_buffer_size( NULL, out_channel, frame->nb_samples, dst_fmt, 0 );
+    int         byte_count  =   av_samples_get_buffer_size( NULL, out_channel, frame->nb_samples, AV_SAMPLE_FMT_S16, 0 );
 
     ad.pcm    =   new uint8_t[byte_count];
     if( ad.pcm == nullptr )
