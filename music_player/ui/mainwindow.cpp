@@ -176,7 +176,6 @@ void    MainWindow::set_connect()
 
     FileModel   *f_model    =   get_file_model();
     connect(    a_model,       &AllModel::update_status_signal,     f_model,  &FileModel::update_vec_slot       );
-
 }
 
 

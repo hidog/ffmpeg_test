@@ -45,6 +45,8 @@ public:
     void    refresh_index( int col, int row );
 	int		get_header_count();
     bool    is_now_play_by_path( QString path );
+    void    set_favorite( QString path, bool flag );
+
 
 	int		rowCount( const QModelIndex &parent = QModelIndex() ) const ;
 	int		columnCount( const QModelIndex &parent = QModelIndex() ) const ;

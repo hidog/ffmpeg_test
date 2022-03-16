@@ -68,9 +68,10 @@ FileWidget::set_connect()
 ********************************************************************************/
 void	FileWidget::set_connect()
 {
-	connect(	model,				SIGNAL(refresh_signal()),							this,		SLOT(refresh_view_slot())						);
-	connect(	model,				SIGNAL(path_change_signal(QString)),				this,		SLOT(path_change_slot(QString))					);
-    connect(	ui->fileTView,		SIGNAL(doubleClicked(const QModelIndex&)),			model,		SLOT(double_clicked_slot(const QModelIndex&))	);
+	connect(	model,				&FileModel::refresh_signal,		    this,		&FileWidget::refresh_view_slot		);
+	connect(	model,				&FileModel::path_change_signal,		this,		&FileWidget::path_change_slot		);
+    connect(	ui->fileTView,		&QTableView::doubleClicked,			model,		&FileModel::double_clicked_slot	    );
+    connect(	ui->fileTView,		&QTableView::clicked,			    model,		&FileModel::clicked_slot	        );
 
 	connect(	ui->fileTView->horizontalHeader(),		SIGNAL(sectionResized(int,int,int)),		this,		SLOT(header_resize_slot(int,int,int))		);
 }

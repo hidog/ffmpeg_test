@@ -185,6 +185,31 @@ void	AllModel::clicked_slot( const QModelIndex &index )
 
 
 
+/*******************************************************************************
+AllModel::set_favorite()
+********************************************************************************/
+void    AllModel::set_favorite( QString path, bool flag )
+{
+    int     i;
+    for( i = 0; i < file_vec.size(); i++ )
+    {
+        if( file_vec[i].absoluteFilePath() == path )
+            break;
+    }
+
+    if( i >= file_vec.size() )
+    {
+        MYLOG( LOG::L_WARN, "not found." );
+        return;
+    }
+
+    status_vec[i].is_favorite   =   flag;
+    refresh_index( 2, i );
+}
+
+
+
+
 
 
 /*******************************************************************************

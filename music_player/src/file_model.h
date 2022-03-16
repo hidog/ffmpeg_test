@@ -58,6 +58,7 @@ public:
 
 public slots:
 	void	double_clicked_slot( const QModelIndex &index );
+    void    clicked_slot( const QModelIndex &index );
 	void	path_change_slot( const QString &new_path );
 	void	refresh_slot();
     void    update_vec_slot();

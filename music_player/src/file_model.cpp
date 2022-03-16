@@ -238,6 +238,26 @@ void	FileModel::double_clicked_slot( const QModelIndex &index )
 
 
 
+/*******************************************************************************
+FileModel::clicked_slot()
+********************************************************************************/
+void    FileModel::clicked_slot( const QModelIndex &index )
+{
+    int     row     =   index.row();
+    int     col     =   index.column();
+    int     idx     =   row - file_start_index;
+
+    if( col == 2 )
+    {
+        QString     path    =   file_list[row].absoluteFilePath();
+        status_vec[idx].is_favorite =  !status_vec[idx].is_favorite;
+        all_model->set_favorite( path, status_vec[idx].is_favorite );
+        refresh_row( row );
+    }
+}
+
+
+
 
 
 /*******************************************************************************
@@ -322,8 +342,8 @@ QVariant	FileModel::icon_data( const QModelIndex &index, int role ) const
 {
 	int		col		=	index.column();
 	int		row		=	index.row();
-
 	assert( row < file_list.size() );
+    int     idx     =   row - file_start_index;
 
 	QFileInfo			info	=	file_list[row]; 
 	QFileIconProvider	icon_pv;
@@ -336,6 +356,7 @@ QVariant	FileModel::icon_data( const QModelIndex &index, int role ) const
     static QIcon   play_icon(QString("./img/play_2.png"));
     static QIcon   fvt_e_icon(QString("./img/favorite_e.png"));
     static QIcon   fvt_s_icon(QString("./img/favorite_s.png"));
+    static QIcon   new_icon(QString("./img/new.png"));
 
 	switch( col )
 	{
@@ -348,11 +369,17 @@ QVariant	FileModel::icon_data( const QModelIndex &index, int role ) const
                 return  play_icon;
         }
         break;
+    case 1:
+        if( info.isFile() == true )
+        {
+            if( status_vec[idx].is_new == true )        
+                result  =   new_icon;
+        }
+        break;
     case 2:
         if( info.isFile() == true )
         {
-            int     index   =   row - file_start_index;
-            if( status_vec[index].is_favorite == true )
+            if( status_vec[idx].is_favorite == true )
                 result  =   fvt_s_icon;
             else
                 result  =   fvt_e_icon;
