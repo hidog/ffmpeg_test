@@ -278,6 +278,8 @@ AudioDecodeSetting    Player::get_audio_setting()
         AudioDecode     *a_ptr  =   decode_manager->get_current_audio_decoder();
         as.channel      =   a_ptr->get_audio_channel();
         as.sample_rate  =   a_ptr->get_audio_sample_rate();
+        as.sample_size  =   a_ptr->get_audeo_sample_size();
+        as.sample_type  =   a_ptr->get_audio_sample_type();
     }
     return  as;
 }
