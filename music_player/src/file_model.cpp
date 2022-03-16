@@ -227,6 +227,9 @@ void	FileModel::double_clicked_slot( const QModelIndex &index )
 			dir.cdUp();
 
             QStringList cd_list =   dir.entryList(QDir::NoDot|QDir::Dirs, QDir::Name);
+            if( dir.path() == root_path )
+                cd_list.removeAt(0);
+
             cd_select_index     =   cd_list.indexOf(cur_path);
             if( cd_select_index < 0 )
                 cd_select_index =   0;
