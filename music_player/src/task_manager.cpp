@@ -78,13 +78,17 @@ void    TaskManager::copyto()
 
     for( int i = 0; i < size; i++ )
     {
-        SLEEP_1US;
-
         if( stop_flag == true )
         {
             MYLOG( LOG::L_WARN, "user interrupt" );
             break;
         }
+
+        progress_value  =   100.0 * i / size;
+        emit progress_signal(progress_value);
+
+        if( status_vec[i].is_favorite == false )
+            continue;
 
         QString     from_path   =   copy_src_vec[i].absoluteFilePath();
         QString     target      =   copy_src_vec[i].absoluteFilePath();
@@ -109,8 +113,7 @@ void    TaskManager::copyto()
         QFile       file(from_path);
         file.copy(to_path);
 
-        progress_value  =   100.0 * i / size;
-        emit progress_signal(progress_value);
+        SLEEP_1US;
     }
 
     MYLOG( LOG::L_INFO, "copy finish." );
