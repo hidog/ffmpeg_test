@@ -782,3 +782,14 @@ void    AllModel::set_from_file( QStringList&& list, QList<int>&& vec )
     list_from_file  =   std::move(list);
     vec_from_file   =   std::move(vec);
 }
+
+
+
+/*******************************************************************************
+AllModel::is_now_play_by_path()
+********************************************************************************/
+bool    AllModel::is_now_play_by_path( QString path )
+{
+    QString     current_path    =   file_vec[play_index].absoluteFilePath();
+    return  current_path == path;
+}

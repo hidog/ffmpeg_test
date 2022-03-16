@@ -224,7 +224,7 @@ QVariant	FileModel::text_data( const QModelIndex &index, int role ) const
 	switch( col )
 	{
 		case 4:
-			result	=	info.fileName();
+			result	=	info.fileName();            
 			break;
 		case 5:
             if( info.isFile() == true )            
@@ -299,9 +299,20 @@ QVariant	FileModel::icon_data( const QModelIndex &index, int role ) const
 	if( role != Qt::DecorationRole )
 		assert(false);
 
+    QIcon   play_icon(QString("./img/play_2.png"));
+
 	switch( col )
 	{
     case 0:
+        if( info.isFile() )
+        {
+            QString     path    =   info.absoluteFilePath();
+            bool        flag    =   all_model->is_now_play_by_path( path );
+            if( flag == true )
+                return  play_icon;
+        }
+        break;
+    case 3:
     	result	=	icon_pv.icon(info);
     	break;
 	}

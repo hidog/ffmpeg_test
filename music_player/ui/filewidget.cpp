@@ -26,8 +26,10 @@ FileWidget::FileWidget(QWidget *parent) :
 
 	header_width_vec.resize( model->get_header_count() );
 
-	//header_width_vec[0]	=	;	don't set icon width.
-	//ui->fileTView->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::Fixed );  need set after refresh.
+    header_width_vec[0] =   20;
+    header_width_vec[1] =   20;
+    header_width_vec[2] =   20;
+    header_width_vec[3] =   20;
 	header_width_vec[4]	=	300;
 	header_width_vec[5]	=	70;
 	header_width_vec[6]	=	60;
