@@ -156,8 +156,8 @@ void	FileModel::get_file_list()
     QStringList     name_filters;
     name_filters << "*.mp3" << "*.flac" << "";    
 
-	QFileInfoList   list1    =   dir.entryInfoList( QDir::NoDot|QDir::Dirs, QDir::Name  );
-	QFileInfoList   list2    =   dir.entryInfoList( name_filters, QDir::Files, QDir::Name  );
+	QFileInfoList   list1    =   dir.entryInfoList( QDir::NoDot|QDir::Dirs, QDir::Name|QDir::LocaleAware  );
+	QFileInfoList   list2    =   dir.entryInfoList( name_filters, QDir::Files, QDir::Name|QDir::LocaleAware  );
 
     if( dir.path() == root_path )
 		list1.removeAt(0);  
