@@ -44,6 +44,7 @@ public:
     ~MainWindow();
 
     void    open( QString dir );
+    void    copyto( QString src, QString dst );
 
     void    set_connect();
     int     volume();
@@ -70,6 +71,7 @@ public:
 public slots:
 
     void    open_slot();
+    void    copyto_slot();
     void    task_finish_slot();
     void    play_button_slot();
     void    stop_button_slot();

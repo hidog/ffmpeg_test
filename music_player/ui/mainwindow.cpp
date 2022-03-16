@@ -140,39 +140,36 @@ void    MainWindow::finish_slot()
 
 
 
-
-
 /*******************************************************************************
 MainWindow::set_connect()
 ********************************************************************************/
 void    MainWindow::set_connect()
 {
-    connect(    ui->openButton,     &QPushButton::clicked,    this,   &MainWindow::open_slot  );
-    connect(    ui->playButton,     &QPushButton::clicked,    this,   &MainWindow::play_button_slot  );    
-    connect(    ui->stopButton,     &QPushButton::clicked,    this,   &MainWindow::stop_button_slot  );    
-    connect(    ui->pauseButton,    &QPushButton::clicked,    this,   &MainWindow::pause_button_slot  );    
-    connect(    ui->previousButton,    &QPushButton::clicked,    this,   &MainWindow::previous_button_slot  );  
-    connect(    ui->nextButton,    &QPushButton::clicked,    this,   &MainWindow::next_button_slot  );
-    connect(    ui->repeatButton,    &QPushButton::clicked,    this,   &MainWindow::repeat_button_slot  );
-    connect(    ui->randomButton,    &QPushButton::clicked,    this,   &MainWindow::random_button_slot  );
-    connect(    ui->favoriteButton,    &QPushButton::clicked,    this,   &MainWindow::favorite_button_slot  );
+    connect(    ui->openButton,     &QPushButton::clicked,    this,   &MainWindow::open_slot            );
+    connect(    ui->copyToButton,   &QPushButton::clicked,    this,   &MainWindow::copyto_slot          );
+    connect(    ui->playButton,     &QPushButton::clicked,    this,   &MainWindow::play_button_slot     );    
+    connect(    ui->stopButton,     &QPushButton::clicked,    this,   &MainWindow::stop_button_slot     );    
+    connect(    ui->pauseButton,    &QPushButton::clicked,    this,   &MainWindow::pause_button_slot    );    
+    connect(    ui->previousButton, &QPushButton::clicked,    this,   &MainWindow::previous_button_slot );  
+    connect(    ui->nextButton,     &QPushButton::clicked,    this,   &MainWindow::next_button_slot     );
+    connect(    ui->repeatButton,   &QPushButton::clicked,    this,   &MainWindow::repeat_button_slot   );
+    connect(    ui->randomButton,   &QPushButton::clicked,    this,   &MainWindow::random_button_slot   );
+    connect(    ui->favoriteButton, &QPushButton::clicked,    this,   &MainWindow::favorite_button_slot );
 
-    connect(    play_worker.get(),      &PlayWorker::duration_signal,    this,           &MainWindow::duration_slot );
+    connect(    ui->volumeSlider,   &QSlider::valueChanged,   music_worker.get(),   &MusicWorker::volume_slot  );
+
+    connect(    play_worker.get(),  &PlayWorker::duration_signal,           this,   &MainWindow::duration_slot          );
+    connect(    music_worker.get(), &MusicWorker::update_seekbar_signal,    this,   &MainWindow::update_seekbar_slot    );
+
+    connect(    &task_manager,      &QThread::finished,             this,           &MainWindow::task_finish_slot   );
+    connect(    &task_manager,      &QThread::finished,             &lock_dialog,   &LockDialog::finish_slot        );
+    connect(    &task_manager,      &TaskManager::progress_signal,  &lock_dialog,   &LockDialog::progress_slot      );  
+    connect(    &task_manager,      &TaskManager::message_singal,   &lock_dialog,   &LockDialog::message_slot       );
+
+    connect(    &lock_dialog,       &LockDialog::cancel_signal,     &task_manager,  &TaskManager::cancel_slot       );
 
 
-    finish_connect  =   connect(    play_worker.get(),      &QThread::finished,    this,           &MainWindow::finish_slot );
-
-
-    connect(    ui->volumeSlider,     &QSlider::valueChanged,    music_worker.get(),   &MusicWorker::volume_slot  );
-
-    connect(    &task_manager,      &QThread::finished,   this,   &MainWindow::task_finish_slot  );
-    connect(    &task_manager,      &QThread::finished,   &lock_dialog,   &LockDialog::finish_slot  );
-    connect(    &task_manager,      &TaskManager::progress_signal,  &lock_dialog,   &LockDialog::progress_slot );  
-    connect(    &task_manager,      &TaskManager::message_singal,  &lock_dialog,   &LockDialog::message_slot );
-
-    connect(    &lock_dialog,      &LockDialog::cancel_signal,  &task_manager,   &TaskManager::cancel_slot );
-
-    connect(    music_worker.get(),       &MusicWorker::update_seekbar_signal,            this,           &MainWindow::update_seekbar_slot            );
+    finish_connect  =   connect(    play_worker.get(),  &QThread::finished,     this,   &MainWindow::finish_slot );
 
     //
     FileWidget  *f_widget   =   dynamic_cast<FileWidget*>(ui->tabWidget->widget(1));
@@ -182,7 +179,7 @@ void    MainWindow::set_connect()
 
     //
     AllModel   *a_model      =   get_all_model();
-    connect(    a_model,      &AllModel::play_signal,  this,   &MainWindow::play_slot );
+    connect(    a_model,      &AllModel::play_signal,   this,   &MainWindow::play_slot );
 }
 
 
@@ -268,8 +265,9 @@ void    MainWindow::open( QString dir )
 
     if( dir.isEmpty() == true )
         return;
-    
-    // note: need stop play music.
+
+    stop_button_slot();
+
     lock_dialog.set_task_name( "scan" );
     lock_dialog.show();
 
@@ -300,9 +298,78 @@ void    MainWindow::open_slot()
     a_model->clear_from_file_data();
 
     QString     dir     =   QFileDialog::getExistingDirectory( this, tr("open music folder"), "D:\\", 
-                                                               QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
-    open(dir);  
+                                                               QFileDialog::ShowDirsOnly|QFileDialog::DontResolveSymlinks );
+
+    if( dir.isEmpty() == false )
+        open(dir);  
 }
+
+
+
+
+
+
+/*******************************************************************************
+MainWindow::copyto_slot()
+********************************************************************************/
+void    MainWindow::copyto_slot()
+{
+    QString     dst_path;
+    while(true)
+    {
+        dst_path =   QFileDialog::getExistingDirectory( this, tr("open copyto folder"), "D:\\", 
+                                                       QFileDialog::ShowDirsOnly|QFileDialog::DontResolveSymlinks );
+        QDir   dir(dst_path);
+        if( dir.isEmpty() == false )
+        {
+            QMessageBox::StandardButton result  =   QMessageBox::question( this, "copyto", QString::fromLocal8Bit("目標目錄不是空的"), 
+                                                                           QMessageBox::Retry|QMessageBox::Cancel );
+            if( result == QMessageBox::Cancel )
+                return;
+        }
+        else        
+            break;        
+    }
+
+    if( dst_path.isEmpty() == false )
+        copyto( root_path, dst_path );
+}
+
+
+
+
+
+
+/*******************************************************************************
+MainWindow::copyto()
+********************************************************************************/
+void    MainWindow::copyto( QString src, QString dst )
+{
+    if( task_manager.isRunning() == true )
+    {
+        MYLOG( LOG::L_WARN, "task is running." );
+        return;
+    }
+
+    if( src.isEmpty() == true || dst.isEmpty() == true )
+        return;
+    
+    lock_dialog.set_task_name( "copyto" );
+    lock_dialog.show();
+
+    AllModel    *all_model  =   get_all_model();
+    const QVector<QFileInfo>    f_vec   =   all_model->get_file_vec();
+    const QVector<PlayStatus>   p_vec   =   all_model->get_status_vec();
+
+
+    task_manager.set_copyto_task( src, dst, f_vec, p_vec );
+    task_manager.start(); 
+}
+
+
+
+
+
 
 
 
@@ -789,15 +856,15 @@ void    MainWindow::save_setting()
     QTextStream     out_data(&file_data);
     out_data.setCodec("UTF-8");
     
-    const QFileInfoList             &file_list  =   a_model->get_file_list();
-    const std::vector<PlayStatus>   &status_vec =   a_model->get_status_vec();    
+    const QVector<QFileInfo>    &file_vec   =   a_model->get_file_vec();
+    const QVector<PlayStatus>   &status_vec =   a_model->get_status_vec();    
 
-    assert( file_list.size() == status_vec.size() );
+    assert( file_vec.size() == status_vec.size() );
 
-    int     size    =   file_list.size();
+    int     size    =   file_vec.size();
     for( int i = 0; i < size; i++ )
     {
-        out_data << file_list[i].absoluteFilePath() << Qt::endl;
+        out_data << file_vec[i].absoluteFilePath() << Qt::endl;
         if( status_vec[i].is_favorite == true )
             out_data << 1 << Qt::endl;
         else

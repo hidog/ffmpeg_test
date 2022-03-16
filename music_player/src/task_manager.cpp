@@ -56,9 +56,64 @@ void    TaskManager::run()
         all_file_count  =   get_all_file_count(scan_path);
         scan_folder( scan_path );
         break;
+    case TaskType::COPYTO:        
+        copyto();
+        break;
     default:
         assert(0);
     }
+}
+
+
+
+/*******************************************************************************
+TaskManager::set_task_type()
+********************************************************************************/
+void    TaskManager::copyto()
+{
+    int     progress_value  =   0;
+    int     size    =   copy_src_vec.size();
+    QString msg;
+
+
+    for( int i = 0; i < size; i++ )
+    {
+        SLEEP_1US;
+
+        if( stop_flag == true )
+        {
+            MYLOG( LOG::L_WARN, "user interrupt" );
+            break;
+        }
+
+        QString     from_path   =   copy_src_vec[i].absoluteFilePath();
+        QString     target      =   copy_src_vec[i].absoluteFilePath();
+        target.remove(src_path);
+
+        QStringList     folders =   target.split( QLatin1Char('/') );
+        folders.removeLast();  // last is file.
+
+        QDir    dir(dst_path);
+
+        for( auto itr : folders )
+        {
+            if( dir.exists(itr) == false )
+                dir.mkdir(itr);
+            dir.cd(itr);            
+        }
+
+        QString     to_path =   QString("%1%2").arg(dst_path).arg(target);
+        msg     =   QString("copy %1 to %2").arg(from_path).arg(to_path);
+        emit message_singal(msg);
+
+        QFile       file(from_path);
+        file.copy(to_path);
+
+        progress_value  =   100.0 * i / size;
+        emit progress_signal(progress_value);
+    }
+
+    MYLOG( LOG::L_INFO, "copy finish." );
 }
 
 
@@ -151,4 +206,27 @@ TaskManager::get_file_list()
 QFileInfoList&&     TaskManager::get_file_list()
 {
     return  std::move(file_list);
+}
+
+
+
+
+
+/*******************************************************************************
+TaskManager::set_copyto_path()
+********************************************************************************/
+void    TaskManager::set_copyto_task( QString src, QString dst, QVector<QFileInfo> fv, QVector<PlayStatus> pv )
+{
+    type        =   TaskType::COPYTO;
+    
+    src_path    =   src;
+    if( src_path[src_path.size()-1] != QLatin1Char('/') )
+        src_path.append( QLatin1Char('/') );
+    
+    dst_path    =   dst;
+    if( dst_path[dst_path.size()-1] != QLatin1Char('/') )
+        dst_path.append( QLatin1Char('/') );
+
+    copy_src_vec    =   std::move(fv);
+    status_vec      =   std::move(pv);
 }

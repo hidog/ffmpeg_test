@@ -67,8 +67,8 @@ public:
 	QVariant	icon_data( const QModelIndex &index, int role ) const;
 	QVariant	get_font_color( const QModelIndex &index, int role ) const;
 
-    const QFileInfoList&    get_file_list();
-    const std::vector<PlayStatus>&   get_status_vec();
+    const QVector<QFileInfo>&    get_file_vec();
+    const QVector<PlayStatus>&   get_status_vec();
 
 public slots:
 	void	double_clicked_slot( const QModelIndex &index );
@@ -90,8 +90,8 @@ private:
     QDir    dir;
     int     play_index     =   0;
 
-    QFileInfoList   file_list;
-    std::vector<PlayStatus>     status_vec;
+    QVector<QFileInfo>      file_vec;
+    QVector<PlayStatus>     status_vec;
 
     QStringList     list_from_file;
     QList<int>      vec_from_file;

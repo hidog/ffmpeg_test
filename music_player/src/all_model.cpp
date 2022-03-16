@@ -65,7 +65,7 @@ AllModel::rowCount()
 ********************************************************************************/
 int		AllModel::rowCount( const QModelIndex &parent ) const 
 { 
-	return	file_list.size();
+	return	file_vec.size();
 }
 
 
@@ -123,7 +123,7 @@ AllModel::refresh_view()
 ********************************************************************************/
 void	AllModel::refresh_list()
 {
-	int		row		=	file_list.size();
+	int		row		=	file_vec.size();
 	int		col		=	head_list.size();
 
 	QModelIndex		left_top		=	createIndex( 0, 0 );
@@ -144,7 +144,7 @@ AllModel::double_clicked_slot()
 void	AllModel::double_clicked_slot( const QModelIndex &index )
 {
  	int			row		=	index.row();
-	QFileInfo	info	=	file_list[row];
+	QFileInfo	info	=	file_vec[row];
 
     if( main_window->is_playing() == false )
     {
@@ -189,8 +189,8 @@ AllModel::play_user()
 bool    AllModel::play_user()
 {
     clear_played_state();
-    assert( play_index < file_list.size() && play_index >= 0 );       
-	QFileInfo	info	=	file_list[play_index];
+    assert( play_index < file_vec.size() && play_index >= 0 );       
+	QFileInfo	info	=	file_vec[play_index];
     assert( main_window->is_playing() == false );
     main_window->set_finish_behavior( FinishBehavior::NONE );
     emit play_signal(info.absoluteFilePath());
@@ -209,7 +209,7 @@ QVariant	AllModel::text_data( const QModelIndex &index, int role ) const
 	int		col =   index.column();
 	int		row =   index.row();
 
-	QFileInfo	info    =   file_list[row];
+	const QFileInfo&	info    =   file_vec[row];
 	QVariant	result;
 
 	// handle DisplayRole only.
@@ -279,9 +279,9 @@ QVariant	AllModel::icon_data( const QModelIndex &index, int role ) const
 	int		col		=	index.column();
 	int		row		=	index.row();
 
-	assert( row < file_list.size() );
+	assert( row < file_vec.size() );
 
-	QFileInfo			info	=	file_list[row]; 
+	const QFileInfo&	info	=	file_vec[row]; 
 	QFileIconProvider	icon_pv;
 	QVariant			result;
 
@@ -336,9 +336,9 @@ QVariant	AllModel::data( const QModelIndex &index, int role ) const
 
 	QVariant	var	=	QVariant();
 
-	assert( row < file_list.size() );
+	assert( row < file_vec.size() );
 
-	QFileInfo	info		=	file_list[row];
+	const QFileInfo&    info    =	file_vec[row];
 
 	switch( role )
 	{
@@ -374,7 +374,7 @@ QVariant	AllModel::get_font_color( const QModelIndex &index, int role ) const
 	int		col		=	index.column();
 	int		row		=	index.row();
 
-	QFileInfo	info	=	file_list[row];
+	QFileInfo	info	=	file_vec[row];
 	QVariant	result;
 	//GitStatus	git_status;
 
@@ -417,8 +417,16 @@ AllModel::set_file_list()
 ********************************************************************************/
 void    AllModel::set_file_list( QFileInfoList&& list )
 {
-    file_list   =   std::move(list);
-    status_vec.resize( file_list.size() );
+    file_vec.resize( list.size() );
+    status_vec.resize( list.size() );
+
+    auto itr2 = file_vec.begin();
+    for( auto itr = list.begin(); itr != list.end(); ++itr )
+    {
+        *itr2    =   *itr;
+        ++itr2;
+    }
+    //file_list   =   std::move(list);
 
     if( list_from_file.isEmpty() == false )
         compare_with_file();
@@ -450,12 +458,12 @@ void    AllModel::compare_with_file()
     bool    find        =   false;
     bool    find_new    =   false;
 
-    for( i = 0; i < file_list.size(); i++ )
+    for( i = 0; i < file_vec.size(); i++ )
     {
         find    =   false;
         for( j = 0; j < list_from_file.size(); j++ )
         {
-            if( file_list[i].absoluteFilePath() == list_from_file[j] )
+            if( file_vec[i].absoluteFilePath() == list_from_file[j] )
             {
                 find    =   true;
                 break;
@@ -480,16 +488,18 @@ void    AllModel::compare_with_file()
     int     insert_index    =   0;
     if( find_new == true )
     {
-        for( i = 0; i < file_list.size(); i++ )
+        for( i = 0; i < file_vec.size(); i++ )
         {
             if( status_vec[i].is_new == true )
             {
                 std::swap( status_vec[i], status_vec[insert_index] );
-                std::swap( file_list[i],  file_list[insert_index]  );
+                std::swap( file_vec[i],   file_vec[insert_index]  );
                 insert_index++;
             }
         }
     }
+
+    qDebug() << "compare finish.";
 }
 
 
@@ -516,19 +526,19 @@ AllModel::get_random_index()
 int    AllModel::get_random_index( bool is_favorite )
 {
     std::random_device rd;
-    std::uniform_int_distribution<int> dist( 0, file_list.size()-1 );
+    std::uniform_int_distribution<int> dist( 0, file_vec.size()-1 );
 
     int     idx  =   dist(rd);
 
     if( is_favorite == false )
     {
         while( status_vec[idx].is_played == true )
-            idx     =   (idx+1) % file_list.size();
+            idx     =   (idx+1) % file_vec.size();
     }
     else
     {
         while( status_vec[idx].is_played == true && status_vec[idx].is_favorite == false )
-            idx     =   (idx+1) % file_list.size();
+            idx     =   (idx+1) % file_vec.size();
     }    
 
     status_vec[idx].is_played   =   true;
@@ -559,10 +569,10 @@ AllModel::play()
 ********************************************************************************/
 bool    AllModel::play( bool is_random, bool is_favorite )
 {
-    if( file_list.empty() == true )
+    if( file_vec.empty() == true )
         return false;
 
-    if( play_index >= file_list.size() )
+    if( play_index >= file_vec.size() )
         play_index =   0;
 
     if( is_random == true )
@@ -573,7 +583,7 @@ bool    AllModel::play( bool is_random, bool is_favorite )
 
     assert( play_index >= 0 );
 
-	QFileInfo	info	=	file_list[play_index];
+	QFileInfo	info	=	file_vec[play_index];
     emit play_signal(info.absoluteFilePath());
     refresh_current();
     return  true;
@@ -587,14 +597,14 @@ AllModel::play()
 ********************************************************************************/
 bool    AllModel::play_random( bool is_favorite )
 {
-    if( file_list.empty() == true )
+    if( file_vec.empty() == true )
         return false;
 
     play_index  =   get_random_index( is_favorite );    
 
     assert( play_index >= 0 );
 
-	QFileInfo	info	=	file_list[play_index];
+	QFileInfo	info	=	file_vec[play_index];
     emit play_signal(info.absoluteFilePath());
     refresh_current();
     return  true;
@@ -609,19 +619,19 @@ AllModel::play()
 ********************************************************************************/
 bool    AllModel::play_next( bool is_repeat )
 {
-    if( file_list.empty() == true )
+    if( file_vec.empty() == true )
         return false;
 
     play_index++;
-    if( is_repeat == true && play_index == file_list.size() )
+    if( is_repeat == true && play_index == file_vec.size() )
         play_index  =   0;
 
-    if( play_index >= file_list.size() )
+    if( play_index >= file_vec.size() )
         return  false;
 
     assert( play_index >= 0 );
 
-	QFileInfo	info	=	file_list[play_index];
+	QFileInfo	info	=	file_vec[play_index];
     emit play_signal(info.absoluteFilePath());
     refresh_current();
     return  true;
@@ -636,13 +646,13 @@ AllModel::previous()
 ********************************************************************************/
 bool    AllModel::previous()
 {
-    if( file_list.empty() == true )
+    if( file_vec.empty() == true )
         return false;
 
     play_index =   play_index > 0 ? play_index-1 : 0;
     assert( play_index >= 0 );
 
-    QFileInfo	info	=	file_list[play_index];
+    const QFileInfo&	info	=	file_vec[play_index];
     emit play_signal(info.absoluteFilePath());
     refresh_current();
     return  true;
@@ -656,17 +666,17 @@ AllModel::next()
 ********************************************************************************/
 bool    AllModel::next( bool repeat_flag )
 {
-    if( file_list.empty() == true )
+    if( file_vec.empty() == true )
         return false;
 
     if( repeat_flag == true )
-        play_index  =   (play_index + 1) % file_list.size();
+        play_index  =   (play_index + 1) % file_vec.size();
     else
-        play_index  =   play_index < file_list.size()-1 ? play_index+1 : file_list.size()-1;
+        play_index  =   play_index < file_vec.size()-1 ? play_index+1 : file_vec.size()-1;
 
     assert( play_index >= 0 );
 
-    QFileInfo	info	=	file_list[play_index];
+    const QFileInfo&	info	=	file_vec[play_index];
     emit play_signal(info.absoluteFilePath());
     refresh_current();
     return  true;
@@ -691,9 +701,9 @@ void    AllModel::set_mainwindow( MainWindow *mw )
 /*******************************************************************************
 AllModel::get_file_list()
 ********************************************************************************/
-const QFileInfoList&    AllModel::get_file_list()
+const QVector<QFileInfo>&    AllModel::get_file_vec()
 {
-    return  file_list;
+    return  file_vec;
 }
 
 
@@ -702,7 +712,7 @@ const QFileInfoList&    AllModel::get_file_list()
 /*******************************************************************************
 AllModel::get_status_vec()
 ********************************************************************************/
-const std::vector<PlayStatus>&   AllModel::get_status_vec()
+const QVector<PlayStatus>&   AllModel::get_status_vec()
 {
     return  status_vec;
 }

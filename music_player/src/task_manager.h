@@ -4,6 +4,7 @@
 #include <QThread>
 #include <QFileInfo>
 
+#include "all_model.h"
 
 
 
@@ -11,6 +12,7 @@ enum class TaskType
 {
     NONE    =   0,
     SCAN,
+    COPYTO,
 };
 
 
@@ -31,8 +33,15 @@ public:
     TaskManager& operator = ( TaskManager&& ) = delete;
 
     void    run() override;
+
+    //
     void    set_scan_task( QString path );
     QFileInfoList&&     get_file_list();
+
+    //
+    void    set_copyto_task( QString src, QString dst, QVector<QFileInfo> fv, QVector<PlayStatus> pv );
+    void    copyto();
+
 
 public slots:
 
@@ -59,6 +68,11 @@ private:
     int         last_pg_value   =   0;
 
     QFileInfoList   file_list;
+
+    // for copyto task
+    QString     src_path, dst_path; 
+    QVector<QFileInfo>  copy_src_vec;
+    QVector<PlayStatus> status_vec;
 
 };
 
