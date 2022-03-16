@@ -348,10 +348,13 @@ QVariant	FileModel::data( const QModelIndex &index, int role ) const
 		case Qt::DecorationRole:
 			var	=	icon_data( index, role );		
 			break;
-		/*case Qt::TextColorRole:
-            if( col < 3 )
-                var	=	QVariant(); //status_vec[row].color;
-			break;*/
+        case Qt::BackgroundColorRole:
+        {
+            QString     path    =   info.absoluteFilePath();
+            if( all_model->is_now_play_by_path(path) && main_window->is_playing() == true )
+                var     =   QColor( 0, 0, 255, 30 );
+        }
+            break;
 	}
 
 	return var;
