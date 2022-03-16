@@ -62,6 +62,7 @@ public slots:
 	void	path_change_slot( const QString &new_path );
 	void	refresh_slot();
     void    update_vec_slot();
+    void    jump_slot();
 
 signals:
 	void	refresh_signal();

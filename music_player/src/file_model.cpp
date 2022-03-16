@@ -560,3 +560,24 @@ void    FileModel::set_allmodel( AllModel* am )
 
 
 
+
+/*******************************************************************************
+FileModel::jump_slot()
+********************************************************************************/
+void    FileModel::jump_slot()
+{
+    if( main_window->is_playing() == false )
+        return;
+
+    const QFileInfo&    current_fileinfo    =   all_model->get_current_play_file();
+    QString     target_path     =   current_fileinfo.absolutePath();
+
+    if( target_path == dir.absolutePath() )
+        return;
+
+    dir.cd(target_path);
+	get_file_list();
+    refresh_view();
+}
+
+

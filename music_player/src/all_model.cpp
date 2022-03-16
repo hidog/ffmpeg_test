@@ -853,3 +853,17 @@ QVector<PlayStatus>   AllModel::get_status_vec( const QFileInfoList& list )
 
     return  vec;
 }
+
+
+
+
+/*******************************************************************************
+AllModel::get_current_play_file()
+********************************************************************************/
+const QFileInfo&    AllModel::get_current_play_file()
+{
+    if( file_vec.isEmpty() == true )
+        return  QFileInfo();
+
+    return  file_vec[play_index];
+}

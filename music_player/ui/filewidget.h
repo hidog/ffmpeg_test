@@ -2,8 +2,7 @@
 #define FILEWIDGET_H
 
 #include <QWidget>
-
-#include <vector>
+#include <QMenu>
 
 
 
@@ -32,10 +31,12 @@ public slots:
 	void	header_resize_slot( int index, int old_size, int new_size );
 	void	path_change_slot( QString path );
     void	refresh_view_slot();
+    void    right_menu_slot( const QPoint &pos );
 
 signals:
     
 private:
+	void	set_right_menu();
 
 	std::vector<int>	header_width_vec;
 
@@ -44,6 +45,9 @@ private:
     Ui::FileWidget *ui  =   nullptr;
 	FileModel	*model  =   nullptr;
 	QString		root_path;
+
+    QMenu       *right_menu     =   nullptr;  // mouse right click menu.
+	QAction	    *jump_action    =   nullptr; 
 };
 
 #endif // FILEWIDGET_H

@@ -38,6 +38,7 @@ FileWidget::FileWidget(QWidget *parent) :
     header_width_vec[9] =   60;
     header_width_vec[10] =   500;
 
+	set_right_menu();
 	set_connect();
 }
 
@@ -177,3 +178,40 @@ FileModel*  FileWidget::get_model()
 {
     return  model;    
 }
+
+
+
+
+
+
+/*******************************************************************************
+FileWidget::set_right_menu()
+********************************************************************************/
+void	FileWidget::set_right_menu()
+{
+    assert( right_menu == nullptr );
+    assert( jump_action == nullptr );
+
+	ui->fileTView->setContextMenuPolicy(Qt::CustomContextMenu); 	  
+
+	right_menu	=	new QMenu( ui->fileTView );
+	jump_action	=	new QAction( "jump to current play", right_menu );
+ 
+	right_menu->addAction( jump_action );  
+
+	connect(	ui->fileTView,	&QWidget::customContextMenuRequested,	this,	&FileWidget::right_menu_slot    );
+	connect(	jump_action,	&QAction::triggered,					model,	&FileModel::jump_slot  	        );
+}
+
+
+
+
+/*******************************************************************************
+FileWidget::right_menu_slot()
+********************************************************************************/
+void FileWidget::right_menu_slot( const QPoint &pos )
+{
+	right_menu->exec( QCursor::pos() ); 
+}
+
+

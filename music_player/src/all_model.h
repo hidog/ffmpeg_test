@@ -71,6 +71,8 @@ public:
 	QVariant	icon_data( const QModelIndex &index, int role ) const;
 	QVariant	get_font_color( const QModelIndex &index, int role ) const;
 
+    const QFileInfo&    get_current_play_file();
+
     const QVector<QFileInfo>&    get_file_vec();
     const QVector<PlayStatus>&   get_status_vec();
 
