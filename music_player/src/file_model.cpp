@@ -259,6 +259,8 @@ void    FileModel::clicked_slot( const QModelIndex &index )
     int     row     =   index.row();
     int     col     =   index.column();
     int     idx     =   row - file_start_index;
+    if( idx < 0 )
+        return;
 
     if( col == 2 )
     {
