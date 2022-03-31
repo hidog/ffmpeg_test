@@ -143,7 +143,7 @@ void    MusicWorker::run()
     // start play
     audio_play();
 
-#if 0
+#if 1
     io->close();
     io  =   nullptr;
 
