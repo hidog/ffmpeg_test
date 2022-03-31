@@ -730,6 +730,12 @@ void    MainWindow::closeEvent( QCloseEvent *event )
     finish_behavior =   FinishBehavior::STOP;
     lock_dialog.close();
     play_worker->stop_slot();    
+
+    // if it is pause state, need resume, otherwise will force terminate thread.
+    if (is_pause() == true)
+        music_worker->pause();
+    play_worker->stop_slot();
+
     wait_worker_stop();
 }
 
