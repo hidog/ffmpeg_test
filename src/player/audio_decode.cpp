@@ -69,9 +69,33 @@ int     AudioDecode::init()
 
     // 要改變 sample rate 可以參考 ffmpeg 官方範例.  resampling_audio                                              
     // S16 改 S32, 需要修改pcm的部分. 需要找時間研究
+
+    dst_fmt =   sample_fmt;
+    switch( sample_fmt )
+    {
+    case AV_SAMPLE_FMT_U8P:
+        dst_fmt     =   AV_SAMPLE_FMT_U8;
+        break;
+    case AV_SAMPLE_FMT_S16P:
+        dst_fmt     =   AV_SAMPLE_FMT_S16;
+        break;
+    case AV_SAMPLE_FMT_S32P:
+        dst_fmt     =   AV_SAMPLE_FMT_S32;
+        break;    
+    case AV_SAMPLE_FMT_FLTP:
+        dst_fmt     =   AV_SAMPLE_FMT_FLT;
+        break;
+    case AV_SAMPLE_FMT_DBLP:
+        dst_fmt     =   AV_SAMPLE_FMT_DBL;
+        break;
+    case AV_SAMPLE_FMT_S64P:
+        dst_fmt     =   AV_SAMPLE_FMT_S64;
+        break;
+    }
+
     swr_ctx     =   swr_alloc_set_opts( swr_ctx,
-                                        av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16, sample_rate,  // output
-                                        channel_layout, dec_ctx->sample_fmt, dec_ctx->sample_rate,         // input 
+                                        av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16,      sample_rate,     // output
+                                        channel_layout,                   sample_fmt,   sample_rate,     // input 
                                         NULL, NULL );
     swr_init(swr_ctx);
 
@@ -243,6 +267,69 @@ int     AudioDecode::get_audio_sample_rate()
     //return  stream->codecpar->sample_rate;
     return  dec_ctx->sample_rate;
 }
+
+
+
+/*******************************************************************************
+AudioDecode::get_audeo_sample_size()
+********************************************************************************/
+int     AudioDecode::get_audeo_sample_size()
+{
+    switch( dec_ctx->sample_fmt )
+    {
+    case AV_SAMPLE_FMT_U8:
+    case AV_SAMPLE_FMT_U8P:
+        return  8;
+    case AV_SAMPLE_FMT_S16:
+    case AV_SAMPLE_FMT_S16P:
+        return  16;
+    case AV_SAMPLE_FMT_S32:
+    case AV_SAMPLE_FMT_S32P:
+        return  32;
+    case AV_SAMPLE_FMT_FLT:
+    case AV_SAMPLE_FMT_FLTP:
+        return  32;
+    case AV_SAMPLE_FMT_DBL:
+    case AV_SAMPLE_FMT_DBLP:
+        return  64;
+    case AV_SAMPLE_FMT_S64:
+    case AV_SAMPLE_FMT_S64P:
+        return  64;
+    default:
+        MYLOG( LOG::L_ERROR, "un defined." );
+    }
+}
+
+
+
+/*******************************************************************************
+AudioDecode::get_audio_sample_type()
+********************************************************************************/
+int     AudioDecode::get_audio_sample_type()
+{
+    switch( dec_ctx->sample_fmt )
+    {
+    case AV_SAMPLE_FMT_U8:
+    case AV_SAMPLE_FMT_U8P:
+        return  2;   //   QAudioFormat  SampleType UnSignedInt
+    case AV_SAMPLE_FMT_S16:
+    case AV_SAMPLE_FMT_S16P:
+    case AV_SAMPLE_FMT_S32:
+    case AV_SAMPLE_FMT_S32P:
+    case AV_SAMPLE_FMT_S64:
+    case AV_SAMPLE_FMT_S64P:
+        return  1;  // SignedInt
+    case AV_SAMPLE_FMT_FLT:
+    case AV_SAMPLE_FMT_FLTP:
+    case AV_SAMPLE_FMT_DBL:
+    case AV_SAMPLE_FMT_DBLP:
+        return  3;  // Float 
+    default:
+        MYLOG( LOG::L_ERROR, "un defined." );
+    }
+}
+
+
 
 
 

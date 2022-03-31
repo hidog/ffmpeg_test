@@ -433,6 +433,7 @@ Worker::seek_slot()
 ********************************************************************************/
 void    Worker::seek_slot( int value )
 {
+    // 播放純音檔的時候應該要從 audio_worker 讀取 old_value. 但暫時不影響執行結果, 先跳過.
     MainWindow  *mw     =   dynamic_cast<MainWindow*>(parent());
     VideoData   *vd     =   mw->get_view_data();
     int     old_value   =   vd->timestamp / 1000;

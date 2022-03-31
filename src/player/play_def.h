@@ -64,7 +64,8 @@ struct AudioDecodeSetting
 {
     int     channel;
     int     sample_rate;
-    //int     sample_size;
+    int     sample_size;
+    int     sample_type;
 };
 
 
