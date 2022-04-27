@@ -11,6 +11,7 @@ extern "C" {
 #include <libswscale/swscale.h>
 #include <libavfilter/buffersrc.h>  // use for subtitle
 #include <libavfilter/buffersink.h>
+#include <libavcodec/avcodec.h>
 
 } // end extern "C"
 
@@ -728,8 +729,8 @@ void    extract_subtitle_frome_file()
     int     ret     =   0;
     int     subidx  =   0;
 
-    AVCodec     *src_codec  =   nullptr;
-    AVCodec     *dst_codec  =   nullptr;
+    const AVCodec     *src_codec  =   nullptr;
+    const AVCodec     *dst_codec  =   nullptr;
 
     AVFormatContext*    src_fmtctx  =   nullptr;
     AVCodecContext*     src_dec     =   nullptr;

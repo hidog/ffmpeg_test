@@ -45,7 +45,7 @@ AudioEncode::list_sample_format()
 ********************************************************************************/
 void    AudioEncode::list_sample_format( AVCodecID code_id )
 {
-    AVCodec                 *codec   =   avcodec_find_encoder(code_id);
+    const AVCodec           *codec   =   avcodec_find_encoder(code_id);
     const AVSampleFormat    *p_fmt   =   codec->sample_fmts;
 
     while( *p_fmt != AV_SAMPLE_FMT_NONE )
@@ -63,8 +63,8 @@ AudioEncode::list_sample_format()
 ********************************************************************************/
 void    AudioEncode::list_sample_rate( AVCodecID code_id )
 {
-    AVCodec*     codec   =   avcodec_find_encoder(code_id);
-    const int*   p_smp   =   codec->supported_samplerates;
+    const AVCodec*  codec   =   avcodec_find_encoder(code_id);
+    const int*      p_smp   =   codec->supported_samplerates;
 
     if( p_smp == nullptr )
     {
@@ -135,7 +135,7 @@ AudioEncode::list_channel_layout()
 ********************************************************************************/
 void    AudioEncode::list_channel_layout( AVCodecID code_id )
 {
-    AVCodec*     codec   =   avcodec_find_encoder(code_id);
+    const AVCodec*     codec   =   avcodec_find_encoder(code_id);
 
     const uint64_t  *p_cl   =   nullptr;
     uint64_t    best_ch_layout      =   0;
@@ -262,7 +262,7 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
     else    
         MYLOG( LOG::L_ERROR, "un handle codec" );    
 
-    if( false == check_sample_fmt( codec, ctx->sample_fmt ) ) 
+    if( false == check_sample_fmt( (AVCodec*)codec, ctx->sample_fmt ) )
         MYLOG( LOG::L_ERROR, "fmt fail." );
 
     // init setting
