@@ -6,6 +6,7 @@ extern "C" {
 #include <libavutil/timestamp.h>
 #include <libavformat/avformat.h>
 #include <libswresample/swresample.h>
+#include <libavcodec/avcodec.h>
 
 } // end extern "C"
 

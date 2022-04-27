@@ -155,7 +155,7 @@ VideoEncode::list_pixfmt()
 ********************************************************************************/
 void    VideoEncode::list_pix_fmt( AVCodecID code_id )
 {
-    AVCodec*     codec   =   avcodec_find_encoder(code_id);
+    const AVCodec*     codec   =   avcodec_find_encoder(code_id);
 
     const AVPixelFormat  *pix_fmt   =   nullptr;
 
@@ -183,7 +183,7 @@ h264, h265 等沒資料.
 ********************************************************************************/
 void    VideoEncode::list_frame_rate( AVCodecID code_id )
 {
-    AVCodec*     codec   =   avcodec_find_encoder(code_id);
+    const AVCodec*     codec   =   avcodec_find_encoder(code_id);
 
     const AVRational  *rt   =   nullptr;
 

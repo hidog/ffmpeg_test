@@ -57,7 +57,7 @@ void    Encode::init( int st_idx, AVCodecID code_id )
         MYLOG( LOG::L_ERROR, "pkt = nullptr." );
 
     // codec
-    codec   =   avcodec_find_encoder(code_id);
+    codec   =   (AVCodec*)avcodec_find_encoder(code_id);
     if( codec == nullptr )
         MYLOG( LOG::L_ERROR, "codec not find. code id = %s", avcodec_get_name(code_id) );
 
