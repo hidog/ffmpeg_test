@@ -40,15 +40,15 @@ void    MusicWorker::open_audio_output( AudioDecodeSetting as )
 
     // Set up the format, eg.
     format.setSampleRate(as.sample_rate);
-    //format.setChannelCount(as.channel);
-    format.setChannelCount(2);  // 目前強制兩聲道,未來改成可以多聲道或單聲道
-    format.setSampleSize(16);
-    //format.setSampleSize(as.sample_size);
+    format.setChannelCount(as.channel);
+    //format.setChannelCount(2);  // 目前強制兩聲道,未來改成可以多聲道或單聲道
+    //format.setSampleSize(16);
+    format.setSampleSize(as.sample_size);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
     //format.setSampleType(QAudioFormat::UnSignedInt);
-    format.setSampleType(QAudioFormat::SignedInt);   // 用unsigned int 在調整音量的時候會爆音
-    //format.setSampleType( static_cast<QAudioFormat::SampleType>(as.sample_type) );
+    //format.setSampleType(QAudioFormat::SignedInt);   // 用unsigned int 在調整音量的時候會爆音
+    format.setSampleType( static_cast<QAudioFormat::SampleType>(as.sample_type) );
 
     //
     QAudioDeviceInfo info { QAudioDeviceInfo::defaultOutputDevice() };
@@ -75,6 +75,7 @@ void    MusicWorker::open_audio_output( AudioDecodeSetting as )
     audio->stop();
     //audio->setBufferSize( 1000000 );  // 遇到影片檔必須開大buffer不然會出問題. 這是一個解法,目前用分批寫入的方式解決
 
+
     MainWindow  *main_window     =   dynamic_cast<MainWindow*>(parent());
     if( main_window == nullptr )
         MYLOG( LOG::L_ERROR, "mw is nullptr");
@@ -86,6 +87,9 @@ void    MusicWorker::open_audio_output( AudioDecodeSetting as )
       //  MYLOG( LOG::L_ERROR, "io is not null." );
 
     io  =   audio->start();
+
+    int buff_size = audio->bufferSize();
+    MYLOG(LOG::L_INFO, "audio buffer size = %d", buff_size);
 }
 
 
@@ -231,7 +235,7 @@ void    MusicWorker::audio_play()
     int64_t last_ts =   0;
     
     // 一次寫入4096的效能比較好
-    int     wanted_buffer_size  =   4096; //audio->bufferSize()/2;
+    int     wanted_buffer_size  =   audio->bufferSize()/2;
 
     //
     int     remain          =   0;

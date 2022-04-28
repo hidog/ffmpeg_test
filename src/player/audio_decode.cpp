@@ -95,8 +95,8 @@ int     AudioDecode::init()
     }
 
     swr_ctx     =   swr_alloc_set_opts( swr_ctx,
-                                        av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16,      sample_rate,     // output
-                                        channel_layout,                   sample_fmt,   sample_rate,     // input 
+                                        channel_layout, dst_fmt,    sample_rate,     // output
+                                        channel_layout, sample_fmt, sample_rate,     // input 
                                         NULL, NULL );
     swr_init(swr_ctx);
 
@@ -357,15 +357,20 @@ int out_count = (int64_t)wanted_nb_samples * is->audio_tgt.freq / af->frame->sam
 ********************************************************************************/
 AudioData   AudioDecode::output_audio_data()
 {
-    static constexpr int    out_channel =   2; // 目前預設輸出成兩聲道. 有空再改
+    //static constexpr int    out_channel =   2; // 目前預設輸出成兩聲道. 有空再改
+
+    int     channel     =   get_audio_channel(),
+            sample_rate =   get_audio_sample_rate(),
+            sample_size =   get_audeo_sample_size();
+
+    AVSampleFormat  sample_type =   dec_ctx->sample_fmt;
+
+    int         byte_count  =   av_samples_get_buffer_size( NULL, channel, frame->nb_samples, sample_type, 0 );
 
     AudioData   ad;
     ad.pcm          =   nullptr;
     ad.bytes        =   0;
     ad.timestamp    =   0;
-
-
-    int         byte_count  =   av_samples_get_buffer_size( NULL, out_channel, frame->nb_samples, AV_SAMPLE_FMT_S16, 0 );
 
     ad.pcm    =   new uint8_t[byte_count];
     if( ad.pcm == nullptr )
@@ -377,6 +382,8 @@ AudioData   AudioDecode::output_audio_data()
     int ret     =   swr_convert( swr_ctx,
                                  data, frame->nb_samples,                              //輸出 
                                  (const uint8_t**)frame->data, frame->nb_samples );    //輸入
+
+    //memcpy( ad.pcm, frame->data, byte_count );
 
     //
     ad.bytes        =   byte_count;
