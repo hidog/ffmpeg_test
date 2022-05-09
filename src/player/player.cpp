@@ -255,6 +255,12 @@ VideoDecodeSetting    Player::get_video_setting()
         VideoDecode     *v_ptr  =   decode_manager->get_current_video_decoder();
         vs.width    =   v_ptr->get_video_width();
         vs.height   =   v_ptr->get_video_height();
+        vs.code_id  =   v_ptr->get_video_codec();
+
+        vs.time_base_num    =   v_ptr->get_video_time_base_num();
+        vs.time_base_den    =   v_ptr->get_video_time_base_den();
+        
+        vs.pix_fmt  =   static_cast<int>(v_ptr->get_pix_fmt());
     }
 
     return  vs;
@@ -280,6 +286,9 @@ AudioDecodeSetting    Player::get_audio_setting()
         as.sample_rate  =   a_ptr->get_audio_sample_rate();
         as.sample_size  =   a_ptr->get_audeo_sample_size();
         as.sample_type  =   a_ptr->get_audio_sample_type();
+        as.code_id      =   a_ptr->get_audio_code_id();
+
+        as.channel_layout   =   a_ptr->get_audio_channel_layout();
     }
     return  as;
 }

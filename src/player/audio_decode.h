@@ -42,6 +42,7 @@ public:
     int     get_audio_sample_format();
     int     get_audeo_sample_size();
     int     get_audio_sample_type();
+    int     get_audio_code_id();
 
     void        output_audio_frame_info();    
     AudioData   output_audio_data();

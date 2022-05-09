@@ -347,6 +347,19 @@ int     AudioDecode::get_audio_sample_format()
 
 
 
+/*******************************************************************************
+AudioDecode::get_audio_codec()
+********************************************************************************/
+int     AudioDecode::get_audio_code_id()
+{
+    return  static_cast<int>(dec_ctx->codec_id);
+}
+
+
+
+
+
+
 
 /*******************************************************************************
 AudioDecode::output_audio_data()

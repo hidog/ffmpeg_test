@@ -41,6 +41,10 @@ public:
     
     int     get_video_width();
     int     get_video_height();
+    int     get_video_codec();
+    int     get_video_time_base_num();
+    int     get_video_time_base_den();
+
     void    output_video_frame_info();
     void    generate_overlay_image();        
     void    set_subtitle_decoder( SubDecode *sd );
@@ -50,7 +54,7 @@ public:
     VideoData   output_video_data();
     QImage      get_video_image();
 
-    int     video_info(); // 未來增加 nv decode 可以參考這邊
+    int     video_info(); // 未來增加 nv decode 可以參考這邊 
 
 #ifdef FFMPEG_TEST
     int     flush() override;

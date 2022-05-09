@@ -59,6 +59,7 @@ public:
     bool    is_embedded_subtitle();
     bool    is_file_subtitle();
 
+
     //void    init_subtitle( AVFormatContext *fmt_ctx );
     void    handle_seek();    
     void    clear_setting();

@@ -7,8 +7,8 @@
 #include "../IO/io_def.h"
 
 
-#define CPU_DECODE
-//#define HW_DECODE
+//#define CPU_DECODE
+#define HW_DECODE
 //#define NV_DECODE
 
 
@@ -29,6 +29,8 @@ struct DecodeSetting
     std::string     srt_ip;
     std::string     srt_port;
 };
+
+
 
 
 
@@ -63,9 +65,11 @@ struct AudioData
 struct AudioDecodeSetting
 {
     int     channel;
+    int     channel_layout;
     int     sample_rate;
     int     sample_size;
     int     sample_type;
+    int     code_id;
 };
 
 
@@ -83,7 +87,14 @@ struct VideoDecodeSetting
 {
     int     width;
     int     height;
+    int     code_id;
+    int     time_base_num;
+    int     time_base_den;
+    int     pix_fmt;
 };
+
+
+
 
 
 
