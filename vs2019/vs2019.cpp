@@ -1,11 +1,15 @@
 ﻿#include "player/player.h"
 #include "maker/maker_interface.h"
+#include "translate.h"
+
 
 
 int main()
 {
-    maker_encode_example();
+    //maker_encode_example();
     //player_decode_example();
+
+    translate_media_file();
 
     return 0;
 }

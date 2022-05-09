@@ -132,6 +132,9 @@
     <ClCompile Include="..\src\player\decode_manager.cpp">
       <Filter>src\player</Filter>
     </ClCompile>
+    <ClCompile Include="translate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\tool.h">
@@ -235,6 +238,9 @@
     </ClInclude>
     <ClInclude Include="..\src\player\decode_manager.h">
       <Filter>src\player</Filter>
+    </ClInclude>
+    <ClInclude Include="translate.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -367,6 +367,69 @@ void    Player::play()
 
 
 
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+Player::play_output_audio()
+********************************************************************************/
+void    Player::play_output_audio()
+{
+    if( demuxer == nullptr )
+        MYLOG( LOG::L_ERROR, "demuxer is null." );
+
+    bool        flag    =   false;
+    int         ret     =   0;
+    AVPacket    *pkt    =   nullptr;
+    Decode      *dc     =   nullptr;
+
+    // read frames from the file 
+    while( true ) 
+    {
+        ret     =   demuxer->demux();
+        if( ret < 0 )        
+            break;
+        
+        pkt     =   demuxer->get_packet();
+        flag    =   decode_manager->is_current_audio_index( pkt->stream_index );
+
+        if( flag == true )
+        {
+            dc  =   decode_manager->get_decoder( pkt->stream_index );
+
+            // send
+            ret =   dc->send_packet(pkt);
+            if( ret >= 0 )
+            {
+                // recv
+                while(true)
+                {
+                    ret =   dc->recv_frame(pkt->stream_index);
+                    if( ret <= 0 )
+                        break;
+            
+                    if( dc->output_frame_func != nullptr && dc->get_is_current() == true )
+                        dc->output_frame_func();
+                    dc->unref_frame();
+                }
+            
+            }
+        }
+
+        demuxer->unref_packet();
+    }
+    MYLOG( LOG::L_INFO, "play main loop end. it will flush." );
+
+    // flush
+    decode_manager->flush_decoders();
+    MYLOG( LOG::L_INFO, "Demuxing finish." )
+}
+#endif
+
+
+
+
+
+
+
 #ifdef USE_MT
 /*******************************************************************************
 Player::video_decode()

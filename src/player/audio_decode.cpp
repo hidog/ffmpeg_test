@@ -142,33 +142,34 @@ AudioDecode::output_pcm()
 int     AudioDecode::output_pcm()
 {
     static FILE *fp     =   fopen( output_pcm_path.c_str(), "wb+" );
+                                       
+    AVSampleFormat  sample_type =   dec_ctx->sample_fmt;
 
-    static constexpr int    out_channel =   2; // 目前預設輸出成兩聲道. 有空再改
+    int     channel     =   get_audio_channel(),
+            sample_rate =   get_audio_sample_rate(),
+            sample_size =   get_audeo_sample_size();
 
-    uint8_t     *data[2]    =   { 0 };  // S16 改 S32, 不確定是不是這邊的 array 要改成 4
-                                        // int         byte_count     =   frame->nb_samples * 2 * 2;  // S16 改 S32, 改成 *4, 理論上資料量會增加, 但不確定是否改的是這邊
-                                        // frame->nb_samples * 2 * 2     表示     分配樣本資料量 * 兩通道 * 每通道2位元組大小
-    int         byte_count  =   av_samples_get_buffer_size( NULL, out_channel, frame->nb_samples, AV_SAMPLE_FMT_S16, 0 );
+    int     byte_count  =   av_samples_get_buffer_size( NULL, channel, frame->nb_samples, sample_type, 0 );
 
+    uint8_t     *data[2]    =   { 0 };  
     unsigned char   *pcm    =   new uint8_t[byte_count];     
 
     if( pcm == nullptr )
         MYLOG( LOG::L_WARN, "pcm is null" );
 
-    data[0]     =   pcm;    // 輸出格式為 AV_SAMPLE_FMT_S16(packet型別), 所以轉換後的 LR 兩通道都存在data[0]中
-                            // 研究一下 S32 是不是存兩個資料
+    data[0]     =   pcm;                        
     int ret     =   swr_convert( swr_ctx,
                                  data, frame->nb_samples,                              //輸出 
                                  (const uint8_t**)frame->data, frame->nb_samples );    //輸入
 
     fwrite( pcm, 1, byte_count, fp );
-    //MYLOG( LOG::L_DEBUG, "audio write %d. frame_count = %d", byte_count, frame_count );
+
+    if( frame_count % 100 == 0 )
+        MYLOG( LOG::L_DEBUG, "audio write %d. frame_count = %d", byte_count, frame_count );
 
     return  0;
 }
 #endif
-
-
 
 
 

@@ -90,6 +90,17 @@ AudioDecode*    DecodeManager::get_current_audio_decoder()
 
 
 
+/*******************************************************************************
+DecodeManager::is_current_audio_index()
+********************************************************************************/
+bool    DecodeManager::is_current_audio_index( int index )
+{
+    return  current_audio_index == index;
+}
+
+
+
+
 
 /*******************************************************************************
 DecodeManager::get_current_subtitle_decoder()

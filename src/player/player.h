@@ -79,6 +79,7 @@ public:
 
 #ifdef FFMPEG_TEST
     void    play(); 
+    void    play_output_audio();
     void    set_output_jpg_path( std::string _path );
     void    set_output_audio_pcm_path( std::string _path );
 
