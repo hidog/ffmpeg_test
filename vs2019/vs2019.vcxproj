@@ -314,7 +314,9 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClCompile Include="..\src\player\video_decode_hw.cpp" />
     <ClCompile Include="..\src\player\video_decode_nv.cpp" />
     <ClCompile Include="..\src\tool.cpp" />
-    <ClCompile Include="translate.cpp" />
+    <ClCompile Include="translate.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="vs2019.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
@@ -359,7 +361,9 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClInclude Include="..\src\player\video_decode_hw.h" />
     <ClInclude Include="..\src\player\video_decode_nv.h" />
     <ClInclude Include="..\src\tool.h" />
-    <ClInclude Include="translate.h" />
+    <ClInclude Include="translate.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClInclude>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

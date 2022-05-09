@@ -309,7 +309,7 @@ void    Maker::work_translate()
     else
         s_encoder.set_eof( true );
 
-    v_encoder.next_frame();
+    v_encoder.next_frame_translate();
     a_encoder.next_frame();
     Encode*     encoder    =   nullptr;
 
@@ -359,7 +359,10 @@ void    Maker::work_translate()
         }  
 
         // update frame
-        encoder->next_frame();
+        if( encoder == &v_encoder )
+            v_encoder.next_frame_translate();
+        else
+            encoder->next_frame();
 
         /* 
             note: 理論上不用判斷 encoder->is_flush() == false, 

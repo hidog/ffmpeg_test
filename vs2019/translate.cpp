@@ -39,7 +39,7 @@ translate_media_file
 void    translate_media_file()
 {
     std::string     input_file  =   "H:/1.mkv";
-    std::string     sub_file    =   ""; //"H:/1.ass";
+    std::string     sub_file    =   "H:/1.ass";
     std::string     audio_file  =   "H:/a.data";
 
     auto setting    =   extraction_audio( input_file, audio_file );
@@ -67,7 +67,6 @@ extraction_audio
 ********************************************************************************/
 std::tuple<VideoDecodeSetting, AudioDecodeSetting>   extraction_audio( std::string input_file, std::string audio_file )
 {
-#ifdef FFMPEG_TEST
     DecodeSetting   setting;
     setting.io_type     =   IO_Type::DEFAULT;
     setting.filename    =   input_file;    
@@ -89,9 +88,6 @@ std::tuple<VideoDecodeSetting, AudioDecodeSetting>   extraction_audio( std::stri
     player.end();
 
     return  std::make_tuple( vs, as );
-#else
-    return  std::tuple<VideoDecodeSetting, AudioDecodeSetting>();
-#endif
 }
 
 
@@ -102,7 +98,6 @@ extraction_audio
 ********************************************************************************/
 void    re_encode_media( std::string output_file, std::string sub_file, VideoDecodeSetting vs, AudioDecodeSetting as )
 {
-#ifdef FFMPEG_TEST
     EncodeSetting   setting;
     setting.io_type =   IO_Type::DEFAULT;
 
@@ -129,9 +124,7 @@ void    re_encode_media( std::string output_file, std::string sub_file, VideoDec
 
     v_setting.src_width     =   vs.width;
     v_setting.src_height    =   vs.height;
-    //v_setting.src_pix_fmt   =   AV_PIX_FMT_BGRA;    // for QImage
-    v_setting.src_pix_fmt   =   AV_PIX_FMT_BGR24;    // for openCV
-
+    v_setting.src_pix_fmt   =   static_cast<AVPixelFormat>(vs.pix_fmt);
 
     AudioEncodeSetting  a_setting;
     a_setting.load_pcm_path     =   "H:/a.data";
@@ -156,5 +149,4 @@ void    re_encode_media( std::string output_file, std::string sub_file, VideoDec
     maker.work_translate();
     maker.end();
 
-#endif
 }

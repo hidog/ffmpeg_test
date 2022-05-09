@@ -444,6 +444,19 @@ void    VideoEncode::next_frame()
 
 
 
+/*******************************************************************************
+VideoEncode::next_frame_translate()
+********************************************************************************/
+void    VideoEncode::next_frame_translate()
+{
+    frame   =   encode::get_video_frame();
+    if( frame == nullptr )
+        eof_flag    =   true;
+}
+
+
+
+
 
 
 #ifdef FFMPEG_TEST

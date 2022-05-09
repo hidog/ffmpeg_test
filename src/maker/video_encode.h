@@ -35,6 +35,7 @@ public:
 
     void    list_frame_rate( AVCodecID code_id );
     void    list_pix_fmt( AVCodecID code_id );    
+    void    next_frame_translate();
 
 #ifdef FFMPEG_TEST
     void    init_sws( VideoEncodeSetting setting );

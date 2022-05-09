@@ -148,8 +148,8 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
 #ifdef FFMPEG_TEST
         av_opt_set( ctx->priv_data, "preset", "slow",    0 );
 #else
-        av_opt_set( ctx->priv_data, "preset", "ultrafast",   0 );
-        av_opt_set( ctx->priv_data, "tune",   "zerolatency", 0 );
+        av_opt_set( ctx->priv_data, "preset", "fast",   0 );
+        //av_opt_set( ctx->priv_data, "tune",   "zerolatency", 0 );
 #endif
     }
 
