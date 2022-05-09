@@ -171,7 +171,7 @@ void    PlayerStream::output_live_stream( Decode* dc )
         if( encode::is_video_queue_full() == true )
             return;
 
-        v_frame     =   get_new_v_frame();
+        v_frame     =   Player::get_new_v_frame();
         frame       =   dc->get_frame();
         av_frame_copy( v_frame, frame );
         v_frame->pts =   dc->get_frame_count();        
@@ -196,43 +196,6 @@ void    PlayerStream::output_live_stream( Decode* dc )
     {
         MYLOG( LOG::L_ERROR, "un handle type" )
     }
-}
-
-
-
-
-
-
-/*******************************************************************************
-PlayerStream::get_new_v_frame()
-********************************************************************************/
-AVFrame*    PlayerStream::get_new_v_frame()
-{
-    VideoDecode     *v_ptr  =   get_decode_manager()->get_current_video_decoder();
-
-    AVFrame*    v_frame     =   nullptr;
-    int         ret         =   0;
-    
-    //
-    v_frame   =   av_frame_alloc();
-    if( v_frame == nullptr ) 
-        MYLOG( LOG::L_ERROR, "v_frame alloc fail." );
-    v_frame->pts  =   0;
-
-    //
-    v_frame->format   =   v_ptr->get_pix_fmt();
-    v_frame->width    =   v_ptr->get_video_width();
-    v_frame->height   =   v_ptr->get_video_height();
-
-    ret     =   av_frame_get_buffer( v_frame, 0 );
-    if( ret < 0 ) 
-        MYLOG( LOG::L_ERROR, "get buffer fail." );
-
-    ret     =   av_frame_make_writable(v_frame);
-    if( ret < 0 )
-        assert(0);
-
-    return  v_frame;
 }
 
 

@@ -1,8 +1,34 @@
 ﻿#include "translate.h"
 
 #include <QString>
+#include <thread>
+
 #include "player/player.h"
 #include "maker/maker.h"
+
+
+
+
+
+
+
+/*******************************************************************************
+run_play
+********************************************************************************/
+void    run_play( std::string input_file )
+{
+    DecodeSetting   setting;
+    setting.io_type     =   IO_Type::DEFAULT;
+    setting.filename    =   input_file;    
+
+    Player  player;  
+
+    player.set( setting );
+    player.init();
+
+    player.play_decode_video();
+    player.end();
+}
 
 
 
@@ -13,15 +39,24 @@ translate_media_file
 void    translate_media_file()
 {
     std::string     input_file  =   "H:/1.mkv";
+    std::string     sub_file    =   ""; //"H:/1.ass";
     std::string     audio_file  =   "H:/a.data";
 
     auto setting    =   extraction_audio( input_file, audio_file );
+
+    std::thread     thr( run_play, input_file );
 
     std::string     output_file     =   "H:/output.mkv";
     VideoDecodeSetting  vs   =   std::get<0>(setting);
     AudioDecodeSetting  as   =   std::get<1>(setting);
 
-    re_encode_media( output_file, vs, as );
+    vs.gop_size      =   30;     // use for nvenc
+    vs.max_b_frames  =   5;
+    vs.cq            =   "25";
+
+    re_encode_media( output_file, sub_file, vs, as );
+
+    thr.join();
 }
 
 
@@ -65,7 +100,7 @@ std::tuple<VideoDecodeSetting, AudioDecodeSetting>   extraction_audio( std::stri
 /*******************************************************************************
 extraction_audio
 ********************************************************************************/
-void    re_encode_media( std::string output_file, VideoDecodeSetting vs, AudioDecodeSetting as )
+void    re_encode_media( std::string output_file, std::string sub_file, VideoDecodeSetting vs, AudioDecodeSetting as )
 {
 #ifdef FFMPEG_TEST
     EncodeSetting   setting;
@@ -73,7 +108,7 @@ void    re_encode_media( std::string output_file, VideoDecodeSetting vs, AudioDe
 
     setting.filename        =   output_file;
     setting.extension       =   "matroska";
-    setting.has_subtitle    =   false;
+    setting.has_subtitle    =   sub_file == "" ? false : true;
 
     VideoEncodeSetting  v_setting;
     v_setting.code_id   =   static_cast<AVCodecID>(vs.code_id);
@@ -83,8 +118,9 @@ void    re_encode_media( std::string output_file, VideoDecodeSetting vs, AudioDe
     v_setting.time_base.num     =   vs.time_base_num;
     v_setting.time_base.den     =   vs.time_base_den;
 
-    v_setting.gop_size      =   30;     // use for nvenc
-    v_setting.max_b_frames  =   15;
+    v_setting.gop_size      =   vs.gop_size;     // use for nvenc
+    v_setting.max_b_frames  =   vs.max_b_frames;
+    v_setting.cq            =   vs.cq;
 
     if( vs.pix_fmt == AV_PIX_FMT_YUV420P )
         v_setting.pix_fmt   =   AV_PIX_FMT_YUV420P;
@@ -98,7 +134,7 @@ void    re_encode_media( std::string output_file, VideoDecodeSetting vs, AudioDe
 
 
     AudioEncodeSetting  a_setting;
-    a_setting.load_pcm_path     =   "H:\\a.pcm";
+    a_setting.load_pcm_path     =   "H:/a.data";
     a_setting.code_id           =   static_cast<AVCodecID>(as.code_id);
     a_setting.bit_rate          =   320000;
     //a_setting.bit_rate          =   128000;
@@ -110,14 +146,14 @@ void    re_encode_media( std::string output_file, VideoDecodeSetting vs, AudioDe
     s_setting.code_id       =   AV_CODEC_ID_ASS;
     //s_setting.code_id       =   AV_CODEC_ID_SUBRIP;
     //s_setting.code_id       =   AV_CODEC_ID_MOV_TEXT;
-    s_setting.subtitle_file =   "F:\\test.ass";
+    s_setting.subtitle_file =   sub_file;
     s_setting.subtitle_ext  =   "ass";
 
 
     Maker   maker;
 
     maker.init( setting, v_setting, a_setting, s_setting );
-    maker.work();
+    maker.work_translate();
     maker.end();
 
 #endif

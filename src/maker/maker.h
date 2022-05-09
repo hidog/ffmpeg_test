@@ -38,6 +38,8 @@ public:
     void    work_without_subtitle();
     void    flush_encoder( Encode* enc );
 
+    void    work_translate();
+
 protected:
     
     // note: 未來有時間再看要不要移到 private, 並且增加 protected interface

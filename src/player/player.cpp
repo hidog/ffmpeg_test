@@ -376,6 +376,149 @@ void    Player::play()
 
 
 
+/*******************************************************************************
+Player::get_new_v_frame()
+********************************************************************************/
+AVFrame*    Player::get_new_v_frame()
+{
+    VideoDecode     *v_ptr  =   get_decode_manager()->get_current_video_decoder();
+
+    AVFrame*    v_frame     =   nullptr;
+    int         ret         =   0;
+    
+    //
+    v_frame   =   av_frame_alloc();
+    if( v_frame == nullptr ) 
+        MYLOG( LOG::L_ERROR, "v_frame alloc fail." );
+    v_frame->pts  =   0;
+
+    //
+    v_frame->format   =   v_ptr->get_pix_fmt();
+    v_frame->width    =   v_ptr->get_video_width();
+    v_frame->height   =   v_ptr->get_video_height();
+
+    ret     =   av_frame_get_buffer( v_frame, 0 );
+    if( ret < 0 ) 
+        MYLOG( LOG::L_ERROR, "get buffer fail." );
+
+    ret     =   av_frame_make_writable(v_frame);
+    if( ret < 0 )
+        assert(0);
+
+    return  v_frame;
+}
+
+
+
+
+/*******************************************************************************
+Player::output_video_frame_to_encode()
+********************************************************************************/
+void    Player::output_video_frame_to_encode( Decode* dc )
+{
+    AVFrame*    frame   =   nullptr;
+    AVFrame*    v_frame =   nullptr;
+
+    if( dc->get_decode_context_type() == AVMEDIA_TYPE_VIDEO )
+    {
+        if( encode::is_video_queue_full() == true )
+            return;
+
+        v_frame     =   get_new_v_frame();
+        frame       =   dc->get_frame();
+        av_frame_copy( v_frame, frame );
+        v_frame->pts =   dc->get_frame_count();        
+        add_video_frame_cb(v_frame);
+    }
+    else
+    {
+        MYLOG( LOG::L_ERROR, "decode type is not video" );
+        assert(0);
+    }
+}
+
+
+
+
+
+
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+Player::play_decode_video()
+********************************************************************************/
+void    Player::play_decode_video()
+{
+    if( demuxer == nullptr )
+        MYLOG( LOG::L_ERROR, "demuxer is null." );
+
+    output_live_stream_func     =   std::bind( &Player::output_video_frame_to_encode, this, std::placeholders::_1 );
+    add_video_frame_cb          =   std::bind( &encode::add_video_frame, std::placeholders::_1 );
+
+    int         ret     =   0;
+    AVPacket    *pkt    =   nullptr;
+    Decode      *dc     =   nullptr;
+    VideoData   vdata;
+
+    //
+    auto video_need_wait    =   [this] () 
+    {
+        if( decode_manager->exist_video_stream() == true && decode::get_video_size() >= MAX_QUEUE_SIZE )
+            return  true;  
+        else
+            return  false;
+    };
+
+    // read frames from the file 
+    while( true ) 
+    {
+        while( video_need_wait() == true )        
+            SLEEP_10MS;        
+
+        ret     =   demuxer->demux();
+        if( ret < 0 )        
+            break;
+        
+        pkt     =   demuxer->get_packet();
+
+        if( pkt->stream_index == decode_manager->get_current_video_index() )
+        {
+            dc  =   decode_manager->get_decoder( pkt->stream_index );
+
+            // send
+            ret =   dc->send_packet(pkt);
+            if( ret >= 0 )
+            {
+                // recv
+                while(true)
+                {
+                    ret =   dc->recv_frame(pkt->stream_index);
+                    if( ret <= 0 )
+                        break;            
+                    
+                    output_live_stream_func( dc );                    
+                    dc->unref_frame();
+                }
+            
+            }
+        }
+
+        demuxer->unref_packet();
+    }
+    MYLOG( LOG::L_INFO, "play main loop end. it will flush." );
+
+    // flush
+    decode_manager->flush_decoders();
+    MYLOG( LOG::L_INFO, "Demuxing finish." )
+}
+#endif
+
+
+
+
+
+
 #ifdef FFMPEG_TEST
 /*******************************************************************************
 Player::play_output_audio()
@@ -385,7 +528,6 @@ void    Player::play_output_audio()
     if( demuxer == nullptr )
         MYLOG( LOG::L_ERROR, "demuxer is null." );
 
-    bool        flag    =   false;
     int         ret     =   0;
     AVPacket    *pkt    =   nullptr;
     Decode      *dc     =   nullptr;
@@ -398,9 +540,8 @@ void    Player::play_output_audio()
             break;
         
         pkt     =   demuxer->get_packet();
-        flag    =   decode_manager->is_current_audio_index( pkt->stream_index );
 
-        if( flag == true )
+        if( pkt->stream_index == decode_manager->get_current_audio_index() )
         {
             dc  =   decode_manager->get_decoder( pkt->stream_index );
 

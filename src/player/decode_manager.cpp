@@ -103,6 +103,18 @@ bool    DecodeManager::is_current_audio_index( int index )
 
 
 /*******************************************************************************
+DecodeManager::is_current_video_index()
+********************************************************************************/
+bool    DecodeManager::is_current_video_index( int index )
+{
+    return  current_video_index == index;
+}
+
+
+
+
+
+/*******************************************************************************
 DecodeManager::get_current_subtitle_decoder()
 ********************************************************************************/
 SubDecode*      DecodeManager::get_current_subtitle_decoder()

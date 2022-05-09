@@ -28,11 +28,11 @@ public:
 
     void    output_live_stream( Decode* dc );
 
-    AVFrame*    get_new_v_frame();
+    //AVFrame*    get_new_v_frame(); // move to Player, for translate media file.
     AVFrame*    get_new_a_frame();
 
     std::function< void(AVFrame*) >     add_audio_frame_cb;
-    std::function< void(AVFrame*) >     add_video_frame_cb;
+    //std::function< void(AVFrame*) >     add_video_frame_cb; // move to Player, for translate media file. 
 
 private:
 

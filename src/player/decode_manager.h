@@ -55,6 +55,7 @@ public:
     int     get_current_subtitle_index();
 
     bool    is_current_audio_index( int index );
+    bool    is_current_video_index( int index );
 
     VideoDecode*    get_current_video_decoder();
     AudioDecode*    get_current_audio_decoder();

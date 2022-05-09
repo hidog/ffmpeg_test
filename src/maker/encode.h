@@ -37,6 +37,7 @@ public:
     bool    is_flush();
     void    set_flush( bool flag );
     void    set_frame( AVFrame* _f );
+    void    set_eof( bool flag );
 
     void        set_stream_time_base( AVRational _stb );
     AVRational  get_stream_time_base();

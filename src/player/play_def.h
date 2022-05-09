@@ -91,11 +91,10 @@ struct VideoDecodeSetting
     int     time_base_num;
     int     time_base_den;
     int     pix_fmt;
+    int     gop_size;
+    int     max_b_frames;
+    std::string     cq;
 };
-
-
-
-
 
 
 

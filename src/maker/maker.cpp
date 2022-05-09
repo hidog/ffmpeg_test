@@ -283,6 +283,118 @@ void    Maker::work_without_subtitle()
 
 
 /*******************************************************************************
+Maker::work_translate()
+********************************************************************************/
+void    Maker::work_translate()
+{
+    muxer->write_header();
+
+    // note: stream_time_base 會在 write header 後改變值, 所以需要再 write header 後做設置.
+    AVRational  stb;
+    stb     =   muxer->get_video_stream_timebase();
+    v_encoder.set_stream_time_base(stb);
+    stb     =   muxer->get_audio_stream_timebase();
+    a_encoder.set_stream_time_base(stb);
+    if( setting.has_subtitle == true )
+    {
+        stb     =   muxer->get_sub_stream_timebase();
+        s_encoder.set_stream_time_base(stb);
+    }
+    
+    //
+    int     ret     =   0;
+
+    if( setting.has_subtitle == true )
+        s_encoder.load_all_subtitle();
+    else
+        s_encoder.set_eof( true );
+
+    v_encoder.next_frame();
+    a_encoder.next_frame();
+    Encode*     encoder    =   nullptr;
+
+    //
+    while( v_encoder.end_of_file() == false || a_encoder.end_of_file() == false || s_encoder.end_of_file() == false )
+    {       
+        //
+        if( v_encoder <= a_encoder )
+        {
+            if( v_encoder <= s_encoder )
+                encoder     =   &v_encoder;
+            else 
+                encoder     =   &s_encoder;
+        }
+        else
+        {
+            if( a_encoder <= s_encoder )
+                encoder     =   &a_encoder;
+            else
+                encoder     =   &s_encoder;
+        }
+
+        // send
+        ret     =   encoder->send_frame();
+        if( ret < 0 )
+        {
+            MYLOG( LOG::L_ERROR, "send fail." );
+            break;
+        }
+
+        // recv
+        while( ret >= 0 ) 
+        {
+            ret     =   encoder->recv_frame();
+            if( ret == AVERROR(EAGAIN) || ret == AVERROR_EOF )
+                break;
+            else if( ret < 0 )
+            {
+                MYLOG( LOG::L_ERROR, "recv fail." );
+                break;
+            }
+
+            encoder->encode_timestamp();
+            auto pkt    =   encoder->get_pkt();
+            muxer->write_frame( pkt );
+            encoder->unref_data();
+        }  
+
+        // update frame
+        encoder->next_frame();
+
+        /* 
+            note: 理論上不用判斷 encoder->is_flush() == false, 
+            因為 flush 後, 會處理另一個 stream, 所以無法跑進已經 flush 過的stream.
+            保險起見加一個檢查
+        */
+        if( encoder->end_of_file() == true && encoder->is_flush() == false )
+            flush_encoder( encoder );
+    }
+
+    //
+    if( s_encoder.get_queue_size() > 0 )
+        MYLOG( LOG::L_WARN, "subtitie queue is not empty." );
+    if( s_encoder.is_flush() == false )
+        MYLOG( LOG::L_WARN, "subtitie not flush." );
+    
+    // flush
+    if( s_encoder.is_flush() == false )
+        flush_encoder( &s_encoder );
+    if( v_encoder.is_flush() == false )
+        flush_encoder( &v_encoder );
+    if( a_encoder.is_flush() == false )
+        flush_encoder( &a_encoder );
+
+    //
+    muxer->write_end();
+
+    MYLOG( LOG::L_INFO, "encode finish." );
+}
+
+
+
+
+
+/*******************************************************************************
 Maker::work()
 ********************************************************************************/
 void Maker::work()

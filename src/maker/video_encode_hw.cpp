@@ -153,8 +153,8 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
 #endif
     }
 
-    // 摸CRF把计
-    av_opt_set( ctx, "cq", "20", AV_OPT_SEARCH_CHILDREN );  // ㏕﹚珇借砞﹚
+    // 摸CRF把计    
+    av_opt_set( ctx, "cq", setting.cq.c_str(), AV_OPT_SEARCH_CHILDREN );  // ㏕﹚珇借砞﹚
 
 
     src_width   =   setting.src_width;

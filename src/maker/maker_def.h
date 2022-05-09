@@ -45,6 +45,7 @@ struct VideoEncodeSetting
 
     int     gop_size;
     int     max_b_frames;
+    std::string     cq;
 
     int             src_width;
     int             src_height;

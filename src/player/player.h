@@ -20,7 +20,7 @@
 
 
 struct AVPacket;
-
+struct AVFrame;
 
 
 // 若有需要, 增加抽象介面.
@@ -72,6 +72,11 @@ public:
 
     DecodeManager*  get_decode_manager();
 
+    void        output_video_frame_to_encode( Decode* dc );
+    AVFrame*    get_new_v_frame();
+
+    std::function< void(AVFrame*) >     add_video_frame_cb;
+
 #ifdef USE_MT
     void    play_QT_multi_thread();
     void    video_decode();
@@ -81,6 +86,7 @@ public:
 #ifdef FFMPEG_TEST
     void    play(); 
     void    play_output_audio();
+    void    play_decode_video();
     void    set_output_jpg_path( std::string _path );
     void    set_output_audio_pcm_path( std::string _path );
 
