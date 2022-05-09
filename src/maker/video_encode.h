@@ -35,12 +35,12 @@ public:
 
     void    list_frame_rate( AVCodecID code_id );
     void    list_pix_fmt( AVCodecID code_id );    
-    void    next_frame_translate();
 
 #ifdef FFMPEG_TEST
     void    init_sws( VideoEncodeSetting setting );
     void    get_fram_from_file_QT();
     void    get_fram_from_file_openCV();
+    void    next_frame_translate();
 
     // 這兩個測試用, 目前不能動
     void    encode_test();

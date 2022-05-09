@@ -443,16 +443,30 @@ void    VideoEncode::next_frame()
 
 
 
-
+#ifdef FFMPEG_TEST
 /*******************************************************************************
 VideoEncode::next_frame_translate()
 ********************************************************************************/
 void    VideoEncode::next_frame_translate()
 {
-    frame   =   encode::get_video_frame();
-    if( frame == nullptr )
+    static int  frame_count     =   0;
+    if( frame_count % 100 == 0 )
+        MYLOG( LOG::L_INFO, "get %d frame", frame_count );
+
+    frame_count++;
+
+    AVFrame     *vf   =   encode::get_video_frame();
+
+    if( vf != nullptr )
+    {
+        sws_scale( sws_ctx, vf->data,    vf->linesize, 0, frame->height,  // src
+                            frame->data, frame->linesize );               // dst
+        av_frame_free( &vf );
+    }
+    else
         eof_flag    =   true;
 }
+#endif
 
 
 
