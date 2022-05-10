@@ -445,6 +445,7 @@ void    Player::output_video_frame_to_encode( Decode* dc )
         av_frame_copy( v_frame, frame );
         v_frame->pts =   dc->get_frame_count();
         add_video_frame_cb(v_frame);
+        //MYLOG( LOG::L_DEBUG, "v_frame pts = %d", v_frame->pts );
     }
     else
     {
@@ -500,7 +501,7 @@ void    Player::play_decode_video()
 
         if( pkt->stream_index == decode_manager->get_current_video_index() )
         {
-            dc  =   decode_manager->get_decoder( pkt->stream_index );
+            dc  =   decode_manager->get_current_video_decoder();
 
             // send
             ret =   dc->send_packet(pkt);
@@ -525,7 +526,24 @@ void    Player::play_decode_video()
     MYLOG( LOG::L_INFO, "play main loop end. it will flush." );
 
     // flush
-    decode_manager->flush_decoders();
+    //decode_manager->flush_decoders();
+    dc      =   decode_manager->get_current_video_decoder();
+    ret     =   dc->send_packet( nullptr );
+    if( ret >= 0 )
+    {
+        // recv
+        while(true)
+        {
+            ret =   dc->recv_frame( -1 );
+            if( ret <= 0 )
+                break;            
+                    
+            output_live_stream_func( dc );                    
+            dc->unref_frame();
+        }
+            
+    }
+
     MYLOG( LOG::L_INFO, "Demuxing finish." )
 
     encode::set_is_finish( true );

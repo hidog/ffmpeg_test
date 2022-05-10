@@ -346,6 +346,7 @@ VideoDecode::get_video_time_base_num()
 int     VideoDecode::get_video_time_base_num()
 {
     return  dec_ctx->time_base.num;
+    //return  stream->r_frame_rate.num;
 }
 
 
@@ -356,6 +357,7 @@ VideoDecode::get_video_time_base_den()
 int     VideoDecode::get_video_time_base_den()
 {
     return  dec_ctx->time_base.den;
+    //return  stream->r_frame_rate.den;
 }
 
 
