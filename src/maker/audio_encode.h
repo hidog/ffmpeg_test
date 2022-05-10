@@ -47,6 +47,9 @@ public:
     void    unref_data() override;
     int64_t get_pts() override;
 
+    AVSampleFormat  to_planner( AVSampleFormat fmt );
+    AVSampleFormat  to_packed( AVSampleFormat fmt );
+
 #ifdef FFMPEG_TEST
     void    init_swr( AudioEncodeSetting setting );
     void    get_frame_from_pcm_file();
@@ -62,6 +65,8 @@ private:
     bool    check_sample_fmt( AVCodec *codec, AVSampleFormat sample_fmt );
     int     select_sample_rate( AVCodec *codec );
     int     select_channel_layout( AVCodec *codec );
+
+    AVSampleFormat  file_fmt;
 
 #ifdef FFMPEG_TEST
     char*   adts_head( int packetlen );

@@ -139,6 +139,16 @@ void    VideoDecode::set_subtitle_decoder( SubDecode* sd )
 
 
 
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoDecode::remove_subtitle()
+********************************************************************************/
+void    VideoDecode::remove_subtitle()
+{
+    sub_dec     =   nullptr;
+}
+#endif
+
 
 
 /*******************************************************************************
@@ -335,7 +345,7 @@ VideoDecode::get_video_time_base_num()
 ********************************************************************************/
 int     VideoDecode::get_video_time_base_num()
 {
-    return  stream->time_base.num;
+    return  dec_ctx->time_base.num;
 }
 
 
@@ -345,7 +355,7 @@ VideoDecode::get_video_time_base_den()
 ********************************************************************************/
 int     VideoDecode::get_video_time_base_den()
 {
-    return  stream->time_base.den;
+    return  dec_ctx->time_base.den;
 }
 
 

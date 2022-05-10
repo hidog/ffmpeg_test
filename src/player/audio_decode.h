@@ -42,6 +42,7 @@ public:
     int     get_audio_sample_format();
     int     get_audeo_sample_size();
     int     get_audio_sample_type();
+    int     get_audio_sample_fmt();
     int     get_audio_code_id();
 
     void        output_audio_frame_info();    
@@ -50,6 +51,7 @@ public:
 
 #ifdef FFMPEG_TEST
     int     output_pcm();
+    int     extract_audio_to_file();
     void    set_output_audio_pcm_path( std::string _path );
 #endif
 
@@ -67,6 +69,7 @@ private:
 
 #ifdef FFMPEG_TEST
     std::string     output_pcm_path =   "H:\\test.pcm";
+    FILE    *audio_fp   =   nullptr;
 #endif
 
 };

@@ -19,7 +19,7 @@ extern "C" {
 AudioEncode::AudioEncode()
 ********************************************************************************/
 AudioEncode::AudioEncode()
-    :   Encode()
+    :   Encode(), file_fmt(AV_SAMPLE_FMT_NONE)
 {}
 
 
@@ -234,6 +234,64 @@ void    AudioEncode::end()
 
 
 
+
+/*******************************************************************************
+AudioEncode::to_planner()
+********************************************************************************/
+AVSampleFormat  AudioEncode::to_planner( AVSampleFormat fmt )
+{
+    switch(fmt)
+    {
+    case AV_SAMPLE_FMT_U8:
+        return  AV_SAMPLE_FMT_U8P;
+    case AV_SAMPLE_FMT_S16:
+        return  AV_SAMPLE_FMT_S16P;
+    case AV_SAMPLE_FMT_S32:
+        return  AV_SAMPLE_FMT_S32P;
+    case AV_SAMPLE_FMT_FLT:
+        return  AV_SAMPLE_FMT_FLTP;
+    case AV_SAMPLE_FMT_DBL:
+        return  AV_SAMPLE_FMT_DBLP;
+    case AV_SAMPLE_FMT_S64:
+        return  AV_SAMPLE_FMT_S64P;
+    default:
+        return  fmt;
+    }
+}
+
+
+
+
+
+    
+/*******************************************************************************
+AudioEncode::to_packed()
+********************************************************************************/
+AVSampleFormat  AudioEncode::to_packed( AVSampleFormat fmt )
+{
+    switch(fmt)
+    {
+    case AV_SAMPLE_FMT_U8P:
+        return  AV_SAMPLE_FMT_U8;
+    case AV_SAMPLE_FMT_S16P:
+        return  AV_SAMPLE_FMT_S16;
+    case AV_SAMPLE_FMT_S32P:
+        return  AV_SAMPLE_FMT_S32;
+    case AV_SAMPLE_FMT_FLTP:
+        return  AV_SAMPLE_FMT_FLT;
+    case AV_SAMPLE_FMT_DBLP:
+        return  AV_SAMPLE_FMT_DBL;
+    case AV_SAMPLE_FMT_S64P:
+        return  AV_SAMPLE_FMT_S64;
+    default:    
+        return  fmt;
+    }
+}
+
+
+
+
+
 /*******************************************************************************
 AudioEncode::init()
 ********************************************************************************/
@@ -253,14 +311,16 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
         ctx->bit_rate   =   setting.bit_rate;
 
     // format可更改,但支援度跟codec有關.
-    if( code_id == AV_CODEC_ID_MP3 )
-        ctx->sample_fmt     =   AV_SAMPLE_FMT_S16P;
+    ctx->sample_fmt     =   static_cast<AVSampleFormat>(setting.sample_fmt);
+    file_fmt            =   to_packed( ctx->sample_fmt );
+    /*if( code_id == AV_CODEC_ID_MP3 )
+        ctx->sample_fmt     =   to_planner( src_fmt );
     else if( code_id == AV_CODEC_ID_AAC || code_id == AV_CODEC_ID_AC3 || code_id == AV_CODEC_ID_VORBIS )
-        ctx->sample_fmt     =   AV_SAMPLE_FMT_FLTP;
+        ctx->sample_fmt     =   to_planner( src_fmt );
     else if( code_id == AV_CODEC_ID_MP2 || code_id == AV_CODEC_ID_FLAC )
-        ctx->sample_fmt     =   AV_SAMPLE_FMT_S16;
+        ctx->sample_fmt     =   to_packed( src_fmt );
     else    
-        MYLOG( LOG::L_ERROR, "un handle codec" );    
+        MYLOG( LOG::L_ERROR, "un handle codec" );*/
 
     if( false == check_sample_fmt( (AVCodec*)codec, ctx->sample_fmt ) )
         MYLOG( LOG::L_ERROR, "fmt fail." );
@@ -339,7 +399,7 @@ void    AudioEncode::init_swr( AudioEncodeSetting setting )
 
     av_opt_set_int        ( swr_ctx, "in_channel_count",   channel,                0 );
     av_opt_set_int        ( swr_ctx, "in_sample_rate",     setting.sample_rate,    0 );
-    av_opt_set_sample_fmt ( swr_ctx, "in_sample_fmt",      sample_fmt,             0 );
+    av_opt_set_sample_fmt ( swr_ctx, "in_sample_fmt",      file_fmt,               0 );
     
     av_opt_set_int        ( swr_ctx, "out_channel_count",  ctx->channels,       0 );
     av_opt_set_int        ( swr_ctx, "out_sample_rate",    ctx->sample_rate,    0 );
@@ -353,7 +413,7 @@ void    AudioEncode::init_swr( AudioEncodeSetting setting )
     if( pcm[0] != nullptr )
         MYLOG( LOG::L_ERROR, "pc is not null" );
 
-    pcm_size    =   av_samples_get_buffer_size( NULL, ctx->channels, ctx->frame_size, AV_SAMPLE_FMT_S16, 0 );
+    pcm_size    =   av_samples_get_buffer_size( NULL, ctx->channels, ctx->frame_size, file_fmt, 0 );
     pcm[0]      =   new int16_t[pcm_size];
 
     if( pcm[0] == nullptr )
@@ -631,7 +691,7 @@ AudioEncode::get_frame_from_pcm_file()
 ********************************************************************************/
 void    AudioEncode::get_frame_from_pcm_file()
 {
-    static int  bytes_per_sample   =   av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+    static int  bytes_per_sample   =   av_get_bytes_per_sample(file_fmt);
     static int  sp_count  =   pcm_size / ctx->channels / bytes_per_sample;
     AVCodecID   code_id   =   ctx->codec_id; 
     int     ret;

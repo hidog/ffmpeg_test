@@ -106,7 +106,8 @@ int     AudioDecode::init()
     //
 #ifdef FFMPEG_TEST
     //output_frame_func   =   std::bind( &VideoDecode::output_jpg_by_QT, this );
-    output_frame_func   =   std::bind( &AudioDecode::output_pcm, this );
+    //output_frame_func   =   std::bind( &AudioDecode::output_pcm, this );
+    output_frame_func   =   std::bind( &AudioDecode::extract_audio_to_file, this );    
 #endif
 
     Decode::init();
@@ -141,7 +142,7 @@ AudioDecode::output_pcm()
 ********************************************************************************/
 int     AudioDecode::output_pcm()
 {
-    static FILE *fp     =   fopen( output_pcm_path.c_str(), "wb+" );
+    FILE *fp  =   fopen( output_pcm_path.c_str(), "wb+" );
                                        
     AVSampleFormat  sample_type =   dec_ctx->sample_fmt;
 
@@ -163,6 +164,46 @@ int     AudioDecode::output_pcm()
                                  (const uint8_t**)frame->data, frame->nb_samples );    //¿é¤J
 
     fwrite( pcm, 1, byte_count, fp );
+
+    if( frame_count % 100 == 0 )
+        MYLOG( LOG::L_DEBUG, "audio write %d. frame_count = %d", byte_count, frame_count );
+
+    return  0;
+}
+#endif
+
+
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+AudioDecode::extract_audio_to_file()
+********************************************************************************/
+int    AudioDecode::extract_audio_to_file()
+{
+    if( audio_fp == nullptr )
+        audio_fp    =   fopen( output_pcm_path.c_str(), "wb+" );
+                                       
+    AVSampleFormat  sample_type =   dec_ctx->sample_fmt;
+
+    int     channel     =   get_audio_channel(),
+            sample_rate =   get_audio_sample_rate(),
+            sample_size =   get_audeo_sample_size();
+
+    int     byte_count  =   av_samples_get_buffer_size( NULL, channel, frame->nb_samples, sample_type, 0 );
+
+    uint8_t     *data[2]    =   { 0 };  
+    unsigned char   *pcm    =   new uint8_t[byte_count];     
+
+    if( pcm == nullptr )
+        MYLOG( LOG::L_WARN, "pcm is null" );
+
+    data[0]     =   pcm;                        
+    int ret     =   swr_convert( swr_ctx,
+                                 data, frame->nb_samples,                              //¿é¥X 
+                                 (const uint8_t**)frame->data, frame->nb_samples );    //¿é¤J
+
+    fwrite( pcm, 1, byte_count, audio_fp );
 
     if( frame_count % 100 == 0 )
         MYLOG( LOG::L_DEBUG, "audio write %d. frame_count = %d", byte_count, frame_count );
@@ -201,6 +242,14 @@ int     AudioDecode::end()
     sample_rate     =   0;
     channel_layout  =   0;
     sample_fmt      =   AV_SAMPLE_FMT_NONE;
+
+#ifdef FFMPEG_TEST
+    if( audio_fp != nullptr )
+    {
+        fclose(audio_fp);
+        audio_fp    =   nullptr;
+    }
+#endif
 
     Decode::end();
     return  R_SUCCESS;
@@ -329,6 +378,17 @@ int     AudioDecode::get_audio_sample_type()
     default:
         MYLOG( LOG::L_ERROR, "un defined." );
     }
+}
+
+
+
+
+/*******************************************************************************
+AudioDecode::get_audio_sample_fmt()
+********************************************************************************/
+int     AudioDecode::get_audio_sample_fmt()
+{
+    return  dec_ctx->sample_fmt;
 }
 
 

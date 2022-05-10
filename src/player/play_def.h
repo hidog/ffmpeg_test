@@ -69,6 +69,7 @@ struct AudioDecodeSetting
     int     sample_rate;
     int     sample_size;
     int     sample_type;
+    int     sample_fmt;
     int     code_id;
 };
 

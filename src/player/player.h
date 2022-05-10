@@ -59,7 +59,6 @@ public:
     bool    is_embedded_subtitle();
     bool    is_file_subtitle();
 
-
     //void    init_subtitle( AVFormatContext *fmt_ctx );
     void    handle_seek();    
     void    clear_setting();
@@ -89,6 +88,7 @@ public:
     void    play_decode_video();
     void    set_output_jpg_path( std::string _path );
     void    set_output_audio_pcm_path( std::string _path );
+    void    remove_subtitle();
 
     std::function<void(QImage)>     output_video_frame_func;
     std::function<void(AudioData)>  output_audio_pcm_func;

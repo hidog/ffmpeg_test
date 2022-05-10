@@ -63,6 +63,7 @@ public:
     int     output_jpg_by_openCV();
     int     test_image_process();
     void    set_output_jpg_path( std::string _path );
+    void    remove_subtitle();
 #endif
 
 //private:

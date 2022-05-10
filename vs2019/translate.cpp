@@ -7,8 +7,9 @@
 #include "maker/maker.h"
 
 
-
-
+namespace {
+std::string     audio_file;
+} // end anonymous namespace 
 
 
 
@@ -25,7 +26,8 @@ void    run_play( std::string input_file )
 
     player.set( setting );
     player.init();
-
+    player.remove_subtitle();
+    
     player.play_decode_video();
     player.end();
 }
@@ -38,11 +40,12 @@ translate_media_file
 ********************************************************************************/
 void    translate_media_file()
 {
+    audio_file  =   "H:/a.data";
+
     std::string     input_file  =   "H:/1.mkv";
     std::string     sub_file    =   "H:/1.ass";
-    std::string     audio_file  =   "H:/a.data";
 
-    auto setting    =   extraction_audio( input_file, audio_file );
+    auto setting    =   extraction_audio( input_file );
 
     std::thread     thr( run_play, input_file );
 
@@ -65,7 +68,7 @@ void    translate_media_file()
 /*******************************************************************************
 extraction_audio
 ********************************************************************************/
-std::tuple<VideoDecodeSetting, AudioDecodeSetting>   extraction_audio( std::string input_file, std::string audio_file )
+std::tuple<VideoDecodeSetting, AudioDecodeSetting>   extraction_audio( std::string input_file )
 {
     DecodeSetting   setting;
     setting.io_type     =   IO_Type::DEFAULT;
@@ -127,13 +130,13 @@ void    re_encode_media( std::string output_file, std::string sub_file, VideoDec
     v_setting.src_pix_fmt   =   static_cast<AVPixelFormat>(vs.pix_fmt);
 
     AudioEncodeSetting  a_setting;
-    a_setting.load_pcm_path     =   "H:/a.data";
+    a_setting.load_pcm_path     =   audio_file;
     a_setting.code_id           =   static_cast<AVCodecID>(as.code_id);
     a_setting.bit_rate          =   320000;
     //a_setting.bit_rate          =   128000;
     a_setting.sample_rate       =   as.sample_rate;
     a_setting.channel_layout    =   as.channel_layout;
-    a_setting.sample_fmt        =   as.sample_type;
+    a_setting.sample_fmt        =   as.sample_fmt;
 
     SubEncodeSetting   s_setting;
     s_setting.code_id       =   AV_CODEC_ID_ASS;

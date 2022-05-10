@@ -140,6 +140,21 @@ int     Player::init()
 
 
 
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+Player::remove_subtitle()
+
+work around
+在轉檔的時候使用.
+********************************************************************************/
+void    Player::remove_subtitle()
+{
+    auto    dc  =   decode_manager->get_current_video_decoder();
+    dc->remove_subtitle();
+}
+#endif
+
+
 
 
 
@@ -286,6 +301,7 @@ AudioDecodeSetting    Player::get_audio_setting()
         as.sample_rate  =   a_ptr->get_audio_sample_rate();
         as.sample_size  =   a_ptr->get_audeo_sample_size();
         as.sample_type  =   a_ptr->get_audio_sample_type();
+        as.sample_fmt   =   a_ptr->get_audio_sample_fmt();
         as.code_id      =   a_ptr->get_audio_code_id();
 
         as.channel_layout   =   a_ptr->get_audio_channel_layout();
@@ -421,13 +437,13 @@ void    Player::output_video_frame_to_encode( Decode* dc )
 
     if( dc->get_decode_context_type() == AVMEDIA_TYPE_VIDEO )
     {
-        if( encode::is_video_queue_full() == true )
-            return;
+        while( encode::get_video_size() >= 100 )        
+            SLEEP_10MS;        
 
         v_frame     =   get_new_v_frame();
         frame       =   dc->get_frame();
         av_frame_copy( v_frame, frame );
-        v_frame->pts =   dc->get_frame_count();        
+        v_frame->pts =   dc->get_frame_count();
         add_video_frame_cb(v_frame);
     }
     else
@@ -464,7 +480,7 @@ void    Player::play_decode_video()
     //
     auto video_need_wait    =   [this] () 
     {
-        if( decode_manager->exist_video_stream() == true && decode::get_video_size() >= MAX_QUEUE_SIZE )
+        if( decode_manager->exist_video_stream() == true && encode::get_video_size() >= 100 )
             return  true;  
         else
             return  false;
@@ -511,6 +527,8 @@ void    Player::play_decode_video()
     // flush
     decode_manager->flush_decoders();
     MYLOG( LOG::L_INFO, "Demuxing finish." )
+
+    encode::set_is_finish( true );
 }
 #endif
 
