@@ -101,7 +101,8 @@ void    Mux::init( EncodeSetting setting )
         s_stream    =   avformat_new_stream( output_ctx, nullptr );
         if( s_stream == nullptr )
             MYLOG( LOG::L_ERROR, "a_stream is nullptr." );
-        s_stream->id    =   output_ctx->nb_streams - 1;
+        s_stream->id            =   output_ctx->nb_streams - 1;
+        s_stream->disposition   |=  AV_DISPOSITION_FORCED;
     }
 }
 

@@ -165,7 +165,7 @@ void    SubEncode::init( int st_idx, SubEncodeSetting setting, bool need_global_
 
     // »Ý³]¸m
     ctx->pkt_timebase   =   AVRational{ 1, 1000 }; 
-    ctx->time_base      =   AVRational{ 1, 1000 };   
+    ctx->time_base      =   AVRational{ 1, 1000 };
 
     copy_sub_header();
 
