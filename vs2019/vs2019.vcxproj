@@ -282,37 +282,24 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\ffmpeg_example\hw_decode.c" />
-    <ClCompile Include="..\src\hw\NvDecoder.cpp" />
-    <ClCompile Include="..\src\hw\NvEncoder.cpp" />
-    <ClCompile Include="..\src\hw\NvEncoderCuda.cpp" />
-    <ClCompile Include="..\src\imgprcs\image_process.cpp" />
-    <ClCompile Include="..\src\IO\file_io.cpp" />
-    <ClCompile Include="..\src\IO\input_output.cpp" />
-    <ClCompile Include="..\src\IO\srt_io.cpp" />
     <ClCompile Include="..\src\maker\audio_encode.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\src\maker\encode.cpp" />
     <ClCompile Include="..\src\maker\maker.cpp" />
     <ClCompile Include="..\src\maker\maker_interface.cpp" />
-    <ClCompile Include="..\src\maker\maker_io.cpp" />
     <ClCompile Include="..\src\maker\mux.cpp" />
-    <ClCompile Include="..\src\maker\mux_io.cpp" />
     <ClCompile Include="..\src\maker\sub_encode.cpp" />
     <ClCompile Include="..\src\maker\video_encode.cpp" />
     <ClCompile Include="..\src\maker\video_encode_hw.cpp" />
-    <ClCompile Include="..\src\maker\video_encode_nv.cpp" />
     <ClCompile Include="..\src\player\audio_decode.cpp" />
     <ClCompile Include="..\src\player\decode.cpp" />
     <ClCompile Include="..\src\player\decode_manager.cpp" />
     <ClCompile Include="..\src\player\demux.cpp" />
-    <ClCompile Include="..\src\player\demux_io.cpp" />
     <ClCompile Include="..\src\player\player.cpp" />
-    <ClCompile Include="..\src\player\player_stream.cpp" />
     <ClCompile Include="..\src\player\sub_decode.cpp" />
     <ClCompile Include="..\src\player\video_decode.cpp" />
     <ClCompile Include="..\src\player\video_decode_hw.cpp" />
-    <ClCompile Include="..\src\player\video_decode_nv.cpp" />
     <ClCompile Include="..\src\tool.cpp" />
     <ClCompile Include="vs2019.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -323,14 +310,6 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ffmpeg_example\hw_decode.h" />
-    <ClInclude Include="..\src\hw\NvDecoder.h" />
-    <ClInclude Include="..\src\hw\NvEncoder.h" />
-    <ClInclude Include="..\src\hw\NvEncoderCuda.h" />
-    <ClInclude Include="..\src\imgprcs\image_process.h" />
-    <ClInclude Include="..\src\IO\file_io.h" />
-    <ClInclude Include="..\src\IO\input_output.h" />
-    <ClInclude Include="..\src\IO\io_def.h" />
-    <ClInclude Include="..\src\IO\srt_io.h" />
     <ClInclude Include="..\src\maker\audio_encode.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
     </ClInclude>
@@ -338,25 +317,19 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
     <ClInclude Include="..\src\maker\maker.h" />
     <ClInclude Include="..\src\maker\maker_def.h" />
     <ClInclude Include="..\src\maker\maker_interface.h" />
-    <ClInclude Include="..\src\maker\maker_io.h" />
     <ClInclude Include="..\src\maker\mux.h" />
-    <ClInclude Include="..\src\maker\mux_io.h" />
     <ClInclude Include="..\src\maker\sub_encode.h" />
     <ClInclude Include="..\src\maker\video_encode.h" />
     <ClInclude Include="..\src\maker\video_encode_hw.h" />
-    <ClInclude Include="..\src\maker\video_encode_nv.h" />
     <ClInclude Include="..\src\player\audio_decode.h" />
     <ClInclude Include="..\src\player\decode.h" />
     <ClInclude Include="..\src\player\decode_manager.h" />
     <ClInclude Include="..\src\player\demux.h" />
-    <ClInclude Include="..\src\player\demux_io.h" />
     <ClInclude Include="..\src\player\player.h" />
-    <ClInclude Include="..\src\player\player_stream.h" />
     <ClInclude Include="..\src\player\play_def.h" />
     <ClInclude Include="..\src\player\sub_decode.h" />
     <ClInclude Include="..\src\player\video_decode.h" />
     <ClInclude Include="..\src\player\video_decode_hw.h" />
-    <ClInclude Include="..\src\player\video_decode_nv.h" />
     <ClInclude Include="..\src\tool.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
