@@ -7,7 +7,7 @@
 #include "video_worker.h"
 #include "mainwindow.h"
 #include "tool.h"
-#include "player/player_stream.h"
+
 
 
 
@@ -16,12 +16,7 @@ Worker::Worker()
 ********************************************************************************/
 Worker::Worker( QObject *parent )
     :   QThread(parent)
-{
-    // note: 目前只支援 stream output. 有需要的話再增加錄影用的介面.
-    maker   =   create_maker_io();
-    if( maker == nullptr )
-        MYLOG( LOG::L_ERROR, "create maker fail." );
-}
+{}
 
 
 
@@ -31,8 +26,6 @@ Worker::~Worker()
 ********************************************************************************/
 Worker::~Worker()
 {
-    if( maker != nullptr )
-        delete  maker;
     if( player != nullptr )
     delete  player;
 }
@@ -80,35 +73,6 @@ QStringList Worker::get_subtitle_files( std::string filename )
 
 
 
-
-
-/*******************************************************************************
-Worker::set_output()
-********************************************************************************/
-void    Worker::set_output( bool enable, std::string _port )
-{
-    is_output   =   enable;
-    port        =   _port.empty() == false ? _port : "1234";
-}
-
-
-
-
-
-
-
-/*******************************************************************************
-Worker::set_type()
-********************************************************************************/
-void    Worker::set_type( WorkType _t )
-{
-    wtype    =   _t;
-}
-
-
-
-
-
 /*******************************************************************************
 Worker::set_ip()
 ********************************************************************************/
@@ -137,21 +101,9 @@ Worker::play_init()
 void    Worker::play_init()
 {
     DecodeSetting   setting;    
-    switch( wtype )
-    {
-    case WorkType::DEFAULT :
-        setting.io_type     =   IO_Type::DEFAULT;
-        setting.filename    =   filename;
-        setting.subname     =   subname;
-        break;
-    case WorkType::SRT :
-        setting.io_type     =   IO_Type::SRT_IO;
-        setting.srt_ip      =   ip;
-        setting.srt_port    =   port;
-        break;
-    default:
-        assert(0);
-    }
+
+    setting.filename    =   filename;
+    setting.subname     =   subname;
 
     //
     player->set( setting );
@@ -239,21 +191,6 @@ void    Worker::play()
 
 
 
-
-/*******************************************************************************
-Worker::output()
-********************************************************************************/
-void    Worker::output( MediaInfo media_info )
-{
-    MYLOG( LOG::L_INFO, "enable output." );
-    output_by_io( media_info, port, maker );
-}
-
-
-
-
-
-
 /*******************************************************************************
 Worker::run()
 ********************************************************************************/
@@ -262,46 +199,11 @@ void    Worker::run()
     // 確保沒在其他地方被初始化
     assert( player == nullptr );
 
-    if( is_output == false )
-        player  =   new Player; // 未來有需要的話, 增加 create_player(type)
-    else
-        player  =   new PlayerStream;
-
+    player  =   new Player; // 未來有需要的話, 增加 create_player(type)
     assert( player != nullptr );
 
     play_init(); // 為了取得 file 資訊, 將 play init 拆開來    
-
-    // note: wtype = default 代表從檔案讀取
-    // 目前暫不支援從 live stream output.
-    if( is_output == true && wtype == WorkType::DEFAULT )
-    {
-        encode::set_is_finish(false);
-
-        MediaInfo   media_info  =   player->get_media_info();
-
-#if defined(HW_DECODE) || defined(NV_DECODE)
-        if( media_info.pix_fmt == 64 )   // 64 = AV_PIX_FMT_YUV420P10LE
-            MYLOG( LOG::L_ERROR, "hw decode with yuv420p10 and hw encode could not work." );
-#endif
-
-        if( output_thr != nullptr )
-            MYLOG( LOG::L_ERROR, "output_thr not null." );
-        output_thr  =   new std::thread( &Worker::output, this, media_info );
-
-        while( maker->is_connect() == false )
-            SLEEP_10MS;
-    }
-
     play();
-
-    if( output_thr != nullptr && wtype == WorkType::DEFAULT )
-    {
-        encode::set_is_finish(true);
-
-        output_thr->join();
-        delete  output_thr;
-        output_thr  =   nullptr;
-    }
 }
 
 

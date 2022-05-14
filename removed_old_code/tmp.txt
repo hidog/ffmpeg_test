@@ -1,0 +1,90 @@
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoDecode::output_jpg_by_openCV()
+********************************************************************************/
+int     VideoDecode::output_jpg_by_openCV()
+{
+    // note: frame 本身有帶 width, height 的資訊
+    // int width = frame->width, height = frame->height;
+
+    /* 
+    yuv420 本身的資料是 width * height * 3 / 2, 一開始沒處理好造成錯誤
+    底下兩個方法, 一個是暴力硬幹 (有機會出錯, 有影片在這邊會造成錯誤)
+    一個是透過介面做轉換
+    */
+#if 0
+    // 某些情況下這段程式碼會出錯.
+    // 那時候 linesize 會出現不match的現象
+    cv::Mat     img     =   cv::Mat::zeros( height*3/2, width, CV_8UC1 );    
+    memcpy( img.data, frame->data[0], width*height );
+    memcpy( img.data + width*height, frame->data[1], width*height/4 );
+    memcpy( img.data + width*height*5/4, frame->data[2], width*height/4 );
+#else
+    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, AV_PIX_FMT_YUV420P, width, height );
+    cv::Mat img( cv::Size( width, height*3/2 ), CV_8UC1, video_dst_data[0] );
+#endif
+
+    cv::Mat     bgr;
+    cv::cvtColor( img, bgr, cv::COLOR_YUV2BGR_I420 );
+
+#if 1
+    // show image by opencv
+    cv::imshow( "RGB frame", bgr );
+    cv::waitKey(1);
+#else
+    static int output_count =   0;
+    char    output_path[1000];
+    sprintf( output_path, "%s\\%d.jpg",  opencv_jpg_root_path.c_str(), output_count++ );
+    cv::imwrite( output_path, bgr );
+#endif
+
+    return 0;
+}
+#endif
+
+
+
+
+
+
+
+
+#ifdef FFMPEG_TEST
+/*******************************************************************************
+VideoEncode::get_fram_from_file_openCV()
+
+這邊需要擴充, 以及考慮使用讀取檔案處理一些參數的 init
+********************************************************************************/
+void    VideoEncode::get_fram_from_file_openCV()
+{
+    char str[1000];
+    int ret;
+
+    sprintf( str, "%s\\%d.jpg", load_jpg_root_path.c_str(), frame_count );
+    if( frame_count % 100 == 0 )
+        MYLOG( LOG::L_DEBUG, "load jpg = %s", str );
+
+    cv::Mat img =   cv::imread( str, cv::IMREAD_COLOR );
+    if( img.empty() == true )
+    //if( frame_count > 1000 )
+    {
+        eof_flag    =   true;
+        return;
+    }
+
+    ret     =   av_frame_make_writable( frame );
+    if( ret < 0 )
+        assert(0);
+
+    size_t      bytes_per_line  =   img.channels() * img.cols;
+    int         linesize[8]     =   { bytes_per_line };
+    uint8_t     *data[4]        =   { img.ptr() };
+
+    sws_scale( sws_ctx, data, linesize, 0, img.rows, video_data, video_linesize );
+    av_image_copy( frame->data, frame->linesize, (const uint8_t**)video_data, video_linesize, ctx->pix_fmt, ctx->width, ctx->height );
+
+    frame->pts  =   frame_count;
+    frame_count++;
+}
+#endif

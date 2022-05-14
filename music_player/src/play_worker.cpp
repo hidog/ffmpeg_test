@@ -40,7 +40,6 @@ PlayWorker::play_init()
 void    PlayWorker::play_init()
 {
     DecodeSetting   setting;
-    setting.io_type     =   IO_Type::DEFAULT;
     setting.filename    =   filename;
 
     //
