@@ -11,12 +11,6 @@
 
 
 
-enum class WorkType
-{
-    DEFAULT     =   0,          // load from file.
-    SRT,
-};
-
 
 
 
@@ -41,13 +35,8 @@ public:
     bool    is_set_src_file();
     void    finish_set_video();
 
-    void    set_type( WorkType _t );
     void    set_ip( std::string _ip );
     void    set_port( std::string _port );
-    
-    // use for output    
-    void    set_output( bool enable, std::string _port );
-    void    output( MediaInfo media_info );
 
     QStringList     get_subtitle_files( std::string filename );
 
@@ -67,8 +56,6 @@ signals:
 
 private:
 
-    WorkType    wtype    =   WorkType::DEFAULT;
-
     Player  *player     =   nullptr;
     bool    is_set_video    =   false;
     bool    is_play_end     =   true;
@@ -82,9 +69,6 @@ private:
     // use for output. 
     std::thread*    output_thr  =   nullptr;  // 方便測試, 先這樣寫. 日後重構
     bool            is_output   =   false;
-
-    // use for encode and output.
-    MakerInterface*     maker   =   nullptr;
 
     QMutex  end_lock;
 };

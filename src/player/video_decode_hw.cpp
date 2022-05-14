@@ -1,12 +1,5 @@
 #include "video_decode_hw.h"
-
-#include "../hw/NvDecoder.h"
-#include "../hw/NvCodecUtils.h"
-
 #include "sub_decode.h"
-#include "../imgprcs/image_process.h"
-
-
 
 extern "C" {
 
