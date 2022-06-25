@@ -282,6 +282,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\ffmpeg_example\hw_decode.c" />
+    <ClCompile Include="..\ffmpeg_example\muxing.cpp" />
     <ClCompile Include="..\src\maker\audio_encode.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
     </ClCompile>
@@ -310,6 +311,7 @@ copy D:\code\ffmpeg_test\vs2019\x64\Release\*.lib D:\code\ffmpeg_test\</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ffmpeg_example\hw_decode.h" />
+    <ClInclude Include="..\ffmpeg_example\muxing.h" />
     <ClInclude Include="..\src\maker\audio_encode.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_cmd|x64'">false</ExcludedFromBuild>
     </ClInclude>
