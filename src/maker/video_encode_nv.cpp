@@ -240,7 +240,7 @@ int    VideoEncodeNV::open_convert_demux()
 	AVIOContext     *io_ctx     =   avio_alloc_context( demux_buffer, demux_buffer_size, 0, (void*)this, demux_read, nullptr, nullptr );
     assert( io_ctx != nullptr );
 
-	const AVInputFormat   *input_fmt  =   nullptr;
+	AVInputFormat   *input_fmt  =   nullptr;
     ret     =   av_probe_input_buffer( io_ctx, &input_fmt, nullptr, nullptr, 0, 0 );
     assert( ret == 0 );
 	demux_ctx->pb =   io_ctx;
