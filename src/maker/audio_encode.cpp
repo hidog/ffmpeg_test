@@ -137,21 +137,21 @@ void    AudioEncode::list_channel_layout( AVCodecID code_id )
 {
     const AVCodec*     codec   =   avcodec_find_encoder(code_id);
 
-    const uint64_t  *p_cl   =   nullptr;
+    const AVChannelLayout  *p_cl    =   nullptr;
     uint64_t    best_ch_layout      =   0;
     int         best_nb_channels    =   0;
 
-    p_cl    =   codec->channel_layouts;
+    p_cl    =   codec->ch_layouts;
     if( p_cl == nullptr )
     {
         printf("can not list.\n");
         return;
     }
 
-    while( *p_cl != 0 ) 
+    while( p_cl != 0 ) 
     {
-        int nb_channels = av_get_channel_layout_nb_channels(*p_cl);
-        printf( "%s support channel layout %llu %d\n", avcodec_get_name(code_id), *p_cl, nb_channels );
+        int nb_channels = p_cl->nb_channels;
+        printf( "%s support channel layout %d\n", avcodec_get_name(code_id), nb_channels );
         p_cl++;
     }
 }
@@ -167,27 +167,28 @@ AudioEncode::select_channel_layout()
 ********************************************************************************/
 int     AudioEncode::select_channel_layout( AVCodec *codec )
 {
-    const uint64_t  *p_cl   =   nullptr;
-    uint64_t    best_ch_layout      =   0;
+    const AVChannelLayout  *p_cl    =   nullptr;
+    //uint64_t    best_ch_layout      =   0;
     int         best_nb_channels    =   0;
 
     if( codec->channel_layouts == nullptr )
         return AV_CH_LAYOUT_STEREO;
 
-    p_cl    =   codec->channel_layouts;
-    while( *p_cl != 0 ) 
+    p_cl    =   codec->ch_layouts;
+    while( p_cl != 0 ) 
     {
-        int     nb_channels     =   av_get_channel_layout_nb_channels(*p_cl);
+        int     nb_channels     =   p_cl->nb_channels;
 
         if( nb_channels > best_nb_channels ) 
         {
-            best_ch_layout      =   *p_cl;
+            //best_ch_layout      =   *p_cl;
             best_nb_channels    =   nb_channels;
         }
         p_cl++;
     }
 
-    return best_ch_layout;
+    //return best_ch_layout;
+    return best_nb_channels;
 }
 
 

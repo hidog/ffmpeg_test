@@ -64,6 +64,9 @@ av_get_default_channel_layout       ┬ржи layout
 ********************************************************************************/
 int     AudioDecode::init()
 {
+    AVChannelLayout     out_layout, in_layout;
+    int     res     =   0;
+
     sample_rate     =   dec_ctx->sample_rate;
     sample_fmt      =   dec_ctx->sample_fmt;
     channel_layout  =   av_get_default_channel_layout( dec_ctx->channels );
@@ -94,10 +97,21 @@ int     AudioDecode::init()
         break;
     }
 
-    swr_ctx     =   swr_alloc_set_opts( swr_ctx,
+    av_channel_layout_default( &out_layout, channel_layout );
+    av_channel_layout_default( &in_layout, channel_layout );
+
+    res     =   swr_alloc_set_opts2( &swr_ctx,
+                                     &out_layout, dst_fmt,    sample_rate,      // output
+                                     &in_layout,  sample_fmt, sample_rate,      // input
+                                     0, nullptr );
+
+    if( res < 0 )
+        MYLOG( LOG::L_ERROR, "set swr opt fail. error code = %d", res );
+
+    /*swr_ctx     =   swr_alloc_set_opts( swr_ctx,
                                         channel_layout, dst_fmt,    sample_rate,     // output
                                         channel_layout, sample_fmt, sample_rate,     // input 
-                                        NULL, NULL );
+                                        NULL, NULL );*/
     swr_init(swr_ctx);
 
     MYLOG( LOG::L_INFO, "audio sample format = %s", av_get_sample_fmt_name(sample_fmt) );

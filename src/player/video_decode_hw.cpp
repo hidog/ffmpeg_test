@@ -76,7 +76,7 @@ int     VideoDecodeHW::open_codec_context(  int stream_index, AVFormatContext *f
 
     // open context
     AVCodec     *dec    =   nullptr;
-    ret     =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_VIDEO, stream_index, -1, (AVCodec**)&dec, 0);  
+    ret     =   av_find_best_stream( fmt_ctx, AVMEDIA_TYPE_VIDEO, stream_index, -1, (const AVCodec**)&dec, 0);  
     if( ret < 0 ) 
     {
         MYLOG( LOG::L_ERROR, "Cannot find a video stream in the input file. ret = %d", ret );
