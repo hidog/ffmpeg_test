@@ -69,7 +69,7 @@ int     AudioDecode::init()
 
     sample_rate     =   dec_ctx->sample_rate;
     sample_fmt      =   dec_ctx->sample_fmt;
-    channel_layout  =   av_get_default_channel_layout( dec_ctx->channels );
+    channel_layout  =   dec_ctx->ch_layout.nb_channels; //  av_get_default_channel_layout( dec_ctx->channels );
 
     // 要改變 sample rate 可以參考 ffmpeg 官方範例.  resampling_audio                                              
     // S16 改 S32, 需要修改pcm的部分. 需要找時間研究
@@ -115,7 +115,7 @@ int     AudioDecode::init()
     swr_init(swr_ctx);
 
     MYLOG( LOG::L_INFO, "audio sample format = %s", av_get_sample_fmt_name(sample_fmt) );
-    MYLOG( LOG::L_INFO, "audio channel = %d, sample rate = %d", av_get_channel_layout_nb_channels(channel_layout), sample_rate );
+    MYLOG( LOG::L_INFO, "audio channel = %d, sample rate = %d", in_layout.nb_channels, sample_rate );
 
     //
 #ifdef FFMPEG_TEST
@@ -256,7 +256,8 @@ AudioDecode::get_audio_channel()
 ********************************************************************************/
 int     AudioDecode::get_audio_channel()
 {
-    return  dec_ctx->channels;
+    return dec_ctx->ch_layout.nb_channels;
+    //return  dec_ctx->channels;
     //return  stream->codecpar->channels;
 }
 
@@ -269,7 +270,8 @@ AudioDecode::get_audio_channel_layout()
 ********************************************************************************/
 int     AudioDecode::get_audio_channel_layout()
 {
-    return  dec_ctx->channel_layout;
+    //return  dec_ctx->channel_layout;
+    return  dec_ctx->ch_layout.nb_channels;
 }
 
 

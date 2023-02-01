@@ -1,14 +1,14 @@
 ﻿#include "player/player.h"
 #include "maker/maker_interface.h"
 
-#include "../ffmpeg_example/muxing.h"
+//#include "../ffmpeg_example/muxing.h"
 
 int main()
 {
     //maker_encode_example();
     //player_decode_example();
 
-    muxing();
+    //muxing();
 
     return 0;
 }
