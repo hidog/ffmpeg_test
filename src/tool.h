@@ -16,6 +16,7 @@ constexpr int HAVE_FRAME    =   1; // 需要用 1 來判斷是否還有 frame.
        
 #define SLEEP_10MS std::this_thread::sleep_for( std::chrono::milliseconds(10) )
 #define SLEEP_1MS std::this_thread::sleep_for( std::chrono::milliseconds(1) )
+#define SLEEP_1US std::this_thread::sleep_for( std::chrono::microseconds(1) )
 
 
 enum class LOG
@@ -71,13 +72,13 @@ struct MediaInfo
     int     pix_fmt;
 
     // audio
-    int     channel_layout;
+    int     channel;
     int     sample_rate;
     int     sample_fmt;
 
     MediaInfo() 
         : width(0), height(0), time_num(0), time_den(0), pix_fmt(0),
-          channel_layout(0), sample_rate(0), sample_fmt(0)
+          channel(0), sample_rate(0), sample_fmt(0)
     {}
 };
 

@@ -39,7 +39,6 @@ public:
 #ifdef FFMPEG_TEST
     void    init_sws( VideoEncodeSetting setting );
     void    get_fram_from_file_QT();
-    void    get_fram_from_file_openCV();
 
     // 這兩個測試用, 目前不能動
     void    encode_test();

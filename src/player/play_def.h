@@ -4,13 +4,9 @@
 
 #include <stdint.h>
 #include <QImage>
-#include "../IO/io_def.h"
-
 
 #define CPU_DECODE
 //#define HW_DECODE
-//#define NV_DECODE
-
 
 
 
@@ -23,7 +19,6 @@
 
 struct DecodeSetting
 {
-    IO_Type         io_type;
     std::string     filename;
     std::string     subname;           // •~±æ¶rπı¿…¶W
     std::string     srt_ip;
@@ -64,7 +59,8 @@ struct AudioDecodeSetting
 {
     int     channel;
     int     sample_rate;
-    //int     sample_size;
+    int     sample_size;
+    int     sample_type;
 };
 
 

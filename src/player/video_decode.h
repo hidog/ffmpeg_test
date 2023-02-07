@@ -56,8 +56,6 @@ public:
     int     flush() override;
     int     output_overlay_by_QT();   // ³B²z graphic subtitle
     int     output_jpg_by_QT();
-    int     output_jpg_by_openCV();
-    int     test_image_process();
     void    set_output_jpg_path( std::string _path );
 #endif
 

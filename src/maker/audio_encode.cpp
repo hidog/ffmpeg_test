@@ -45,7 +45,7 @@ AudioEncode::list_sample_format()
 ********************************************************************************/
 void    AudioEncode::list_sample_format( AVCodecID code_id )
 {
-    AVCodec                 *codec   =   avcodec_find_encoder(code_id);
+    const AVCodec           *codec   =   avcodec_find_encoder(code_id);
     const AVSampleFormat    *p_fmt   =   codec->sample_fmts;
 
     while( *p_fmt != AV_SAMPLE_FMT_NONE )
@@ -63,8 +63,8 @@ AudioEncode::list_sample_format()
 ********************************************************************************/
 void    AudioEncode::list_sample_rate( AVCodecID code_id )
 {
-    AVCodec*     codec   =   avcodec_find_encoder(code_id);
-    const int*   p_smp   =   codec->supported_samplerates;
+    const AVCodec*  codec   =   avcodec_find_encoder(code_id);
+    const int*      p_smp   =   codec->supported_samplerates;
 
     if( p_smp == nullptr )
     {
@@ -135,23 +135,25 @@ AudioEncode::list_channel_layout()
 ********************************************************************************/
 void    AudioEncode::list_channel_layout( AVCodecID code_id )
 {
-    AVCodec*     codec   =   avcodec_find_encoder(code_id);
+    const AVCodec*     codec   =   avcodec_find_encoder(code_id);
 
-    const uint64_t  *p_cl   =   nullptr;
+    const AVChannelLayout  *p_cl    =   nullptr;
     uint64_t    best_ch_layout      =   0;
     int         best_nb_channels    =   0;
 
-    p_cl    =   codec->channel_layouts;
+    p_cl    =   codec->ch_layouts;
     if( p_cl == nullptr )
     {
         printf("can not list.\n");
         return;
     }
 
-    while( *p_cl != 0 ) 
+    while( p_cl != 0 ) 
     {
-        int nb_channels = av_get_channel_layout_nb_channels(*p_cl);
-        printf( "%s support channel layout %llu %d\n", avcodec_get_name(code_id), *p_cl, nb_channels );
+        int nb_channels = p_cl->nb_channels;
+        if( nb_channels == 0 )
+            break;
+        printf( "%s support channel layout %d\n", avcodec_get_name(code_id), nb_channels );
         p_cl++;
     }
 }
@@ -165,29 +167,27 @@ void    AudioEncode::list_channel_layout( AVCodecID code_id )
 /*******************************************************************************
 AudioEncode::select_channel_layout()
 ********************************************************************************/
-int     AudioEncode::select_channel_layout( AVCodec *codec )
+int     AudioEncode::select_channel_layout( const AVCodec *codec )
 {
-    const uint64_t  *p_cl   =   nullptr;
-    uint64_t    best_ch_layout      =   0;
-    int         best_nb_channels    =   0;
+    const AVChannelLayout  *p_cl    =   nullptr;
+    int best_nb_channels    =   0;
 
-    if( codec->channel_layouts == nullptr )
+    if( codec->ch_layouts == nullptr )
         return AV_CH_LAYOUT_STEREO;
 
-    p_cl    =   codec->channel_layouts;
-    while( *p_cl != 0 ) 
+    p_cl    =   codec->ch_layouts;
+    while( p_cl != 0 ) 
     {
-        int     nb_channels     =   av_get_channel_layout_nb_channels(*p_cl);
+        int     nb_channels     =   p_cl->nb_channels;
+        if( nb_channels == 0 )
+            break;
 
         if( nb_channels > best_nb_channels ) 
-        {
-            best_ch_layout      =   *p_cl;
             best_nb_channels    =   nb_channels;
-        }
         p_cl++;
     }
 
-    return best_ch_layout;
+    return best_nb_channels;
 }
 
 
@@ -262,13 +262,12 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
     else    
         MYLOG( LOG::L_ERROR, "un handle codec" );    
 
-    if( false == check_sample_fmt( codec, ctx->sample_fmt ) ) 
+    if( false == check_sample_fmt( (AVCodec*)codec, ctx->sample_fmt ) )
         MYLOG( LOG::L_ERROR, "fmt fail." );
 
     // init setting
     ctx->sample_rate    =   setting.sample_rate; 
-    ctx->channel_layout =   setting.channel_layout;
-    ctx->channels       =   av_get_channel_layout_nb_channels(ctx->channel_layout);
+    av_channel_layout_default( &ctx->ch_layout, setting.channels );
 
     if( need_global_header == true )
         ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -291,7 +290,8 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
     // set param to frame.
     frame->nb_samples       =   ctx->frame_size;
     frame->format           =   ctx->sample_fmt;
-    frame->channel_layout   =   ctx->channel_layout;
+    av_channel_layout_copy( &frame->ch_layout, &ctx->ch_layout );
+
     frame->sample_rate      =   ctx->sample_rate;
     frame->pts              =   0; // -frame->nb_samples;  // 一個取巧的做法, 參考取得 frame 的code, 確保第一個 frame 的 pts 是 0
     
@@ -335,13 +335,13 @@ void    AudioEncode::init_swr( AudioEncodeSetting setting )
 
     // 輸入預設值, 未來再改成動態決定參數
     AVSampleFormat  sample_fmt  =   static_cast<AVSampleFormat>(setting.sample_fmt);
-    int     channel     =   av_get_channel_layout_nb_channels( setting.channel_layout );
+    int     channel     =   setting.channels; // av_get_channel_layout_nb_channels( setting.channel_layout );
 
-    av_opt_set_int        ( swr_ctx, "in_channel_count",   channel,                0 );
+    av_opt_set_int        ( swr_ctx, "in_channel_count",   channel,                0 );  // 之後改成新的寫法  av_opt_set_chlayout
     av_opt_set_int        ( swr_ctx, "in_sample_rate",     setting.sample_rate,    0 );
     av_opt_set_sample_fmt ( swr_ctx, "in_sample_fmt",      sample_fmt,             0 );
     
-    av_opt_set_int        ( swr_ctx, "out_channel_count",  ctx->channels,       0 );
+    av_opt_set_chlayout   ( swr_ctx, "out_chlayout",       &ctx->ch_layout,     0 );
     av_opt_set_int        ( swr_ctx, "out_sample_rate",    ctx->sample_rate,    0 );
     av_opt_set_sample_fmt ( swr_ctx, "out_sample_fmt",     ctx->sample_fmt,     0 );
 
@@ -353,7 +353,7 @@ void    AudioEncode::init_swr( AudioEncodeSetting setting )
     if( pcm[0] != nullptr )
         MYLOG( LOG::L_ERROR, "pc is not null" );
 
-    pcm_size    =   av_samples_get_buffer_size( NULL, ctx->channels, ctx->frame_size, AV_SAMPLE_FMT_S16, 0 );
+    pcm_size    =   av_samples_get_buffer_size( NULL, ctx->ch_layout.nb_channels, ctx->frame_size, AV_SAMPLE_FMT_S16, 0 );
     pcm[0]      =   new int16_t[pcm_size];
 
     if( pcm[0] == nullptr )
@@ -632,7 +632,7 @@ AudioEncode::get_frame_from_pcm_file()
 void    AudioEncode::get_frame_from_pcm_file()
 {
     static int  bytes_per_sample   =   av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
-    static int  sp_count  =   pcm_size / ctx->channels / bytes_per_sample;
+    static int  sp_count  =   pcm_size / ctx->ch_layout.nb_channels / bytes_per_sample;
     AVCodecID   code_id   =   ctx->codec_id; 
     int     ret;
 

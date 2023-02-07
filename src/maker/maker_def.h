@@ -4,7 +4,6 @@
 
 #include <stdint.h>
 #include <string>
-#include "../IO/io_def.h"
 
 
 extern "C" {
@@ -24,7 +23,6 @@ constexpr int   default_subtitle_stream_index   =   2;
 
 struct EncodeSetting
 {
-    IO_Type         io_type;
     std::string     filename;
     std::string     extension;
     bool            has_subtitle;
@@ -60,7 +58,7 @@ struct AudioEncodeSetting
     AVCodecID   code_id;
     int64_t     bit_rate;
     int         sample_rate;
-    uint64_t    channel_layout;
+    int         channels;
     int         sample_fmt;
 
     std::string     load_pcm_path;

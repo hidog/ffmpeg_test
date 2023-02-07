@@ -6,6 +6,7 @@ extern "C" {
 #include <libavutil/timestamp.h>
 #include <libavformat/avformat.h>
 #include <libswresample/swresample.h>
+#include <libavcodec/avcodec.h>
 
 } // end extern "C"
 
@@ -63,20 +64,53 @@ av_get_default_channel_layout       轉成 layout
 ********************************************************************************/
 int     AudioDecode::init()
 {
+    AVChannelLayout     out_layout, in_layout;
+    int     res     =   0;
+
     sample_rate     =   dec_ctx->sample_rate;
     sample_fmt      =   dec_ctx->sample_fmt;
-    channel_layout  =   av_get_default_channel_layout( dec_ctx->channels );
+    channel_layout  =   dec_ctx->ch_layout.nb_channels;
 
     // 要改變 sample rate 可以參考 ffmpeg 官方範例.  resampling_audio                                              
     // S16 改 S32, 需要修改pcm的部分. 需要找時間研究
-    swr_ctx     =   swr_alloc_set_opts( swr_ctx,
-                                        av_get_default_channel_layout(2), AV_SAMPLE_FMT_S16, sample_rate,  // output
-                                        channel_layout, dec_ctx->sample_fmt, dec_ctx->sample_rate,         // input 
-                                        NULL, NULL );
+
+    dst_fmt =   sample_fmt;
+    switch( sample_fmt )
+    {
+    case AV_SAMPLE_FMT_U8P:
+        dst_fmt     =   AV_SAMPLE_FMT_U8;
+        break;
+    case AV_SAMPLE_FMT_S16P:
+        dst_fmt     =   AV_SAMPLE_FMT_S16;
+        break;
+    case AV_SAMPLE_FMT_S32P:
+        dst_fmt     =   AV_SAMPLE_FMT_S32;
+        break;    
+    case AV_SAMPLE_FMT_FLTP:
+        dst_fmt     =   AV_SAMPLE_FMT_FLT;
+        break;
+    case AV_SAMPLE_FMT_DBLP:
+        dst_fmt     =   AV_SAMPLE_FMT_DBL;
+        break;
+    case AV_SAMPLE_FMT_S64P:
+        dst_fmt     =   AV_SAMPLE_FMT_S64;
+        break;
+    }
+
+    av_channel_layout_default( &out_layout, channel_layout );
+    av_channel_layout_default( &in_layout, channel_layout );
+
+    res     =   swr_alloc_set_opts2( &swr_ctx,
+                                     &out_layout, dst_fmt,    sample_rate,      // output
+                                     &in_layout,  sample_fmt, sample_rate,      // input
+                                     0, nullptr );
+    if( res < 0 )
+        MYLOG( LOG::L_ERROR, "set swr opt fail. error code = %d", res );
+
     swr_init(swr_ctx);
 
     MYLOG( LOG::L_INFO, "audio sample format = %s", av_get_sample_fmt_name(sample_fmt) );
-    MYLOG( LOG::L_INFO, "audio channel = %d, sample rate = %d", av_get_channel_layout_nb_channels(channel_layout), sample_rate );
+    MYLOG( LOG::L_INFO, "audio channel = %d, sample rate = %d", in_layout.nb_channels, sample_rate );
 
     //
 #ifdef FFMPEG_TEST
@@ -217,21 +251,9 @@ AudioDecode::get_audio_channel()
 ********************************************************************************/
 int     AudioDecode::get_audio_channel()
 {
-    return  dec_ctx->channels;
-    //return  stream->codecpar->channels;
+    return dec_ctx->ch_layout.nb_channels;
 }
 
-
-
-
-
-/*******************************************************************************
-AudioDecode::get_audio_channel_layout()
-********************************************************************************/
-int     AudioDecode::get_audio_channel_layout()
-{
-    return  dec_ctx->channel_layout;
-}
 
 
 
@@ -243,6 +265,69 @@ int     AudioDecode::get_audio_sample_rate()
     //return  stream->codecpar->sample_rate;
     return  dec_ctx->sample_rate;
 }
+
+
+
+/*******************************************************************************
+AudioDecode::get_audeo_sample_size()
+********************************************************************************/
+int     AudioDecode::get_audeo_sample_size()
+{
+    switch( dec_ctx->sample_fmt )
+    {
+    case AV_SAMPLE_FMT_U8:
+    case AV_SAMPLE_FMT_U8P:
+        return  8;
+    case AV_SAMPLE_FMT_S16:
+    case AV_SAMPLE_FMT_S16P:
+        return  16;
+    case AV_SAMPLE_FMT_S32:
+    case AV_SAMPLE_FMT_S32P:
+        return  32;
+    case AV_SAMPLE_FMT_FLT:
+    case AV_SAMPLE_FMT_FLTP:
+        return  32;
+    case AV_SAMPLE_FMT_DBL:
+    case AV_SAMPLE_FMT_DBLP:
+        return  64;
+    case AV_SAMPLE_FMT_S64:
+    case AV_SAMPLE_FMT_S64P:
+        return  64;
+    default:
+        MYLOG( LOG::L_ERROR, "un defined." );
+    }
+}
+
+
+
+/*******************************************************************************
+AudioDecode::get_audio_sample_type()
+********************************************************************************/
+int     AudioDecode::get_audio_sample_type()
+{
+    switch( dec_ctx->sample_fmt )
+    {
+    case AV_SAMPLE_FMT_U8:
+    case AV_SAMPLE_FMT_U8P:
+        return  2;   //   QAudioFormat  SampleType UnSignedInt
+    case AV_SAMPLE_FMT_S16:
+    case AV_SAMPLE_FMT_S16P:
+    case AV_SAMPLE_FMT_S32:
+    case AV_SAMPLE_FMT_S32P:
+    case AV_SAMPLE_FMT_S64:
+    case AV_SAMPLE_FMT_S64P:
+        return  1;  // SignedInt
+    case AV_SAMPLE_FMT_FLT:
+    case AV_SAMPLE_FMT_FLTP:
+    case AV_SAMPLE_FMT_DBL:
+    case AV_SAMPLE_FMT_DBLP:
+        return  3;  // Float 
+    default:
+        MYLOG( LOG::L_ERROR, "un defined." );
+    }
+}
+
+
 
 
 
@@ -269,15 +354,20 @@ int out_count = (int64_t)wanted_nb_samples * is->audio_tgt.freq / af->frame->sam
 ********************************************************************************/
 AudioData   AudioDecode::output_audio_data()
 {
-    static constexpr int    out_channel =   2; // 目前預設輸出成兩聲道. 有空再改
+    //static constexpr int    out_channel =   2; // 目前預設輸出成兩聲道. 有空再改
+
+    int     channel     =   get_audio_channel(),
+            sample_rate =   get_audio_sample_rate(),
+            sample_size =   get_audeo_sample_size();
+
+    AVSampleFormat  sample_type =   dec_ctx->sample_fmt;
+
+    int         byte_count  =   av_samples_get_buffer_size( NULL, channel, frame->nb_samples, sample_type, 0 );
 
     AudioData   ad;
     ad.pcm          =   nullptr;
     ad.bytes        =   0;
     ad.timestamp    =   0;
-
-
-    int         byte_count  =   av_samples_get_buffer_size( NULL, out_channel, frame->nb_samples, AV_SAMPLE_FMT_S16, 0 );
 
     ad.pcm    =   new uint8_t[byte_count];
     if( ad.pcm == nullptr )
@@ -289,6 +379,8 @@ AudioData   AudioDecode::output_audio_data()
     int ret     =   swr_convert( swr_ctx,
                                  data, frame->nb_samples,                              //輸出 
                                  (const uint8_t**)frame->data, frame->nb_samples );    //輸入
+
+    //memcpy( ad.pcm, frame->data, byte_count );
 
     //
     ad.bytes        =   byte_count;

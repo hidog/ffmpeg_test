@@ -1,7 +1,6 @@
 #include "player.h"
 
 #include "tool.h"
-#include "demux_io.h"
 #include "video_decode.h"
 #include "audio_decode.h"
 
@@ -27,25 +26,14 @@ int     Player::init_demuxer()
 {
     if( demuxer != nullptr )
         MYLOG( LOG::L_ERROR, "demuxer not null." );
-    if( setting.io_type == IO_Type::DEFAULT )
+
+    demuxer     =   std::make_unique<Demux>();
+    if( setting.filename.empty() == true )
     {
-        demuxer     =   std::make_unique<Demux>();
-        if( setting.filename.empty() == true )
-        {
-            MYLOG( LOG::L_ERROR, "src file is empty." );
-            return  R_ERROR;   
-        }
-        demuxer->set_input_file( setting.filename );
+        MYLOG( LOG::L_ERROR, "src file is empty." );
+        return  R_ERROR;   
     }
-    else
-    {
-        demuxer     =   std::make_unique<DemuxIO>(setting);
-        if( demuxer == nullptr )
-        {
-            MYLOG( LOG::L_ERROR, "init demuxer fail." );
-            return  R_ERROR;
-        }
-    }
+    demuxer->set_input_file( setting.filename );
 
     return  R_SUCCESS;
 }
@@ -85,7 +73,7 @@ MediaInfo   Player::get_media_info()
     if( decode_manager->exist_audio_stream() == true )
     {
         AudioDecode     *a_dec  =   decode_manager->get_current_audio_decoder();
-        info.channel_layout =   a_dec->get_audio_channel_layout();
+        info.channel        =   a_dec->get_audio_channel();
         info.sample_rate    =   a_dec->get_audio_sample_rate();
         info.sample_fmt     =   a_dec->get_audio_sample_format();
     }
@@ -278,6 +266,8 @@ AudioDecodeSetting    Player::get_audio_setting()
         AudioDecode     *a_ptr  =   decode_manager->get_current_audio_decoder();
         as.channel      =   a_ptr->get_audio_channel();
         as.sample_rate  =   a_ptr->get_audio_sample_rate();
+        as.sample_size  =   a_ptr->get_audeo_sample_size();
+        as.sample_type  =   a_ptr->get_audio_sample_type();
     }
     return  as;
 }
@@ -618,6 +608,16 @@ void    Player::stop()
 
 
 
+/*******************************************************************************
+Player::stop()
+********************************************************************************/
+bool    Player::get_stop_flag()
+{
+    return  stop_flag;
+}
+
+
+
 
 /*******************************************************************************
 Player::handle_seek()
@@ -724,6 +724,7 @@ void    Player::play_QT()
     flush();
     MYLOG( LOG::L_INFO, "play finish.")
 }
+
 
 
 
@@ -895,7 +896,7 @@ int     Player::end()
 {
     clear_setting();
 
-    stop_flag   =   false;
+    //stop_flag   =   false;
     seek_flag   =   false;
 
     //
@@ -957,11 +958,8 @@ player_decode_example
 void    player_decode_example()
 {
     DecodeSetting   setting;
-    setting.io_type     =   IO_Type::DEFAULT;
-    //setting.io_type     =   IO_Type::SRT_IO;
     setting.filename   =   "D:\\test_video\\test.mkv";     // 使用 D:\\code\\test.mkv 會出錯. 已增加程式碼處理這個問題.
     //setting.subname    =   "D:\\test.ass";   
-    //setting.srt_port    =   "1234";
 
     Player  player;  
 

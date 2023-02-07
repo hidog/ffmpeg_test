@@ -117,9 +117,9 @@ void    VideoEncodeHW::init( int st_idx, VideoEncodeSetting setting, bool need_g
 
     // Encode::init 使用 avcodec_find_encoder, 無法取得 hw encode. 強制取得nvenc, 重設 codec.
     if( setting.code_id == AV_CODEC_ID_H264 )
-        codec   =   avcodec_find_encoder_by_name("h264_nvenc");
+        codec   =   (AVCodec*)avcodec_find_encoder_by_name("h264_nvenc");
     else if( setting.code_id == AV_CODEC_ID_H265 )
-        codec   =   avcodec_find_encoder_by_name("hevc_nvenc");
+        codec   =   (AVCodec*)avcodec_find_encoder_by_name("hevc_nvenc");
     else
         assert(0);
 

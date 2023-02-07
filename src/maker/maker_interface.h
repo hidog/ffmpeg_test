@@ -26,9 +26,8 @@ public:
 
 
 DLL_API void    maker_encode_example();
-DLL_API void    output_by_io( MediaInfo media_info, std::string _port, MakerInterface* maker );
 
-DLL_API MakerInterface* create_maker_io();
+
 
 
 #endif

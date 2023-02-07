@@ -3,7 +3,6 @@
 
 #ifdef FFMPEG_TEST
 #include <QImage>
-#include <opencv2/opencv.hpp>
 #endif
 
 extern "C" {
@@ -155,7 +154,7 @@ VideoEncode::list_pixfmt()
 ********************************************************************************/
 void    VideoEncode::list_pix_fmt( AVCodecID code_id )
 {
-    AVCodec*     codec   =   avcodec_find_encoder(code_id);
+    const AVCodec*     codec   =   avcodec_find_encoder(code_id);
 
     const AVPixelFormat  *pix_fmt   =   nullptr;
 
@@ -183,7 +182,7 @@ h264, h265 等沒資料.
 ********************************************************************************/
 void    VideoEncode::list_frame_rate( AVCodecID code_id )
 {
-    AVCodec*     codec   =   avcodec_find_encoder(code_id);
+    const AVCodec*     codec   =   avcodec_find_encoder(code_id);
 
     const AVRational  *rt   =   nullptr;
 
@@ -432,8 +431,7 @@ VideoEncode::get_frame()
 void    VideoEncode::next_frame()
 {
 #ifdef FFMPEG_TEST
-    // get_fram_from_file_QT();
-    get_fram_from_file_openCV();
+    get_fram_from_file_QT();
 #else
     frame   =   encode::get_video_frame();
     if( frame == nullptr )
@@ -491,50 +489,6 @@ void    VideoEncode::get_fram_from_file_QT()
 #endif
 
     frame->pts = frame_count;
-    frame_count++;
-}
-#endif
-
-
-
-
-
-
-#ifdef FFMPEG_TEST
-/*******************************************************************************
-VideoEncode::get_fram_from_file_openCV()
-
-這邊需要擴充, 以及考慮使用讀取檔案處理一些參數的 init
-********************************************************************************/
-void    VideoEncode::get_fram_from_file_openCV()
-{
-    char str[1000];
-    int ret;
-
-    sprintf( str, "%s\\%d.jpg", load_jpg_root_path.c_str(), frame_count );
-    if( frame_count % 100 == 0 )
-        MYLOG( LOG::L_DEBUG, "load jpg = %s", str );
-
-    cv::Mat img =   cv::imread( str, cv::IMREAD_COLOR );
-    if( img.empty() == true )
-    //if( frame_count > 1000 )
-    {
-        eof_flag    =   true;
-        return;
-    }
-
-    ret     =   av_frame_make_writable( frame );
-    if( ret < 0 )
-        assert(0);
-
-    size_t      bytes_per_line  =   img.channels() * img.cols;
-    int         linesize[8]     =   { bytes_per_line };
-    uint8_t     *data[4]        =   { img.ptr() };
-
-    sws_scale( sws_ctx, data, linesize, 0, img.rows, video_data, video_linesize );
-    av_image_copy( frame->data, frame->linesize, (const uint8_t**)video_data, video_linesize, ctx->pix_fmt, ctx->width, ctx->height );
-
-    frame->pts  =   frame_count;
     frame_count++;
 }
 #endif

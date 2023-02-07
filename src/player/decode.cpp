@@ -90,7 +90,7 @@ Decode::open_codec_context()
 int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, AVMediaType type )
 {
     int         ret     =   0;
-    AVCodec     *dec    =   nullptr;
+    const AVCodec     *dec    =   nullptr;
 
     //
     stream  =   fmt_ctx->streams[stream_index];
@@ -136,7 +136,7 @@ int     Decode::open_codec_context( int stream_index, AVFormatContext *fmt_ctx, 
     dec_ctx->pkt_timebase   =   fmt_ctx->streams[stream_index]->time_base;
 
     // output info
-    output_decode_info( dec, dec_ctx );
+    output_decode_info( (AVCodec*)dec, dec_ctx );
 
     return  R_SUCCESS;
 }

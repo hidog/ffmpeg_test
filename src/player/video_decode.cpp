@@ -2,13 +2,9 @@
 
 #include "sub_decode.h"
 #include "video_decode_hw.h"
-#include "video_decode_nv.h"
-#include "../imgprcs/image_process.h"
 
 #include <QPainter>
 #include <QImage>
-#include <opencv2/opencv.hpp>
-
 
 extern "C" {
 
@@ -618,76 +614,6 @@ VideoDecode::set_output_jpg_path()
 void    VideoDecode::set_output_jpg_path( std::string _path )
 {
     output_jpg_path    =   _path;
-}
-#endif
-
-
-
-#ifdef FFMPEG_TEST
-/*******************************************************************************
-VideoDecode::output_jpg_by_openCV()
-********************************************************************************/
-int     VideoDecode::output_jpg_by_openCV()
-{
-    // note: frame 本身有帶 width, height 的資訊
-    // int width = frame->width, height = frame->height;
-
-    /* 
-    yuv420 本身的資料是 width * height * 3 / 2, 一開始沒處理好造成錯誤
-    底下兩個方法, 一個是暴力硬幹 (有機會出錯, 有影片在這邊會造成錯誤)
-    一個是透過介面做轉換
-    */
-#if 0
-    // 某些情況下這段程式碼會出錯.
-    // 那時候 linesize 會出現不match的現象
-    cv::Mat     img     =   cv::Mat::zeros( height*3/2, width, CV_8UC1 );    
-    memcpy( img.data, frame->data[0], width*height );
-    memcpy( img.data + width*height, frame->data[1], width*height/4 );
-    memcpy( img.data + width*height*5/4, frame->data[2], width*height/4 );
-#else
-    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, AV_PIX_FMT_YUV420P, width, height );
-    cv::Mat img( cv::Size( width, height*3/2 ), CV_8UC1, video_dst_data[0] );
-#endif
-
-    cv::Mat     bgr;
-    cv::cvtColor( img, bgr, cv::COLOR_YUV2BGR_I420 );
-
-#if 1
-    // show image by opencv
-    cv::imshow( "RGB frame", bgr );
-    cv::waitKey(1);
-#else
-    static int output_count =   0;
-    char    output_path[1000];
-    sprintf( output_path, "%s\\%d.jpg",  opencv_jpg_root_path.c_str(), output_count++ );
-    cv::imwrite( output_path, bgr );
-#endif
-
-    return 0;
-}
-#endif
-
-
-
-
-
-#ifdef FFMPEG_TEST
-/*******************************************************************************
-VideoDecode::test_image_process()
-********************************************************************************/
-int     VideoDecode::test_image_process()
-{
-    av_image_copy( video_dst_data, video_dst_linesize, (const uint8_t **)(frame->data), frame->linesize, AV_PIX_FMT_YUV420P, width, height );
-    cv::Mat     yuvframe( cv::Size( width, height*3/2 ), CV_8UC1, video_dst_data[0] );
-
-    ImageProcess    *image_process  =   get_image_process_instance();
-
-    //image_process->histogram( yuvframe, width, height );
-    //image_process->rgb_to_gray( yuvframe, width, height );
-    //image_process->sobel( yuvframe, width, height );
-    image_process->canny_edge( yuvframe, width, height );  
-
-    return 0;
 }
 #endif
 

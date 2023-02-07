@@ -37,9 +37,10 @@ public:
 
     int     get_audio_nb_sample();
     int     get_audio_channel();
-    int     get_audio_channel_layout();
     int     get_audio_sample_rate();
     int     get_audio_sample_format();
+    int     get_audeo_sample_size();
+    int     get_audio_sample_type();
 
     void        output_audio_frame_info();    
     AudioData   output_audio_data();
@@ -58,6 +59,8 @@ private:
     uint64_t    channel_layout  =   0;  // 多聲道的時候研究一下
 
     AVSampleFormat  sample_fmt;
+    AVSampleFormat  dst_fmt;
+
     SwrContext      *swr_ctx    =   nullptr;   // use for chagne audio data to play.
 
 #ifdef FFMPEG_TEST
