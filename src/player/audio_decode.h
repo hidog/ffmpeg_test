@@ -37,7 +37,6 @@ public:
 
     int     get_audio_nb_sample();
     int     get_audio_channel();
-    int     get_audio_channel_layout();
     int     get_audio_sample_rate();
     int     get_audio_sample_format();
     int     get_audeo_sample_size();

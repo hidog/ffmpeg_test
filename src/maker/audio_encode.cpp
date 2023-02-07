@@ -151,6 +151,8 @@ void    AudioEncode::list_channel_layout( AVCodecID code_id )
     while( p_cl != 0 ) 
     {
         int nb_channels = p_cl->nb_channels;
+        if( nb_channels == 0 )
+            break;
         printf( "%s support channel layout %d\n", avcodec_get_name(code_id), nb_channels );
         p_cl++;
     }
@@ -165,11 +167,10 @@ void    AudioEncode::list_channel_layout( AVCodecID code_id )
 /*******************************************************************************
 AudioEncode::select_channel_layout()
 ********************************************************************************/
-int     AudioEncode::select_channel_layout( AVCodec *codec )
+int     AudioEncode::select_channel_layout( const AVCodec *codec )
 {
     const AVChannelLayout  *p_cl    =   nullptr;
-    //uint64_t    best_ch_layout      =   0;
-    int         best_nb_channels    =   0;
+    int best_nb_channels    =   0;
 
     if( codec->ch_layouts == nullptr )
         return AV_CH_LAYOUT_STEREO;
@@ -178,16 +179,14 @@ int     AudioEncode::select_channel_layout( AVCodec *codec )
     while( p_cl != 0 ) 
     {
         int     nb_channels     =   p_cl->nb_channels;
+        if( nb_channels == 0 )
+            break;
 
         if( nb_channels > best_nb_channels ) 
-        {
-            //best_ch_layout      =   *p_cl;
             best_nb_channels    =   nb_channels;
-        }
         p_cl++;
     }
 
-    //return best_ch_layout;
     return best_nb_channels;
 }
 
@@ -268,11 +267,7 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
 
     // init setting
     ctx->sample_rate    =   setting.sample_rate; 
-    //ctx->channel_layout =   setting.channel_layout;
-    //ctx->channels       =  av_get_channel_layout_nb_channels(ctx->channel_layout);
     av_channel_layout_default( &ctx->ch_layout, setting.channels );
-
-
 
     if( need_global_header == true )
         ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -295,8 +290,6 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
     // set param to frame.
     frame->nb_samples       =   ctx->frame_size;
     frame->format           =   ctx->sample_fmt;
-
-    //frame->channel_layout   =   ctx->channel_layout;
     av_channel_layout_copy( &frame->ch_layout, &ctx->ch_layout );
 
     frame->sample_rate      =   ctx->sample_rate;

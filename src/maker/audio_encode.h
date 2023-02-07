@@ -61,7 +61,7 @@ private:
 
     bool    check_sample_fmt( AVCodec *codec, AVSampleFormat sample_fmt );
     int     select_sample_rate( AVCodec *codec );
-    int     select_channel_layout( AVCodec *codec );
+    int     select_channel_layout( const AVCodec *codec );
 
 #ifdef FFMPEG_TEST
     char*   adts_head( int packetlen );
