@@ -73,7 +73,7 @@ MediaInfo   Player::get_media_info()
     if( decode_manager->exist_audio_stream() == true )
     {
         AudioDecode     *a_dec  =   decode_manager->get_current_audio_decoder();
-        info.channel_layout =   a_dec->get_audio_channel_layout();
+        info.channel        =   a_dec->get_audio_channel();
         info.sample_rate    =   a_dec->get_audio_sample_rate();
         info.sample_fmt     =   a_dec->get_audio_sample_format();
     }

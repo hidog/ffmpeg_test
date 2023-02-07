@@ -58,7 +58,7 @@ struct AudioEncodeSetting
     AVCodecID   code_id;
     int64_t     bit_rate;
     int         sample_rate;
-    uint64_t    channel_layout;
+    int         channels;
     int         sample_fmt;
 
     std::string     load_pcm_path;

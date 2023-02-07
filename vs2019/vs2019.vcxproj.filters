@@ -75,16 +75,13 @@
     <ClCompile Include="..\src\player\video_decode_hw.cpp">
       <Filter>src\player</Filter>
     </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\hw_decode.c">
-      <Filter>ffmpeg_example</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\maker\video_encode_hw.cpp">
       <Filter>src\maker</Filter>
     </ClCompile>
     <ClCompile Include="..\src\player\decode_manager.cpp">
       <Filter>src\player</Filter>
     </ClCompile>
-    <ClCompile Include="..\ffmpeg_example\muxing.cpp">
+    <ClCompile Include="..\ffmpeg_example\muxing.c">
       <Filter>ffmpeg_example</Filter>
     </ClCompile>
   </ItemGroup>
@@ -140,17 +137,11 @@
     <ClInclude Include="..\src\player\video_decode_hw.h">
       <Filter>src\player</Filter>
     </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\hw_decode.h">
-      <Filter>ffmpeg_example</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\maker\video_encode_hw.h">
       <Filter>src\maker</Filter>
     </ClInclude>
     <ClInclude Include="..\src\player\decode_manager.h">
       <Filter>src\player</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ffmpeg_example\muxing.h">
-      <Filter>ffmpeg_example</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

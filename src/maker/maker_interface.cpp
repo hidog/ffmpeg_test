@@ -65,7 +65,7 @@ void    maker_encode_example()
     a_setting.bit_rate          =   320000;
     //a_setting.bit_rate          =   128000;
     a_setting.sample_rate       =   48000;
-    a_setting.channel_layout    =   3; // AV_CH_LAYOUT_STEREO = 3;
+    a_setting.channels          =   2;
     a_setting.sample_fmt        =   static_cast<int>(AV_SAMPLE_FMT_S16);
 
     SubEncodeSetting   s_setting;
