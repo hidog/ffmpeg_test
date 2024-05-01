@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <QImage>
 
-#define CPU_DECODE
-//#define HW_DECODE
+//#define CPU_DECODE
+#define HW_DECODE
 
 
 

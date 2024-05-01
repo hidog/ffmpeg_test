@@ -573,9 +573,9 @@ int    VideoDecode::output_jpg_by_QT()
     memcpy( img.bits(), video_dst_data[0], video_dst_bufsize );
 
     char    str[1000];
-    sprintf( str, "%s\\%d.jpg", output_jpg_path.c_str(), frame_count );
+    sprintf( str, "%s\\%d.png", output_jpg_path.c_str(), frame_count );
     if( frame_count % 100 == 0 )
-        MYLOG( LOG::L_DEBUG, "save jpg %s", str );
+        MYLOG( LOG::L_DEBUG, "save png %s", str );
     img.save(str);
 
     return  0;
@@ -648,8 +648,6 @@ VideoDecode*    get_video_decoder_instance()
     return  new VideoDecode;
 #elif defined( HW_DECODE )
     return  new VideoDecodeHW;
-#elif defined( NV_DECODE)
-    return  new VideoDecodeNV;
 #else
     assert(0);
     return  nullptr;
