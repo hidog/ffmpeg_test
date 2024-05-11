@@ -335,6 +335,7 @@ DecodeManager::get_decoder()
 Decode*     DecodeManager::get_decoder( int stream_index )
 {
     // video
+
     auto    v_itr  =   video_map.find(stream_index);
     if( v_itr != video_map.end() )
         return  v_itr->second;

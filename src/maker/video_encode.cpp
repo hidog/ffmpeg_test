@@ -453,8 +453,9 @@ void    VideoEncode::get_fram_from_file_QT()
     char str[1000];
     int ret;
 
-    sprintf( str, "%s\\%d.jpg", load_jpg_root_path.c_str(), frame_count );
-    printf( "str = %s\n", str );
+    sprintf( str, "%s\\%d.png", load_jpg_root_path.c_str(), frame_count );
+    if( frame_count % 100 == 0 )
+        MYLOG( LOG::L_DEBUG, "str = %s\n", str );
 
     QImage  img;
     if( img.load( str ) == false )
