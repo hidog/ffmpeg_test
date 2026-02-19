@@ -41,9 +41,11 @@ enum class LOG
             printf("[ERR] [%s] [%d] ", __FILE__, __LINE__); \
 		printf(__VA_ARGS__); \
 		printf("\n"); \
-        if( TAG == LOG::L_ERROR ) \
-            assert(0); \
 	}
+
+
+        //if( TAG == LOG::L_ERROR ) \
+        //    assert(0); 
 
 
 
