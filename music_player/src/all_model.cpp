@@ -44,6 +44,7 @@ AllModel::search_slot()
 void    AllModel::search_slot( const QString &text )
 {
     locker.lock();
+    is_searching   =   true;
     
     search_vec.clear();
     for( const auto& itr : file_vec )
@@ -53,6 +54,7 @@ void    AllModel::search_slot( const QString &text )
     }
     emit refresh_signal();
 
+    is_searching   =   false;
     locker.unlock();
 }
 
@@ -183,6 +185,9 @@ AllModel::double_clicked_slot()
 ********************************************************************************/
 void	AllModel::double_clicked_slot( const QModelIndex &index )
 {
+    if( is_searching == true )
+        return;
+
     const auto& show_vec    =   get_show_file_vec();
 
  	int			row		=	index.row();
@@ -259,7 +264,8 @@ bool    AllModel::play_user()
 {
     clear_played_state();
     assert( play_index < file_vec.size() && play_index >= 0 );       
-	QFileInfo	info	=	file_vec[play_index];
+    const auto&     show_vec    =   get_show_file_vec();
+	QFileInfo	    info	    =	show_vec[play_index];
     assert( main_window->is_playing() == false );
     main_window->set_finish_behavior( FinishBehavior::NONE );
     emit play_signal(info.absoluteFilePath());

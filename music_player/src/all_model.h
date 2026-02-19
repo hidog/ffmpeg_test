@@ -110,6 +110,8 @@ private:
     QStringList     list_from_file;
     QList<int>      vec_from_file;
 
+    bool    is_searching   =   false;
+
 };
 
 
