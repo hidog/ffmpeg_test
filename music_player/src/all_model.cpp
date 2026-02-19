@@ -39,6 +39,44 @@ AllModel::~AllModel()
 
 
 /*******************************************************************************
+AllModel::search_slot()
+********************************************************************************/
+void    AllModel::search_slot( const QString &text )
+{
+    locker.lock();
+    
+    search_vec.clear();
+    for( const auto& itr : file_vec )
+    {
+        if( itr.absoluteFilePath().contains(text) )
+            search_vec.push_back(itr);
+    }
+    emit refresh_signal();
+
+    locker.unlock();
+}
+
+
+
+
+
+/*******************************************************************************
+AllModel::search_slot()
+********************************************************************************/
+const QVector<QFileInfo>&   AllModel::get_show_file_vec() const
+{
+    if( search_vec.isEmpty() )
+        return file_vec;
+    else
+        return search_vec;
+}
+
+
+
+
+
+
+/*******************************************************************************
 AllModel::refresh_slot()
 ********************************************************************************/
 void	AllModel::refresh_slot()
@@ -67,7 +105,7 @@ AllModel::rowCount()
 ********************************************************************************/
 int		AllModel::rowCount( const QModelIndex &parent ) const 
 { 
-	return	file_vec.size();
+	return	get_show_file_vec().size();
 }
 
 
@@ -125,7 +163,7 @@ AllModel::refresh_view()
 ********************************************************************************/
 void	AllModel::refresh_list()
 {
-	int		row		=	file_vec.size();
+	int		row		=	get_show_file_vec().size();
 	int		col		=	head_list.size();
 
 	QModelIndex		left_top		=	createIndex( 0, 0 );
@@ -145,8 +183,10 @@ AllModel::double_clicked_slot()
 ********************************************************************************/
 void	AllModel::double_clicked_slot( const QModelIndex &index )
 {
+    const auto& show_vec    =   get_show_file_vec();
+
  	int			row		=	index.row();
-	QFileInfo	info	=	file_vec[row];
+	QFileInfo	info	=	show_vec[row];
 
     if( main_window->is_playing() == false )
     {
@@ -238,7 +278,8 @@ QVariant	AllModel::text_data( const QModelIndex &index, int role ) const
 	int		col =   index.column();
 	int		row =   index.row();
 
-	const QFileInfo&	info    =   file_vec[row];
+    const auto&         show_vec    =   get_show_file_vec();
+	const QFileInfo&	info        =   show_vec[row];
 	QVariant	result;
 
 	// handle DisplayRole only.
@@ -310,7 +351,8 @@ QVariant	AllModel::icon_data( const QModelIndex &index, int role ) const
 
 	assert( row < file_vec.size() );
 
-	const QFileInfo&	info	=	file_vec[row]; 
+    const auto&         show_vec    =   get_show_file_vec();
+	const QFileInfo&	info	    =	show_vec[row]; 
 	QFileIconProvider	icon_pv;
 	QVariant			result;
 
@@ -367,7 +409,8 @@ QVariant	AllModel::data( const QModelIndex &index, int role ) const
 
 	assert( row < file_vec.size() );
 
-	const QFileInfo&    info    =	file_vec[row];
+    const auto&         show_vec    =   get_show_file_vec();
+	const QFileInfo&    info        =	show_vec[row];
 
 	switch( role )
 	{
@@ -403,7 +446,8 @@ QVariant	AllModel::get_font_color( const QModelIndex &index, int role ) const
 	int		col		=	index.column();
 	int		row		=	index.row();
 
-	QFileInfo	info	=	file_vec[row];
+    const auto& show_vec    =   get_show_file_vec();
+	QFileInfo	info	    =	show_vec[row];
 	QVariant	result;
 	//GitStatus	git_status;
 
@@ -554,8 +598,10 @@ AllModel::get_random_index()
 ********************************************************************************/
 int    AllModel::get_random_index( bool is_favorite )
 {
+    const auto& show_vec        =   get_show_file_vec();
+    int         all_file_count  =   show_vec.size();
     std::random_device rd;
-    std::uniform_int_distribution<int> dist( 0, file_vec.size()-1 );
+    std::uniform_int_distribution<int> dist( 0, all_file_count-1 );
 
     int     idx     =   dist(rd);
     int     size    =   file_vec.size();
@@ -648,10 +694,12 @@ AllModel::play()
 ********************************************************************************/
 bool    AllModel::play( bool is_random, bool is_favorite )
 {
-    if( file_vec.empty() == true )
+    const auto& show_vec    =   get_show_file_vec();
+
+    if( show_vec.empty() == true )
         return false;
 
-    if( play_index >= file_vec.size() )
+    if( play_index >= show_vec.size() )
         play_index =   0;
 
     if( is_random == true )
@@ -662,7 +710,7 @@ bool    AllModel::play( bool is_random, bool is_favorite )
 
     assert( play_index >= 0 );
 
-	QFileInfo	info	=	file_vec[play_index];
+	QFileInfo	info	=	show_vec[play_index];
     emit play_signal(info.absoluteFilePath());
     refresh_current();
     return  true;
@@ -676,14 +724,16 @@ AllModel::play()
 ********************************************************************************/
 bool    AllModel::play_random( bool is_favorite )
 {
-    if( file_vec.empty() == true )
+    const auto& show_vec    =   get_show_file_vec();
+
+    if( show_vec.empty() == true )
         return false;
 
     play_index  =   get_random_index( is_favorite );    
 
     assert( play_index >= 0 );
 
-	QFileInfo	info	=	file_vec[play_index];
+	QFileInfo	info	=	show_vec[play_index];
     emit play_signal(info.absoluteFilePath());
     refresh_current();
     return  true;
@@ -698,19 +748,21 @@ AllModel::play()
 ********************************************************************************/
 bool    AllModel::play_next( bool is_repeat )
 {
-    if( file_vec.empty() == true )
+    const auto& show_vec    =   get_show_file_vec();
+
+    if( show_vec.empty() == true )
         return false;
 
     play_index++;
-    if( is_repeat == true && play_index == file_vec.size() )
+    if( is_repeat == true && play_index == show_vec.size() )
         play_index  =   0;
 
-    if( play_index >= file_vec.size() )
+    if( play_index >= show_vec.size() )
         return  false;
 
     assert( play_index >= 0 );
 
-	QFileInfo	info	=	file_vec[play_index];
+	QFileInfo	info	=	show_vec[play_index];
     emit play_signal(info.absoluteFilePath());
     refresh_current();
     return  true;
@@ -725,13 +777,15 @@ AllModel::previous()
 ********************************************************************************/
 bool    AllModel::previous()
 {
-    if( file_vec.empty() == true )
+    const auto& show_vec    =   get_show_file_vec();
+
+    if( show_vec.empty() == true )
         return false;
 
     play_index =   play_index > 0 ? play_index-1 : 0;
     assert( play_index >= 0 );
 
-    const QFileInfo&	info	=	file_vec[play_index];
+    const QFileInfo&	info	=	show_vec[play_index];
     emit play_signal(info.absoluteFilePath());
     refresh_current();
     return  true;
@@ -745,17 +799,19 @@ AllModel::next()
 ********************************************************************************/
 bool    AllModel::next( bool repeat_flag )
 {
-    if( file_vec.empty() == true )
+    const auto& show_vec    =   get_show_file_vec();
+
+    if( show_vec.empty() == true )
         return false;
 
     if( repeat_flag == true )
-        play_index  =   (play_index + 1) % file_vec.size();
+        play_index  =   (play_index + 1) % show_vec.size();
     else
-        play_index  =   play_index < file_vec.size()-1 ? play_index+1 : file_vec.size()-1;
+        play_index  =   play_index < show_vec.size()-1 ? play_index+1 : show_vec.size()-1;
 
     assert( play_index >= 0 );
 
-    const QFileInfo&	info	=	file_vec[play_index];
+    const QFileInfo&	info	=	show_vec[play_index];
     emit play_signal(info.absoluteFilePath());
     refresh_current();
     return  true;
@@ -817,7 +873,8 @@ AllModel::is_now_play_by_path()
 ********************************************************************************/
 bool    AllModel::is_now_play_by_path( QString path )
 {
-    QString     current_path    =   file_vec[play_index].absoluteFilePath();
+    const auto& show_vec    =   get_show_file_vec();
+    QString     current_path    =   show_vec[play_index].absoluteFilePath();
     return  current_path == path;
 }
 
@@ -862,8 +919,10 @@ AllModel::get_current_play_file()
 ********************************************************************************/
 const QFileInfo&    AllModel::get_current_play_file()
 {
-    if( file_vec.isEmpty() == true )
+    const auto& show_vec    =   get_show_file_vec();
+
+    if( show_vec.isEmpty() == true )
         return  QFileInfo();
 
-    return  file_vec[play_index];
+    return  show_vec[play_index];
 }

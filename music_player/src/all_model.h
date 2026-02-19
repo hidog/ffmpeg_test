@@ -6,6 +6,7 @@
 #include <QString>
 #include <QDir>
 #include <QColor>
+#include <QMutex>
 
 #include <vector>
 
@@ -73,8 +74,9 @@ public:
 
     const QFileInfo&    get_current_play_file();
 
-    const QVector<QFileInfo>&    get_file_vec();
-    const QVector<PlayStatus>&   get_status_vec();
+    const QVector<QFileInfo>&   get_file_vec();
+    const QVector<QFileInfo>&   get_show_file_vec() const;
+    const QVector<PlayStatus>&  get_status_vec();
 
     QVector<PlayStatus>     get_status_vec( const QFileInfoList& list );
 
@@ -83,6 +85,7 @@ public slots:
 	void	double_clicked_slot( const QModelIndex &index );
     void	clicked_slot( const QModelIndex &index );
 	void	refresh_slot();
+    void    search_slot( const QString &text );
 
 signals:
 	void	refresh_signal();
@@ -95,11 +98,13 @@ private:
 
     MainWindow      *main_window    =   nullptr;
     QStringList     head_list;
+    QMutex          locker;
 
     QDir    dir;
     int     play_index     =   0;
 
     QVector<QFileInfo>      file_vec;
+    QVector<QFileInfo>      search_vec;
     QVector<PlayStatus>     status_vec;
 
     QStringList     list_from_file;
