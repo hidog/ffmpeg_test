@@ -7,8 +7,8 @@
 
 int main()
 {
-    //maker_encode_example();
-    player_decode_example();
+    maker_encode_example();
+    //player_decode_example();
 
     //muxing();
 

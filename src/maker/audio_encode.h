@@ -67,6 +67,7 @@ private:
     char*   adts_head( int packetlen );
 
     SwrContext  *swr_ctx    =   nullptr;
+    AVSampleFormat  src_fmt =   AV_SAMPLE_FMT_NONE;
 
     /*
         可以使用 av_samples_alloc_array_and_samples 取得資料

@@ -958,7 +958,7 @@ player_decode_example
 void    player_decode_example()
 {
     DecodeSetting   setting;
-    setting.filename   =   "D:\\Disc03.mkv";     // 使用 D:\\code\\test.mkv 會出錯. 已增加程式碼處理這個問題.
+    setting.filename   =   "D:\\tmp.mkv";     // 使用 D:\\code\\test.mkv 會出錯. 已增加程式碼處理這個問題.
     //setting.subname    =   "D:\\test.ass";   
 
     Player  player;  
@@ -966,8 +966,8 @@ void    player_decode_example()
     player.set( setting );
     player.init();
 
-    player.set_output_jpg_path( "F:\\output\\png" );
-    player.set_output_audio_pcm_path( "F:\\output\\test.pcm" );
+    player.set_output_jpg_path( "I:\\output\\png" );
+    player.set_output_audio_pcm_path( "I:\\output\\test.pcm" );
 
     player.play();
     player.end();
