@@ -216,6 +216,9 @@ AllModel::clicked_slot()
 ********************************************************************************/
 void	AllModel::clicked_slot( const QModelIndex &index )
 {
+    if( get_show_file_vec().isEmpty() == false )
+        return;
+
  	int     row		=	index.row();
     int     col     =   index.column();
 
