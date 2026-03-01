@@ -156,8 +156,8 @@ void	FileModel::get_file_list()
     QStringList     name_filters;
     name_filters << "*.mp3" << "*.flac" << "";    
 
-	QFileInfoList   list1    =   dir.entryInfoList( QDir::NoDot|QDir::Dirs, QDir::Name );
-	QFileInfoList   list2    =   dir.entryInfoList( name_filters, QDir::Files, QDir::Name );
+	QFileInfoList   list1    =   dir.entryInfoList( QDir::NoDot|QDir::Dirs, QDir::Name|QDir::IgnoreCase );
+	QFileInfoList   list2    =   dir.entryInfoList( name_filters, QDir::Files, QDir::Name|QDir::IgnoreCase );
 
     if( dir.path() == root_path )
 		list1.removeAt(0);  
@@ -165,6 +165,9 @@ void	FileModel::get_file_list()
     file_list.clear();
     file_list.append(list1);
     file_list.append(list2);
+
+    // for( int i = 0; i < file_list.size(); i++ )
+    //    qDebug() << i << " " << file_list[i].fileName();
 
     file_start_index    =   list1.size();
     update_status_vec( list2 ); 
@@ -282,6 +285,9 @@ QVariant	FileModel::text_data( const QModelIndex &index, int role ) const
 {
 	int		col		=	index.column();
 	int		row		=	index.row();
+
+    if( row >= 189 && row <= 210 )
+        printf("test");
 
 	QFileInfo	info		=	file_list[row];
 	QVariant	result;
