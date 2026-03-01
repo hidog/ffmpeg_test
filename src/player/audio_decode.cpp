@@ -157,7 +157,7 @@ int     AudioDecode::output_pcm()
     uint8_t     *data[2]    =   { 0 };  // S16 改 S32, 不確定是不是這邊的 array 要改成 4
                                         // int         byte_count     =   frame->nb_samples * 2 * 2;  // S16 改 S32, 改成 *4, 理論上資料量會增加, 但不確定是否改的是這邊
                                         // frame->nb_samples * 2 * 2     表示     分配樣本資料量 * 兩通道 * 每通道2位元組大小
-    int         byte_count  =   av_samples_get_buffer_size( NULL, out_channel, frame->nb_samples, AV_SAMPLE_FMT_S16, 0 );
+    int         byte_count  =   av_samples_get_buffer_size( NULL, out_channel, frame->nb_samples, dst_fmt, 0 );
 
     unsigned char   *pcm    =   new uint8_t[byte_count];     
 

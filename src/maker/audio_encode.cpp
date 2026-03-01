@@ -287,6 +287,8 @@ void    AudioEncode::init( int st_idx, AudioEncodeSetting setting, bool need_glo
         MYLOG( LOG::L_WARN, "need set to 10000" );
 
 #ifdef FFMPEG_TEST
+    src_fmt     =   static_cast<AVSampleFormat>(setting.sample_fmt);
+
     // set param to frame.
     frame->nb_samples       =   ctx->frame_size;
     frame->format           =   ctx->sample_fmt;
@@ -353,7 +355,7 @@ void    AudioEncode::init_swr( AudioEncodeSetting setting )
     if( pcm[0] != nullptr )
         MYLOG( LOG::L_ERROR, "pc is not null" );
 
-    pcm_size    =   av_samples_get_buffer_size( NULL, ctx->ch_layout.nb_channels, ctx->frame_size, AV_SAMPLE_FMT_S16, 0 );
+    pcm_size    =   av_samples_get_buffer_size( NULL, ctx->ch_layout.nb_channels, ctx->frame_size, src_fmt, 0 );
     pcm[0]      =   new int16_t[pcm_size];
 
     if( pcm[0] == nullptr )
@@ -631,10 +633,10 @@ AudioEncode::get_frame_from_pcm_file()
 ********************************************************************************/
 void    AudioEncode::get_frame_from_pcm_file()
 {
-    static int  bytes_per_sample   =   av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+    static int  bytes_per_sample   =   av_get_bytes_per_sample(src_fmt);  // change code, load from setting
     static int  sp_count  =   pcm_size / ctx->ch_layout.nb_channels / bytes_per_sample;
     AVCodecID   code_id   =   ctx->codec_id; 
-    int     ret;
+    int     ret, data_size = 0;
 
     static FILE *fp     =   fopen( load_pcm_path.c_str(), "rb" );    
 
@@ -662,7 +664,8 @@ void    AudioEncode::get_frame_from_pcm_file()
     if( ret < pcm_size )
         memset( pcm[0] + ret, 0, pcm_size - ret );
 
-    ret     =   swr_convert( swr_ctx, frame->data, frame->nb_samples, (const uint8_t **)pcm, frame->nb_samples );
+    data_size   =   ret / ctx->ch_layout.nb_channels / bytes_per_sample; // frame->nb_samples
+    ret         =   swr_convert( swr_ctx, frame->data, frame->nb_samples, (const uint8_t **)pcm, data_size );
     if( ret < 0 ) 
         MYLOG( LOG::L_ERROR, "convert fail." );
 
